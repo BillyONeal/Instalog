@@ -1,0 +1,7 @@
+Feature Brainstorm:
+
+Work on x64 (And maybe ARM?)
+Plugin-able/DSL?/Extensable
+Collapsable Sections
+Copy/Save/Zip
+Readable by humans and machines -- unambiguous
