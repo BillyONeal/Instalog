@@ -2,3 +2,4 @@ syntax: glob
 Instalog.sdf
 *.vcxproj.user
 Debug/*
+Instalog.suo
