@@ -3,3 +3,6 @@ Instalog.sdf
 *.vcxproj.user
 Debug/*
 Instalog.suo
+Docs/Instalog Specification/*.pdf
+Docs/Instalog Specification/tmp
+*.synctex.gz

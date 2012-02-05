@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Thu Feb 02 22:33:19 EST 2012
+markTmpDer=true
+builderNum=7
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=InstalogSpecification.tex
+outputFile=InstalogSpecification.pdf
+langSpell=en
+markDer=true
+srcDir=
