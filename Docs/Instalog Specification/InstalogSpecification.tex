@@ -67,6 +67,25 @@ which are replaced with some content, are written of the form \var{name}, and
 will be explained in greater detail in prose surrounding a given block of
 \texttt{fixed width} text.
 
+Portions of this document are written in terms of the \verb|.REG| format
+described by Regedit, a Widnows component. The syntax for the regedit script is
+described in several locations, in particular  of \texttt{monospaced}
+(\url{http://en.wikipedia.org/wiki/Windows_Registry#.REG_files}).
+
+Additionally WOW64 (Windows on Windows 64) defines a system whereby registry
+virtualization is in effect -- 32 bit programs are shown a virtualized view of
+the 64 bit registry. Current versions of windows implement this by putting the
+32 bit registry view in a key called ``\verb|Wow6432Node|'' in the root of each
+hive in the registry. Additionally, Windows provides flags to the functions that open
+registry keys, such as \verb|NtOpenKey| or \verb|RegCreateKeyEx|, which select
+the correct view. Microsoft asks that applications be built in terms of the API
+flags, because the specific name of \verb|Wow6432Node| is an implementation
+detail which can change in future versions of Windows.
+
+Therefore, we will define on top of the \verb|.REG| format a comment of
+\verb|;32 Bit Registry View| or \verb|64 Bit Registry View|, which represent the
+flag that would be passed into Windows when opening the indicated key.
+
 \subsection{Intended Audience}
 Instalog is designed with three types of target users in mind. These ``user
 classes'' are listed in the following sections.
@@ -293,8 +312,85 @@ forum software's URL behavior which looks for the protocol prefix in order to
 determine what portions of a post indicate a link. (Note that due to the last
 reqirement of general escaping this will cause no effect on the unescaped data).
 
-\subsection{PseudoHJT Machine Report}
-The information in the PseudoHJT report MUST closely match the information
+\subsection{Header}
+The header of an Instalog report consists of 4 lines, which are always displayed
+and shown in the same order as defined in this document. No component of the
+header is associated with any type of fix information.
+
+\subsubsection{Line One}
+The first line lists information about Instalog itself. It is of the form:
+\begin{verbatim}
+Instalog ${Version}${SafebootState}
+\end{verbatim}
+
+\var{Version} is the version number of the current release of Instalog. This
+allows remote determination of cases where a user needs to upgrade their current
+copy before malware removal or system repair can continue safely.
+
+\var{SafebootState} is the string ``\verb| MINIMAL|'' if the system is currently
+booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
+the systemis booted into \textit{Safe Mode with Networking}, or nothing if the
+machine was booted normally.
+
+\subsubsection{Line Two}
+The second line lists information about the user running Instalog, and the local
+date and time of the system when the log was generated. It has the form:
+\begin{verbatim}
+Run by ${UserName} at ${Y}-${M}-${D} ${H}:${M}:${S}.${Milli} [GMT ${TimeZone}]
+\end{verbatim}
+
+\var{UserName} is the current display name of the logged in user, escaped with
+the general escaping format defined in \ref{generalescape}, using a left
+delimiter of a double quote (\verb|"|), a right delimiter of a double
+quote (\verb|"|), and an escape character backslash (\verb|\|).
+
+\var{Y}, \var{M}, \var{D}, \var{H}, \var{M}, \var{S}, and \var{Milli} are
+replaced with numeric representations of the current local date and time (that
+is, year, month, day, hour, minute, second, and millisecond, respectively).
+
+\var{TimeZone} is a one sign, three digit, and one decimal point representation
+of the time zone of the machine taking the report. For instance, Eastern
+Standard Time is \verb|-4.00| or \verb|-5.00|, while Moscow Standard Time would
+be \verb|+4.00|. (The extra two digits are to allow for locales with half and
+quarter hour time zones)
+
+\subsubsection{Line Three}
+The third line is designed to indicate when important exploitable applications
+need to be updated, by listing their versions. It has the form:
+\begin{verbatim}
+IE: ${IE} Java: ${Java} Flash: ${Flash} Adobe: ${AdobeReader}
+\end{verbatim}
+
+The variables are the installed versions of Microsoft's Internet Explorer,
+Oracle's Java, Adobe's Flash, and Adobe's Adobe Reader. In the event one or more
+of these applications are not installed then their version is listed as
+``\verb|None|''.
+
+\subsubsection{Line Four}
+The fourth line contains information about the current Windows installation and
+boot state. It is of the form:
+\begin{verbatim}
+Microsoft Windows ${WindowsVersion} ${WindowsEdition} ${ProcessorArchitecture}
+${Major}.${Minor}.${Build}.${ServicePack} ${FreeRam}/${TotalRam} MB Free
+\end{verbatim}
+
+Newlines in the above are a consequence of this document and are not present in
+the output.
+
+\var{ProcesserArchitecture} is either the string ``\verb|x86|'' or
+``\verb|x64|'', matching the installed operating system type. (Note that this is
+\textit{not} the capability of the current processor)
+
+Examples:
+\begin{verbatim}
+Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
+Microsoft Windows 7 Ulimate x64 6.1.7601.1 4547/8071 MB Free
+\end{verbatim}
+
+\subsection{Running Processes}
+
+\subsection{General PseudoHJT Reports}
+The information in the PseudoHJT reports MUST closely match the information
 displayed by the original HJT tool. The format MUST closely match the syntax of
 a similar predecessor, DDS, so that forum voulenteers need not learn
 significantly different syntax to that which they know. This format MUST be
@@ -312,13 +408,6 @@ per type of line shown in the PseudoHJT report.
 Each line in the PseudoHJT report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
-
-The ``Data Sources'' sections in the definitions below make use of standard
-registry script, as defined by \verb|regedit.exe|, which is shipped as a
-standard Windows operating system component. A full specification for this
-format can be found on Wikipedia
-(\url{http://en.wikipedia.org/wiki/Windows_Registry#.REG_files}) and other
-similar sources.
 
 \subsubsection{User Default Page URL}
 \begin{description}
