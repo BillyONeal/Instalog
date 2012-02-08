@@ -47,6 +47,25 @@ which are replaced with some content, are written of the form \var{name}, and
 will be explained in greater detail in prose surrounding a given block of
 \texttt{fixed width} text.
 
+Portions of this document are written in terms of the \verb|.REG| format
+described by Regedit, a Widnows component. The syntax for the regedit script is
+described in several locations, in particular  of \texttt{monospaced}
+(\url{http://en.wikipedia.org/wiki/Windows_Registry#.REG_files}).
+
+Additionally WOW64 (Windows on Windows 64) defines a system whereby registry
+virtualization is in effect -- 32 bit programs are shown a virtualized view of
+the 64 bit registry. Current versions of windows implement this by putting the
+32 bit registry view in a key called ``\verb|Wow6432Node|'' in the root of each
+hive in the registry. Additionally, Windows provides flags to the functions that open
+registry keys, such as \verb|NtOpenKey| or \verb|RegCreateKeyEx|, which select
+the correct view. Microsoft asks that applications be built in terms of the API
+flags, because the specific name of \verb|Wow6432Node| is an implementation
+detail which can change in future versions of Windows.
+
+Therefore, we will define on top of the \verb|.REG| format a comment of
+\verb|;32 Bit Registry View| or \verb|64 Bit Registry View|, which represent the
+flag that would be passed into Windows when opening the indicated key.
+
 \subsection{Intended Audience}
 Instalog is designed with three types of target users in mind. These ``user
 classes'' are listed in the following sections.

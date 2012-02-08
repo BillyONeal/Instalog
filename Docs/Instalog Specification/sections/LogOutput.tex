@@ -10,8 +10,8 @@ format:
 
 That is, the name of the section with one space of padding, centered in a block
 of equals (\verb|=|) signs 50 total characters wide. In the case that a tie
-exists with respect to the centering, Instalog shall prefer placing the name of the
-section farther to the right than to the left.
+exists with respect to the centering, Instalog shall prefer placing the name of
+the section farther to the right than to the left.
 
 \subsection{Default Script Sections} \label{sec:default_script_sections}
 Instalog's standard (that is, run without a script) output consists of the
@@ -130,6 +130,90 @@ forum software's URL behavior which looks for the protocol prefix in order to
 determine what portions of a post indicate a link. (Note that due to the last
 requirement of general escaping this will cause no effect on the unescaped data).
 
+\subsection{Header}
+The header of an Instalog report consists of 4 lines, which are always displayed
+and shown in the same order as defined in this document. No component of the
+header is associated with any type of fix information.
+
+\subsubsection{Line One}
+The first line lists information about Instalog itself. It is of the form:
+\begin{verbatim}
+Instalog ${Version}${SafebootState}
+\end{verbatim}
+
+\var{Version} is the version number of the current release of Instalog. This
+allows remote determination of cases where a user needs to upgrade their current
+copy before malware removal or system repair can continue safely.
+
+\var{SafebootState} is the string ``\verb| MINIMAL|'' if the system is currently
+booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
+the systemis booted into \textit{Safe Mode with Networking}, or nothing if the
+machine was booted normally.
+
+\subsubsection{Line Two}
+The second line lists information about the user running Instalog, and the local
+date and time of the system when the log was generated. It has the form:
+\begin{verbatim}
+Run by ${UserName} at ${Y}-${M}-${D} ${H}:${M}:${S}.${Milli} [GMT ${TimeZone}]
+\end{verbatim}
+
+\var{UserName} is the current display name of the logged in user, escaped with
+the general escaping format defined in \ref{generalescape}, using a left
+delimiter of a double quote (\verb|"|), a right delimiter of a double
+quote (\verb|"|), and an escape character backslash (\verb|\|).
+
+\var{Y}, \var{M}, \var{D}, \var{H}, \var{M}, \var{S}, and \var{Milli} are
+replaced with numeric representations of the current local date and time (that
+is, year, month, day, hour, minute, second, and millisecond, respectively).
+
+\var{TimeZone} is a one sign, three digit, and one decimal point representation
+of the time zone of the machine taking the report. For instance, Eastern
+Standard Time is \verb|-4.00| or \verb|-5.00|, while Moscow Standard Time would
+be \verb|+4.00|. (The extra two digits are to allow for locales with half and
+quarter hour time zones)
+
+\subsubsection{Line Three}
+The third line is designed to indicate when important exploitable applications
+need to be updated, by listing their versions. It has the form:
+\begin{verbatim}
+IE: ${IE} Java: ${Java} Flash: ${Flash} Adobe: ${AdobeReader}
+\end{verbatim}
+
+The variables are the installed versions of Microsoft's Internet Explorer,
+Oracle's Java, Adobe's Flash, and Adobe's Adobe Reader. In the event one or more
+of these applications are not installed then their version is listed as
+``\verb|None|''.
+
+\subsubsection{Line Four}
+The fourth line contains information about the current Windows installation and
+memory state. It is of the form:
+\begin{verbatim}
+Microsoft Windows ${WindowsVersion} ${WindowsEdition} ${ProcessorArchitecture}
+${Major}.${Minor}.${Build}.${ServicePack} ${FreeRam}/${TotalRam} MB Free
+\end{verbatim}
+
+Newlines in the above are a consequence of this document and are not present in
+the output.
+
+\var{WindowsVersion} is the ``string name'' of the version of Windows in use,
+such as ``XP'', ``Vista'', or ``7''. \var{WindowsEdition} is the edition of the
+same; such as ``Home'', ``Professional'', or ``Ultimate''. The values
+\var{Major}, \var{Minor}, \var{Build}, and \var{ServicePack} match the current
+version information of the operating system in use.
+
+\var{ProcesserArchitecture} is either the string ``\verb|x86|'' or
+``\verb|x64|'', matching the installed operating system type. (Note that this is
+\textit{not} the capability of the current processor)
+
+Finally, \var{FreeRam} and \var{TotalRam} are the number of Mebibytes of memory
+that are available for use by programs on the current running system.
+
+Examples:
+\begin{verbatim}
+Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
+Microsoft Windows 7 Ulimate x64 6.1.7601.1 4547/8071 MB Free
+\end{verbatim}
+
 \subsection{PseudoHJT Machine Report}
 The information in the PseudoHJT report MUST closely match the information
 displayed by the original HJT tool. The format MUST closely match the syntax of
@@ -150,14 +234,85 @@ Each line in the PseudoHJT report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
 
-The ``Data Sources'' sections in the definitions below make use of standard
-registry script, as defined by \verb|regedit.exe|, which is shipped as a
-standard Windows operating system component. A full specification for this
-format can be found on Wikipedia
-(\url{http://en.wikipedia.org/wiki/Windows_Registry#.REG_files}) and other
-similar sources.
+\subsubsection{Default Page URL}
+\begin{description}
+\item[Rationale] \hfill \\
+The User Default Page URL is the location(s) of pages opened when a user creates
+a new Microsoft Internet Explorer window, or starts the browser for the first
+time. This value may be overridden by a user-specific setting. This setting
+affects 32 bit versions of Internet Explorer only.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+DefaultPageUrl=${url}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variable \var{url} is escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
+\item[Whitelist Considerations] \hfill \\
+The default value for this entry
+differs depending on the version of Internet Explorer and Windows currently in
+use. Testing will need to be undertaken against supported operating systems in
+order to determine which values to hide.
+\item[Fix Considerations] \hfill \\
+Valid options: fix registry. Generated
+script:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg32
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="about:blank"
+\end{verbatim}
+\end{description}
 
-\subsubsection{User Default Page URL}
+\subsubsection{64 Bit Default Page URL}
+\begin{description}
+\item[Rationale] \hfill \\
+The User Default Page URL is the location(s) of pages opened when a user creates
+a new Microsoft Internet Explorer window, or starts the browser for the first
+time. This value may be overridden by a user-specific setting. This setting
+affects 64 bit versions of Internet Explorer only.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+DefaultPageUrl64=${url}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variable \var{url} is escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
+\item[Whitelist Considerations] \hfill \\
+The default value for this entry
+differs depending on the version of Internet Explorer and Windows currently in
+use. Testing will need to be undertaken against supported operating systems in
+order to determine which values to hide.
+\item[Fix Considerations] \hfill \\
+Valid options: fix registry. Generated
+script:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg64
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="about:blank"
+\end{verbatim}
+\end{description}
+
+\subsection{PseudoHJT User Report}
+
+\subsubsection{Default Page URL}
 \begin{description}
 \item[Rationale] \hfill \\
 The User Default Page URL is the location(s) of pages opened when a user creates
@@ -174,12 +329,11 @@ value. This setting affects 32 bit versions of Internet Explorer only.
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim} 
-uDefaultPageUrl=${url}
+DefaultPageUrl=${url}
 \end{verbatim}
 \item[Output Description] \hfill \\
-The variable \var{url} is escaped using the
-URL escaping scheme defined in \ref{urlescape}, where the escape character is the
-hash mark (\verb|#|). 
+The variable \var{url} is escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
 \item[Whitelist Considerations] \hfill \\
 The default value for this entry
 differs depending on the version of Internet Explorer and Windows currently in
@@ -191,6 +345,44 @@ script:
 \vspace{-\baselineskip}
 \begin{verbatim}
 :reg32
+[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="about:blank"
+\end{verbatim}
+\end{description}
+
+\subsubsection{64 Bit Default Page URL}
+\begin{description}
+\item[Rationale] \hfill \\
+The User Default Page URL is the location(s) of pages opened when a user creates
+a new Microsoft Internet Explorer window, or starts the browser for the first
+time. If this value is set, it overrides the machine-wide Default Page URL
+value. This setting affects 64 bit versions of Internet Explorer only.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 64 Bit Registry View
+[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+DefaultPageUrl=${url}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variable \var{url} is escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
+\item[Whitelist Considerations] \hfill \\
+The default value for this entry
+differs depending on the version of Internet Explorer and Windows currently in
+use. Testing will need to be undertaken against supported operating systems in
+order to determine which values to hide.
+\item[Fix Considerations] \hfill \\
+Valid options: fix registry. Generated
+script:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg64
 [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="about:blank"
 \end{verbatim}
