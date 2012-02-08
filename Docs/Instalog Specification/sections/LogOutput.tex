@@ -1,0 +1,197 @@
+\section{Log Output} \label{sec:log_output}
+This section generally defines the form of Instalog's output. A log is split up
+into several delimited portions called ``sections''. With the exception of
+headers and footers, all sections begin with a line similar to the following
+format:
+
+\begin{verbatim}
+================ ${Section Name} ===============
+\end{verbatim}
+
+That is, the name of the section with one space of padding, centered in a block
+of equals (\verb|=|) signs 50 total characters wide. In the case that a tie
+exists with respect to the centering, Instalog shall prefer placing the name of the
+section farther to the right than to the left.
+
+\subsection{Default Script Sections} \label{sec:default_script_sections}
+Instalog's standard (that is, run without a script) output consists of the
+following sections in the following order:
+\begin{enumerate}
+    \item Header
+    \item Running Processes
+    \item Machine PsuedoHJT Report
+    \item $n$ User PseudoHJT Reports (One for each loaded user registry on the
+    system)
+    \item Mozilla Firefox (If Mozilla Firefox is installed)
+    \item Google Chrome (If Google Chrome is installed)
+    \item Created Last 30
+    \item Find3M Report
+    \item Event Viewer (If any relevant events need be reported)
+    \item Machine Specifications
+    \item Restore Points
+    \item Installed Programs
+    \item Footer
+\end{enumerate}
+
+\subsection{Additional Script Sections}
+\noindent{}The following additional sections are available but they are not
+generated in the default report:
+\begin{description}
+\item[DNS Check] Displayed if the \verb|:dnscheck| scripting section is used.
+\item[Directory] Displayed if the \verb|:dirlook| scripting section is used.
+\item[VirusTotal] Displayed if the \verb|:virustotal| scripting section is used.
+\item[MRC Upload] Displayed if the \verb|:mrc| scripting section is used.
+\item[Process Kill] Displayed if the \verb|:kill| scripting section is used.
+\item[File Quarentine] Displayed if the \verb|:move| scripting section is used.
+\item[Security Center] Displayed if the \verb|:securitycenter| scripting section
+is used.
+\item[Registry 32 Bit] Displayed if the \verb|:reg32| scripting action is used.
+\item[Registry 64 Bit] Displayed if the \verb|:reg64| scripting action is used.
+\end{description}
+
+\subsection{Escaping Formats}
+In order to meet the requirements of machine readability and human readability,
+several escaping formats must be used depending on the type of data to produce
+the most readable unambigous representation given typical data collected from a
+given location.
+
+\subsubsection{General Escaping Format}
+Generally, escaping MUST be done in a manner similar to most programming
+languages, such as C, C++, Java, or similar, for quoted string escapes. Such an
+escaping scheme is defined by three characters: an optional starting delimiter,
+an optional termination delimiter, and an escape character. For instance, in C,
+the starting delimiter is the quote mark, \verb|"|, the ending delimiter is also
+a quote mark \verb|"|, and the escape character is the backslash \verb|\|.
+
+For most types of information Instalog enumerates, such as Windows file paths,
+the exact method C uses is unsuitable; backslashes occur far too often inside
+file paths for the backslash as an escape character to make a good choice.
+Legacy applications like the command processor (\texttt{cmd.exe}) get around
+such problems by implementing complicated escaping schemes, but these are
+designed with specific input data in mind (file paths and command line
+switches, for instance), which is not the case for most reported data.
+
+\label{generalescape}
+Therefore, we define a general escape function that works in a manner similar to
+C's string literal escapes, but which allows arbitrary starting, termination,
+and escaping characters. The input to the escape function is raw data obtained
+from some data source, and the output is the same data with the following
+textual replacements:
+
+\begin{itemize}
+    \item \var{EscapeCharacter} is replaced with
+    \var{EscapeCharacter}\var{EscapeCharacter}.
+    \item \var{RightDelimiter}, if defined,  is replaced with
+    \var{EscapeCharacter}\var{RightDelimiter}.
+    \item The null character (ASCII \verb|0x00|) is replaced with
+    \var{EscapeCharacter}\texttt{0}.
+    \item The backspace character (ASCII \verb|0x08|) is replaced with
+    \var{EscapeCharacter}\texttt{b}.
+    \item The form feed character (ASCII \verb|0x0C|) is replaced with
+    \var{EscapeCharacter}\texttt{f}.
+    \item The newline character (ASCII \verb|0x0A|) is replaced with
+    \var{EscapeCharacter}\texttt{n}.
+    \item The carriage return character (ASCII \verb|0x0D|) is replaced with
+    \var{EscapeCharacter}\texttt{r}.
+    \item The horizontal tab character (ASCII \verb|0x09|) is replaced with
+    \var{EscapeCharacter}\texttt{t}.
+    \item The vertical tab character (ASCII \verb|0x0B|) is replaced with
+    \var{EscapeCharacter}\texttt{v}.
+    \item ASCII characters which are not in the above list but are unprintable
+    (that is, ASCII \verb|0x00| - \verb|0x1F|; \verb|0x7F|) are
+    replaced with \var{EscapeCharacter}\texttt{xHH}, where \texttt{HH} is the
+    hexadecimal representation of the numeric value of the given character.
+    \item Non-ASCII characters (\verb|U+0080| and above) are replaced with
+    \var{EscapeCharacter}\texttt{uHHHH}, where \texttt{HHHH} is the hexadecimal
+    representation of the numeric value of the character.
+    \item Unicode characters requiring a surrogate pair in UTF-16 (that is,
+    greater than U+FFFF) are represented as two normal Unicode
+    (\var{EscapeCharacter}\texttt{uHHHH}) escapes matching the UTF-16 surrogate
+    pair. (This is exactly how they'd be represented in Windows itself.)
+    \item Forum software destroys significant whitespace; but escaping every
+    space would be impractical. Where there is more than a single consecutive
+    space, the second and later spaces are escaped. (That is, replaced with
+    ``\var{EscapeCharacter}\texttt{ }''.)
+    \item Any instance of \var{EscapeCharacter} followed by an unused character
+    in the above list is equivilent to that character with no escape. This will
+    never be generated by the escaping functionality in Instalog for general
+    escaping, but is valid for the reverse, unescaping, operation.
+\end{itemize}
+
+\subsubsection{URL Escaping Format} \label{urlescape}
+URL escaping matches the general escaping format above, except has the
+additional constraint of forum software which tries to convert URLs into links.
+It is desireable to inhibit this behavior of the forum software, so that board
+owners need not wory about linking to malicious websites. Therefore, URL
+escaping is defined to be general escaping with the additional requirement that
+when the string ``\texttt{http}'' (case insensitive) appears in the source, it
+is replaced with ``\texttt{htt}\var{EscapeCharacter}\texttt{p}''. This inhibits
+forum software's URL behavior which looks for the protocol prefix in order to
+determine what portions of a post indicate a link. (Note that due to the last
+reqirement of general escaping this will cause no effect on the unescaped data).
+
+\subsection{PseudoHJT Machine Report}
+The information in the PseudoHJT report MUST closely match the information
+displayed by the original HJT tool. The format MUST closely match the syntax of
+a similar predecessor, DDS, so that forum voulenteers need not learn
+significantly different syntax to that which they know. This format MUST be
+sparse and human readable. Perhaps most importantly, despite matching the
+original HJT in terms of information conveyed, the format itself MUST be
+different enough to avoid legal action by TrendMicro against Instalog's authors.
+
+Generally speaking, the PseudoHJT report attempts to list all relevant loading
+points on a Windows machine, as well as user settings for the Internet Explorer
+browser; such as home page, search provider, and title settings. The report is
+heavily whitelisted. Items which are defaults on Windows MUST NOT be emitted,
+unless whitelisting has been disabled. Specific whitelisting schemes are given
+per type of line shown in the PseudoHJT report.
+
+Each line in the PseudoHJT report is given a unique prefix, which is not shared
+by other line types. This allows the line to be unambiguously understood by the
+Instalog GUI, and other kinds of inspection tools.
+
+The ``Data Sources'' sections in the definitions below make use of standard
+registry script, as defined by \verb|regedit.exe|, which is shipped as a
+standard Windows operating system component. A full specification for this
+format can be found on Wikipedia
+(\url{http://en.wikipedia.org/wiki/Windows_Registry#.REG_files}) and other
+similar sources.
+
+\subsubsection{User Default Page URL}
+\begin{description}
+\item[Rationale] \hfill \\
+The User Default Page URL is the location(s) of pages opened when a user creates
+a new Microsoft Internet Explorer window, or starts the browser for the first time. If this value is set, it overrides the
+machine-wide Default Page URL value. This setting affects 32 bit versions of
+Internet Explorer only.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+uDefaultPageUrl=${url}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variable \var{url} is escaped using the
+URL escaping scheme defined in \ref{urlescape}, where the escape character is the
+hash mark (\verb|#|). 
+\item[Whitelist Considerations] \hfill \\
+The default value for this entry
+differs depending on the version of Internet Explorer and Windows currently in
+use. Testing will need to be undertaken against supported operating systems in
+order to determine which values to hide.
+\item[Fix Considerations] \hfill \\
+Valid options: fix registry. Generated
+script:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg32
+[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="about:blank"
+\end{verbatim}
+\end{description}
