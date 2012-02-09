@@ -327,6 +327,42 @@ The only valid option is ``Fix''. It generates script matching the following:
 \end{verbatim}
 \end{description}
 
+\subsubsection{Local URL}
+\begin{description}
+\item[Rationale] The local URL is shown as the "blank" page in Internet
+Explorer.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Local Page"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Local Page"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+LocalPage=${url}
+LocalPage64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+On x86 versions of Windows, \var{url64} does not exist, and the default value of
+\var{url} is \verb|%WINDIR%\System32\Blank.htm|, which shall not be displayed.
+On x64 versions of Windows, the default value of \var{url64} is
+\verb|%WINDIR%\System32\Blank.htm|, and the default value of \var{url} is
+\verb|%WINDIR%\SysWow64\Blank.htm|, neither of which shall be displayed.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It generates script resetting the default
+value for the machine type which generated the log.
+\end{description}
+
 \subsection{PseudoHJT User Report}
 The PseudoHJT user report is specific to a given user on the target machine.
 There will be a separate such section for each user that is loaded into the
@@ -434,6 +470,41 @@ The only valid option is ``Fix''. It generates script matching the following:
 [${CurrentUser}\Software\Microsoft\Internet Explorer]
 "Default_Search_URL"="http://google.com/"
 \end{verbatim}
+\end{description}
+
+\begin{description}
+\item[Rationale] The local URL is shown as the "blank" page in Internet
+Explorer.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Local Page"="${url}"
+; 64 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Local Page"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+LocalPageUrl=${url}
+LocalPageUrl64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+On x86 versions of Windows, \var{url64} does not exist, and the default value of
+\var{url} is \verb|%WINDIR%\System32\Blank.htm|, which shall not be displayed.
+On x64 versions of Windows, the default value of \var{url64} is
+\verb|%WINDIR%\System32\Blank.htm|, and the default value of \var{url} is
+\verb|%WINDIR%\SysWow64\Blank.htm|, neither of which shall be displayed.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It generates script resetting the default
+value for the machine type which generated the log.
 \end{description}
 
 \subsubsection{}
