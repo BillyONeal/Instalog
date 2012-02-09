@@ -146,7 +146,7 @@ copy before malware removal or system repair can continue safely.
 
 \var{SafebootState} is the string ``\verb| MINIMAL|'' if the system is currently
 booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
-the systemis booted into \textit{Safe Mode with Networking}, or nothing if the
+the system is booted into \textit{Safe Mode with Networking}, or nothing if the
 machine was booted normally.
 
 The second line lists information about the user running Instalog, and the local
@@ -335,4 +335,191 @@ script:
 \end{description}
 
 \subsection{Mozilla Firefox}
-\subsection{Google Chrome}
+Mozilla Firefox (hereafter referred to as simply ``Firefox'') is a popular web
+browser that many users have installed on their machines.  An attack from within
+the browser is a possibility.  As such, this tool must enumerate various Firefox
+loading points to find suspicious information (if Firefox is installed).  This
+can be determined by checking to see if the \var{version} is set in the
+following registry key:
+% TODO: Do I have to put any 32/64 bit information here? 
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\Mozilla Firefox] 
+"Current Version"="${version}
+\end{verbatim}
+
+This specification is targeted for Firefox 10.0 x86 builds.  The behavior is
+undefined for other versions of Firefox but will likely be similar.
+
+\subsubsection{Profile}
+\begin{description}
+\item[Rationale] \hfill \\
+Firefox stores its user settings in ``profiles''.  Each profile is a directory
+on disk.  
+\item[Data Sources] \hfill \\
+The profiles are stored in the following location:
+\vspace{-\baselineskip}
+\begin{verbatim}
+%APPDATA%\Roaming\Mozilla\Firefox\Profiles\${profilefolder}
+\end{verbatim}
+There can be several profiles installed for each user.   All profiles in this
+directory with randomly generated folder names of 8 characters.  The profile
+that starts up when Firefox loads will be in the randomly named folder appended
+by ``\verb|.default|''.  It should be sufficient to only enumerate the default
+profile for the currently logged in user.
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+ProfilePath ${profilepath}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{profilepath} is the full path to the profile escaped using the scheme
+defined in \ref{generalescape}, where the escape character is the hash mark
+(\verb|#|) and the right delimiter is just the newline.
+\item[Whitelist Considerations] \hfill \\
+This item cannot be whitelisted as it is unique to each user's machine.
+\item[Fix Considerations] \hfill \\
+There are no fix actions associated with the profile path.  The profile path is
+provided so that further fix actions can be applied to components within the
+path.
+\end{description}
+
+\subsubsection{User Preferences}
+\begin{description}
+\item[Rationale] \hfill \\
+Some user preferences could be overridden that would lead a user to malicious
+pages.  
+\item[Data Sources] \hfill \\
+User preferences are located in the ``\verb|${profile path}/prefs.js|'' file. 
+The preferences are saved in the JSON format. There are several different
+``loading points'' from this file that could be important for diagnosing an
+infection:
+\begin{enumerate}
+  \item \verb|browser.startup.homepage|
+  \item \verb|network.proxy.type|
+\end{enumerate}
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+${preference}=${value}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{preference} is the preference name from the settings file, and \var{value}
+is the corresponding value for the setting.  \var{value} must be escaped using
+the URL escaping scheme defined in \ref{urlescape}, where the escape character
+is the hash mark (\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+The default values for each preference should be whitelisted.  These values are
+enumerated below:
+\begin{enumerate}
+  \item \verb|browser.startup.homepage = about:home|
+  \item \verb|network.proxy.type = 5|
+\end{enumerate}
+
+\item[Fix Considerations] \hfill \\
+A sensible fix for these items is to simply delete the corresponding key and
+value from \verb|prefs.js|.  Firefox will then reset the preference to the
+default value the next time it loads.
+
+Firefox must not be running for this to work.  If a script is supposed to fix
+any of the preferences and Firefox is running, a dialog must appear warning the
+user that Firefox will be closed.  When the user hits okay in this dialog, the
+Firefox process can be killed if it is still running and the preference(s)
+reset.
+\end{description}
+
+\subsubsection{Extensions}
+\begin{description}
+\item[Rationale] \hfill \\
+Firefox allows users to add to the functionality of their browser through
+``extensions'' (sometimes called addons).  These extensions can be malicious in
+nature.  Extensions need not be installed by the user; they can be installed
+outside Firefox as well by placing extensions in the profile directory and
+relaunching Firefox.  
+\item[Data Sources] \hfill \\
+Extension metadata is stored in an SQLite 3 database located in \\
+\verb|${profilepath}/extensions.sqlite|.  There are two tables in this database
+that are of interest: \verb|addon| and \verb|locale|.  
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+Extension ${visible} ${active} "${name} ${version} ${type} ${id} ${path}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The output variables are defined as:
+\begin{description}
+  \item[\var{visible}] \verb|addon.visible| attribute.  This shall be output as
+  a binary 0 or 1 value.
+  \item[\var{active}] \verb|addon.active| attribute.  This shall be output as a
+  binary 0 or 1 value.
+  \item[\var{name}] \verb|locale.name| attribute where \texttt{locale.id =
+  addon.defaultLocale}.  This shall be escaped according to the scheme defined
+  in \ref{generalescape} with \verb|#| as the escape character and double quotes
+  (\verb|"|) as the right delimiter.
+  \item[\var{version}] \verb|addon.version| attribute
+  \item[\var{type}] \verb|addon.type| attribute
+  \item[\var{id}] \verb|addon.id| attribute
+  \item[\var{path}] \verb|addon.descriptor| attribute.  This shall be escaped
+  according to the scheme defined in \ref{generalescape} with \# as the
+  escape character and the newline as the right delimiter.  
+\end{description}
+\item[Whitelist Considerations] \hfill \\
+No whitelist actions apply here
+\item[Fix Considerations] \hfill \\
+To fix these items, the \var{path} simply needs to be deleted.  This must
+happen while Firefox is not running.  If a script is supposed to fix an
+extension and Firefox is running, a dialog must appear warning the user that
+Firefox will be closed.  When the user hits okay in this dialog, the Firefox
+process can be killed if it is still running.  When the user re-opens Firefox
+later, the extension(s) will be removed from the database.
+\end{description}
+
+\subsubsection{Plugins}
+\begin{description}
+\item[Rationale] \hfill \\
+Firefox, like most major browsers, supports plugins.  These are a potential
+attack vector and should be scanned.  
+\item[Data Sources] \hfill \\
+Firefox maintains a list of plugins in \texttt{\var{profilepath}/pluginreg.dat}.
+This file is structured in a specific way.  Everything below the line labeled
+``\texttt{[PLUGINS]}'' is imported for this tool.  Each plugin is listed below
+this line, each in its own ``block''.  These ``block'' are all structured
+similarly, and follow the same format:
+\begin{verbatim}
+${file name}|$
+${full file path}|$
+${version}|$
+${installed timestamp}|${unknown?}|${unknown?}|$
+${description}|$
+${name}|$
+${mime type count}
+0|${mime type}|$
+1|${mime type}|$
+...
+${${mime type count} minus 1}|${mime type}|$
+\end{verbatim}
+Each plugin ``block'' is put immediately after the last plugin ``block'' with no
+other separation.  It should be enough to read through to the
+``\texttt{[PLUGINS]}'' line and keep parsing ``block'' until the
+``\texttt{[INVALID]}'' line is reached.
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+Plugin "${name} ${version} ${path}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{name}, \var{version}, and \var{path} are from the \texttt{pluginreg.dat}
+file described above.  \var{name} shall be escaped according to the scheme
+defined in \ref{generalescape} with \verb|#| as the escape character and double
+quotes (\verb|"|) as the right delimiter.  \var{path} shall be escaped
+according to \ref{generalescape} as well with \verb|#| as the escape character
+and the newline as the right delimiter.  
+\item[Whitelist Considerations] \hfill \\
+No whitelist actions are necessary.  
+\item[Fix Considerations] \hfill \\
+To fix these items, the \var{path} simply needs to be deleted.  This must
+happen while Firefox is not running.  If a script is supposed to fix an
+plugin and Firefox is running, a dialog must appear warning the user that
+Firefox will be closed.  When the user hits okay in this dialog, the Firefox
+process can be killed if it is still running.  When the user re-opens Firefox
+later, the plugins(s) will be removed from the file.
+\end{description}
