@@ -42,7 +42,7 @@ generated in the default report:
 \item[VirusTotal] Displayed if the \verb|:virustotal| scripting section is used.
 \item[MRC Upload] Displayed if the \verb|:mrc| scripting section is used.
 \item[Process Kill] Displayed if the \verb|:kill| scripting section is used.
-\item[File Quarentine] Displayed if the \verb|:move| scripting section is used.
+\item[File Quarantine] Displayed if the \verb|:move| scripting section is used.
 \item[Security Center] Displayed if the \verb|:securitycenter| scripting section
 is used.
 \item[Registry 32 Bit] Displayed if the \verb|:reg32| scripting action is used.
@@ -336,3 +336,19 @@ script:
 
 \subsection{Mozilla Firefox}
 \subsection{Google Chrome}
+\subsection{Created Last 30}
+\subsection{Find3M}
+\subsection{Event Viewer}
+\subsection{Machine Specifications}
+\subsection{Restore Points}
+\subsection{Installed Programs}
+\subsection{Footer}
+The footer shall not have a section title. It is a line of the following form
+surrounded by newlines:
+\begin{verbatim}
+Instalog ${version} Finished ${Y}-${M}-${D} ${H}:${M}:${S}.${Milli}
+\end{verbatim}
+
+Here, \var{version} is the version of Instalog used to generate the report, and
+the other variables are the same kinds of date variables used in the header (Y
+is year, M is month, etc.)
