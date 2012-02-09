@@ -249,10 +249,8 @@ report. Such cases are documented here.
 \item[Rationale] \hfill \\
 The User Default Page URL is the location(s) of pages opened when a user creates
 a new Microsoft Internet Explorer window, or starts the browser for the first
-time. This value may be overridden by a user-specific setting. The 32 bit
-version of this setting affects 32 bit versions of Internet Explorer only, while
-the 64 bit version affects 64 bit copies only. Note that even on x64 versions of
-Windows, most users use the 32 bit version of Internet Explorer only.
+time. This value may be overridden by a user-specific setting.
+\input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -274,12 +272,9 @@ The variables \var{url} and \var{url64} are escaped using the URL escaping
 scheme defined in \ref{urlescape}, where the escape character is the hash mark
 (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
-The default value for this entry
-differs depending on the version of Internet Explorer and Windows currently in
-use. Testing will need to be undertaken against supported operating systems in
-order to determine which values to hide.
+\input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script similar to the following:
+The only valid option is ``Fix''. It generates script matching the following:
 \vspace{-\baselineskip}
 \begin{verbatim}
 :reg32
@@ -288,6 +283,47 @@ The only valid option is ``Fix''. It generates script similar to the following:
 :reg64
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="http://google.com/"
+\end{verbatim}
+\end{description}
+
+\subsubsection{Default Search URL}
+\begin{description}
+\item[Rationale] The default search URL is used to populate the search pane when
+the user expands it. This is a machine wide setting. It may be overridden by
+user-specific settings.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+DefaultSearchUrl=${url}
+DefaultSearchUrl64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+\input{snippets/iewhitelist.tex}
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It generates script matching the following:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg32
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="http://google.com/"
+:reg64
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="http://google.com/"
 \end{verbatim}
 \end{description}
 
@@ -321,10 +357,8 @@ HKEY_USERS\S-1-5-21-2812505617-3763003962-1231251036-1000
 The User Default Page URL is the location(s) of pages opened when a user creates
 a new Microsoft Internet Explorer window, or starts the browser for the first
 time. If this value is set, it overrides the machine-wide Default Page URL
-value. The 32 bit version of this setting affects 32 bit versions of Internet
-Explorer only, while the 64 bit version affects 64 bit copies only. Note that
-even on x64 versions of Windows, most users use the 32 bit version of Internet
-Explorer only.
+value.
+\input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -342,18 +376,13 @@ DefaultPageUrl=${url}
 DefaultPageUrl64=${url64}
 \end{verbatim}
 \item[Output Description] \hfill \\
-The variable \var{url} is escaped using the URL escaping scheme defined in
-\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|). 
 \item[Whitelist Considerations] \hfill \\
-The default value for this entry
-differs depending on the version of Internet Explorer and Windows currently in
-use. Testing will need to be undertaken against supported operating systems in
-order to determine which values to hide.
+\input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-Valid options: fix registry. Generated
-script:
-\vspace{-\baselineskip}
-The only valid option is ``Fix''. It generates script similar to the following:
+The only valid option is ``Fix''. It generates script matching the following:
 \vspace{-\baselineskip}
 \begin{verbatim}
 :reg32
@@ -363,6 +392,58 @@ The only valid option is ``Fix''. It generates script similar to the following:
 [${CurrentUser}\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="http://google.com/"
 \end{verbatim}
+\end{description}
+
+\subsubsection{Default Search URL}
+\begin{description}
+\item[Rationale] \hfill \\
+The default search URL is used to populate the search pane when
+the user expands it. This user-specific setting overrides the machine wide
+setting if it exists.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="${url}"
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim} 
+DefaultSearchUrl=${url}
+DefaultSearchUrl64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|). 
+\item[Whitelist Considerations] \hfill \\
+\input{snippets/iewhitelist.tex}
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It generates script matching the following:
+\vspace{-\baselineskip}
+\begin{verbatim}
+:reg32
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="http://google.com/"
+:reg64
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Search_URL"="http://google.com/"
+\end{verbatim}
+\end{description}
+
+\subsubsection{}
+\begin{description}
+\item[Rationale]
+\item[Data Sources]
+\item[Log Format]
+\item[Output Description]
+\item[Whitelist Considerations]
+\item[Fix Considerations]
 \end{description}
 
 \subsection{Mozilla Firefox}
