@@ -213,7 +213,7 @@ Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
 \subsection{Running Processes}
 % Jacob
 
-\subsection{PseudoHJT Report General Properties}
+\subsection{PseudoHJT Report General}
 The information in the PseudoHJT report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
@@ -233,8 +233,16 @@ Each line in the PseudoHJT report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
 
+For either PseudoHJT section in the Instalog GUI, two checkboxes are available
+if defined by the lines below: \textbf{Move} and \textbf{Fix} (in that order).
+Move, generally speaking, will generate script to quarantine a file associated
+with an entry, and Fix will generate script to reset settings to a default
+state, or delete loading points.
+
 \subsection{PseudoHJT Machine Report}
 The PseudoHJT machine report contains settings which affect the entire machine.
+Settings in this section can generally be overridden by settings in the user
+report. Such cases are documented here.
 
 \subsubsection{Default Page URL}
 \begin{description}
@@ -271,20 +279,41 @@ differs depending on the version of Internet Explorer and Windows currently in
 use. Testing will need to be undertaken against supported operating systems in
 order to determine which values to hide.
 \item[Fix Considerations] \hfill \\
-Valid options: fix registry. Generated
-script:
+The only valid option is ``Fix''. It generates script similar to the following:
 \vspace{-\baselineskip}
 \begin{verbatim}
 :reg32
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="about:blank"
+"Default_Page_URL"="http://google.com/"
 :reg64
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="about:blank"
+"Default_Page_URL"="http://google.com/"
 \end{verbatim}
 \end{description}
 
 \subsection{PseudoHJT User Report}
+The PseudoHJT user report is specific to a given user on the target machine.
+There will be a separate such section for each user that is loaded into the
+registry at the time Instalog is run (that is, loaded into \verb|HKEY_USERS|).
+
+The first line of the user report indicates which SID and name the user has, and
+is of the form:
+\begin{verbatim}
+Identity: "${username}" ${sid}
+\end{verbatim}
+
+The variable \var{username} refers to the display name of the user being
+enumerated. It is escaped using the general escaping method defined in
+\ref{generalescape}, using a right delimiter of \verb|"|, and an escape
+character of \verb|\|. The \var{sid} is the security identifier associated with
+that user. It follows a regular format, and therefore need not be escaped.
+
+The variable \var{CurrentUser} is used several times below in registry sections.
+This variable expands to the value of the currently being checked user hive,
+such as
+\begin{verbatim}
+HKEY_USERS\S-1-5-21-2812505617-3763003962-1231251036-1000
+\end{verbatim}
 
 \subsubsection{Default Page URL}
 \begin{description}
@@ -300,10 +329,10 @@ Explorer only.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url}"
 ; 32 Bit Registry View
-[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -324,13 +353,15 @@ order to determine which values to hide.
 Valid options: fix registry. Generated
 script:
 \vspace{-\baselineskip}
+The only valid option is ``Fix''. It generates script similar to the following:
+\vspace{-\baselineskip}
 \begin{verbatim}
 :reg32
-[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="about:blank"
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="http://google.com/"
 :reg64
-[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="about:blank"
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="http://google.com/"
 \end{verbatim}
 \end{description}
 
@@ -525,11 +556,17 @@ later, the plugins(s) will be removed from the file.
 \end{description}
 \subsection{Google Chrome}
 \subsection{Created Last 30}
+%Bill
 \subsection{Find3M}
+%Bill
 \subsection{Event Viewer}
+%Bill
 \subsection{Machine Specifications}
+%Jacob
 \subsection{Restore Points}
+%Jacob ?
 \subsection{Installed Programs}
+%Jacob
 \subsection{Footer}
 The footer shall not have a section title. It is a line of the following form
 surrounded by newlines:
