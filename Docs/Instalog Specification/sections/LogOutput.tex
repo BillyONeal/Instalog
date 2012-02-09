@@ -135,7 +135,6 @@ The header of an Instalog report consists of 4 lines, which are always displayed
 and shown in the same order as defined in this document. No component of the
 header is associated with any type of fix information.
 
-\subsubsection{Line One}
 The first line lists information about Instalog itself. It is of the form:
 \begin{verbatim}
 Instalog ${Version}${SafebootState}
@@ -150,7 +149,6 @@ booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
 the systemis booted into \textit{Safe Mode with Networking}, or nothing if the
 machine was booted normally.
 
-\subsubsection{Line Two}
 The second line lists information about the user running Instalog, and the local
 date and time of the system when the log was generated. It has the form:
 \begin{verbatim}
@@ -172,7 +170,6 @@ Standard Time is \verb|-4.00| or \verb|-5.00|, while Moscow Standard Time would
 be \verb|+4.00|. (The extra two digits are to allow for locales with half and
 quarter hour time zones)
 
-\subsubsection{Line Three}
 The third line is designed to indicate when important exploitable applications
 need to be updated, by listing their versions. It has the form:
 \begin{verbatim}
@@ -184,7 +181,6 @@ Oracle's Java, Adobe's Flash, and Adobe's Adobe Reader. In the event one or more
 of these applications are not installed then their version is listed as
 ``\verb|None|''.
 
-\subsubsection{Line Four}
 The fourth line contains information about the current Windows installation and
 memory state. It is of the form:
 \begin{verbatim}
@@ -208,54 +204,67 @@ version information of the operating system in use.
 Finally, \var{FreeRam} and \var{TotalRam} are the number of Mebibytes of memory
 that are available for use by programs on the current running system.
 
-Examples:
+Examples of the 4th line:
 \begin{verbatim}
 Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
-Microsoft Windows 7 Ulimate x64 6.1.7601.1 4547/8071 MB Free
+Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
 \end{verbatim}
 
-\subsection{PseudoHJT Machine Report}
-The information in the PseudoHJT report MUST closely match the information
-displayed by the original HJT tool. The format MUST closely match the syntax of
+\subsection{Running Processes}
+% Jacob
+
+\subsection{PseudoHJT Report General Properties}
+The information in the PseudoHJT report must closely match the information
+displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
 significantly different syntax to that which they know. This format MUST be
 sparse and human readable. Perhaps most importantly, despite matching the
 original HJT in terms of information conveyed, the format itself MUST be
 different enough to avoid legal action by TrendMicro against Instalog's authors.
 
-Generally speaking, the PseudoHJT report attempts to list all relevant loading
-points on a Windows machine, as well as user settings for the Internet Explorer
-browser; such as home page, search provider, and title settings. The report is
-heavily whitelisted. Items which are defaults on Windows MUST NOT be emitted,
-unless whitelisting has been disabled. Specific whitelisting schemes are given
-per type of line shown in the PseudoHJT report.
+Generally speaking, the PseudoHJT report shall attempt to list all relevant
+loading points on a Windows machine, as well as user settings for the Internet
+Explorer browser; such as home page, search provider, and title settings. The
+report shall be heavily whitelisted. Items which are defaults on Windows shall
+not be emitted, unless whitelisting has been disabled. Specific whitelisting
+schemes are given per type of line shown in the PseudoHJT report.
 
 Each line in the PseudoHJT report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
+
+\subsection{PseudoHJT Machine Report}
+The PseudoHJT machine report contains settings which affect the entire machine.
 
 \subsubsection{Default Page URL}
 \begin{description}
 \item[Rationale] \hfill \\
 The User Default Page URL is the location(s) of pages opened when a user creates
 a new Microsoft Internet Explorer window, or starts the browser for the first
-time. This value may be overridden by a user-specific setting. This setting
-affects 32 bit versions of Internet Explorer only.
+time. This value may be overridden by a user-specific setting. The 32 bit
+version of this setting affects 32 bit versions of Internet Explorer only, while
+the 64 bit version affects 64 bit copies only. Note that even on x64 versions of
+Windows, most users use the 32 bit version of Internet Explorer only.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim} 
 DefaultPageUrl=${url}
+DefaultPageUrl64=${url64}
 \end{verbatim}
 \item[Output Description] \hfill \\
-The variable \var{url} is escaped using the URL escaping scheme defined in
-\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
 \item[Whitelist Considerations] \hfill \\
 The default value for this entry
 differs depending on the version of Internet Explorer and Windows currently in
@@ -269,41 +278,6 @@ script:
 :reg32
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="about:blank"
-\end{verbatim}
-\end{description}
-
-\subsubsection{64 Bit Default Page URL}
-\begin{description}
-\item[Rationale] \hfill \\
-The User Default Page URL is the location(s) of pages opened when a user creates
-a new Microsoft Internet Explorer window, or starts the browser for the first
-time. This value may be overridden by a user-specific setting. This setting
-affects 64 bit versions of Internet Explorer only.
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="${url}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-DefaultPageUrl64=${url}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variable \var{url} is escaped using the URL escaping scheme defined in
-\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
-\item[Whitelist Considerations] \hfill \\
-The default value for this entry
-differs depending on the version of Internet Explorer and Windows currently in
-use. Testing will need to be undertaken against supported operating systems in
-order to determine which values to hide.
-\item[Fix Considerations] \hfill \\
-Valid options: fix registry. Generated
-script:
-\vspace{-\baselineskip}
-\begin{verbatim}
 :reg64
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="about:blank"
@@ -318,18 +292,25 @@ script:
 The User Default Page URL is the location(s) of pages opened when a user creates
 a new Microsoft Internet Explorer window, or starts the browser for the first
 time. If this value is set, it overrides the machine-wide Default Page URL
-value. This setting affects 32 bit versions of Internet Explorer only.
+value. The 32 bit version of this setting affects 32 bit versions of Internet
+Explorer only, while the 64 bit version affects 64 bit copies only. Note that
+even on x64 versions of Windows, most users use the 32 bit version of Internet
+Explorer only.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
 [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url}"
+; 32 Bit Registry View
+[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
+"Default_Page_URL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim} 
 DefaultPageUrl=${url}
+DefaultPageUrl64=${url64}
 \end{verbatim}
 \item[Output Description] \hfill \\
 The variable \var{url} is escaped using the URL escaping scheme defined in
@@ -347,43 +328,11 @@ script:
 :reg32
 [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="about:blank"
-\end{verbatim}
-\end{description}
-
-\subsubsection{64 Bit Default Page URL}
-\begin{description}
-\item[Rationale] \hfill \\
-The User Default Page URL is the location(s) of pages opened when a user creates
-a new Microsoft Internet Explorer window, or starts the browser for the first
-time. If this value is set, it overrides the machine-wide Default Page URL
-value. This setting affects 64 bit versions of Internet Explorer only.
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 64 Bit Registry View
-[HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="${url}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-DefaultPageUrl=${url}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variable \var{url} is escaped using the URL escaping scheme defined in
-\ref{urlescape}, where the escape character is the hash mark (\verb|#|). 
-\item[Whitelist Considerations] \hfill \\
-The default value for this entry
-differs depending on the version of Internet Explorer and Windows currently in
-use. Testing will need to be undertaken against supported operating systems in
-order to determine which values to hide.
-\item[Fix Considerations] \hfill \\
-Valid options: fix registry. Generated
-script:
-\vspace{-\baselineskip}
-\begin{verbatim}
 :reg64
 [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="about:blank"
 \end{verbatim}
 \end{description}
+
+\subsection{Mozilla Firefox}
+\subsection{Google Chrome}
