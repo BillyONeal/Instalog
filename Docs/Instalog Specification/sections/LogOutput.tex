@@ -211,7 +211,59 @@ Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
 \end{verbatim}
 
 \subsection{Running Processes}
-% Jacob
+\begin{description}
+\item[Rationale] \hfill \\
+One obvious source of problems is the processes that are currently running on
+the system.  As such, each of these processes shall be listed for analysis
+purposes.  
+\item[Data Sources] \hfill \\
+The full path to the running executable shall be referred to as \var{path}.  The
+arguments to that process shall be referred to as \var{arguments}.  The
+\var{arguments} variable should be empty except if the processes is one of the
+following values:
+\begin{itemize}
+  \item \verb|C:\WINDOWS\System32\svchost|
+  \item \verb|C:\WINDOWS\System32\svchost.exe|
+  %TODO: rundll?
+\end{itemize}
+\item[Log Format] \hfill \\
+If \var{arguments} is set:
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${path} [${arguments}
+\end{verbatim}
+If \var{arguments} is not set:
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${path} 
+\end{verbatim}
+\item[Output Description] \hfill \\
+Both \var{path} and \var{arguments} shall be escaped according to the scheme
+described in \ref{generalescape} where \verb|#| is the escape character and
+\verb|]| is the right delimiter.  
+\item[Whitelist Considerations] \hfill \\
+The following process paths should be whitelisted:
+\begin{itemize}
+  \item \verb|C:\WINDOWS\System32\csrss.exe|
+  \item \verb|C:\WINDOWS\System32\winlogon.exe|
+  \item \verb|C:\WINDOWS\System32\services.exe|
+  \item \verb|C:\WINDOWS\System32\lsass.exe|
+  \item \verb|C:\WINDOWS\System32\smss.exe|
+\end{itemize}
+\item[Fix Considerations] \hfill \\
+Two fix actions shall be available:
+\begin{description}
+\item[Kill] This action will kill the identified process.  This action shall
+accept both the process path as well as arguments.  If multiple processes exist
+that match the supplied path and arguments, all instances shall be killed. 
+\item[Kill and Quarantine]  This action will kill and quarantine the identified
+process.  This action shall accept both the process path as well as arguments. 
+The \textbf{kill} action described above shall first be followed.  The process
+should then be moved into quarantine following the procedure defined in
+\ref{quarantine}.  
+%TODO: quarantine needs to be written.
+\end{description}
+\end{description}
 
 \subsection{PseudoHJT Report General}
 The information in the PseudoHJT report must closely match the information

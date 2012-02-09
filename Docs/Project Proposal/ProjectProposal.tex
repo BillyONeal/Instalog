@@ -1,5 +1,5 @@
 \documentclass[letterpaper,12pt]{article}
-\usepackage[margin=.5in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage{xltxtra}
 \setmainfont[Mapping=tex-text]{Liberation Serif}
 \setmonofont[Scale=0.8]{Liberation Mono}
@@ -163,6 +163,9 @@ clean up a system.  Most of the log sections listed in the previous section will
 have fix actions associated with them.  Again, the specifics about this are too
 detailed to include in a document of this scope, but will be explained in full
 in the specification document.
+
+One very important requirement of fix script actions is that they MUST create a
+backup before they proceed so that the action taken can be reverted.  
 
 \subsection{Graphical User Interface Requirements}
 The graphical user interface will be the only method for interfacing with this
