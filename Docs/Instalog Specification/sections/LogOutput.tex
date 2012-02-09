@@ -1003,6 +1003,9 @@ following registry key:
 "Current Version"="${version}
 \end{verbatim}
 
+If Firefox is installed, the following information shall be output to the log. 
+If Firefox is not installed, the entire section shall not be printed to the log.
+
 This specification is targeted for Firefox 10.0 x86 builds.  The behavior is
 undefined for other versions of Firefox but will likely be similar.
 
@@ -1193,6 +1196,11 @@ see if the \texttt{Chrome.exe} executable exists in the following path:
 \begin{verbatim}
 %userprofile%\AppData\Local\Google\chrome.exe
 \end{verbatim}
+
+If Chrome is installed, the following information shall be output to the log. 
+If Chrome is not installed, the entire section shall not be printed to the log.
+%TODO: multipe users
+
 This specification is targetted at Chrome 17.0.  While this information extend
 to other versions of the browser, the behavior will be undefined.  
 
@@ -1352,6 +1360,7 @@ This line shall be printed for each preference listed in the Data Sources.
 \item[Whitelist Considerations] \hfill \\
 If the \var{name} is \verb|default_search_provider.search_url|, then the default
 value is:
+\vspace{-\baselineskip}
 \begin{verbatim}
 "{google:baseURL}search?{google:RLZ}{google:acceptedSuggestion}{google:
 originalQueryForSuggestion}{google:searchFieldtrialParameter}{google:
@@ -1378,7 +1387,47 @@ this dialog, the Chrome process can be killed if it is still running.
 \subsection{Machine Specifications}
 %Jacob
 \subsection{Restore Points}
-%Jacob ?
+\begin{description}
+\item[Rationale] \hfill \\
+Restore Points were introduced in Windows XP.  They allow a user to return their
+system to a previous state.  These restore points are typically created when a
+major system event occurs (application installs / uninstalls), driver changes,
+etc.  Users can also manually create restore points. 
+
+If there are no restore points available or the system does not support restore
+points, this entire log section shall be skipped.
+\item[Data Sources] \hfill \\
+Restore Points can be accessed using WMI
+(\url{http://msdn.microsoft.com/en-us/library/windows/desktop/aa378951(v=vs.85).aspx}),
+which exposes a list of \texttt{SystemRestore} classes:
+\vspace{-\baselineskip}
+\begin{verbatim}
+class SystemRestore
+{
+  String Description;
+  uint32 RestorePointType;
+  uint32 EventType;
+  uint32 SequenceNumber;
+  String CreationTime;
+};
+\end{verbatim}
+From this class, the variables that shall be logged are \texttt{Description},
+\texttt{SequenceNumber}, and \texttt{CreationTime} and will be referred to as
+\var{description}, \var{number}, and \var{time} respectively.
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+${number} ${time} ${description}
+\end{verbatim}
+\item[Output Description] \hfill \\
+None of the variables need to be escaped.
+\item[Whitelist Considerations] \hfill \\
+There are no applicable whitelist considerations.
+\item[Fix Considerations] \hfill \\
+No applicable fix considerations apply.  Future versions of this tool may
+support restoring to a certain point.  
+\end{description}
+
 \subsection{Installed Programs}
 %Jacob
 \subsection{Footer}
