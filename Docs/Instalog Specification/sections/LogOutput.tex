@@ -568,10 +568,9 @@ the hash mark (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It should generate a fix which erases the
+The only valid option is ``Fix''. It shall generate a fix which erases the
 value.
 \end{description}
-
 
 \subsection{PseudoHJT User Report}
 The PseudoHJT user report is specific to a given user on the target machine.
@@ -828,7 +827,7 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It should generate a fix which resets this
+The only valid option is ``Fix''. It shall generate a fix which resets this
 value to the default setting.
 \end{description}
 
@@ -892,7 +891,7 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It should generate a fix which erases this
+The only valid option is ``Fix''. It shall generate a fix which erases this
 value.
 \end{description}
 
@@ -925,7 +924,7 @@ the hash mark (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It should generate a fix which erases the
+The only valid option is ``Fix''. It shall generate a fix which erases the
 value.
 \end{description}
 
@@ -969,7 +968,7 @@ The profiles are stored in the following location:
 There can be several profiles installed for each user.   All profiles in this
 directory with randomly generated folder names of 8 characters.  The profile
 that starts up when Firefox loads will be in the randomly named folder appended
-by ``\verb|.default|''.  It should be sufficient to only enumerate the default
+by ``\verb|.default|''.  It shall be sufficient to only enumerate the default
 profile for the currently logged in user.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
@@ -977,7 +976,7 @@ profile for the currently logged in user.
 ProfilePath ${profilefolder}
 \end{verbatim}
 \item[Output Description] \hfill \\
-\var{profilefolder} should be escaped using the scheme described in
+\var{profilefolder} shall be escaped using the scheme described in
 \ref{generalescape}, where the escape character is the hash mark (\verb|#|) and
 the right delimiter is just the newline.
 \item[Whitelist Considerations] \hfill \\
@@ -1003,19 +1002,19 @@ infection:
   \item \verb|network.proxy.type|
 \end{itemize}
 The preference name will be referred to as \var{preference} and the associated
-value as \var{value}.  If a preference does not have a name, \var{value} should
+value as \var{value}.  If a preference does not have a name, \var{value} shall
 default to ``not set''.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
 ${preference}=${value}
 \end{verbatim}
-This line should be printed for every \var{preference} listed in Data Sources.
+This line shall be printed for every \var{preference} listed in Data Sources.
 \item[Output Description] \hfill \\
 \var{value} must be escaped using the URL escaping scheme defined in
 \ref{urlescape}, where the escape character is the hash mark (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
-The default values for each preference should be whitelisted.  These values are
+The default values for each preference shall be whitelisted.  These values are
 enumerated below:
 \begin{enumerate}
   \item \verb|browser.startup.homepage = about:home|
@@ -1087,7 +1086,7 @@ later, the extension(s) will be removed from the database.
 \begin{description}
 \item[Rationale] \hfill \\
 Firefox, like most major browsers, supports plugins.  These are a potential
-attack vector and should be scanned.  
+attack vector and shall be scanned.  
 \item[Data Sources] \hfill \\
 Firefox maintains a list of plugins in \texttt{\var{profilepath}/pluginreg.dat}.
 This file is structured in a specific way.  Everything below the line labeled
@@ -1108,7 +1107,7 @@ ${mime type count}
 ${${mime type count} minus 1}|${mime type}|$
 \end{verbatim}
 Each plugin ``block'' is put immediately after the last plugin ``block'' with no
-other separation.  It should be enough to read through to the
+other separation.  It shall be enough to read through to the
 ``\texttt{[PLUGINS]}'' line and keep parsing ``block'' until the
 ``\texttt{[INVALID]}'' line is reached.
 \item[Log Format] \hfill 
@@ -1136,7 +1135,7 @@ later, the plugins(s) will be removed from the file.
 \subsection{Google Chrome}
 Google Chrome (hereafter referred to as ``Chrome'') is a popular browser that is
 extensible like Firefox.  Therefore, like Firefox, it has some potential attack
-vectors.  This section of the log should only appear if Chrome is installed.  To
+vectors.  This section of the log shall only appear if Chrome is installed.  To
 determine if Chrome is installed for the current user, the tool shall check to
 see if the \texttt{Chrome.exe} executable exists in the following path:
 \begin{verbatim}
@@ -1167,7 +1166,7 @@ will be given.  For example, if the JSON file were:
 In this case, simply stating ``\texttt{a}'' would refer to the ``\texttt{a}''
 object and all of its children.  Similarly, ``\texttt{a.three}'' would refer to
 the ``\texttt{three}'' object in the ``\texttt{a}'' object.  To access values,
-a full key should be given (``\texttt{a.one}'', ``\texttt{a.two}'',
+a full key shall be given (``\texttt{a.one}'', ``\texttt{a.two}'',
 ``\texttt{a.three.i}'', or ``\texttt{b}'').  
 
 A ``\texttt{*}'' indicates that any string can be used and will return a set of
@@ -1208,7 +1207,7 @@ character of \verb|#| and a right delimiter of double quotes (\verb|"|).
 
 \item[Whitelist Considerations] \hfill \\
 A default Chrome installation has several safe extensions installed.  Extensions
-should be whitelisted if their \var{name} matches any of the following
+shall be whitelisted if their \var{name} matches any of the following
 extensions:
 \begin{itemize}
 \item ``YouTube''
@@ -1235,7 +1234,7 @@ running.
 \begin{description}
 \item[Rationale] \hfill \\
 Chrome, like most major browsers, supports plugins.  These are a potential
-attack vector and should be scanned.
+attack vector and shall be scanned.
 \item[Data Sources] \hfill \\
 The list of plugins is available in the Preferences file.  Each plugin is listed
 inside a JSON list located in \verb|plugins.plugins_list|.  For each plugin,
@@ -1281,14 +1280,14 @@ Some other user preferences, such as homepages and such could become infected by
 malware.  Therefore, these preferences shall be scanned.
 \item[Data Sources] \hfill \\
 Each of the preferences comes from the Preferences file.  The following
-preferences should be enumerated:
+preferences shall be enumerated:
 \begin{itemize}
   \item \verb|default_search_provider.search_url|
   \item \verb|homepage|  
 \end{itemize}
 The name of the preference shall be referred to as \var{name} and the
 corresponding value as \var{value}.  If no value is available, \var{value}
-should be set to ``not set''.
+shall be set to ``not set''.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -1316,6 +1315,8 @@ appear warning the user that Chrome will be closed.  When the user hits okay in
 this dialog, the Chrome process can be killed if it is still running.
 \end{description}
 
+\subsection{Services/Drivers}
+%Bill
 \subsection{Created Last 30}
 %Bill
 \subsection{Find3M}
