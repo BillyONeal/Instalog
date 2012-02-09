@@ -974,12 +974,12 @@ profile for the currently logged in user.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
-ProfilePath ${profilepath}
+ProfilePath ${profilefolder}
 \end{verbatim}
 \item[Output Description] \hfill \\
-\var{profilepath} is the full path to the profile escaped using the scheme
-defined in \ref{generalescape}, where the escape character is the hash mark
-(\verb|#|) and the right delimiter is just the newline.
+\var{profilefolder} should be escaped using the scheme described in
+\ref{generalescape}, where the escape character is the hash mark (\verb|#|) and
+the right delimiter is just the newline.
 \item[Whitelist Considerations] \hfill \\
 This item cannot be whitelisted as it is unique to each user's machine.
 \item[Fix Considerations] \hfill \\
@@ -998,20 +998,22 @@ User preferences are located in the ``\verb|${profile path}/prefs.js|'' file.
 The preferences are saved in the JSON format. There are several different
 ``loading points'' from this file that could be important for diagnosing an
 infection:
-\begin{enumerate}
+\begin{itemize}
   \item \verb|browser.startup.homepage|
   \item \verb|network.proxy.type|
-\end{enumerate}
+\end{itemize}
+The preference name will be referred to as \var{preference} and the associated
+value as \var{value}.  If a preference does not have a name, \var{value} should
+default to ``not set''.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
 ${preference}=${value}
 \end{verbatim}
+This line should be printed for every \var{preference} listed in Data Sources.
 \item[Output Description] \hfill \\
-\var{preference} is the preference name from the settings file, and \var{value}
-is the corresponding value for the setting.  \var{value} must be escaped using
-the URL escaping scheme defined in \ref{urlescape}, where the escape character
-is the hash mark (\verb|#|).
+\var{value} must be escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
 The default values for each preference should be whitelisted.  These values are
 enumerated below:
@@ -1043,13 +1045,8 @@ relaunching Firefox.
 \item[Data Sources] \hfill \\
 Extension metadata is stored in an SQLite 3 database located in \\
 \verb|${profilepath}/extensions.sqlite|.  There are two tables in this database
-that are of interest: \verb|addon| and \verb|locale|.  
-\item[Log Format] \hfill 
-\vspace{-\baselineskip}
-\begin{verbatim}
-Extension ${visible} ${active} "${name} ${version} ${type} ${id} ${path}
-\end{verbatim}
-\item[Output Description] \hfill \\
+that are of interest: \verb|addon| and \verb|locale|. 
+ 
 The output variables are defined as:
 \begin{description}
   \item[\var{visible}] \verb|addon.visible| attribute.  This shall be output as
@@ -1057,16 +1054,24 @@ The output variables are defined as:
   \item[\var{active}] \verb|addon.active| attribute.  This shall be output as a
   binary 0 or 1 value.
   \item[\var{name}] \verb|locale.name| attribute where \texttt{locale.id =
-  addon.defaultLocale}.  This shall be escaped according to the scheme defined
-  in \ref{generalescape} with \verb|#| as the escape character and double quotes
-  (\verb|"|) as the right delimiter.
+  addon.defaultLocale}
   \item[\var{version}] \verb|addon.version| attribute
   \item[\var{type}] \verb|addon.type| attribute
   \item[\var{id}] \verb|addon.id| attribute
-  \item[\var{path}] \verb|addon.descriptor| attribute.  This shall be escaped
-  according to the scheme defined in \ref{generalescape} with \# as the
-  escape character and the newline as the right delimiter.  
+  \item[\var{path}] \verb|addon.descriptor| attribute
 \end{description}
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+Extension ${visible} ${active} "${name} ${version} ${type} ${id} ${path}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{name} shall be escaped according to the scheme defined in
+\ref{generalescape} with \verb|#| as the escape character and double quotes
+(\verb|"|) as the right delimiter.  \var{path} shall be escaped according to
+the scheme defined in \ref{generalescape} with \# as the escape character and
+the newline as the right delimiter.
+  
 \item[Whitelist Considerations] \hfill \\
 No whitelist actions apply here
 \item[Fix Considerations] \hfill \\
@@ -1112,8 +1117,7 @@ other separation.  It should be enough to read through to the
 Plugin "${name} ${version} ${path}
 \end{verbatim}
 \item[Output Description] \hfill \\
-\var{name}, \var{version}, and \var{path} are from the \texttt{pluginreg.dat}
-file described above.  \var{name} shall be escaped according to the scheme
+\var{name} shall be escaped according to the scheme
 defined in \ref{generalescape} with \verb|#| as the escape character and double
 quotes (\verb|"|) as the right delimiter.  \var{path} shall be escaped
 according to \ref{generalescape} as well with \verb|#| as the escape character
@@ -1128,7 +1132,190 @@ Firefox will be closed.  When the user hits okay in this dialog, the Firefox
 process can be killed if it is still running.  When the user re-opens Firefox
 later, the plugins(s) will be removed from the file.
 \end{description}
+
 \subsection{Google Chrome}
+Google Chrome (hereafter referred to as ``Chrome'') is a popular browser that is
+extensible like Firefox.  Therefore, like Firefox, it has some potential attack
+vectors.  This section of the log should only appear if Chrome is installed.  To
+determine if Chrome is installed for the current user, the tool shall check to
+see if the \texttt{Chrome.exe} executable exists in the following path:
+\begin{verbatim}
+%userprofile%\AppData\Local\Google\chrome.exe
+\end{verbatim}
+This specification is targetted at Chrome 17.0.  While this information extend
+to other versions of the browser, the behavior will be undefined.  
+
+All of the various sections for Chrome pull from the same Preferences file:
+\begin{verbatim}
+%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Preferences
+\end{verbatim}
+This is a JSON file that contains most of the important settings for a user.  In
+this document, to address JSON locations, the successive keys of each object
+will be given.  For example, if the JSON file were:
+\begin{verbatim}
+{
+    "a": {
+        "one": true,
+        "two": false,
+        "three": {
+            "i": "stringvalue"
+        }
+    }
+    "b": 1234
+}
+\end{verbatim}
+In this case, simply stating ``\texttt{a}'' would refer to the ``\texttt{a}''
+object and all of its children.  Similarly, ``\texttt{a.three}'' would refer to
+the ``\texttt{three}'' object in the ``\texttt{a}'' object.  To access values,
+a full key should be given (``\texttt{a.one}'', ``\texttt{a.two}'',
+``\texttt{a.three.i}'', or ``\texttt{b}'').  
+
+A ``\texttt{*}'' indicates that any string can be used and will return a set of
+objects that match the specified string.  For example, ``\texttt{a.*}'' would
+return ``\texttt{a.one}'', ``\texttt{a.two}'', and ``\texttt{a.three}'' and
+``\texttt{a.*.i}'' would return ``\texttt{a.three.i}.
+
+\subsubsection{Extensions}
+\begin{description}
+\item[Rationale] \hfill \\
+Chrome allows users to add to the functionality of their browser through
+``extensions'' (sometimes called addons).  These extensions can be malicious in
+nature.   Each extension is installed into its own randomly named folder inside
+\vspace{-\baselineskip}
+\begin{verbatim}
+%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Extensions\
+\end{verbatim}
+\item[Data Sources] \hfill \\
+All of the data for the extensions is available in the aforementioned
+Preferences file.  Each extension has its own object created inside
+\texttt{extensions.settings}.  Therefore, each extension can be enumerated by
+listing the set of \texttt{extensions.settings.*}.  For each extension in this
+set (hereafter referred to as \texttt{e}), the following variables are defined:
+\begin{description}
+\item[\var{state}] \texttt{e.state}
+\item[\var{name}] \texttt{e.mainfest.name}
+\item[\var{version}] \texttt{e.manifest.version}
+\item[\var{id}] The object key of \texttt{e}
+\end{description}
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+Extension ${state} "${name} ${version} ${id}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{name} shall be escaped according to \ref{generalescape} with an escape
+character of \verb|#| and a right delimiter of double quotes (\verb|"|). 
+
+\item[Whitelist Considerations] \hfill \\
+A default Chrome installation has several safe extensions installed.  Extensions
+should be whitelisted if their \var{name} matches any of the following
+extensions:
+\begin{itemize}
+\item ``YouTube''
+\item ``Google Search''
+\item ``Gmail''
+\end{itemize}
+\item[Fix Considerations] \hfill \\
+To remove a Chrome extensions, two actions must be taken.  First, the entire
+extension object must be removed from the Preferences file for the given
+extension \var{id}.  Secondly, the extension must be removed from the
+filesystem.  This can be achieved by deleting the directory 
+\vspace{-\baselineskip}
+\begin{verbatim}
+%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Extensions\${id}
+\end{verbatim}
+
+Chrome must not be running for this operation to proceed.  If Chrome is running,
+a dialog must appear warning the user that Chrome will be closed.  When the
+user hits okay in this dialog, the Chrome process can be killed if it is still
+running.  
+\end{description}
+
+\subsubsection{Plugins}
+\begin{description}
+\item[Rationale] \hfill \\
+Chrome, like most major browsers, supports plugins.  These are a potential
+attack vector and should be scanned.
+\item[Data Sources] \hfill \\
+The list of plugins is available in the Preferences file.  Each plugin is listed
+inside a JSON list located in \verb|plugins.plugins_list|.  For each plugin,
+\texttt{p} in this list, the following variables are defined:
+\begin{description}
+\item[\var{name}] \texttt{p.name}
+\item[\var{version}] \texttt{p.version}
+\item[\var{path}] \texttt{p.path}
+\end{description}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+Plugin "${name} ${version} ${path}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{name} shall be escaped according to the scheme defined in
+\ref{generalescape} with \verb|#| as the escape character and double quotes
+(\verb|"|) as the right delimiter.  \var{path} shall be escaped according to
+\ref{generalescape} as well with \verb|#| as the escape character and the
+newline as the right delimiter.
+\item[Whitelist Considerations] \hfill \\
+Default Chrome installations have several plugins pre-installed.  If \var{name}
+matches any of the following values, the plugin can be whitelisted:
+\begin{enumerate}
+  \item ``Shockwave Flash''
+  \item ``Flash''
+  \item ``Remoting Viewer''
+  \item ``Native Client''
+  \item ``Chrome PDF Viewer''
+\end{enumerate}
+\item[Fix Considerations] \hfill \\
+To fix these items, the \var{path} simply needs to be deleted.  This must
+happen while Chrome is not running.  If a script is supposed to fix an
+plugin and Chrome is running, a dialog must appear warning the user that
+Chrome will be closed.  When the user hits okay in this dialog, the Chrome
+process can be killed if it is still running.  
+\end{description}
+
+\subsubsection{Other user preferences}
+\begin{description}
+\item[Rationale] \hfill \\
+Some other user preferences, such as homepages and such could become infected by
+malware.  Therefore, these preferences shall be scanned.
+\item[Data Sources] \hfill \\
+Each of the preferences comes from the Preferences file.  The following
+preferences should be enumerated:
+\begin{itemize}
+  \item \verb|default_search_provider.search_url|
+  \item \verb|homepage|  
+\end{itemize}
+The name of the preference shall be referred to as \var{name} and the
+corresponding value as \var{value}.  If no value is available, \var{value}
+should be set to ``not set''.
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+Preference ${name} ${value}
+\end{verbatim}
+This line shall be printed for each preference listed in the Data Sources.
+\item[Output Description] \hfill \\
+\var{value} must be escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+If the \var{name} is \verb|default_search_provider.search_url|, then the default
+value is:
+\begin{verbatim}
+"{google:baseURL}search?{google:RLZ}{google:acceptedSuggestion}{google:
+originalQueryForSuggestion}{google:searchFieldtrialParameter}{google:
+instantFieldTrialGroupParameter}sourceid=chrome&ie={inputEncoding}&q=
+{searchTerms}"
+\end{verbatim}
+without the newlines.  This value could potentially be whitelisted.  
+\item[Fix Considerations] \hfill \\
+To fix these items, it is enough to simply delete the object in the Preferences
+file with the given \var{name}.  This must happen while Chrome is not running. 
+If a script is supposed to fix a preference and Chrome is running, a dialog must
+appear warning the user that Chrome will be closed.  When the user hits okay in
+this dialog, the Chrome process can be killed if it is still running.
+\end{description}
+
 \subsection{Created Last 30}
 %Bill
 \subsection{Find3M}
