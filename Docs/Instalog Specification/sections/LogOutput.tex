@@ -124,11 +124,12 @@ additional constraint of forum software which tries to convert URLs into links.
 It is desirable to inhibit this behavior of the forum software, so that board
 owners need not worry about linking to malicious websites. Therefore, URL
 escaping is defined to be general escaping with the additional requirement that
-when the string ``\texttt{http}'' (case insensitive) appears in the source, it
-is replaced with ``\texttt{htt}\var{EscapeCharacter}\texttt{p}''. This inhibits
-forum software's URL behavior which looks for the protocol prefix in order to
+when the string ``\texttt{http}'' (case insensitive) appears, it is replaced
+with ``\texttt{htt}\var{EscapeCharacter}\texttt{p}''. This inhibits forum
+software's URL behavior which looks for the protocol prefix in order to
 determine what portions of a post indicate a link. (Note that due to the last
-requirement of general escaping this will cause no effect on the unescaped data).
+requirement of general escaping this will cause no effect on the unescaped
+data).
 
 \subsection{Header}
 The header of an Instalog report consists of 4 lines, which are always displayed
@@ -244,11 +245,11 @@ described in \ref{generalescape} where \verb|#| is the escape character and
 \item[Whitelist Considerations] \hfill \\
 The following process paths should be whitelisted:
 \begin{itemize}
-  \item \verb|C:\WINDOWS\System32\csrss.exe|
-  \item \verb|C:\WINDOWS\System32\winlogon.exe|
-  \item \verb|C:\WINDOWS\System32\services.exe|
-  \item \verb|C:\WINDOWS\System32\lsass.exe|
-  \item \verb|C:\WINDOWS\System32\smss.exe|
+  \item \verb|%WINDIR%\System32\csrss.exe|
+  \item \verb|%WINDIR%\System32\winlogon.exe|
+  \item \verb|%WINDIR%\System32\services.exe|
+  \item \verb|%WINDIR%\System32\lsass.exe|
+  \item \verb|%WINDIR%\System32\smss.exe|
 \end{itemize}
 \item[Fix Considerations] \hfill \\
 Two fix actions shall be available:
@@ -773,7 +774,7 @@ value for the machine type which generated the log.
 \subsubsection{Start Page URL}
 \begin{description}
 \item[Rationale]  \hfill \\ This setting corresponds to Internet Explorer's home
-page. If it exists, it overrides the machine-wide setting.
+page. If this value is set, it overrides the machine-wide setting.
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
@@ -981,6 +982,53 @@ The only valid option is ``Fix''. It shall generate a fix which erases the
 value.
 \end{description}
 
+\subsubsection{Internet Connection Wizard Shell Next}
+\begin{description}
+\item[Rationale] \hfill \\
+This is the location a user is dropped to after completing the Internet
+Connection Wizard.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${CurrentUser}\Software\Microsoft\Internet Connection Wizard]
+"ShellNext"="${url}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|InternetConnectionWizard=${url}|
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This value is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases this
+value.
+\end{description}
+
+\subsubsection{Proxy Server}
+\begin{description}
+\item[Rationale] \hfill \\
+The proxy server configured for the user; through which all Internet traffic is
+directed.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${CurrentUser}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
+"ProxyServer"="${proxy}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|ProxyServer=${proxy}|
+\item[Output Description] \hfill \\
+The variable \var{proxy} is escaped using the general escaping method defined in
+\ref{generalescape}, using the escape character \verb|#|.
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations]
+The only valid option is ``Fix''. It shall generate a fix which erases this
+value.
+\end{description}
+
 \subsubsection{}
 \begin{description}
 \item[Rationale]
@@ -1057,9 +1105,9 @@ infection:
   \item \verb|browser.startup.homepage|
   \item \verb|network.proxy.type|
 \end{itemize}
-The preference name will be referred to as \var{preference} and the associated
-value as \var{value}.  If a preference does not have a name, \var{value} shall
-default to ``not set''.
+The name of the preference will be referred to as \var{preference} and the
+value to which that preference is set as \var{value}.  If a preference does not
+have a name, \var{value} shall default to ``not set''.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -1399,7 +1447,7 @@ If there are no restore points available or the system does not support restore
 points, this entire log section shall be skipped.
 \item[Data Sources] \hfill \\
 Restore Points can be accessed using WMI
-(\url{http://msdn.microsoft.com/en-us/library/windows/desktop/aa378951(v=vs.85).aspx}),
+(\url{http://msdn.microsoft.com/en-us/library/windows/desktop/aa378951.aspx}),
 which exposes a list of \texttt{SystemRestore} classes:
 \vspace{-\baselineskip}
 \begin{verbatim}
