@@ -7,3 +7,5 @@ Docs/Instalog Specification/*.pdf
 Docs/Instalog Specification/tmp
 *.synctex.gz
 Docs/Instalog Specification/.settings/org.eclipse.core.resources.prefs
+Docs/Project Proposal/*.pdf
+Docs/Project Proposal/tmp
