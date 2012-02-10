@@ -1683,7 +1683,35 @@ support restoring to a certain point.
 \end{description}
 
 \subsection{Installed Programs}
-%Jacob
+\begin{description}
+\item[Rationale] \hfill \\
+It is often important to have a full list of which programs are installed on a
+user machine.  The output log shall contain a list of all installed programs.  
+\item[Data Sources] \hfill \\
+The installed programs shall be determined by enumerating through the registry
+for all of the \var{id}'s that are present.
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\CurrentVersion\Uninstall\${id}]
+"DisplayName"="${name}"
+"VersionMajor"="${version_major}"
+"VersionMinor"="${verison_minor}"
+\end{verbatim}
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+${name} version ${version_major}.${version_minor}
+\end{verbatim}
+\item[Output Description] \hfill \\
+None of the variables need to be escaped.
+\item[Whitelist Considerations] \hfill \\
+There are no applicable whitelist considerations.
+\item[Fix Considerations] \hfill \\
+No applicable fix considerations apply.  Future versions of this tool may
+support uninstalling.  However, since some applications use non-standard
+uninstallers, support uninstalling across the board could prove difficult.
+\end{description}
+
 \subsection{Footer}
 The footer shall not have a section title. It is a line of the following form
 surrounded by newlines:
