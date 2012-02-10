@@ -626,6 +626,102 @@ The only valid option is ``Fix''. It shall generate a fix which erases the
 value.
 \end{description}
 
+\subsubsection{Search URL}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"SearchURL"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+"SearchURL"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+SearchUrl=${url}
+SearchUrl64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
+\end{description}
+
+\subsubsection{Search Assistant}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+"SearchAssistant"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+"SearchAssistant"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+SearchAssistant=${url}
+SearchAssistant64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
+\end{description}
+
+\subsubsection{Customize Search}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+"CustomizeSearch"="${url}"
+; 64 Bit Registry View
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+"CustomizeSearch"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+CustomizeSearch=${url}
+CustomizeSearch64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
+\end{description}
+
 \subsection{PseudoHJT User Report}
 The PseudoHJT user report is specific to a given user on the target machine.
 There will be a separate such section for each user that is loaded into the
@@ -1024,19 +1120,128 @@ The variable \var{proxy} is escaped using the general escaping method defined in
 \ref{generalescape}, using the escape character \verb|#|.
 \item[Whitelist Considerations] \hfill \\
 This entry is not whitelisted.
-\item[Fix Considerations]
+\item[Fix Considerations] \hfill \\
 The only valid option is ``Fix''. It shall generate a fix which erases this
 value.
 \end{description}
 
-\subsubsection{}
+\subsubsection{Proxy Override}
 \begin{description}
-\item[Rationale]
-\item[Data Sources]
-\item[Log Format]
-\item[Output Description]
-\item[Whitelist Considerations]
-\item[Fix Considerations]
+\item[Rationale] \hfill \\
+A setting which overrides the proxy server setting; addresses configured here
+bypass the proxy server and go directly to the default gateway.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${CurrentUser}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
+"ProxyOverride"="${override}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|ProxyOverride=${override}|
+\item[Output Description] \hfill \\
+The variable \var{override} is escaped using the general escaping method defined
+in \ref{generalescape}, using the escape character \verb|#|.
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases this
+value.
+\end{description}
+
+\subsubsection{Search URL}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"SearchURL"="${url}"
+; 64 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer]
+"SearchURL"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+SearchUrl=${url}
+SearchUrl64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
+\end{description}
+
+\subsubsection{Search Assistant}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
+"SearchAssistant"="${url}"
+; 64 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
+"SearchAssistant"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+SearchAssistant=${url}
+SearchAssistant64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
+\end{description}
+
+\subsubsection{Customize Search}
+\begin{description}
+\item[Rationale] \hfill \\
+Unknown, but HijackThis and DDS enumerate it.
+\input{snippets/ie64bit.tex}
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
+"CustomizeSearch"="${url}"
+; 64 Bit Registry View
+[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
+"CustomizeSearch"="${url64}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+CustomizeSearch=${url}
+CustomizeSearch64=${url64}
+\end{verbatim}
+\item[Output Description] \hfill \\
+The variables \var{url} and \var{url64} are escaped using the URL escaping
+scheme defined in \ref{urlescape}, where the escape character is the hash mark
+(\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which erases the value
+in question.
 \end{description}
 
 \subsection{Mozilla Firefox}
