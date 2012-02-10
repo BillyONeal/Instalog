@@ -1639,7 +1639,51 @@ this dialog, the Chrome process can be killed if it is still running.
 \subsection{Event Viewer}
 %Bill
 \subsection{Machine Specifications}
-%Jacob
+\begin{description}
+\item[Rationale] \hfill \\
+Sometimes it is helpful for a forum assistant to have an idea of what type of
+machine the end user is working on.  This section's purpose is to provide this
+type of information.
+\item[Data Sources] \hfill \\
+%TODO: Bill?
+\item[Log Format] \hfill 
+\vspace{-\baselineskip}
+\begin{verbatim}
+${windows_version}
+Boot Device: ${boot_device}
+Install Date: ${install_date}
+System Uptime: ${uptime} (${uptime_duration})
+Motherboard: ${motherboard}
+Processor: ${processor_0}
+${drive_partitions}
+\end{verbatim}
+\var{drive\_partitions} is defined as a list of all of the drive partitions
+on the system.  This list should list each partition on its own line.  There are
+two different types of lines that are possible.  If the partition's size is not
+available, the following line shall be printed:
+\vspace{-\baselineskip}
+\begin{verbatim}
+${partition_letter}: is ${type}
+\end{verbatim}
+\var{partition\_letter} is simply the letter of the partition.  \var{type} is
+the type of the disk (``FIXED", ``CDROM", or ``REMOVABLE'').  If the size is
+available, the following line shall be printed:
+\vspace{-\baselineskip}
+\begin{verbatim}
+${partition_letter}: is ${type} - ${total} GiB total, ${free} GiB free
+\end{verbatim}
+\var{total} is the total size of the disk and \var{free} is the free space
+remaining on the disk.  Both of these values shall be reported in Gibibytes
+(Giga Binary Bytes, 1 GiB = 1,073,741,824 bytes).
+
+\item[Output Description] \hfill \\
+None of the variables need to be escaped.
+\item[Whitelist Considerations] \hfill \\
+There are no applicable whitelist considerations.
+\item[Fix Considerations] \hfill \\
+No applicable fix considerations apply.  
+\end{description}
+
 \subsection{Restore Points}
 \begin{description}
 \item[Rationale] \hfill \\
