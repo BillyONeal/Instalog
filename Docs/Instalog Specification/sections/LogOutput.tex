@@ -291,7 +291,7 @@ which may be (after resolution is re-run)
 C:\Windows\baddie.dll
 \end{verbatim}
 
-\subsubsection{Default File Output}
+\subsubsection{Default File Output} \label{stdfile}
 Given a raw piece of data meant to represent a file, Instalog shall use the
 following ``default file format'' where indicated.
 
@@ -1418,7 +1418,42 @@ this dialog, the Chrome process can be killed if it is still running.
 \end{description}
 
 \subsection{Services/Drivers}
-%Bill
+The services and drivers section enumerates all services and drivers on the
+current machine, limited by whitelist. Each line in this report is of the form
+\begin{verbatim}
+${State}${Start} ${ServiceName};${DisplayName};${File}
+\end{verbatim}
+
+\var{State} is one of the following:
+\begin{description}
+\item[S] Service Stopped
+\item[R?] Service Start Pending
+\item[S?] Service Stop Pending
+\item[R] Service Running
+\item[C?] Service Continue Pending
+\item[P?] Service Pause Pending
+\item[P] Service Paused
+\item[?] Unknown
+\end{description}
+
+\var{Start} is one of the following:
+\begin{description}
+\item[0] \verb|SERVICE_BOOT_START| -- A device driver started by the system
+loader. This value is valid only for driver services.
+\item[1] \verb|SERVICE_SYSTEM_START| -- A device driver started by the
+\verb|IoInitSystem| function. This value is valid only for driver services.
+\item[2] \verb|SERVICE_AUTO_START| -- A service started automatically by the
+service control manager during system startup.
+\item[3] \verb|SERVICE_DEMAND_START| -- A service started by the service control
+manager when a process calls the \verb|StartService| function.
+\item[4] \verb|SERVICE_DISABLED| -- A service that cannot be started.
+\end{description}
+
+\var{ServiceName} is the registry name used for the service. \var{DisplayName}
+is the name the service advertises itself as. \var{File} is the image path
+configured for the service, in the standard file enumeration format defined in
+section \ref{stdfile}.
+
 \subsection{Created Last 30}
 Created Last 30 is designed to be look in interesting locations for files
 created in the last 30 days. It is defined by sUBs' DDS tool, and shall be used,
