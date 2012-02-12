@@ -131,6 +131,24 @@ determine what portions of a post indicate a link. (Note that due to the last
 requirement of general escaping this will cause no effect on the unescaped
 data).
 
+\subsubsection{CommandLineToArgvW Escaping Format} \label{winescape}
+Windows' own \verb|CommandLineToArgvW| function defines it's own escaping
+scheme. This format is delimited on both the left and right by quote (\verb|"|)
+characters. Instalog shall interpret this format exactly as Windows' function
+does. Quoting MSDN:
+\begin{indent}
+CommandLineToArgvW has a special interpretation of backslash characters when
+they are followed by a quotation mark character (\verb|"|), as follows:
+\begin{itemize}
+    \item $2n$ backslashes followed by a quotation mark produce $n$ backslashes
+    followed by a quotation mark.
+    \item $(2n) + 1$ backslashes followed by a quotation mark again produce $n$
+    backslashes followed by a quotation mark.
+    \item $n$ backslashes not followed by a quotation mark simply produce $n$
+    backslashes.
+\end{itemize}
+\end{indent}
+
 \subsection{Date Formats}
 Instalog shall use two date formats.
 
@@ -158,6 +176,129 @@ two digit minute count, \var{SS} is the two digit number of seconds, and
 
 If the given value is fewer than the number of digits available, they shall be
 zero padded to take up as many spaces as that item has been assigned.
+
+\subsection{Path Formats}
+Instalog uses several path formats across it's log output.
+
+\subsubsection{Path Resolution}
+Windows often does not provide Instalog with direct path information; providing
+a full command line including arguments in some cases. Disambiguating which part
+of a given command line is a path to an executable and which is part of the
+arguments requires access to the filesystem of the target machine to determine.
+Additionally, several APIs used by Instalog return native (NT) paths rather than
+Win32 paths as a user would expect. To combat these problems, Instalog must
+implement a path resolution facility.
+
+Path resolution consists of three phases:
+\begin{enumerate}
+    \item Conversion from Native Path to Win32 Path
+    \item Separation of the Win32 path from its arguments
+    \item Removal of common path prefixes that serve as redirectors
+\end{enumerate}
+
+Instalog will use a hueristic to convert from the NT path to the Win32 path; as
+there is no consistent API exposed by Windows for this task. This hueristic
+consists of replacing several prefixes on the path with known values. These
+replacements must be done in the following order.
+\begin{enumerate}
+    \item If the path begins with \verb|\|, the \verb|\| is removed.
+    \item Afterwards, if the path begins with \verb|??\|, the \verb|??\| is
+    removed.
+    \item Afterwards, if the path begins with \verb|\?\|, then the \verb|\?\| is
+    removed.
+    \item Afterwards, if the path begins with \verb|globalroot\|, then
+    \verb|globalroot\| is removed.
+    \item Afterwards, if the path begins with \verb|system32\|, then
+    \verb|system32\| is replaced with the path \verb|${WINDIR}\system32\|, where
+    \var{WINDIR} is the location where Windows is installed.
+    \item Finally, if the path begins with \verb|systemroot\|, then
+    \verb|systemroot\| is replaced with the path to the current Windows
+    installation followed by a backslash.
+\end{enumerate}
+
+After this hueristic is applied, the resulting path should correspond to a Win32
+path.
+
+The second phase consists of seperation of the executable path from it's
+arguments. This is done in the same way that Windows' own \verb|CreateProcessW|
+API call does. It is based on the current value of the environment variables
+\verb|%PATH%| and \verb|%PATHEXT%|. The first defines to Windows where
+executabs are located, while the second defines which file extensions are
+allowed to be implicitly interpreted as executables.
+
+At first, any leading space in the path is removed. Next, if the path begins
+with a quote (\verb|"|) character, then the path is treated as a quoted path
+that follows the same convention that Windows' own \verb|CommandLineToArgvW|
+function does (see section \ref{winescape}).
+
+Otherwise, Instalog shall try to interpret the path in terms of the portions
+that end in spaces. For instance:
+\begin{verbatim}
+C:\Folder with .exe in the name.exe\Program.exe ProgramThatIsAnArgument.exe
+         ^    ^    ^  ^   ^                    ^
+\end{verbatim}
+at each space point (indicated above with \verb|^|s), Instalog checks for
+information about the file. If the file does not exist, each of the extensions
+in \verb|%PATHEXT%| are tried, appending them to the part of the path before the
+space, one by one, until a file is found that exists. If this still does not
+work, Instalog shall repeat the \verb|%PATHEXT%| part of the check, prefixing
+the entire path with each of the paths in \verb|%PATH%|, until it finds a match.
+If it still cannot find a matching file, Instalog moves on to the next space.
+
+For example, if \verb|PATH=C:\Windows;C:\Windows\System32|, and
+\verb|%PATHEXT%=.bat;.com;.exe|, and one is trying to parse a command line of
+\verb|rundll32 example.dll|, Instalog shall try the following paths, in
+order:
+\begin{verbatim}
+rundll32
+rundll32.bat
+rundll32.com
+rundll32.exe
+C:\Windows\rundll32
+C:\Windows\rundll32.bat
+C:\Windows\rundll32.com
+C:\Windows\rundll32.exe
+C:\Windows\System32\rundll32
+C:\Windows\System32\rundll32.bat
+C:\Windows\System32\rundll32.com
+C:\Windows\System32\rundll32.exe
+rundll32 example.dll
+rundll32 example.dll.bat
+rundll32 example.dll.com
+rundll32 example.dll.exe
+C:\Windows\rundll32 example.dll
+\end{verbatim}
+et cetera.
+
+Finally, common prefixes are eliminated. If after the first part of resolution,
+the target is to Windows' \verb|rundll32.exe|, that part of the path is
+stripped, the entire path after the first \verb|,| is stripped from the path,
+and resolution is \textem{restarted} on the new argument. That is, this:
+\begin{verbatim}
+rundll32 baddie.dll,SomeRandomGarbage
+\end{verbatim}
+is (typically) resolved to
+\begin{verbatim}
+C:\Windows\System32\rundll32.exe
+\end{verbatim}
+which is Windows' Rundll32.exe. Therefore, this is stripped from the path, along
+with everything after the first comma character, leaving:
+\begin{verbatim}
+Baddie.dll
+\end{verbatim}
+which may be (after resolution is re-run)
+\begin{verbatim}
+C:\Windows\baddie.dll
+\end{verbatim}
+
+\subsection{File Formats}
+This section describes on-disk formats that are used by Instalog.
+
+\subsubsection{Executable}
+Instalog shall detect whether a file is an executable by checking the first two
+bytes of the file to see if they match ``\verb|MZ|'' (\verb|0x4D| \verb|0x5A|),
+which is always the first two bytes of executables Windows is capable of
+loading.
 
 \subsection{Header}
 The header of an Instalog report consists of 4 lines, which are always displayed
