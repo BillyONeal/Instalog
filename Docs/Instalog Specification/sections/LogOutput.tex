@@ -180,7 +180,7 @@ zero padded to take up as many spaces as that item has been assigned.
 \subsection{Path Formats}
 Instalog uses several path formats across it's log output.
 
-\subsubsection{Path Resolution}
+\subsubsection{Path Resolution} \label{pathresolution}
 Windows often does not provide Instalog with direct path information; providing
 a full command line including arguments in some cases. Disambiguating which part
 of a given command line is a path to an executable and which is part of the
@@ -273,7 +273,7 @@ et cetera.
 Finally, common prefixes are eliminated. If after the first part of resolution,
 the target is to Windows' \verb|rundll32.exe|, that part of the path is
 stripped, the entire path after the first \verb|,| is stripped from the path,
-and resolution is \textem{restarted} on the new argument. That is, this:
+and resolution is \textit{restarted} on the new argument. That is, this:
 \begin{verbatim}
 rundll32 baddie.dll,SomeRandomGarbage
 \end{verbatim}
@@ -290,6 +290,45 @@ which may be (after resolution is re-run)
 \begin{verbatim}
 C:\Windows\baddie.dll
 \end{verbatim}
+
+\subsubsection{Default File Output}
+Given a raw piece of data meant to represent a file, Instalog shall use the
+following ``default file format'' where indicated.
+
+If the file exists and company information (using Windows' version info
+querying functions like \verb|VerQueryValue|):
+\begin{verbatim}
+${ResolvedFile} [${Size} ${CreatedDate} ${Company}]
+\end{verbatim}
+where \var{ResolvedFile} is the raw data of the entry after going through
+\textit{Path Resolution} (detailed in section \ref{pathresolution}), \var{Size}
+is the size of the file in bytes, \var{CreatedDate} is the date the filesystem
+has recorded as the file's creation date in the default date format (see
+section \ref{stddate}), and \var{Company} is the company reported as the
+file's author, using the general escaping format defined in \ref{generalescape}
+with an escape character of hash (\verb|#|) and a right delimiter of right
+square brace (\verb|]|).
+
+If no company info is available, the format shall match:
+\begin{verbatim}
+${ResolvedFile} [${Size} ${CreatedDate}]
+\end{verbatim}
+using the same values as above.
+
+If the file does not exist (and therefore resolution fails), the output shall
+match:
+\begin{verbatim}
+${RawData} [x]
+\end{verbatim}
+where \var{RawData} is the information retrieved for the file, escaped using the
+general escaping method, using an escape character of hash (\verb|#|).
+
+Finally, if some failure occured in path resolution that was not the file not
+existing, then the output shall match the following:
+\begin{verbatim}
+${RawData} [?]
+\end{verbatim}
+(Where \var{RawData} is the same as above)
 
 \subsection{File Formats}
 This section describes on-disk formats that are used by Instalog.
