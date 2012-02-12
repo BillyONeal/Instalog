@@ -131,6 +131,34 @@ determine what portions of a post indicate a link. (Note that due to the last
 requirement of general escaping this will cause no effect on the unescaped
 data).
 
+\subsection{Date Formats}
+Instalog shall use two date formats.
+
+\subsubsection{Standard Date Format} \label{stddate}
+The standard date format shall be defined as
+\begin{verbatim}
+${YYYY}-${MM}-${DD} ${HH}:${MM}:${SS}
+\end{verbatim}
+Where \var{YYYY} is the four digit year, \var{MM} is the two digit month,
+\var{DD} is the two digit day, \var{HH} is the two digit hour, \var{MM} is the
+two digit minute count, and \var{SS} is the two digit number of seconds.
+
+If the given value is fewer than the number of digits available, they shall be
+zero padded to take up as many spaces as that item has been assigned.
+
+\subsubsection{Millisecond Date Format} \label{millidate}
+The millisecond date format shall be defined as
+\begin{verbatim}
+${YYYY}-${MM}-${DD} ${HH}:${MM}:${SS}.${Milli}
+\end{verbatim}
+Where \var{YYYY} is the four digit year, \var{MM} is the two digit month,
+\var{DD} is the two digit day, \var{HH} is the two digit hour, \var{MM} is the
+two digit minute count, \var{SS} is the two digit number of seconds, and
+\var{Milli} is the 4 digit number of miliseconds.
+
+If the given value is fewer than the number of digits available, they shall be
+zero padded to take up as many spaces as that item has been assigned.
+
 \subsection{Header}
 The header of an Instalog report consists of 4 lines, which are always displayed
 and shown in the same order as defined in this document. No component of the
@@ -153,7 +181,7 @@ machine was booted normally.
 The second line lists information about the user running Instalog, and the local
 date and time of the system when the log was generated. It has the form:
 \begin{verbatim}
-Run by ${UserName} at ${Y}-${M}-${D} ${H}:${M}:${S}.${Milli} [GMT ${TimeZone}]
+Run by ${UserName} at ${Date} [GMT ${TimeZone}]
 \end{verbatim}
 
 \var{UserName} is the current display name of the logged in user, escaped with
@@ -161,9 +189,8 @@ the general escaping format defined in \ref{generalescape}, using a left
 delimiter of a double quote (\verb|"|), a right delimiter of a double
 quote (\verb|"|), and an escape character backslash (\verb|\|).
 
-\var{Y}, \var{M}, \var{D}, \var{H}, \var{M}, \var{S}, and \var{Milli} are
-replaced with numeric representations of the current local date and time (that
-is, year, month, day, hour, minute, second, and millisecond, respectively).
+\var{Date} is the current date when the log report was started being generated,
+using the millisecond date format specified in \ref{millidate}.
 
 \var{TimeZone} is a one sign, three digit, and one decimal point representation
 of the time zone of the machine taking the report. For instance, Eastern
@@ -1185,7 +1212,25 @@ this dialog, the Chrome process can be killed if it is still running.
 \subsection{Find3M}
 %Bill
 \subsection{Event Viewer}
-%Bill
+The event viewer section shall enumerate event viewer messages from the past
+week. Each line of this report shall match
+\begin{verbatim}
+${Date}, ${Type}: ${Source} [${EventId}] ${Description}
+\end{verbatim}
+where \var{Date} is the date the event was logged using the standard date format
+(see section \ref{stddate}), \var{type} is the type of event log message
+(currently ``Critical'', ``Error'', ``Warning'', or ``Information''),
+\var{Source} is the service that generated the event log, \var{EventId} is the
+ID that service has given the event, and \var{Description} is the human readable
+description provided by the service.
+
+All ``Warning'' and ``Critical'' messages will be printed to the log, from the
+default System and Application event logs. All messages (including
+Informational and Warning) will be enumerated for Windows File Protection
+sourced events.
+
+The EventIds 1000, 8023, and 10010 are whitelisted, and shall not be printed.
+
 \subsection{Machine Specifications}
 \begin{description}
 \item[Rationale] \hfill \\
@@ -1309,9 +1354,9 @@ uninstallers, support uninstalling across the board could prove difficult.
 The footer shall not have a section title. It is a line of the following form
 surrounded by newlines:
 \begin{verbatim}
-Instalog ${version} Finished ${Y}-${M}-${D} ${H}:${M}:${S}.${Milli}
+Instalog ${version} Finished ${Date}
 \end{verbatim}
 
 Here, \var{version} is the version of Instalog used to generate the report, and
-the other variables are the same kinds of date variables used in the header (Y
-is year, M is month, etc.)
+\var{Date} is the date when the report was completed using the millisecond date
+format defined in section \ref{millidate}.
