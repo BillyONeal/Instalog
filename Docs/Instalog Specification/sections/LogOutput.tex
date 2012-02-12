@@ -266,11 +266,11 @@ should then be moved into quarantine following the procedure defined in
 \end{description}
 \end{description}
 
-\subsection{PseudoHJT Report General}
+\subsection{PseudoHJT Report} \label{hjtgeneral}
 The information in the PseudoHJT report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
-significantly different syntax to that which they know. This format MUST be
+significantly different syntax to that which they know. This format is
 sparse and human readable. Perhaps most importantly, despite matching the
 original HJT in terms of information conveyed, the format itself MUST be
 different enough to avoid legal action by TrendMicro against Instalog's authors.
@@ -280,7 +280,8 @@ loading points on a Windows machine, as well as user settings for the Internet
 Explorer browser; such as home page, search provider, and title settings. The
 report shall be heavily whitelisted. Items which are defaults on Windows shall
 not be emitted, unless whitelisting has been disabled. Specific whitelisting
-schemes are given per type of line shown in the PseudoHJT report.
+schemes are given per type of line shown in the PseudoHJT report. Instalog shall
+implement the PseudoHJT report as defined in this section (\ref{hjtgeneral}).
 
 Each line in the PseudoHJT report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
@@ -292,26 +293,52 @@ Move, generally speaking, will generate script to quarantine a file associated
 with an entry, and Fix will generate script to reset settings to a default
 state, or delete loading points.
 
-\subsection{PseudoHJT Machine Report}
 The PseudoHJT machine report contains settings which affect the entire machine.
-Settings in this section can generally be overridden by settings in the user
-report. Such cases are documented here.
+
+The PseudoHJT user report is specific to a given user on the target machine.
+There will be a separate such section for each user that is loaded into the
+registry at the time Instalog is run (that is, loaded into \verb|HKEY_USERS|).
+
+The first line of the user report indicates which SID and name the user has, and
+is of the form:
+\begin{verbatim}
+Identity: "${username}" ${sid}
+\end{verbatim}
+
+The variable \var{username} refers to the display name of the user being
+enumerated. It is escaped using the general escaping method defined in
+\ref{generalescape}, using a right delimiter of \verb|"|, and an escape
+character of \verb|\|. The \var{sid} is the security identifier associated with
+that user. It follows a regular format, and therefore need not be escaped.
+
+\subsubsection{Root Registry Hives}
+The log lines discussed in the remainder of \ref{hjtgeneral} are ``rooted'' at a
+specific registry hive. Specifically, for the machine report, the root hive is
+\verb|HKEY_LOCAL_MACHINE|. For a user report, this will be the root of the
+user's registry, loaded under \verb|HKEY_USERS|. For instance,
+\begin{verbatim}
+HKEY_USERS\S-1-5-21-2812505617-3763003962-1231251036-1000
+\end{verbatim}
+That is, \verb|HKEY_USERS| followed by the user's SID.
+
+The root hive of \verb|HKEY_LOCAL_MACHINE| or the user's hive shall be
+the variable \var{RootHive} in the log lines below.
 
 \subsubsection{Default Page URL}
 \begin{description}
 \item[Rationale] \hfill \\
 The User Default Page URL is the location(s) of pages opened when a user creates
 a new Microsoft Internet Explorer window, or starts the browser for the first
-time. This value may be overridden by a user-specific setting.
+time. 
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Default_Page_URL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -327,33 +354,23 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="http://google.com/"
-:reg64
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="http://google.com/"
-\end{verbatim}
+The only valid option is ``Fix''. It generates script setting the value
+``\verb|Default_Page_URL|'' to ``\verb|http://google.com/|''.
 \end{description}
 
 \subsubsection{Default Search URL}
 \begin{description}
 \item[Rationale]  \hfill \\ The default search URL is used to redirect the user
-to a specific web search site if they type an invalid URL. This is a machine wide
-setting.
-It may be overridden by user-specific settings.
+to a specific web search site if they type an invalid URL.
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Default_Search_URL"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Default_Search_URL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -369,16 +386,8 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="http://google.com/"
-:reg64
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="http://google.com/"
-\end{verbatim}
+The only valid option is ``Fix''. It generates script setting the value
+``\verb|Default_Search_URL|'' to ``\verb|http://google.com/|''.
 \end{description}
 
 \subsubsection{Local Page URL}
@@ -390,10 +399,10 @@ Internet Explorer.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Local Page"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Local Page"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -426,10 +435,10 @@ page.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Start Page"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Start Page"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -445,31 +454,24 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Start Page"="http://google.com/"
-:reg64
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Start Page"="http://google.com/"
-\end{verbatim}
+The only valid option is ``Fix''. It generates script setting the start page to
+Google.
 \end{description}
 
 \subsubsection{Search Page URL}
 \begin{description}
-\item[Rationale] \hfill \\ This is the web page shown by Internet Explorer when
-the user selects ``Search'' on the toolbar.
+\item[Rationale] \hfill \\ This is a legacy setting which specifies the URL to
+open if the user selects Start $\rightarrow$ Find $\rightarrow$ On The Internet.
+(It is enumerated primarily because other tools do)
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Search Page"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Search Page"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -485,31 +487,24 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Search Page"="http://google.com/"
-:reg64
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
-"Search Page"="http://google.com/"
-\end{verbatim}
+The only valid option is ``Fix''. It generates script setting the value
+``\verb|Search Page|'' to Google.
 \end{description}
 
 \subsubsection{Search Bar}
 \begin{description}
-\item[Rationale]  \hfill \\ This value contains information about the search bar
-used in Internet Explorer versions 7 and 8.
+\item[Rationale]  \hfill \\ It is suspected that this value contains information
+about the search bar used in Internet Explorer versions 7 and 8. (It is
+enumerated primarily because other tools do)
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Search Bar"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Search Bar"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -537,10 +532,10 @@ value to the default setting.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "SearchMigratedDefaultUrl"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "SearchMigratedDefaultUrl"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -556,8 +551,7 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 \input{snippets/iewhitelist.tex}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases this
-value.
+The only valid option is ``Fix''. It shall generate a fix which erases the value.
 \end{description}
 
 \subsubsection{Security Risk URL}
@@ -569,10 +563,10 @@ potential security faults with a particular website.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Security Risk Page"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Security Risk Page"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -590,7 +584,7 @@ The default setting for both variables is ``\verb|about:SecurityRisk|''. This
 line will not be generated if that default setting is set.
 \item[Fix Considerations] \hfill \\
 The only valid option is ``Fix''. It shall generate a fix which resets the
-default value.
+``\verb|Security Risk Page|'' value to the default.
 \end{description}
 
 \subsubsection{Internet Explorer Window Title}
@@ -603,10 +597,10 @@ Explorer provided by Timer Warner Cable''.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Window Title"="${title}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "Window Title"="${title64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -623,22 +617,24 @@ the hash mark (\verb|#|).
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
 The only valid option is ``Fix''. It shall generate a fix which erases the
-value.
+``\verb|WindowTitle|'' value.
 \end{description}
 
 \subsubsection{Search URL}
 \begin{description}
 \item[Rationale] \hfill \\
-Unknown, but HijackThis and DDS enumerate it.
+The URL to use when the user types something into the address bar that isn't
+an address, for example: \verb|http://google.com/search?q=%s| where \verb|%s|
+is filled by the user's query.
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "SearchURL"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer]
+[${RootHive}\Software\Microsoft\Internet Explorer]
 "SearchURL"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -661,16 +657,17 @@ in question.
 \subsubsection{Search Assistant}
 \begin{description}
 \item[Rationale] \hfill \\
-Unknown, but HijackThis and DDS enumerate it.
+This is the value used to display a search engine in the search page when the
+user selects ``Search'' from Internet Explorer's toolbar.
 \input{snippets/ie64bit.tex}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+[${RootHive}\Software\Microsoft\Internet Explorer\Search]
 "SearchAssistant"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+[${RootHive}\Software\Microsoft\Internet Explorer\Search]
 "SearchAssistant"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -699,10 +696,10 @@ Unknown, but HijackThis and DDS enumerate it.
 \vspace{-\baselineskip}
 \begin{verbatim}
 ; 32 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+[${RootHive}\Software\Microsoft\Internet Explorer\Search]
 "CustomizeSearch"="${url}"
 ; 64 Bit Registry View
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer\Search]
+[${RootHive}\Software\Microsoft\Internet Explorer\Search]
 "CustomizeSearch"="${url64}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -722,361 +719,8 @@ The only valid option is ``Fix''. It shall generate a fix which erases the value
 in question.
 \end{description}
 
-\subsection{PseudoHJT User Report}
-The PseudoHJT user report is specific to a given user on the target machine.
-There will be a separate such section for each user that is loaded into the
-registry at the time Instalog is run (that is, loaded into \verb|HKEY_USERS|).
-
-The first line of the user report indicates which SID and name the user has, and
-is of the form:
-\begin{verbatim}
-Identity: "${username}" ${sid}
-\end{verbatim}
-
-The variable \var{username} refers to the display name of the user being
-enumerated. It is escaped using the general escaping method defined in
-\ref{generalescape}, using a right delimiter of \verb|"|, and an escape
-character of \verb|\|. The \var{sid} is the security identifier associated with
-that user. It follows a regular format, and therefore need not be escaped.
-
-The variable \var{CurrentUser} is used several times below in registry sections.
-This variable expands to the value of the currently being checked user hive,
-such as
-\begin{verbatim}
-HKEY_USERS\S-1-5-21-2812505617-3763003962-1231251036-1000
-\end{verbatim}
-
-\subsubsection{Default Page URL}
-\begin{description}
-\item[Rationale] \hfill \\
-The User Default Page URL is the location(s) of pages opened when a user creates
-a new Microsoft Internet Explorer window, or starts the browser for the first
-time. If this value is set, it overrides the machine-wide Default Page URL
-value.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="${url}"
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-DefaultPageUrl=${url}
-DefaultPageUrl64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|). 
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="http://google.com/"
-:reg64
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Page_URL"="http://google.com/"
-\end{verbatim}
-\end{description}
-
-\subsubsection{Default Search URL}
-\begin{description}
-\item[Rationale] \hfill \\
-The default search URL is used to redirect the user to a specific web search
-site if they type an invalid URL. This user-specific setting overrides the
-machine wide setting if it exists.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="${url}"
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-DefaultSearchUrl=${url}
-DefaultSearchUrl64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|). 
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="http://google.com/"
-:reg64
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Default_Search_URL"="http://google.com/"
-\end{verbatim}
-\end{description}
-
-\subsubsection{Local Page URL}
-\begin{description}
-\item[Rationale]  \hfill \\ The local URL is shown as the "blank" page in
-Internet Explorer.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Local Page"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Local Page"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-LocalPageUrl=${url}
-LocalPageUrl64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-On x86 versions of Windows, \var{url64} does not exist, and the default value of
-\var{url} is \verb|%WINDIR%\System32\Blank.htm|, which shall not be displayed.
-On x64 versions of Windows, the default value of \var{url64} is
-\verb|%WINDIR%\System32\Blank.htm|, and the default value of \var{url} is
-\verb|%WINDIR%\SysWow64\Blank.htm|, neither of which shall be displayed.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script resetting the default
-value for the machine type which generated the log.
-\end{description}
-
-\subsubsection{Start Page URL}
-\begin{description}
-\item[Rationale]  \hfill \\ This setting corresponds to Internet Explorer's home
-page. If this value is set, it overrides the machine-wide setting.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Start Page"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Start Page"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-StartPage=${url}
-StartPage64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Start Page"="http://google.com/"
-:reg64
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Start Page"="http://google.com/"
-\end{verbatim}
-\end{description}
-
-
-\subsubsection{Search Page URL}
-\begin{description}
-\item[Rationale]  \hfill \\ This is the web page shown by Internet Explorer when
-the user selects ``Search'' on the toolbar. This user-specific setting overrides the
-machine-wide setting if it exists.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Page"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Page"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-SearchPage=${url}
-SearchPage64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It generates script matching the following:
-\vspace{-\baselineskip}
-\begin{verbatim}
-:reg32
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Page"="http://google.com/"
-:reg64
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Page"="http://google.com/"
-\end{verbatim}
-\end{description}
-
-\subsubsection{Search Bar}
-\begin{description}
-\item[Rationale]  \hfill \\ This value contains information about the search bar
-used in Internet Explorer versions 7 and 8.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Bar"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Search Bar"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-SearchBar=${url}
-SearchBar64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which resets this
-value to the default setting.
-\end{description}
-
-\subsubsection{Security Risk URL}
-\begin{description}
-\item[Rationale]  \hfill \\ This value contains the URL used to warn users about
-potential security faults with a particular website.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Security Risk Page"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Security Risk Page"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-SecurityPage=${url}
-SecurityPage64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-The default setting for both variables is ``\verb|about:SecurityRisk|''. This
-line will not be generated if that default setting is set.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which resets the
-default value.
-\end{description}
-
-\subsubsection{Search Migrated Default URL}
-\begin{description}
-\item[Rationale]  \hfill \\ This value contains migrated search URL settings.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"SearchMigratedDefaultUrl"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"SearchMigratedDefaultUrl"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-SearchMigratedDefaultUrl=${url}
-SearchMigratedDefaultUrl=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-\input{snippets/iewhitelist.tex}
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases this
-value.
-\end{description}
-
-\subsubsection{Internet Explorer Window Title}
-\begin{description}
-\item[Rationale]  \hfill \\ This value is used to allow OEMs to customize their
-versions of Internet Explorer, such as making the title say ``Microsoft Internet
-Explorer provided by Timer Warner Cable''.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Window Title"="${title}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"Window Title"="${title64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim} 
-WindowTitle=${title}
-WindowTitle64=${title64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{title} and \var{title64} are escaped using the general
-escaping method defined in \ref{generalescape}, using an escape character of
-the hash mark (\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-This entry is not whitelisted.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases the
-value.
-\end{description}
+\subsubsection{User Only Sections}
+The following sections are displayed in user PseudoHJT reports only.
 
 \subsubsection{Internet Connection Wizard Shell Next}
 \begin{description}
@@ -1086,7 +730,7 @@ Connection Wizard.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-[${CurrentUser}\Software\Microsoft\Internet Connection Wizard]
+[${RootHive}\Software\Microsoft\Internet Connection Wizard]
 "ShellNext"="${url}"
 \end{verbatim}
 \item[Log Format] \hfill \\
@@ -1098,8 +742,8 @@ scheme defined in \ref{urlescape}, where the escape character is the hash mark
 \item[Whitelist Considerations] \hfill \\
 This value is not whitelisted.
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases this
-value.
+The only valid option is ``Fix''. It shall generate a fix which erases the
+``\verb|ShellNext|'' value above.
 \end{description}
 
 \subsubsection{Proxy Server}
@@ -1110,7 +754,7 @@ directed.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-[${CurrentUser}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
 "ProxyServer"="${proxy}"
 \end{verbatim}
 \item[Log Format] \hfill \\
@@ -1121,8 +765,8 @@ The variable \var{proxy} is escaped using the general escaping method defined in
 \item[Whitelist Considerations] \hfill \\
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases this
-value.
+The only valid option is ``Fix''. It shall generate a fix which erases the
+``\verb|ProxyServer|'' value above.
 \end{description}
 
 \subsubsection{Proxy Override}
@@ -1133,7 +777,7 @@ bypass the proxy server and go directly to the default gateway.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-[${CurrentUser}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\Internet Settings]
 "ProxyOverride"="${override}"
 \end{verbatim}
 \item[Log Format] \hfill \\
@@ -1144,104 +788,8 @@ in \ref{generalescape}, using the escape character \verb|#|.
 \item[Whitelist Considerations] \hfill \\
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases this
-value.
-\end{description}
-
-\subsubsection{Search URL}
-\begin{description}
-\item[Rationale] \hfill \\
-Unknown, but HijackThis and DDS enumerate it.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"SearchURL"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer]
-"SearchURL"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-SearchUrl=${url}
-SearchUrl64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-This entry is not whitelisted.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases the value
-in question.
-\end{description}
-
-\subsubsection{Search Assistant}
-\begin{description}
-\item[Rationale] \hfill \\
-Unknown, but HijackThis and DDS enumerate it.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
-"SearchAssistant"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
-"SearchAssistant"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-SearchAssistant=${url}
-SearchAssistant64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-This entry is not whitelisted.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases the value
-in question.
-\end{description}
-
-\subsubsection{Customize Search}
-\begin{description}
-\item[Rationale] \hfill \\
-Unknown, but HijackThis and DDS enumerate it.
-\input{snippets/ie64bit.tex}
-\item[Data Sources] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-; 32 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
-"CustomizeSearch"="${url}"
-; 64 Bit Registry View
-[${CurrentUser}\Software\Microsoft\Internet Explorer\Search]
-"CustomizeSearch"="${url64}"
-\end{verbatim}
-\item[Log Format] \hfill
-\vspace{-\baselineskip}
-\begin{verbatim}
-CustomizeSearch=${url}
-CustomizeSearch64=${url64}
-\end{verbatim}
-\item[Output Description] \hfill \\
-The variables \var{url} and \var{url64} are escaped using the URL escaping
-scheme defined in \ref{urlescape}, where the escape character is the hash mark
-(\verb|#|).
-\item[Whitelist Considerations] \hfill \\
-This entry is not whitelisted.
-\item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which erases the value
-in question.
+The only valid option is ``Fix''. It shall generate a fix which erases the
+``\verb|ProxyOverride|'' value above.
 \end{description}
 
 \subsection{Mozilla Firefox}
@@ -1645,7 +1193,8 @@ Sometimes it is helpful for a forum assistant to have an idea of what type of
 machine the end user is working on.  This section's purpose is to provide this
 type of information.
 \item[Data Sources] \hfill \\
-%TODO: Bill?
+This segment is generated primarily from the \verb|Win32_ComputerSystem| class
+in Windows Managment Instrumentation.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
