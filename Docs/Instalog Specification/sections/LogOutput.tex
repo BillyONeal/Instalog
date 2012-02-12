@@ -330,10 +330,42 @@ ${RawData} [?]
 \end{verbatim}
 (Where \var{RawData} is the same as above)
 
+\subsubsection{Attributes} \label{attributes}
+An attributes string is a string representation of the attribute flags on a file
+as reported by the filesystem. An attributes string is 8 characters wide. It is
+of the form: ``\verb|dcshatwr|''.
+
+For the character \verb|w|, in the above, \verb|w| is used if the file is not
+read only, while the letter \verb|r| is used if the file is read only.
+
+The other characters are similar to boolean flags. If the specified attribute is
+set, then the character appears. If it is not, \verb|-| is output instead. The
+letters correspond to the following flags:
+\begin{description}
+\item[d] \verb|FILE_ATTRIBUTE_DIRECTORY|
+\item[c] \verb|FILE_ATTRIBUTE_COMPRESSED|
+\item[s] \verb|FILE_ATTRIBUTE_SYSTEM|
+\item[h] \verb|FILE_ATTRIBUTE_HIDDEN|
+\item[a] \verb|FILE_ATTRIBUTE_ARCHIVE|
+\item[t] \verb|FILE_ATTRIBUTE_TEMPORARY|
+\item[r] \verb|FILE_ATTRIBUTE_REPARSE_POINT|
+\end{description}
+
+\subsubsection{File Listing Format} \label{filelisting}
+File Listing Format shall be defined as
+\begin{verbatim}
+${CDate} . ${MDate} ${Size} ${Attributes} ${Filepath}
+\end{verbatim}
+where \var{CDate} and \var{MDate} are the creation and modification dates of the
+file, \var{Size} is the size of the file in bytes, right aligned and space
+padded to 12 spaces wide, \var{Attributes} is an attributes string for the file
+(see section \ref{attributes}), and \var{Filepath} is the path to the file in
+question.
+
 \subsection{File Formats}
 This section describes on-disk formats that are used by Instalog.
 
-\subsubsection{Executable}
+\subsubsection{Executable} \label{executables}
 Instalog shall detect whether a file is an executable by checking the first two
 bytes of the file to see if they match ``\verb|MZ|'' (\verb|0x4D| \verb|0x5A|),
 which is always the first two bytes of executables Windows is capable of
@@ -1388,9 +1420,194 @@ this dialog, the Chrome process can be killed if it is still running.
 \subsection{Services/Drivers}
 %Bill
 \subsection{Created Last 30}
-%Bill
+Created Last 30 is designed to be look in interesting locations for files
+created in the last 30 days. It is defined by sUBs' DDS tool, and shall be used,
+almost verbatim, in Instalog.
+
+Each line of the Created Last 30 report shall use the file listing format
+defined in section \ref{filelisting}.
+
+Created Last 30 shall enumerate the following directories:
+\begin{itemize}
+    \item \verb|%SystemRoot%\System32\drivers|
+	\item \verb|%SystemRoot%\System32\wbem|
+	\item \verb|%SystemRoot%\System32|
+	\item \verb|%SystemRoot%\system|
+	\item \verb|%SystemRoot%|
+	\item \verb|%Systemdrive%|
+	\item \verb|%Systemdrive%\temp|
+	\item \verb|%userprofile%|
+	\item \verb|%commonprogramfiles%|
+	\item \verb|%programfiles%|
+	\item \verb|%AppData%|
+	\item \verb|%AllUsersprofile%|
+\end{itemize}
+and the following additional directories on x64 machines:
+\begin{itemize}
+	\item \verb|%SystemRoot%\SysWow64|
+	\item \verb|%ProgramFiles(x86)%|
+	\item \verb|%CommonProgramFiles(x86)%|
+\end{itemize}
+and the following additional directories on machines as old or more recent
+than Windows Vista:
+\begin{itemize}
+    \item \verb|%Common Appdata%|
+\end{itemize}
+
+The output will then be sorted by creation date, then by modification date, then
+by size, then by attribute string, and finally by file path.
+
 \subsection{Find3M}
-%Bill
+Find3M is taken from sUBs' DDS, almost without modification. It originally stood
+for ``Find files created in the last 3 months'', but has since been expanded to
+cover cases where files are in strange locations where they otherwise should not
+be. The output is a file listing, following the format defined in section
+\ref{filelisting}.
+
+Find3M shall be generated in the following manner:
+\begin{enumerate}
+    \item Enumerate the directories
+    \begin{itemize}
+        \item Program Files
+        \item Common Program Files
+    \end{itemize}
+    \item Enumerate files modified more recently than 3 months ago:
+    \begin{itemize}
+        \item Application Data
+        \item Common Application Data
+        \item System Drive
+        \item Windows Directory
+        \item Windows Directory \textbackslash System32
+        \item Userprofile
+        \item All Users' Profile (If the current operating system is Vista or
+        later)
+    \end{itemize}
+    \item The above comprise \var{List1}. Discard entries which do not have one
+    of the following extensions:
+    \begin{itemize}
+        \item bat
+        \item reg
+        \item vbs
+        \item wsf
+        \item vbe
+        \item msi
+        \item msp
+        \item com
+        \item pif
+        \item ren
+        \item vir
+        \item tmp
+        \item dll
+        \item scr
+        \item sys
+        \item exe
+        \item bin
+        \item drv
+    \end{itemize}
+    \item Discard those items which are not executables (see section
+    \ref{executables}) from \var{List1}.
+    \item Enumerate the following directories recursively. This comprises
+    \var{List2}.
+    \begin{itemize}
+        \item Windows Directory \textbackslash System
+        \item Windows Directory \textbackslash \verb|System32\Wbem|
+        \item Windows Directory \textbackslash
+        \verb|system32\GroupPolicy\Machine\Scripts\Shutdown|
+        \item Windows Directory \textbackslash
+        \verb|system32\GroupPolicy\User\Scripts\Logoff|
+    \end{itemize}
+    \item Discard entries from \var{List2} which are not executables and have
+    one of the following extensions:
+    \begin{itemize}
+        \item com
+        \item pif
+        \item ren
+        \item vir
+        \item tmp
+        \item dll
+        \item scr
+        \item sys
+        \item exe
+        \item bin
+        \item dat
+        \item drv
+    \end{itemize}
+    and discard those files which are not directories, and have one of the
+    following extensions:
+    \begin{itemize}
+        \item bat
+        \item cmd
+        \item reg
+        \item vbs
+        \item wsf
+        \item vbe
+        \item msi
+        \item msp
+    \end{itemize}
+    \item Enumerate executables (see section \ref{executables}) in Windows
+    Directory \textbackslash \verb|System32\Spool\prtprocs\w32x86|, forming 
+    \var{List3}.
+    \item If the current machine is an x64 machine, enumerate the following
+    directories, forming \var{List4}:
+    \begin{itemize}
+        \item Program Files (x86)
+        \item Common Program Files (x86)
+        \item Windows Directory \textbackslash Syswow64 (More recently than 3
+        months ago)
+        \item Windows Directory \textbackslash \verb|Syswow64\Drivers|
+        (Recursively)
+        \item Windows Directory \textbackslash \verb|Syswow64\Wbem|
+        (Recursively)
+    \end{itemize}
+    \item Enumerate \var{List5} as the following directories, recursively:
+    \begin{itemize}
+		\item \verb|%Systemroot%\java|
+		\item \verb|%Systemroot%\msapps|
+		\item \verb|%Systemroot%\pif|
+		\item \verb|%Systemroot%\Registration|
+		\item \verb|%Systemroot%\help|
+		\item \verb|%Systemroot%\web|
+		\item \verb|%Systemroot%\pchealth|
+		\item \verb|%Systemroot%\srchasst|
+		\item \verb|%Systemroot%\tasks|
+		\item \verb|%Systemroot%\apppatch|
+		\item \verb|%Systemroot%\Internet Logs|
+		\item \verb|%Systemroot%\Media|
+		\item \verb|%Systemroot%\prefetch|
+		\item \verb|%Systemroot%\cursors|
+		\item \verb|%Systemroot%\inf|
+    \end{itemize}
+    \item Eliminate items from \var{List5}, using the same rules that were used
+    for \var{List1} above.
+    \item Form \var{List6} by enumerating \verb|%SystemRoot%\Fonts| recursively,
+    and keeping only those files which have sizes between 1500 and 2000 bytes,
+    or have size greater than 1500 bytes, are executables (see section
+    \ref{executables}), and have one of the following extensions:
+    \begin{itemize}
+        \item com
+        \item pif
+        \item ren
+        \item vir
+        \item tmp
+        \item dll
+        \item scr
+        \item sys
+        \item exe
+        \item bin
+        \item dat
+        \item drv
+    \end{itemize}
+    \item Combine all the lists generated so far, and sort according to creation
+    date.
+    \item Remove ``runs'' of files. That is, lines of files which are longer
+    than 12 files long, which have creation date time differences of less than
+    one second. (This is to remove Windows Update changes from the report).
+    \item Remove files/directories that were already listed in the Created Last
+    30 report.
+    \item Crop the output to 100 files. (And indicate in the output if cropping
+    was required)
+\end{enumerate}
+
 \subsection{Event Viewer}
 The event viewer section shall enumerate event viewer messages from the past
 week. Each line of this report shall match
