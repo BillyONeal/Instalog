@@ -63,26 +63,26 @@ flags, because the specific name of \verb|Wow6432Node| is an implementation
 detail which can change in future versions of Windows.
 
 Therefore, we will define on top of the \verb|.REG| format a comment of
-\verb|;32 Bit Registry View| or \verb|64 Bit Registry View|, which represent the
-flag that would be passed into Windows when opening the indicated key.
+\verb|;32 Bit Registry View| or \verb|;64 Bit Registry View|, which represent
+the flag that would be passed into Windows when opening the indicated key.
 
 \subsection{Intended Audience}
 Instalog is designed with three types of target users in mind. These ``user
 classes'' are listed in the following sections.
 
 \subsubsection{Home Users}
-For a typical home user, Instalog MUST NOT display a complicated interface, and
+For a typical home user, Instalog must not display a complicated interface, and
 must make it relatively difficult to misstep and take a wrong action. Few
 options need be presented, such as the ability to generate a default report and
 the ability to take a given script and run it on a target machine. Complicated
-features such as analysis MUST NOT be displayed; though they may appear as
+features such as analysis must not be displayed; though they may appear as
 options that are, by default, deselected.
 
 \subsubsection{Administrators}
 Administrators are similar to home users in that they are physically working at
 a computer being examined, but they are different in that they have the intent of
 repairing their own computer or the computer of a client. They wish to see
-analysis features and more possible options. Instalog MUST provide a means for
+analysis features and more possible options. Instalog must provide a means for
 Administrators to use it's analysis features without manual saving and reloading
 of log files.
 
@@ -91,7 +91,7 @@ Forum Experts help typical end users repair their machines remotely over
 self-help forums such as BleepingComputer.com or GeeksToGo.com.
 These users work remotely, and likely will never see a given target
 machine.
-Instalog MUST produce log formats that are human readable in the vast majority
+Instalog must produce log formats that are human readable in the vast majority
 of cases, but which can be passed through common forum software such as Invision
 Power Board, phpBB, or vBulletin without destruction of information.
 Unfortunately, this makes common data exchange formats such as JSON and XML
@@ -110,7 +110,7 @@ data for use in Instalog, and for being available for occasional clarification
 of problems. He also allowed use of a modified form of DDS' logging format.
 
 Instalog also was constructed with feedback taken from self help forums like
-BleepingComputer, and students in Dr. Glutekin Özsoyoğlu's EECS 395: Senior
+BleepingComputer, and students in Dr. Glutekin Ozsoyoglu's EECS 395: Senior
 Project class of Spring 2012, at Case Western Reserve University.
 
 \subsection{Licensing} \label{sec:licensing}
@@ -149,12 +149,17 @@ readable and lawyer readable versions of this license can be found at
 
 \subsection{Minimum System Requirements}
 Instalog MUST run on all Microsoft Windows NT variants released later than
-Windows 2000 (x86, SP4 only). This includes all versions Windows XP (x86 and
-x64, RTM, SP1, SP2, and SP3 (on x86 machines)), Windows Vista (x86 and x64, RTM,
-SP1, and SP2), Windows 7 (x86 and x64, RTM and SP1), Windows Server 2003 (x86
-and x64, RTM, SP1, and SP2), Windows Server 2003 R2 (x86 and x64, RTM, SP1, and
-SP2), Windows Server 2008 (x86 and x64, RTM, SP1, and SP2), Windows Server 2008
-R2 (x64, RTM, and SP1).
+Windows 2000:
+\begin{itemize}
+  \item Windows 2000 (x86, SP4 only)
+  \item Windows XP (x86 and x64, RTM, SP1, SP2, and SP3 (on x86 machines))
+  \item Windows Vista (x86 and x64, RTM, SP1, and SP2)
+  \item Windows 7 (x86 and x64, RTM and SP1)
+  \item Windows Server 2003 (x86 and x64, RTM, SP1, and SP2)
+  \item Windows Server 2003 R2 (x86 and x64, RTM, SP1, and SP2)
+  \item Windows Server 2008 (x86 and x64, RTM, SP1, and SP2)
+  \item Windows Server 2008 R2 (x64, RTM, and SP1)
+\end{itemize}
 
 No attempt will be made to support Itanium architecture systems as Instalog's
 authors do not have access to suitable testing hardware. No attempt will be made

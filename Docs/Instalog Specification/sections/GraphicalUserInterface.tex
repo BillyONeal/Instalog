@@ -10,9 +10,9 @@ Basic users will only encounter screens similar to what they are familiar with
 when installing or uninstalling applications.  The interface will become much
 more complex when power users use the tool to modify scripts, but this is to be
 expected.  The editing script interface is inspired by tools that exist in the
-field (namely OTA and HijackThis).
+field (namely \textit{OTA} and \textit{HijackThis}).
 
-\subsection{Main}
+\subsection{Main Screen}
 When a user opens the application, they must be presented with the screen from
 Figure~\ref{fig:gui_main}.  This screen is the decision point of the
 application.  Depending on the user's input, this screen will take the user
@@ -48,26 +48,26 @@ shall be enabled for searching for \texttt{*.txt} and \texttt{*.zip} files.
 \begin{enumerate}
 \item  If a valid file is opened, the contents of the textbox shall be cleared
 and then the full contents of the file shall be placed into the textbox.
-Obviously, zipped files should be unzipped.
+zipped files shall be unzipped.
 \item If the user presses cancel in the dialog, the contents of the textbox
 shall not be changed
 \end{enumerate}
 \end{enumerate}
 
-\item[\var{action} button requirements] \hfill
+\item[\var{ACTION} button requirements] \hfill
 \begin{enumerate}
 \item The contents of the textbox shall be scanned to determine if it contains
 default script content (or empty script content), script content, or log
-content.  If so, the button shall display ``Scan," ``Execute," or ``Analyze"
+content.  If so, the button shall display ``Execute" or ``Analyze"
 (respectively).
 \item The button shall have differing behavior based on the inferred content of
 the textbox:
 \begin{enumerate}
-\item If the button reads ``Scan," the tool shall proceed to the Running Screen
-(section~\ref{sec:running_screen}) running the default script
-(section~\ref{sec:default_script_sections}).
 \item If the button reads ``Execute," the tool shall proceed to the Running
-Screen (section~\ref{sec:running_screen}) running the supplied script.
+Screen (section~\ref{sec:running_screen}) running the supplied script.  If the
+script input is empty, then the tool shall run the default script
+(\ref{sec:default_script_sections}), otherwise, the tool shall run the provided
+script.
 \item If the button reads ``Analyze," the tool shall proceed to the Analysis
 Screen (section~\ref{sec:analysis_screen}) displaying the parsed log.
 \end{enumerate}
@@ -81,7 +81,7 @@ invalid and therefore the tool will not continue.
 
 \item[About button requirements] \hfill
 \begin{enumerate}
-\item This button shall display a screen that contains the license for this
+\item The about button shall display a screen that contains the license for this
 project (section~\ref{sec:licensing}) as well as information for any other
 tools used in this project.  This screen shall have a simple close button.
 \item The behavior for this button is the same on all following windows. 
@@ -105,23 +105,25 @@ Screen is presented in Figure~\ref{fig:gui_running}.
 \item[Textbox requirements] \hfill 
 \begin{enumerate}
   \item The textbox shall be updated to display the (raw) log output of the
-  currently running screen.  This textbox shall only be updated at a rate of 60
-  Hz to avoid slowing down the GUI.
-  \item The textbox must be scrollable.  It shall automatically scroll down to 
-  follow the output by default.  If the user scrolls up for any reason, it shall
-  no longer auto-scroll unless the user manually scrolls all the way down to the
-  bottom of the output.
+  currently running screen.  This textbox shall only be updated at a rate of 
+  at most 60 Hz to avoid slowing down the GUI.
+  \item The textbox must be scrollable in both dimensions.  It shall
+  automatically scroll down to follow the output by default.  If the user
+  scrolls up for any reason, it shall no longer auto-scroll unless the user
+  manually scrolls all the way down to the bottom of the output.
+  \item The scrolling behavior must respect the scroll lock key.
+  \item The textbox shall be read-only
 \end{enumerate}
-\item[Progress bar requirements] \hfill 
+\item[Progress bar requirements] \hfill
 \begin{enumerate}
-  \item The progress bar shall contain the best estimate of the progress through
-  the script.  This estimate can be something as simple as the completed script 
-  actions divided by the total script actions.
+  \item The progress bar shall contain a reasonable estimate of the progress
+  through the script.  This estimate can be something as simple as the completed
+  script actions divided by the total script actions.
 \end{enumerate}
 \item[Cancel button requirements] \hfill 
 \begin{enumerate}
   \item The ``Cancel'' button must not be enabled if the script contains any 
-  system-altering actions.  This can be determined by scanning the script in 
+  system-altering actions.  This can be determined by parsing the script in 
   advance.
   \item If the user presses the ``Cancel" button, the ``Next" button must  
   change to display ``Exit."  The text of the ``Cancel" button shall change to
@@ -181,7 +183,7 @@ file).  This screen is presented in Figure~\ref{fig:gui_run_complete}.
     the Analysis Screen (section~\ref{sec:analysis_screen}).
     \item If the only option selected was ``Analyze output," then the tool
     shall proceed to the Analysis Screen (section~\ref{sec:analysis_screen})
-    after displaying a warning that the output will be otherwise un-savable.
+    after displaying a warning that the output will be otherwise not be saved.
   \end{enumerate}
 \end{enumerate}
 \item[Window close button requirements] \hfill
@@ -197,7 +199,7 @@ file).  This screen is presented in Figure~\ref{fig:gui_run_complete}.
 The analysis screen enables users to construct a script based on the output
 from a log.  For the requirements listed in this section, it does not
 matter what workflow the user used to get to this screen.  This screen is
-presented in figure~\ref{fig:gui_analyze}.
+presented in Figure~\ref{fig:gui_analyze}.
 
 \begin{figure}[h]
   	\centering
@@ -212,29 +214,31 @@ presented in figure~\ref{fig:gui_analyze}.
   \item Each separate section in the log shall be parsed into one of the gray
   section.  Sections in the log are described in section~\ref{sec:log_output}.
   \item Sections can be collapsed or expanded by the user.  The user can either
-  press the entire section heading or the Chevron arrow to perform this action.
+  press the entire section heading or the chevron arrow to perform this action.
   By default, all sections will be expanded.
-  \item The Chevron arrow shall point to the right for collapsed sections and
+  \item The chevron arrow shall point to the right for collapsed sections and
   downward for expanded sections.
-  \item No animation is necessary for the collapse action or expand action.
+  \item No animation is necessary for the collapse or expansion of sections.
   \item Hovering over a section shall slightly change the background color.
   \item Each corresponding line shall be listed under the section.  Some
   sections might not have any lines.  In this case, a single line shall appear
-  with the following text in italics: ``No lines available for this section."
+  with the following text in italics: ``No output available for this section."
 \end{enumerate}
 \item[Line requirements] \hfill
 \begin{enumerate}
-  \item Each separate line of the log will be logged into a line underneath the
+  \item Each separate line of the log will be displayed as a line underneath the
   corresponding section.
-  \item Hovering over a line shall slightly change the background color.
+  \item Hovering over a line shall slightly change the line's background color.
 \end{enumerate}
 \item[Checkbox requirements] \hfill
 \begin{enumerate}
   \item Depending on the line, there may be zero, one, or many actions available
   for the given line.  There shall be a checkbox to the left of the line for
-  each action.  Checking a box indicates that the action shall be taken.
+  each action.  Checking a box indicates that the action shall be taken by a
+  script.
   \item A user shall be able to hover their mouse over any checkbox to
-  determine what action the checkbox enables.
+  determine what action the checkbox enables.  The information shall be provided
+  via a tooltip. 
   \item In a given section, actions shall be grouped by actions.  Therefore,
   each column will only have one type of action in it.  If an action does not
   apply to a line, there shall simply be an empty slot where the checkbox would
@@ -243,13 +247,13 @@ presented in figure~\ref{fig:gui_analyze}.
 \end{enumerate}
 \item[Aditional script actions requirements] \hfill
 \begin{enumerate}
-  \item The last section in the log must always be titled ``Additional script
+  \item The last section in the log must be titled ``Additional script
   actions'' and will contain a textbox that will allow the user to specify
   additional script actions to take
-  \item The textbox shall always have a minimum height of ten lines and will
+  \item The textbox shall have a minimum height of ten lines and will
   grow to always be one line longer than its contents
   \item The textbox shall not have its own scrollbars.  Rather, the scrollbars
-  for the rest of the control are be sufficient
+  for the checkboxes control are sufficient
   \item The textbox must support basic operations including but not limited
   to Copy, Paste, and Undo/Redo.
   \item The textbox shall not implement word-wrap.
@@ -262,7 +266,7 @@ presented in figure~\ref{fig:gui_analyze}.
 \end{description}
 
 \subsection{Analysis Completed Screen}
-This screen enables a user to decide what to do with the finished script.  This
+This screen enables a user to decide what to do with the generated script.  This
 screen is presented in Figure~\ref{fig:gui_analysis_completed}.
 
 \begin{figure}[h]
@@ -275,15 +279,15 @@ screen is presented in Figure~\ref{fig:gui_analysis_completed}.
 \begin{description}
 \item[Option requirements] \hfill
 \begin{enumerate}
-  \item By default, nothing shall be selected
+  \item By default, nothing shall be selected.
   \item Both of the file Save fields shall default to the user's desktop
   (\verb|%userprofile%\Desktop\|) with the filenames \verb|Script.txt| and
   \verb|Script.zip|.
 \end{enumerate}
 \item[Next button requirements] \hfill
 \begin{enumerate}
-  \item The button must be disabled until at least one option is selected. It
-  must return to being disabled if nothing is selected.
+  \item Whenever one or more options are checked, the button shall be enabled.
+  Otherwise, it shall be disabled.
   \item The button shall have the following behavior when it is clicked:
   \begin{enumerate}
     \item If the options selected did not include ``Run script," then the tool
