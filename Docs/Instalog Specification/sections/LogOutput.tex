@@ -1014,6 +1014,122 @@ For the ``DefaultMissing'' line, only ``Fix'' is valid; selecting it generates a
 script restoring the default value.
 \end{description}
 
+\subsubsection{Shell}
+\begin{description}
+\item[Rationale] \hfill \\
+The shell is responsible for drawing the user's taskbar, start menu, icons, etc.
+Sometimes users legitimately replace the shell with alterates such as xplorer2.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"Shell"="${Shell}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Shell=${Shell}|
+\item[Output Description] \hfill \\
+The variable \var{Shell} is shown using the file display method defined in
+section \ref{stdfile}.
+\item[Whitelist Considerations] \hfill \\
+The default value if \var{Shell}, ``\verb|explorer.exe|'', shall be whitelisted.
+\item[Fix Considerations] \hfill \\
+The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Fix'' shall restore the default registry value.
+\end{description}
+
+\subsubsection{Userinit}
+\begin{description}
+\item[Rationale] \hfill \\
+Userinit performs user initialization procedures for Windows, to get a user's
+session ready for use. If it is damaged, or disabled, users' attempts to log in
+will immedately cause them to log out.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"Userinit"="${Userinit}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Userinit=${Userinit}|
+\item[Output Description] \hfill \\
+The variable \var{Userinit} is shown using the file display method defined in
+section \ref{stdfile}.
+\item[Whitelist Considerations] \hfill \\
+The default value if \var{Userinit}, ``\verb|userinit.exe|'', shall be whitelisted.
+\item[Fix Considerations] \hfill \\
+The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Fix'' shall restore the default registry value.
+\end{description}
+
+\subsubsection{UI Host}
+\begin{description}
+\item[Rationale] \hfill \\
+The UI Host is used by Windows to help display the logon screen.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"UIHost"="${UIHost}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|UIHost=${UIHost}|
+\item[Output Description] \hfill \\
+The variable \var{UIHost} is shown using the file display method defined in
+section \ref{stdfile}.
+\item[Whitelist Considerations] \hfill \\
+The default value if \var{UIHost}, ``\verb|logonui.exe|'', shall be whitelisted.
+\item[Fix Considerations] \hfill \\
+The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Fix'' shall restore the default registry value.
+\end{description}
+
+\subsubsection{Task Manager}
+\begin{description}
+\item[Rationale] \hfill \\
+The task manager is the interface Windows provides to terminate processes for a
+user. The registry value in question here changes what Windows interprets as the
+task manager for the purposes of the Control+Alt+Delete key sequence.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"TaskMan"="${TaskMan}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|TaskMan=${TaskMan}|
+\item[Output Description] \hfill \\
+The variable \var{TaskMan} is shown using the file display method defined in
+section \ref{stdfile}.
+\item[Whitelist Considerations] \hfill \\
+The default value if \var{TaskMan}, ``\verb|taskmgr.exe|'', shall be whitelisted.
+\item[Fix Considerations] \hfill \\
+The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Fix'' shall restore the default registry value.
+\end{description}
+
+\subsubsection{System File Checking Disable}
+\begin{description}
+\item[Rationale] \hfill \\
+This registry value disables Windows File Protection.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"SFCDisable"=dword:${SFCDisable}
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|SFC=Enabled| \\
+\verb|SFC=Disabled|
+\item[Output Description] \hfill \\
+The variable \var{SFCDisable} is a number; if it is zero, then the ``Enabled''
+line is printed. If it is nonzero, then the ``Disabled'' line is printed. If it
+does not exist, then nothing is printed.
+\item[Whitelist Considerations] \hfill \\
+Not applicable. (This entry does not exist by default)
+\item[Fix Considerations] \hfill \\
+The option ``Fix'' shall delete the registry value.
+\end{description}
+
 \subsubsection{User Only Sections}
 The following sections are displayed in user PseudoHJT reports only.
 
@@ -1085,6 +1201,32 @@ This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
 The only valid option is ``Fix''. It shall generate a fix which erases the
 ``\verb|ProxyOverride|'' value above.
+\end{description}
+
+\subsubsection{INI Autostarts}
+\begin{description}
+\item[Rationale] \hfill \\
+These autostart locations are maintained by Windows for compatability with the
+Win9x series of operating systems.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows NT\CurrentVersion\Windows]
+"Load"="${Load}"
+"Run"="${Run}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|IniLoad=${Load}| \\
+\verb|IniRun=${Run}|
+\item[Output Description] \hfill \\
+The variables \var{Load} and \var{Run} shall be escaped using the general
+escaping method defined in \ref{generalescape}, using an escape character of
+hash (\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+Not applicable.
+\item[Fix Considerations] \hfill \\
+The option ``Fix'' shall generate a script which deletes the associated
+registry value.
 \end{description}
 
 \subsection{Mozilla Firefox}
