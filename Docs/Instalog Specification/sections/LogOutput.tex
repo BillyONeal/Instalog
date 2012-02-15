@@ -1,8 +1,7 @@
 \section{Log Output} \label{sec:log_output}
 This section generally defines the form of Instalog's output. A log is split up
 into several delimited portions called ``sections''. With the exception of
-headers and footers, all sections begin with a line similar to the following
-format:
+headers and footers, all sections begin with a line of the following format:
 
 \begin{verbatim}
 ================ ${Section Name} ===============
@@ -72,11 +71,11 @@ designed with specific input data in mind (file paths and command line
 switches, for instance), which is not the case for most reported data.
 
 \label{generalescape}
-Therefore, we define a general escape function that works in a manner similar to
-C's string literal escapes, but which allows arbitrary starting, termination,
-and escaping characters. The input to the escape function is raw data obtained
-from some data source, and the output is the same data with the following
-textual replacements:
+Therefore, Instalog shall use define a general escape function that works in a
+manner similar to C's string literal escapes, but which allows arbitrary
+starting, termination, and escaping characters. The input to the escape function
+is raw data obtained from some data source, and the output is the same data with
+the following textual replacements: 
 
 \begin{itemize}
     \item \var{EscapeCharacter} is replaced with
@@ -136,9 +135,10 @@ Windows' own \verb|CommandLineToArgvW| function defines it's own escaping
 scheme. This format is delimited on both the left and right by quote (\verb|"|)
 characters. Instalog shall interpret this format exactly as Windows' function
 does. Quoting MSDN:
-\begin{indent}
-CommandLineToArgvW has a special interpretation of backslash characters when
-they are followed by a quotation mark character (\verb|"|), as follows:
+
+\begin{quote}
+\verb|CommandLineToArgvW| has a special interpretation of backslash characters
+when they are followed by a quotation mark character (\verb|"|), as follows:
 \begin{itemize}
     \item $2n$ backslashes followed by a quotation mark produce $n$ backslashes
     followed by a quotation mark.
@@ -147,7 +147,7 @@ they are followed by a quotation mark character (\verb|"|), as follows:
     \item $n$ backslashes not followed by a quotation mark simply produce $n$
     backslashes.
 \end{itemize}
-\end{indent}
+\end{quote}
 
 \subsection{Date Formats}
 Instalog shall use two date formats.
@@ -172,7 +172,7 @@ ${YYYY}-${MM}-${DD} ${HH}:${MM}:${SS}.${Milli}
 Where \var{YYYY} is the four digit year, \var{MM} is the two digit month,
 \var{DD} is the two digit day, \var{HH} is the two digit hour, \var{MM} is the
 two digit minute count, \var{SS} is the two digit number of seconds, and
-\var{Milli} is the 4 digit number of miliseconds.
+\var{Milli} is the 4 digit number of milliseconds.
 
 If the given value is fewer than the number of digits available, they shall be
 zero padded to take up as many spaces as that item has been assigned.
@@ -196,8 +196,8 @@ Path resolution consists of three phases:
     \item Removal of common path prefixes that serve as redirectors
 \end{enumerate}
 
-Instalog will use a hueristic to convert from the NT path to the Win32 path; as
-there is no consistent API exposed by Windows for this task. This hueristic
+Instalog will use a heuristic to convert from the NT path to the Win32 path; as
+there is no consistent API exposed by Windows for this task. This heuristic
 consists of replacing several prefixes on the path with known values. These
 replacements must be done in the following order.
 \begin{enumerate}
@@ -216,14 +216,14 @@ replacements must be done in the following order.
     installation followed by a backslash.
 \end{enumerate}
 
-After this hueristic is applied, the resulting path should correspond to a Win32
+After this heuristic is applied, the resulting path should correspond to a Win32
 path.
 
-The second phase consists of seperation of the executable path from it's
+The second phase consists of separation of the executable path from it's
 arguments. This is done in the same way that Windows' own \verb|CreateProcessW|
 API call does. It is based on the current value of the environment variables
 \verb|%PATH%| and \verb|%PATHEXT%|. The first defines to Windows where
-executabs are located, while the second defines which file extensions are
+executables are located, while the second defines which file extensions are
 allowed to be implicitly interpreted as executables.
 
 At first, any leading space in the path is removed. Next, if the path begins
@@ -245,7 +245,7 @@ work, Instalog shall repeat the \verb|%PATHEXT%| part of the check, prefixing
 the entire path with each of the paths in \verb|%PATH%|, until it finds a match.
 If it still cannot find a matching file, Instalog moves on to the next space.
 
-For example, if \verb|PATH=C:\Windows;C:\Windows\System32|, and
+For example, if \verb|%PATH%=C:\Windows;C:\Windows\System32|, and
 \verb|%PATHEXT%=.bat;.com;.exe|, and one is trying to parse a command line of
 \verb|rundll32 example.dll|, Instalog shall try the following paths, in
 order:
@@ -275,7 +275,7 @@ the target is to Windows' \verb|rundll32.exe|, that part of the path is
 stripped, the entire path after the first \verb|,| is stripped from the path,
 and resolution is \textit{restarted} on the new argument. That is, this:
 \begin{verbatim}
-rundll32 baddie.dll,SomeRandomGarbage
+rundll32 baddie.dll,EntryPoint
 \end{verbatim}
 is (typically) resolved to
 \begin{verbatim}
@@ -296,7 +296,7 @@ Given a raw piece of data meant to represent a file, Instalog shall use the
 following ``default file format'' where indicated.
 
 If the file exists and company information (using Windows' version info
-querying functions like \verb|VerQueryValue|):
+querying functions such as \verb|VerQueryValue|):
 \begin{verbatim}
 ${ResolvedFile} [${Size} ${CreatedDate} ${Company}]
 \end{verbatim}
@@ -323,7 +323,7 @@ ${RawData} [x]
 where \var{RawData} is the information retrieved for the file, escaped using the
 general escaping method, using an escape character of hash (\verb|#|).
 
-Finally, if some failure occured in path resolution that was not the file not
+Finally, if some failure occurred in path resolution that was not the file not
 existing, then the output shall match the following:
 \begin{verbatim}
 ${RawData} [?]
@@ -459,28 +459,27 @@ purposes.
 \item[Data Sources] \hfill \\
 The full path to the running executable shall be referred to as \var{path}.  The
 arguments to that process shall be referred to as \var{arguments}.  The
-\var{arguments} variable should be empty except if the processes is one of the
+\var{arguments} variable should be empty unless the processes is one of the
 following values:
 \begin{itemize}
-  \item \verb|C:\WINDOWS\System32\svchost|
-  \item \verb|C:\WINDOWS\System32\svchost.exe|
+  \item \verb|%WINDIR%\System32\svchost|
+  \item \verb|%WINDIR%\System32\svchost.exe|
   %TODO: rundll?
 \end{itemize}
 \item[Log Format] \hfill \\
 If \var{arguments} is set:
 \vspace{-\baselineskip}
 \begin{verbatim}
-[${path} [${arguments}
+${path} ${arguments}
 \end{verbatim}
 If \var{arguments} is not set:
 \vspace{-\baselineskip}
 \begin{verbatim}
-[${path} 
+${path} 
 \end{verbatim}
 \item[Output Description] \hfill \\
 Both \var{path} and \var{arguments} shall be escaped according to the scheme
-described in \ref{generalescape} where \verb|#| is the escape character and
-\verb|]| is the right delimiter.  
+described in \ref{generalescape} where \verb|#| is the escape character.
 \item[Whitelist Considerations] \hfill \\
 The following process paths should be whitelisted:
 \begin{itemize}
@@ -496,7 +495,7 @@ Two fix actions shall be available:
 \item[Kill] This action will kill the identified process.  This action shall
 accept both the process path as well as arguments.  If multiple processes exist
 that match the supplied path and arguments, all instances shall be killed. 
-\item[Kill and Quarantine]  This action will kill and quarantine the identified
+\item[Quarantine]  This action will kill and quarantine the identified
 process.  This action shall accept both the process path as well as arguments. 
 The \textbf{kill} action described above shall first be followed.  The process
 should then be moved into quarantine following the procedure defined in
@@ -510,9 +509,7 @@ The information in the PseudoHJT report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
 significantly different syntax to that which they know. This format is
-sparse and human readable. Perhaps most importantly, despite matching the
-original HJT in terms of information conveyed, the format itself MUST be
-different enough to avoid legal action by TrendMicro against Instalog's authors.
+sparse and human readable. 
 
 Generally speaking, the PseudoHJT report shall attempt to list all relevant
 loading points on a Windows machine, as well as user settings for the Internet
@@ -527,10 +524,10 @@ by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
 
 For either PseudoHJT section in the Instalog GUI, two checkboxes are available
-if defined by the lines below: \textbf{Move} and \textbf{Fix} (in that order).
-Move, generally speaking, will generate script to quarantine a file associated
-with an entry, and Fix will generate script to reset settings to a default
-state, or delete loading points.
+if defined by the lines below: \textbf{Quarantine} and \textbf{Fix} (in that
+order).  Move, generally speaking, will generate script to quarantine a file
+associated with an entry, and Fix will generate script to reset settings to a
+default state, or delete loading points.
 
 The PseudoHJT machine report contains settings which affect the entire machine.
 
@@ -1095,9 +1092,9 @@ Mozilla Firefox (hereafter referred to as simply ``Firefox'') is a popular web
 browser that many users have installed on their machines.  An attack from within
 the browser is a possibility.  As such, this tool must enumerate various Firefox
 loading points to find suspicious information (if Firefox is installed).  This
-can be determined by checking to see if the \var{version} is set in the
-following registry key:
-% TODO: Do I have to put any 32/64 bit information here? 
+is determined by checking to see if the \var{version} is set in the following
+registry key:
+% TODO: Do I have to put any 32/64 bit information here?
 \begin{verbatim}
 [HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\Mozilla Firefox] 
 "Current Version"="${version}
@@ -1149,7 +1146,7 @@ Some user preferences could be overridden that would lead a user to malicious
 pages.  
 \item[Data Sources] \hfill \\
 User preferences are located in the ``\verb|${profile path}/prefs.js|'' file. 
-The preferences are saved in the JSON format. There are several different
+The preferences are saved in JSON. There are several different
 ``loading points'' from this file that could be important for diagnosing an
 infection:
 \begin{itemize}
@@ -1188,14 +1185,15 @@ Firefox process can be killed if it is still running and the preference(s)
 reset.
 \end{description}
 
-\subsubsection{Extensions}
+\subsubsection{Extensions and Themes}
 \begin{description}
 \item[Rationale] \hfill \\
 Firefox allows users to add to the functionality of their browser through
 ``extensions'' (sometimes called addons).  These extensions can be malicious in
 nature.  Extensions need not be installed by the user; they can be installed
 outside Firefox as well by placing extensions in the profile directory and
-relaunching Firefox.  
+relaunching Firefox.  Themes are loaded in the same manner as extensions and
+therefore must also be enumerated.
 \item[Data Sources] \hfill \\
 Extension metadata is stored in an SQLite 3 database located in \\
 \verb|${profilepath}/extensions.sqlite|.  There are two tables in this database
@@ -1211,13 +1209,12 @@ The output variables are defined as:
   addon.defaultLocale}
   \item[\var{version}] \verb|addon.version| attribute
   \item[\var{type}] \verb|addon.type| attribute
-  \item[\var{id}] \verb|addon.id| attribute
   \item[\var{path}] \verb|addon.descriptor| attribute
 \end{description}
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
-Extension ${visible} ${active} "${name} ${version} ${type} ${id} ${path}
+${type} ${visible} ${active} ${version} "${name}" ${type} ${path}
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{name} shall be escaped according to the scheme defined in
@@ -1234,7 +1231,7 @@ happen while Firefox is not running.  If a script is supposed to fix an
 extension and Firefox is running, a dialog must appear warning the user that
 Firefox will be closed.  When the user hits okay in this dialog, the Firefox
 process can be killed if it is still running.  When the user re-opens Firefox
-later, the extension(s) will be removed from the database.
+later, the extension(s) or theme(s) will be removed from the database.
 \end{description}
 
 \subsubsection{Plugins}
@@ -1268,7 +1265,7 @@ other separation.  It shall be enough to read through to the
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
-Plugin "${name} ${version} ${path}
+Plugin "${name}" "${version}" "${path}"
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{name} shall be escaped according to the scheme
@@ -1359,7 +1356,7 @@ set (hereafter referred to as \texttt{e}), the following variables are defined:
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
-Extension ${state} "${name} ${version} ${id}
+Extension ${state} ${id} ${version} "${name}"
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{name} shall be escaped according to \ref{generalescape} with an escape
@@ -1407,7 +1404,7 @@ inside a JSON list located in \verb|plugins.plugins_list|.  For each plugin,
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-Plugin "${name} ${version} ${path}
+Plugin ${version} "${name}" ${path}
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{name} shall be escaped according to the scheme defined in
@@ -1416,18 +1413,10 @@ Plugin "${name} ${version} ${path}
 \ref{generalescape} as well with \verb|#| as the escape character and the
 newline as the right delimiter.
 \item[Whitelist Considerations] \hfill \\
-Default Chrome installations have several plugins pre-installed.  If \var{name}
-matches any of the following values, the plugin can be whitelisted:
-\begin{enumerate}
-  \item ``Shockwave Flash''
-  \item ``Flash''
-  \item ``Remoting Viewer''
-  \item ``Native Client''
-  \item ``Chrome PDF Viewer''
-\end{enumerate}
+None.
 \item[Fix Considerations] \hfill \\
 To fix these items, the \var{path} simply needs to be deleted.  This must
-happen while Chrome is not running.  If a script is supposed to fix an
+happen while Chrome is not running.  If a script is supposed to fix a
 plugin and Chrome is running, a dialog must appear warning the user that
 Chrome will be closed.  When the user hits okay in this dialog, the Chrome
 process can be killed if it is still running.  
@@ -1483,7 +1472,8 @@ current machine, limited by whitelist. Each line in this report is of the form
 ${State}${Start} ${ServiceName};${DisplayName};${File}
 \end{verbatim}
 
-\var{State} is one of the following:
+\noindent{}\var{State} is one of the following:
+\begin{quote}
 \begin{description}
 \item[S] Service Stopped
 \item[R?] Service Start Pending
@@ -1494,8 +1484,10 @@ ${State}${Start} ${ServiceName};${DisplayName};${File}
 \item[P] Service Paused
 \item[?] Unknown
 \end{description}
+\end{quote}
 
-\var{Start} is one of the following:
+\noindent{}\var{Start} is one of the following:
+\begin{quote}
 \begin{description}
 \item[0] \verb|SERVICE_BOOT_START| -- A device driver started by the system
 loader. This value is valid only for driver services.
@@ -1507,11 +1499,12 @@ service control manager during system startup.
 manager when a process calls the \verb|StartService| function.
 \item[4] \verb|SERVICE_DISABLED| -- A service that cannot be started.
 \end{description}
+\end{quote}
 
 \var{ServiceName} is the registry name used for the service. \var{DisplayName}
 is the name the service advertises itself as. \var{File} is the image path
 configured for the service, in the standard file enumeration format defined in
-section \ref{stdfile}.
+section \ref{stdfile} and escaped using \verb|;| as the right delmiter.
 
 \subsection{Created Last 30}
 Created Last 30 is designed to be look in interesting locations for files
@@ -1542,8 +1535,7 @@ and the following additional directories on x64 machines:
 	\item \verb|%ProgramFiles(x86)%|
 	\item \verb|%CommonProgramFiles(x86)%|
 \end{itemize}
-and the following additional directories on machines as old or more recent
-than Windows Vista:
+and the following additional directories on Vista or newer.
 \begin{itemize}
     \item \verb|%Common Appdata%|
 \end{itemize}
@@ -1552,8 +1544,8 @@ The output will then be sorted by creation date, then by modification date, then
 by size, then by attribute string, and finally by file path.
 
 \subsection{Find3M}
-Find3M is taken from sUBs' DDS, almost without modification. It originally stood
-for ``Find files created in the last 3 months'', but has since been expanded to
+Find3M is modelled after sUBs' DDS, almost without modification. It
+originally stood for ``Find files created in the last 3 months'', but has since been expanded to
 cover cases where files are in strange locations where they otherwise should not
 be. The output is a file listing, following the format defined in section
 \ref{filelisting}.
@@ -1579,31 +1571,31 @@ Find3M shall be generated in the following manner:
     \item The above comprise \var{List1}. Discard entries which do not have one
     of the following extensions:
     \begin{itemize}
-        \item bat
-        \item reg
-        \item vbs
-        \item wsf
-        \item vbe
-        \item msi
-        \item msp
-        \item com
-        \item pif
-        \item ren
-        \item vir
-        \item tmp
-        \item dll
-        \item scr
-        \item sys
-        \item exe
-        \item bin
-        \item drv
+        \item \verb|bat|
+        \item \verb|reg|
+        \item \verb|vbs|
+        \item \verb|wsf|
+        \item \verb|vbe|
+        \item \verb|msi|
+        \item \verb|msp|
+        \item \verb|com|
+        \item \verb|pif|
+        \item \verb|ren|
+        \item \verb|vir|
+        \item \verb|tmp|
+        \item \verb|dll|
+        \item \verb|scr|
+        \item \verb|sys|
+        \item \verb|exe|
+        \item \verb|bin|
+        \item \verb|drv|
     \end{itemize}
     \item Discard those items which are not executables (see section
     \ref{executables}) from \var{List1}.
     \item Enumerate the following directories recursively. This comprises
     \var{List2}.
     \begin{itemize}
-        \item Windows Directory \textbackslash System
+        \item Windows Directory \textbackslash \verb|System|
         \item Windows Directory \textbackslash \verb|System32\Wbem|
         \item Windows Directory \textbackslash
         \verb|system32\GroupPolicy\Machine\Scripts\Shutdown|
@@ -1613,30 +1605,30 @@ Find3M shall be generated in the following manner:
     \item Discard entries from \var{List2} which are not executables and have
     one of the following extensions:
     \begin{itemize}
-        \item com
-        \item pif
-        \item ren
-        \item vir
-        \item tmp
-        \item dll
-        \item scr
-        \item sys
-        \item exe
-        \item bin
-        \item dat
-        \item drv
+        \item \verb|com|
+        \item \verb|pif|
+        \item \verb|ren|
+        \item \verb|vir|
+        \item \verb|tmp|
+        \item \verb|dll|
+        \item \verb|scr|
+        \item \verb|sys|
+        \item \verb|exe|
+        \item \verb|bin|
+        \item \verb|dat|
+        \item \verb|drv|
     \end{itemize}
     and discard those files which are not directories, and have one of the
     following extensions:
     \begin{itemize}
-        \item bat
-        \item cmd
-        \item reg
-        \item vbs
-        \item wsf
-        \item vbe
-        \item msi
-        \item msp
+        \item \verb|bat|
+        \item \verb|cmd|
+        \item \verb|reg|
+        \item \verb|vbs|
+        \item \verb|wsf|
+        \item \verb|vbe|
+        \item \verb|msi|
+        \item \verb|msp|
     \end{itemize}
     \item Enumerate executables (see section \ref{executables}) in Windows
     Directory \textbackslash \verb|System32\Spool\prtprocs\w32x86|, forming 
@@ -1678,18 +1670,18 @@ Find3M shall be generated in the following manner:
     or have size greater than 1500 bytes, are executables (see section
     \ref{executables}), and have one of the following extensions:
     \begin{itemize}
-        \item com
-        \item pif
-        \item ren
-        \item vir
-        \item tmp
-        \item dll
-        \item scr
-        \item sys
-        \item exe
-        \item bin
-        \item dat
-        \item drv
+        \item \verb|com|
+        \item \verb|pif|
+        \item \verb|ren|
+        \item \verb|vir|
+        \item \verb|tmp|
+        \item \verb|dll|
+        \item \verb|scr|
+        \item \verb|sys|
+        \item \verb|exe|
+        \item \verb|bin|
+        \item \verb|dat|
+        \item \verb|drv|
     \end{itemize}
     \item Combine all the lists generated so far, and sort according to creation
     date.
@@ -1715,12 +1707,12 @@ where \var{Date} is the date the event was logged using the standard date format
 ID that service has given the event, and \var{Description} is the human readable
 description provided by the service.
 
-All ``Warning'' and ``Critical'' messages will be printed to the log, from the
-default System and Application event logs. All messages (including
-Informational and Warning) will be enumerated for Windows File Protection
-sourced events.
+All ``Warning'' and ``Critical'' messages will be not be logged, from the
+default System and Application event logs. All messages (including Informational
+and Warning) will be enumerated for Windows File Protection sourced events.
 
-The EventIds 1000, 8023, and 10010 are whitelisted, and shall not be printed.
+The \var{EventId}'s 1000, 8023, and 10010 are whitelisted, and shall not be
+printed.
 
 \subsection{Machine Specifications}
 \begin{description}
@@ -1737,7 +1729,7 @@ in Windows Managment Instrumentation.
 ${windows_version}
 Boot Device: ${boot_device}
 Install Date: ${install_date}
-System Uptime: ${uptime} (${uptime_duration})
+System Uptime: ${boot_time} (${uptime})
 Motherboard: ${motherboard}
 Processor: ${processor_0}
 ${drive_partitions}
@@ -1803,7 +1795,8 @@ From this class, the variables that shall be logged are \texttt{Description},
 ${number} ${time} ${description}
 \end{verbatim}
 \item[Output Description] \hfill \\
-None of the variables need to be escaped.
+\var{description} shall be escaped using the scheme defined in
+\ref{generalescape} with \verb|#| as the escape character.  
 \item[Whitelist Considerations] \hfill \\
 There are no applicable whitelist considerations.
 \item[Fix Considerations] \hfill \\
