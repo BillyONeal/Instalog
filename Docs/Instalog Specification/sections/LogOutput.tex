@@ -958,6 +958,65 @@ The only valid option is ``Fix''. It shall generate a fix which erases the value
 in question.
 \end{description}
 
+\subsubsection{URL Search Hooks}
+\begin{description}
+\item[Rationale] \hfill \\
+URL Search Hooks are used by Internet Explorer in the event the user types in
+something that is not an address in order to attempt to resolve a reasonable web
+address.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+; 32 bit registry view
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\
+    Internet Explorer\URLSearchHooks]
+"${CLSID}"="${AlternateName}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InprocServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|UrlSearchHook: ${SelectedName}: ${CLSID}=${File}| \\
+\verb|UrlSearchHook64: ${SelectedName}: ${CLSID}=${File}| \\
+\verb|UrlSearchHook: DefaultMissing| \\
+\verb|UrlSearchHook64: DefaultMissing|
+\item[Output Description] \hfill \\
+\var{SelectedName} is either \var{Name}, \var{AlternateName}, or the string
+``\verb|N/A|'', in order. (That is, failing to the next if the given name is
+empty) \var{SelectedName} is escaped using the default escaping method defined
+in \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
+delimiter of colon (\verb|:|). \var{CLSID} shall also be escaped, using the
+same escape character but a right delimiter of equals (\verb|=|). File shall be
+passed through the resolution process defined in \ref{stdfile}.
+
+The DefaultMissing line shall be displayed in the event the default value does
+not exist.
+\item[Whitelist Considerations] \hfill \\
+The default CLSID is
+\vspace{-\baselineskip}
+\begin{verbatim}
+{CFBFAE00-17A6-11D0-99CB-00C04FD64497}
+\end{verbatim}
+the default file is
+\vspace{-\baselineskip}
+\begin{verbatim}
+${WINDIR}\System32\ieframe.dll
+\end{verbatim}
+the default name
+is ``Microsoft Url Search Hook'', and the default alternate name is the empty
+string.
+This default entry is the legitimate system default and shall be whitelisted.
+\item[Fix Considerations] \hfill \\
+For the non ``DefaultMissing'' lines, both ``Move'' and ``Fix'' are valid.
+``Move'' shall generate a script which quarentines the indicated file (if it
+exists). ``Fix'' shall generate a fix removing the URLSearchHook from the
+registry.
+
+For the ``DefaultMissing'' line, only ``Fix'' is valid; selecting it generates a
+script restoring the default value.
+\end{description}
+
 \subsubsection{User Only Sections}
 The following sections are displayed in user PseudoHJT reports only.
 
