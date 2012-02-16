@@ -1297,8 +1297,50 @@ This entry is not whitelisted.
 shall generate a fix which erases the indicated value.
 \end{description}
 
-\subsubsection{User Only Sections}
-The following sections are displayed in user PseudoHJT reports only.
+\subsubsection{Policies}
+\begin{description}
+\item[Rationale] \hfill \\
+The Policies are designed to allow a system administrator restrict operation of
+a given machine; either to prevent an employee from doing something, or to allow
+secure and safe operation of computers in a public environment such as kiosks.
+However, malware can use these values for nefarious purposes, such as stopping
+security software.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\
+    Policies\Explorer]
+"${Name}"="${Value}"
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\
+    Policies\System]
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\
+    Policies\Explorer\DisallowRun]
+"${Name}"="${Value}"
+"${Name}"="${Value}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+PoliciesExplorer: [${Name}] ${Value}
+PoliciesExplorer64: [${Name}] ${Value}
+PoliciesSystem: [${Name}] ${Value}
+PoliciesSystem64: [${Name}] ${Value}
+PoliciesDisallowRun: [${Name}] ${Value}
+PoliciesDisallowRun64: [${Name}] ${Value}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{Name} shall be escaped using the general escaping method defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of right square bracket (\verb|]|). \var{Value} shall also be escaped
+using the general method and the hash (\verb|#|) escape character.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the associated policy value.
+\end{description}
+
+\subsubsection{User Only Line Types}
+The following lines are displayed in user PseudoHJT reports only.
 
 \subsubsection{Internet Connection Wizard Shell Next}
 \begin{description}
