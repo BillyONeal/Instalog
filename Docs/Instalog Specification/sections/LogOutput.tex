@@ -1130,6 +1130,122 @@ Not applicable. (This entry does not exist by default)
 The option ``Fix'' shall delete the registry value.
 \end{description}
 
+\subsubsection{Browser Helper Objects}
+\begin{description}
+\item[Rationale] \hfill \\
+Browser Helper Objects are one of Internet Explorer's extension mechanisms.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+;Either 32 or 64 bit registry view
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\
+    Browser Helper Objects\${CLSID}]
+@="${AlternateName}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+BHO: ${GeneratedName}: ${CLSID} ${File}
+BHO64: ${GeneratedName}: ${CLSID} ${File}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{GeneratedName} is \var{Name}, \var{AlternateName}, or ``\verb|No Name|'',
+whichever has content first, escaped using the general escaping method defined
+in \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
+delimiter of colon (\verb|:|). \var{CLSID} is escaped using the default escaping
+function as well, using an escape character of hash (\verb|#|), and a right
+delimiter of space (\verb| |). \var{File} is displayed using the standard file
+display format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
+fix which removes the specific browser helper object key, and it's associated
+subkey of \verb|HKCR\CLSID|.
+\end{description}
+
+\subsubsection{Toolbars}
+\begin{description}
+\item[Rationale] \hfill \\
+Toolbars are one of Internet Explorer's extension mechanisms.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+;Either 32 or 64 bit registry view; one of the following is a toolbar root
+[${RootHive}\Software\Microsoft\Internet Explorer\Toolbar]
+"${CLSID}"="${AlternateName}"
+[${RootHive}\Software\Microsoft\Internet Explorer\Toolbar\Webbrowser]
+"${CLSID}"="${AlternateName}"
+
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+TB: ${GeneratedName}: ${CLSID} ${File}
+TB64: ${GeneratedName}: ${CLSID} ${File}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{GeneratedName} is \var{Name}, \var{AlternateName}, or ``\verb|No Name|'',
+whichever has content first, escaped using the general escaping method defined
+in \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
+delimiter of colon (\verb|:|). \var{CLSID} is escaped using the default escaping
+function as well, using an escape character of hash (\verb|#|), and a right
+delimiter of space (\verb| |). \var{File} is displayed using the standard file
+display format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
+fix which removes the specific toolbar value, and it's associated subkey of
+\verb|HKCR\CLSID|.
+\end{description}
+
+\subsubsection{Explorer Bars}
+\begin{description}
+\item[Rationale] \hfill \\
+Explorer Bars are Windows Explorer's equivelent of toolbars.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+;Either 32 or 64 bit registry view
+[${RootHive}\Software\Microsoft\Internet Explorer\Explorer Bars]
+"${CLSID}"="${AlternateName}"
+
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+EB: ${GeneratedName}: ${CLSID} ${File}
+EB64: ${GeneratedName}: ${CLSID} ${File}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{GeneratedName} is \var{Name}, \var{AlternateName}, or ``\verb|No Name|'',
+whichever has content first, escaped using the general escaping method defined
+in \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
+delimiter of colon (\verb|:|). \var{CLSID} is escaped using the default escaping
+function as well, using an escape character of hash (\verb|#|), and a right
+delimiter of space (\verb| |). \var{File} is displayed using the standard file
+display format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
+fix which removes the specific explorer bar value, and it's associated subkey of
+\verb|HKCR\CLSID|.
+\end{description}
+
 \subsubsection{User Only Sections}
 The following sections are displayed in user PseudoHJT reports only.
 
