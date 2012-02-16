@@ -1340,8 +1340,95 @@ None.
 \end{description}
 
 \subsubsection{Internet Explorer Menu Options}
+\begin{description}
+\item[Rationale] \hfill \\
+These are menu items shown in Internet Explorer. Malware will sometimes put
+traps here for a user to click on after everything else has been removed (e.g.
+replacing the normal Windows Update option with one that goes to a malicious
+copy of Windows Update\ldots)
+\item[Data Sources] \hfill
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Internet Explorer\MenuExt\${Name}]
+@="${Command}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|IeMenu: [${Name}] ${Command}|
+\verb|IeMenu64: [${Name}] ${Command}|
+\item[Output Description]
+\var{Name} is escaped using the default escaping convention defined in
+\ref{generalescape} with an escape character of \verb|#| and a right delimiter
+of \verb|]|. \var{Command} is displayed using the default file format as defined
+in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the associated key. ``Move'' shall
+generate a script which moves the file associated with \var{Command}.
+\end{description}
+
 \subsubsection{Internet Explorer Script Extensions}
+\begin{description}
+\item[Rationale] \hfill \\
+These are script extensions loaded by Internet Explorer, and can override
+behavior of the browser.
+\item[Data Sources] \hfill
+\begin{verbatim}
+; One of the following:
+[${RootHive}\Software\Microsoft\Internet Explorer\Extensions\${Name}]
+"Exec"="${Command}"
+[${RootHive}\Software\Microsoft\Internet Explorer\Extensions\${Name}]
+"Script"="${Command}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|IeScript: [${Name}] ${Command}|
+\verb|IeScript64: [${Name}] ${Command}|
+\item[Output Description]
+\var{Name} is escaped using the default escaping convention defined in
+\ref{generalescape} with an escape character of \verb|#| and a right delimiter
+of \verb|]|. \var{Command} is displayed using the default file format as defined
+in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the associated key. ``Move'' shall
+generate a script
+\end{description}
+
 \subsubsection{Internet Explorer COM Extensions}
+\begin{description}
+\item[Rationale] \hfill \\
+These are COM extensions loaded by Internet Explorer, and can override
+behavior of the browser. These are (generally speaking) more powerful than the
+script extensions because they are native code.
+\item[Data Sources] \hfill
+\begin{verbatim}
+; One of the following:
+[${RootHive}\Software\Microsoft\Internet Explorer\Extensions\${Name}]
+"clsidextension"="${Clsid}"
+[${RootHive}\Software\Microsoft\Internet Explorer\Extensions\${Name}]
+"bandclsid"="${Clsid}"
+; And the following:
+[HKEY_CLASSES_ROOT\CLSID\${Clsid}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|IeCom: [${Name}->${Clsid}] ${File}| \\
+\verb|IeCom64: [${Name}->${Clsid}] ${File}|
+\item[Output Description]
+\var{Name} is escaped using the default escaping convention defined in
+\ref{generalescape} with an escape character of \verb|#| and a right delimiter
+of \verb|-|. \var{Clsid} is also escaped using the default escape function,
+using an escape character of \verb|#| and a right delimiter of \verb|]|.
+\var{File} is displayed using the default file format as defined in
+\ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the key associated with
+\var{Name}, as well as the root key associated with \var{Clsid}.
+``Move'' shall generate a script which quarentines the file in question.
+\end{description}
+
 \subsubsection{Internet Explorer Trusted Zone}
 
 \subsubsection{Machine Only Line Types}
@@ -1349,7 +1436,9 @@ The following lines are displayed in machine PsuedoHJT reports only.
 
 \subsubsection{Downloaded Program Files}
 \subsubsection{Layered Service Providers}
+
 \subsubsection{DNS Server}
+
 \subsubsection{Spoofed DNS Check}
 \begin{description}
 \item[Rationale] \hfill \\
@@ -1366,17 +1455,16 @@ locations.  An interesting attack could be if the users' home router itself is
 attacked such that it gives all machines connected to it a malicious DNS server.
 \item[Data Sources] \hfill \\
 Instalog shall query the machine's default DNS server for common websites
-(referred to as \var{url}).  Instalog will record the IP address response(s) it
-receives in the list \var{response\textunderscore ip}.  For each of the
-\var{response\textunderscore ip} IP addresses in \var{response\textunderscore
-ips}, Instalog shall perform a DNS query against a safe DNS server (such as
-Google's DNS servers or OpenDNS's DNS Servers) to get the url associated with
-that IP (referred to as \var{response\textunderscore url}).  If the response url
-does not match the expected response, then the result shall be logged according
-to the format explained in the \textbf{Log Format} section.
+(referred to as \var{Url}).  Instalog will record the IP address response(s) it
+receives in the list \var{ResponseIp}.  For each of the
+\var{ResponseIp} IP addresses in \var{ResponseIp}, Instalog shall perform a DNS
+query against a safe DNS server (such as Google's DNS servers or OpenDNS's DNS
+Servers) to get the url associated with that IP (referred to as \var{ResponseIp}).
+If the response url does not match the expected response, then the result shall be
+logged according to the format explained in the \textbf{Log Format} section.
 
-Below is a list of \var{url}'s to query along with the expected reverse lookup
-url.  
+Below is a list of \var{Url}'s to query along with the expected reverse lookup
+url.
 
 \begin{tabular}{l | l}
 \textbf{URL} & \textbf{Expected URL Response} \\ \hline 
@@ -1399,10 +1487,10 @@ logged according to the \textbf{Log Format} section.
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-SpoofedDNS: ${url} ${response_ip} ${response_url}
+SpoofedDNS: ${Url} ${ResponseIp} ${response_url}
 \end{verbatim}
 \item[Output Description] \hfill \\
-\var{url} and \var{response\textunderline url} shall be escaped according to the
+\var{Url} and \var{ResponseUrl} shall be escaped according to the
 scheme defined in \ref{urlescape}.
 \item[Whitelisting Considerations] \hfill \\
 As described in the \textbf{Data Sources} section, each line shall only be
