@@ -1246,6 +1246,57 @@ fix which removes the specific explorer bar value, and it's associated subkey of
 \verb|HKCR\CLSID|.
 \end{description}
 
+\subsubsection{Registry Autostarts}
+\begin{description}
+\item[Rationale] \hfill \\
+These entries are run by Windows Explorer when a user logs in. On 64 bit
+machines, both the 32 bit and 64 bit versions of these keys are checked and
+started.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\Run]
+"${Name}"="${File}"
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\RunOnce]
+"${Name}"="${File}"
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\RunServices]
+"${Name}"="${File}"
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce]
+"${Name}"="${File}"
+[${RootHive}\Software\Microsoft\Windows\CurrentVersion\
+    Policies\Explorer\Run]
+"${Name}"="${File}"
+\end{verbatim}
+\item[Log Format] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+Run: [${Name}] ${File}
+Run64: [${Name}] ${File}
+RunOnce: [${Name}] ${File}
+RunOnce64: [${Name}] ${File}
+RunServices: [${Name}] ${File}
+RunServices64: [${Name}] ${File}
+RunServicesOnce: [${Name}] ${File}
+RunServicesOnce64: [${Name}] ${File}
+ExplorerRun: [${Name}] ${File}
+ExplorerRun64: [${Name}] ${File}
+\end{verbatim}
+\item[Output Description] \hfill \\
+\var{Name} is escaped using the default escaping method (see section
+\ref{generalescape}), using an escape character of hash (\verb|#|), and a right
+delimiter of right square bracket (\verb|]|). \var{File} is displayed with the
+general file display method (\ref{stdfile}).
+
+The versions of the log lines with prefixes ending in ``64'' are those which are
+taken from the 64 bit registry view. The remainder of the prefix corresponds to
+the last path component of the registry key from which the data is taken.
+\item[Whitelisting Considerations] \hfill \\
+This entry is not whitelisted.
+\item[Fix Considerations] \hfill \\
+``Move'' shall generate a fix which quarentines the indicated file. ``Fix''
+shall generate a fix which erases the indicated value.
+\end{description}
+
 \subsubsection{User Only Sections}
 The following sections are displayed in user PseudoHJT reports only.
 
@@ -1343,6 +1394,31 @@ Not applicable.
 \item[Fix Considerations] \hfill \\
 The option ``Fix'' shall generate a script which deletes the associated
 registry value.
+\end{description}
+
+\subsubsection{Startup Folder}
+\begin{description}
+\item[Rationale] \hfill \\
+The startup folder contains a set of links that Windows launches when a user
+logs in. However, it will also cause direct executables to be run if they are
+placed there.
+\item[Data Sources] \hfill \\
+\verb|%USERPROFILE%\Start Menu\Startup\${Link}|
+\item[Log Format] \hfill \\
+\verb|StartupFolder: ${Link}->${Target}| \\
+\verb|StartupFolder: ${Link}|
+\item[Output Description] \hfill \\
+In the case the file enumerated as \var{Link} can be interpreted as a Windows
+Link (that is, can be recognised using the \verb|IShellLink| interface), the
+first form the log line is used. In such cases, \var{Link} is escaped using the
+general escaping format using an escape character of hash (\verb|#|), and a
+right delimiter of dash (\verb|-|), and \var{Target} is the resolved target of
+the link file indicated in \var{Link}, which is displayed using the default file
+output defined in \ref{stdfile}.
+
+In the case that \var{Link} cannot be interpreted as a link, it shall use the
+second format, and \var{Link} shall be output using the default file output
+defined in \ref{stdfile}.
 \end{description}
 
 \subsection{Mozilla Firefox}
