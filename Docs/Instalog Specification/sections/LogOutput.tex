@@ -1688,6 +1688,31 @@ shall generate a script quarentineing the file in question.
 \end{description}
 
 \subsubsection{Winlogon Notify}
+\begin{description}
+\item[Rationale] \hfill \\
+Winlogin notify allows applications to customize the log in screen.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\
+    Winlogon\Notify\${Name}]
+"DllName"="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Notify: [${Name}] ${File}|
+\item[Output Description]
+\var{Name} shall be escaped using the default escaping function defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of right square bracket (\verb|]|). \var{File} shall be displayed
+using the default file format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which deletes the registry key mentioned as
+\var{Item}, as well as the associated CLSID key defined by \var{CLSID}. ``Move''
+shall generate a script quarentineing the file in question.
+\end{description}
+
 \subsubsection{Application Initialization DLLs}
 \subsubsection{Shell Object Service Delay Load}
 \subsubsection{Shell Task Scheduler}
