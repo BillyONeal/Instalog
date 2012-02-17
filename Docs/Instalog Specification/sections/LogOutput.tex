@@ -1430,6 +1430,22 @@ None.
 \end{description}
 
 \subsubsection{Internet Explorer Trusted Zone}
+\begin{description}
+\item[Rationale] \hfill \\
+The trusted zone contains domains which recieve preferential treatment (lower
+security settings) by Internet Explorer.
+\item[Data Sources] \hfill \\
+Internet Exploer's ``\verb|IInternetSecurityManager|'' interface.
+\item[Log Format] \hfill \\
+\verb|TrustedZone: ${Domain}|
+\item[Output Description]
+\var{Domain} is escaped using the default escaping function defined in
+\ref{generalescape}.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the item from the trusted zone.
+\end{description}
 
 \subsubsection{Machine Only Line Types}
 The following lines are displayed in machine PsuedoHJT reports only.
@@ -1482,12 +1498,12 @@ url.
 Unfortunately, this reverse DNS lookup method does not work for many popular
 sites including most domains run by Microsoft as well as domains run by most
 popular banking institutions.  If for some reason a response is not available,
-\var{response\textunderscore url} shall be set to ``no response'' and shall be
-logged according to the \textbf{Log Format} section.
+\var{ResponseUrl} shall be set to ``no response'' and shall be logged according
+to the \textbf{Log Format} section.
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-SpoofedDNS: ${Url} ${ResponseIp} ${response_url}
+SpoofedDNS: ${Url} ${ResponseIp} ${ResponseUrl}
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{Url} and \var{ResponseUrl} shall be escaped according to the
