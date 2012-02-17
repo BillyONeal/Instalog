@@ -1759,7 +1759,42 @@ registry. ``Move'' shall generate a script which quarentines the indicated DLL.
 \end{description}
 
 \subsubsection{Shell Object Service Delay Load}
-\subsubsection{Shell Task Scheduler}
+\begin{description}
+\item[Rationale] \hfill \\
+Shell Object Service Delay Load DLLs are loaded by the shell. They are loaded
+even in safe mode.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+    ShellObjectServiceDelayLoad]
+"${AlternateName}"="${CLSID}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Ssodl: [${GeneratedName}->${CLSID}] ${File}| \\
+\verb|Ssodl64: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+\var{GeneratedName} shall consist of \var{Name} if it's
+contents are not blank, followed by \var{AlternateName} if it's contents are
+not blank, followed by the empty string. \var{File} uses the standard file
+output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
+the standard escaping format defined in \ref{generalescape}, using an escape
+character of hash (\verb|#|) and right delimiters of dash (\verb|-|) and
+right square bracket (\verb|]|), respectively.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the value under the
+ShellObjectServiceDelayLoad registry key, and the associated key under
+HKCR\textbackslash{}CLSID.
+``Move'' shall generate a script which quarentines the indicated DLL.
+\end{description}
+
+\subsubsection{Shared Task Scheduler}
 \subsubsection{Shell Execute Hooks}
 \subsubsection{Security Providers}
 \subsubsection{Local Security Authority Settings}
