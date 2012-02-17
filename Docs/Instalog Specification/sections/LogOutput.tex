@@ -1353,7 +1353,7 @@ copy of Windows Update\ldots)
 \item[Log Format] \hfill \\
 \verb|IeMenu: [${Name}] ${Command}|
 \verb|IeMenu64: [${Name}] ${Command}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
 \ref{generalescape} with an escape character of \verb|#| and a right delimiter
 of \verb|]|. \var{Command} is displayed using the default file format as defined
@@ -1381,7 +1381,7 @@ behavior of the browser.
 \item[Log Format] \hfill \\
 \verb|IeScript: [${Name}] ${Command}|
 \verb|IeScript64: [${Name}] ${Command}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
 \ref{generalescape} with an escape character of \verb|#| and a right delimiter
 of \verb|]|. \var{Command} is displayed using the default file format as defined
@@ -1413,7 +1413,7 @@ script extensions because they are native code.
 \item[Log Format] \hfill \\
 \verb|IeCom: [${Name}->${Clsid}] ${File}| \\
 \verb|IeCom64: [${Name}->${Clsid}] ${File}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
 \ref{generalescape} with an escape character of \verb|#| and a right delimiter
 of \verb|-|. \var{Clsid} is also escaped using the default escape function,
@@ -1434,10 +1434,10 @@ None.
 The trusted zone contains domains which recieve preferential treatment (lower
 security settings) by Internet Explorer.
 \item[Data Sources] \hfill \\
-Internet Exploer's ``\verb|IInternetSecurityManager|'' interface.
+Internet Explorer's ``\verb|IInternetSecurityManager|'' interface.
 \item[Log Format] \hfill \\
 \verb|TrustedZone: ${Domain}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Domain} is escaped using the default escaping function defined in
 \ref{generalescape}.
 \item[Whitelisting Considerations] \hfill \\
@@ -1450,6 +1450,24 @@ None.
 The following lines are displayed in machine PsuedoHJT reports only.
 
 \subsubsection{Downloaded Program Files}
+\begin{description}
+\item[Rationale] \hfill \\
+DPFs are ActiveX controls loaded into Internet Explorer by any website.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|TrustedZone: ${Domain}|
+\item[Output Description] \hfill \\
+\var{Domain} is escaped using the default escaping function defined in
+\ref{generalescape}.
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the item from the trusted zone.
+\end{description}
 
 \subsubsection{Winsock Layered Service Providers and Namespace Providers}
 \begin{description}
@@ -1578,7 +1596,7 @@ can use this to redirect users to malicious web servers.
 \verb|TcpDhcpNameserver: ${DHCPNameServer}| \\
 \verb|TcpNameserver: [${CLSID}] ${NameServer}| \\
 \verb|TcpDhcpNameserver: [${CLSID}] ${DHCPNameServer}| \\
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{CLSID} is escaped using the default escaping function defined in
 \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
 delimiter of right square bracket (\verb|]|).
@@ -1672,7 +1690,7 @@ protocols, such as HTTP or FTP.
 \verb|IeFilter: [${Item}->${CLSID}] ${File}| \\
 \verb|IeHandler: [${Item}->${CLSID}] ${File}| \\
 \verb|IeNamespace: [${Item}->${CLSID}] ${File}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Item} is escaped using the default escaping function defined in
 \ref{generalescape}, using an escape character of hash (\verb|#|), and a right
 delimiter if dash (\verb|-|) \var{CLSID} is escaped using the default escaping
@@ -1700,7 +1718,7 @@ Winlogin notify allows applications to customize the log in screen.
 \end{verbatim}
 \item[Log Format] \hfill \\
 \verb|Notify: [${Name}] ${File}|
-\item[Output Description]
+\item[Output Description] \hfill \\
 \var{Name} shall be escaped using the default escaping function defined in
 \ref{generalescape}, using an escape character of hash (\verb|#|), and a right
 delimiter of right square bracket (\verb|]|). \var{File} shall be displayed
@@ -1709,11 +1727,37 @@ using the default file format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script which deletes the registry key mentioned as
-\var{Item}, as well as the associated CLSID key defined by \var{CLSID}. ``Move''
-shall generate a script quarantining the file in question.
+\var{Name}. ``Move'' shall generate a script which quarentines the associated
+file.
 \end{description}
 
 \subsubsection{Application Initialization DLLs}
+\begin{description}
+\item[Rationale] \hfill \\
+Application Initialization DLLs are DLLs loaded into every process that loads
+user32.dll, which is usually loaded. This allows malware to inject code into all
+processes on the system.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\
+    Winlogon]
+"Appinit_Dlls"="${Dlls}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|AppinitDll: ${File}| \\
+\verb|AppinitDll64: ${File}|
+\item[Output Description] \hfill \\
+\var{Dlls} is a comma or space delimited list of DLLs. Each individual DLL shall
+be turned into a seperate line in the log, using the default file display format
+defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the single indiciated DLL from the
+registry. ``Move'' shall generate a script which quarentines the indicated DLL.
+\end{description}
+
 \subsubsection{Shell Object Service Delay Load}
 \subsubsection{Shell Task Scheduler}
 \subsubsection{Shell Execute Hooks}
