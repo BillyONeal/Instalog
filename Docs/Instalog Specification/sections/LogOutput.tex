@@ -1766,7 +1766,8 @@ registry. ``Move'' shall generate a script which quarentines the indicated DLL.
 \subsubsection{Client Server Runtime SubSystem Server DLL}
 \subsubsection{Installed Active Setup Components}
 \subsubsection{Image File Execution Options}
-\subsubsection{hosts File}
+
+\subsubsection{Hosts File}
 \begin{description}
 \item[Rationale] \hfill \\
 The hosts file maps hostnames to IP addresses.  This file is sometimes modified
@@ -1782,7 +1783,7 @@ comment lines.  The hosts file usually starts with several of these lines
 explaining how the file is structured.  After this, IP address (\var{ip}) and
 hostnames (\var{hostname}) pairs are listed.
 \item[Log Format] \hfill \\
-\verb|Hosts: {ip} {hostname}|
+\verb|Hosts: ${ip} ${hostname}|
 \item[Output Description] \hfill \\
 The variable \var{url} shall be escaped using the URL escaping scheme defined in
 \ref{urlescape}, where the escape character is the hash mark (\verb|#|).
@@ -1819,8 +1820,8 @@ following strings:
   \item wilderssecurity
 \end{itemize}
 \item[Fix Considerations] \hfill \\
-The only valid option is ``Fix''. It shall generate a fix which removes the
-given entry from the hosts file.
+Neither ``Fix'' nor ``Move'' are valid. The user is expected to reset the hosts
+file completely if need be.
 \end{description}
 
 \subsubsection{User Only Line Types}
