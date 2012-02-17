@@ -149,10 +149,10 @@ readable and lawyer readable versions of this license can be found at
 
 \subsection{Minimum System Requirements}
 Instalog MUST run on all Microsoft Windows NT variants released later than
-Windows 2000:
+Windows 2000 SP4:
 \begin{itemize}
   \item Windows 2000 (x86, SP4 only)
-  \item Windows XP (x86 and x64, RTM, SP1, SP2, and SP3 (on x86 machines))
+  \item Windows XP (x86 and x64, RTM, SP1, SP2, and SP3)
   \item Windows Vista (x86 and x64, RTM, SP1, and SP2)
   \item Windows 7 (x86 and x64, RTM and SP1)
   \item Windows Server 2003 (x86 and x64, RTM, SP1, and SP2)
@@ -165,3 +165,24 @@ No attempt will be made to support Itanium architecture systems as Instalog's
 authors do not have access to suitable testing hardware. No attempt will be made
 to support MS-DOS based versions of Windows. Instalog's behavior on unsupported
 machines must not cause data destruction, but is otherwise undefined.
+
+\subsection{Scope Limit}
+While the authors would like to complete this entire tool before the completion
+of the Senior Project class in April, they realize that this may not be possible
+given the scale of the tool. Therefore, if they must cut features to meet the
+deadline, these features shall be cut, in order (lower number on this list
+means more likely to be cut):
+\begin{enumerate}
+    \item Checkboxes and fix generation on the GUI
+    \item ``Value Added'' scripting actions, such as MRC upload or VirusTotal
+    upload
+    \item Spoofed DNS check
+    \item Enumeration of Google Chrome data
+    \item Enumeration of Firefox data
+    \item GUI altogether
+    \item Scripting altogether
+\end{enumerate}
+
+In the event any of these features are removed, Instalog must remain a
+functional, shippable, well tested, production-quality product, suitable for the
+author's Senior Project submission.
