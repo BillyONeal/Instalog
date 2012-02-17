@@ -1556,7 +1556,37 @@ For the log lines without files, ``Fix'' shall generate a script which repairs
 the chain in question.
 \end{description}
 
-\subsubsection{DNS Server}
+\subsubsection{DNS Servers}
+\begin{description}
+\item[Rationale] \hfill \\
+The DNS servers are used to resolve a domain name to a given IP address. Malware
+can use this to redirect users to malicious web servers.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters]
+"NameServer"="${NameServer}"
+"DHCPNameServer"="${DHCPNameServer}"
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+    \Interfaces\${CLSID}]
+"NameServer"="${NameServer}"
+"DHCPNameServer"="${DHCPNameServer}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|TcpNameserver: ${NameServer}| \\
+\verb|TcpDhcpNameserver: ${DHCPNameServer}| \\
+\verb|TcpNameserver: [${CLSID}] ${NameServer}| \\
+\verb|TcpDhcpNameserver: [${CLSID}] ${DHCPNameServer}| \\
+\item[Output Description]
+\var{CLSID} is escaped using the default escaping function defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|) and a right
+delimiter of right square bracket (\verb|]|).
+\item[Whitelisting Considerations] \hfill \\
+None.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which deletes the associated registry value.
+\end{description}
 
 \subsubsection{Spoofed DNS Check}
 \begin{description}
@@ -1618,17 +1648,52 @@ emitted to the log if the urls do not match.
 None.
 \end{description}
 
-\subsubsection{Protocol Filters}
-\subsubsection{Protocol Handlers}
-\subsubsection{Namespace Handlers}
+\subsubsection{Protocols}
+\begin{description}
+\item[Rationale] \hfill \\
+The protocols registrations tell Internet Explorer how to handle particular
+protocols, such as HTTP or FTP.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+;One of the following:
+[HKEY_CLASSES_ROOT\PROTOCOLS\Filter\${Item}]
+"CLSID"="${CLSID}"
+[HKEY_CLASSES_ROOT\PROTOCOLS\Handler\${Item}]
+"CLSID"="${CLSID}"
+[HKEY_CLASSES_ROOT\PROTOCOLS\Name-Space Handler\${Item}]
+"CLSID"="${CLSID}"
+
+;And:
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|IeFilter: [${Item}->${CLSID}] ${File}| \\
+\verb|IeHandler: [${Item}->${CLSID}] ${File}| \\
+\verb|IeNamespace: [${Item}->${CLSID}] ${File}|
+\item[Output Description]
+\var{Item} is escaped using the default escaping function defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter if dash (\verb|-|) \var{CLSID} is escaped using the default escaping
+function defined in \ref{generalescape}, using an escape character of hash
+(\verb|#|) and a right delimiter of right square bracket (\verb|]|).
+\var{File} is displayed using the method defined in section \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which deletes the registry key mentioned as
+\var{Item}, as well as the associated CLSID key defined by \var{CLSID}. ``Move''
+shall generate a script quarentineing the file in question.
+\end{description}
+
 \subsubsection{Winlogon Notify}
 \subsubsection{Application Initialization DLLs}
 \subsubsection{Shell Object Service Delay Load}
 \subsubsection{Shell Task Scheduler}
 \subsubsection{Shell Execute Hooks}
 \subsubsection{Security Providers}
-\subsubsection{Local Security Authority Authentication Packages}
-\subsubsection{Local Security Authority Notification Packages}
+\subsubsection{Local Security Authority Settings}
 \subsubsection{Client Server Runtime SubSystem Server DLL}
 \subsubsection{Installed Active Setup Components}
 \subsubsection{Image File Execution Options}
