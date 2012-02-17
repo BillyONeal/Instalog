@@ -44,8 +44,7 @@ generated in the default report:
 \item[File Quarantine] Displayed if the \verb|:move| scripting section is used.
 \item[Security Center] Displayed if the \verb|:securitycenter| scripting section
 is used.
-\item[Registry 32 Bit] Displayed if the \verb|:reg32| scripting action is used.
-\item[Registry 64 Bit] Displayed if the \verb|:reg64| scripting action is used.
+\item[Registry] Displayed if the \verb|:registry| scripting action is used.
 \end{description}
 
 \subsection{Escaping Formats}
@@ -464,7 +463,7 @@ following values:
 \begin{itemize}
   \item \verb|%WINDIR%\System32\svchost|
   \item \verb|%WINDIR%\System32\svchost.exe|
-  %TODO: rundll?
+  \item \verb|%WINDIR%\System32\rundll32.exe|
 \end{itemize}
 \item[Log Format] \hfill \\
 If \var{arguments} is set:
@@ -1451,7 +1450,111 @@ None.
 The following lines are displayed in machine PsuedoHJT reports only.
 
 \subsubsection{Downloaded Program Files}
-\subsubsection{Layered Service Providers}
+
+\subsubsection{Winsock Layered Service Providers and Namespace Providers}
+\begin{description}
+\item[Rationale] \hfill \\
+There are two types of Winsock service providers: Layered Service Providers
+(LSPs) and Namespace Service Providers (NSPs).
+
+Layered service providers are an intergal part of the Windows IP stack. When a
+packet is sent through the network, each LSP is a ``layer'' which gets to
+inspect or modify the packet before it is sent to the network. This is used
+legitimately for applications like firewalls, but also by malware to redirect
+users and cause other kinds of damage.
+
+Namespace providers provide a similar service at a different level of the
+Winsock stack. Specifically, MSDN says:
+\begin{quote}
+A namespace provider implements an interface mapping between the Winsock
+namespace SPI and the native programmatic interface of an existing name
+service such as DNS, X.500, or NetWare Directory Services (NDS).
+\end{quote}
+(See \url{http://msdn.microsoft.com/en-us/library/ms739923.aspx})
+
+What's more, these providers are laid out in a very specific format. If a binary
+in the chain is missing or corrupted, such as would happen by deleting a piece
+of malware using this technique, the user's internet access would be broken
+until the chain could be restored.
+\item[Data Sources] \hfill
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters]
+"Current_Protocol_Catalog"="${ProtocolCatalog}"
+"Current_NameSpace_Catalog"="${NamespaceCatalog}"
+
+;LSP Information
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${ProtocolCatalog}]
+"Num_Catalog_Entries"=dword:${NumberOfProtocolEntries}
+"Num_Catalog_Entries64"=dword:${NumberOfx64ProtocolEntries}
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${ProtocolCatalog}\CatalogEntries\${ProtocolNumber}]
+"PackedCatalogItem"="${ProtocolBlob}"
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${ProtocolCatalog}\CatalogEntries64\${ProtocolNumber}]
+"PackedCatalogItem"="${ProtocolBlob}"
+
+;NSP Information
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${NamespaceCatalog}]
+"Num_Catalog_Entries"=dword:${NumberOfCatalogEntries}
+"Num_Catalog_Entries64"=dword:${NumberOfx64CatalogEntries}
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${NamespaceCatalog}\CatalogEntries\${NamespaceNumber}]
+"LibraryPath"="${NspPath}"
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Winsock2
+    \Parameters\${NamespaceCatalog}\CatalogEntries64\${NamespaceNumber}]
+"LibraryPath"="${NspPath}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|LSP: ${File}| \\
+\verb|LSP64: ${File}| \\
+\verb|LSP: Chain Broken| \\
+\verb|LSP64: Chain Broken| \\
+\verb|NSP: ${NspPath}| \\
+\verb|NSP64: ${NspPath}| \\
+\verb|NSP: Chain Broken| \\
+\verb|NSP64: Chain Broken|
+\item[Output Description]
+For LSPs, the file is determined by unpacking the ``PackedCatalogEntry'' binary
+blob, which (fortunately) begins with a null terminated string containing the
+full path to the binary providing the layer.
+
+For NSPs, things are simpler; the registry value indiciated provides a direct
+path to the file in question.
+
+For both types, the catalog location in the registry is taken from the root
+Winsock2 parameters key, and for each number between 1 and the value of the
+number of entries indicated in the given catalog, and enumerates a file. Then,
+duplicate file names are removed. Finally, files are displayed using the
+standard file display format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+The following files are whitelisted on all versions of Windows Instalog
+supports:
+\begin{enumerate}
+    \item \verb|%SystemRoot%\System32\rsvpsp.dll|
+    \item \verb|%SystemRoot%\System32\winrnr.dll|
+    \item \verb|%SystemRoot%\System32\mswsock.dll|
+    \item \verb|%SystemRoot%\System32\msafd.dll|
+\end{enumerate}
+
+The following files are whitelisted on Windows Vista and later:
+\begin{enumerate}
+    \item \verb|%SystemRoot%\System32\NLAapi.dll|
+    \item \verb|%SystemRoot%\System32\napinsp.dll|
+    \item \verb|%SystemRoot%\System32\pnrpnsp.dll|
+\end{enumerate}
+
+Note that these entries shall be whitelisted if and only if they exist. If they
+do not exist then the chain may be broken, and this needs to be visible in the
+report in some way.
+\item[Fix Considerations] \hfill \\
+For the log lines with files, ``Move'' shall generate a script which quarentines
+the offending file, and repairs the chain in question.
+For the log lines without files, ``Fix'' shall generate a script which repairs
+the chain in question.
+\end{description}
 
 \subsubsection{DNS Server}
 
