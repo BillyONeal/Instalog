@@ -1710,7 +1710,7 @@ None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script which deletes the registry key mentioned as
 \var{Item}, as well as the associated CLSID key defined by \var{CLSID}. ``Move''
-shall generate a script quarentineing the file in question.
+shall generate a script quarantining the file in question.
 \end{description}
 
 \subsubsection{Application Initialization DLLs}
@@ -1722,7 +1722,62 @@ shall generate a script quarentineing the file in question.
 \subsubsection{Client Server Runtime SubSystem Server DLL}
 \subsubsection{Installed Active Setup Components}
 \subsubsection{Image File Execution Options}
-\subsubsection{HOSTS File}
+\subsubsection{hosts File}
+\begin{description}
+\item[Rationale] \hfill \\
+The hosts file maps hostnames to IP addresses.  This file is sometimes modified
+by software, so strange entries shall be reported.  
+\item[Data Sources] \hfill \\
+The hosts file is located at
+\vspace{-\baselineskip}
+\begin{verbatim}
+%SystemRoot%\system32\drivers\etc\hosts
+\end{verbatim}
+This file is formatted quite simply.  Lines that begin with a \verb|#| are
+comment lines.  The hosts file usually starts with several of these lines
+explaining how the file is structured.  After this, IP address (\var{ip}) and
+hostnames (\var{hostname}) pairs are listed.
+\item[Log Format] \hfill \\
+\verb|Hosts: {ip} {hostname}|
+\item[Output Description] \hfill \\
+The variable \var{url} shall be escaped using the URL escaping scheme defined in
+\ref{urlescape}, where the escape character is the hash mark (\verb|#|).
+\item[Whitelist Considerations] \hfill \\
+Any entry in the hosts file with an \var{ip} value of \verb|127.0.0.1| or
+\verb|::1| shall be whitelisted unless \var{hostname} contains one of the
+following strings:
+\begin{itemize}
+  \item microsoft
+  \item symantec
+  \item mcafee
+  \item f-secure
+  \item kaspersky
+  \item sophos
+  \item trendmicro
+  \item viruslist
+  \item virustotal
+  \item avast
+  \item avira
+  \item bitdefender
+  \item bleepingcomputer
+  \item eset
+  \item majorgeeks
+  \item free-av
+  \item avg
+  \item grisoft
+  \item geekstogo
+  \item pandasecurity
+  \item spywareinfo
+  \item sunbeltsecurity
+  \item techspot
+  \item techsupportforum
+  \item whatthetech
+  \item wilderssecurity
+\end{itemize}
+\item[Fix Considerations] \hfill \\
+The only valid option is ``Fix''. It shall generate a fix which removes the
+given entry from the hosts file.
+\end{description}
 
 \subsubsection{User Only Line Types}
 The following lines are displayed in user PseudoHJT reports only.
