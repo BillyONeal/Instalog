@@ -1,0 +1,138 @@
+\section{Scripting}
+This section defines the scripting language that Instalog accepts for building
+scripts.  The actions defined in this section will enable the tool to fix a wide
+variety of problems that may be revealed by the system scan.  This being said,
+the scripting language is not designed to be a master fix tool.  Rather, it is
+designed to fix a wide majority of problems.  However, in some cases such as
+uninstalling an application, other actions outside of Instalog's actions may be
+required. 
+
+\subsection{Running a Script}
+Instalog shall go through the following steps when running a script.  
+\subsubsection{Validation}
+When Instalog is presented with a script, the first thing that it should do is
+attempt to parse the script to ensure it does not have any syntax errors.  If
+any syntax errors are present, Instalog \textbf{must not} proceed with executing
+the script and shall instead return an error describing which line of the script
+the syntax error was found on.
+\subsubsection{Order Optimization}
+Since scripts are written by users, they might not be presented in an order that
+makes sense or is efficient.  For example, it does not make any sense to process
+a script that quarantines files and then kills a process.  Rather, the order
+should be optimized so that script actions have the greatest order of success.
+
+Before reordering the script, script actions must be merged.  For example, if a
+script defines two separate kill process sections, they shall be merged into one
+kill process section.  Then, the script shall be rearranged into the following
+order:
+\begin{enumerate}
+%TODO: Determine order
+  \item 
+\end{enumerate}
+\subsubsection{Backup Folder Creation} \label{sec:backup_folder}
+%TODO: ``system altering'' needs to be defined
+If a script is determined to be system-altering, a folder must be created to
+save backups and any intermediate output files.  Each script run shall create a
+subfolder within \verb|C:\Instalog\| that is named according to the standard
+date format defined in \ref{stddate}.  A copy of the script shall be saved in
+this folder with the name ``\verb|Script.txt|''.  In addition, the script's output
+shall be saved in this folder with the name ``\verb|Output.txt|''.  After each
+different script action completes, this file must be written to.  This is done
+so that if the system crashes while a script is executing, it will be possible
+to determine where in the script execution it crashed and therefore which
+actions successfully completed.  
+\subsubsection{Execution}
+Each action in the script shall be executed in the optimized order.  After each
+action completes, the intermediate log shall be written to as explained in
+\label{sec:backup_folder}.
+
+\subsection{General Syntax}
+While Instalog scripts are designed to be constructed by the GUI, the scripting
+language is designed in such a way that editing them by hand with a simple text
+editor is possible.  
+
+Actions are listed in scripts in different action sections.  Scripts are built
+by combining 1 or more action sections together.  Each action section is defined
+as:
+\begin{verbatim}
+:${action} ${arg}
+${items}
+\end{verbatim}
+\var{action} indicates which script action will be taken.  Some script actions
+accept an optional argument, \var{arg}.  If the action takes an argument,
+then \var{arg} will be whatever string follows the one space character after
+\var{action}.  For example, if there were three spaces following \var{action}
+and then some other characters, \var{arg} would contain two spaces and then
+those characters.  Most actions expect a list of items to perform an action on. 
+This is provided as \var{list}, which is a collection of 0 or more lines of
+\var{item}'s for the script action to operate upon.  Each \var{action} and
+\var{item} in \var{items} must be on separate lines in the script.
+
+\subsection{Output Format}
+The output format is defined differently for actions that are system-altering
+and not system-altering.
+\subsubsection{System-altering Action Output Format}
+Actions that modify a system must either succeed or fail after they have been
+performed.  If the action succeeded, it shall be emitted to the log as
+\begin{verbatim}
+[ OK ] ${message}
+\end{verbatim}
+where \var{message} is some information about the action.  Similarly, if the
+action failed, it shall be emitted to the log as
+\begin{verbatim}
+[FAIL] ${message}
+\end{verbatim}
+\subsubsection{Non-system-altering Action Output Format}
+Actions that are not system-altering can simply have their status message
+emitted to the log.
+
+\subsection{Backup Actions}
+An important aspect of Instalog's scripting actions is that most are designed to
+be ``safe,'' meaning that changes that are made are designed to be backed up in
+some manner so that if something goes wrong, the change can be reverted. 
+Several backup procedures are described in this section to provide this.  While
+these procedures are in place, this tool will not provide functionality to
+restore the backups it takes.  Rather, this will be left up to the user and
+other external tools.
+
+Instalog shall use two different backup procedures.  Each script action must
+dictate which backup procedure it uses.  
+\subsubsection{File Backup}
+Rather than deleting files, Instalog shall ``quarantine'' them, that is,
+Instalog will move them from their current location to some safe location. 
+Quarantined files will be placed into a zip container in the corresponding
+backup folder for the current script.  This will allow quarantined files to be
+easy to associate with a given script run and therefore easy to restore if the
+need arises.  
+
+All files quarantined by a script shall be placed in a zip file named
+\verb|Files.zip|, which must be located in the backup directory defined in
+\ref{sec:backup_folder}.  Files shall be stored in the zip file with the same
+path that they have on disk with the exception that the drive letter shall be
+the top-most directory.  For example, the file \verb|C:\dir\sub\file.txt| shall
+be saved in the zip as \verb|C\dir\sub\file.txt|.
+\subsubsection{Registry Backup} 
+If a script will modify the registry in any way, the registry must first be
+backed up in its entirety.  The preferred method for registry backups is a
+restore point.  Therefore, Instalog shall first attempt to create a restore
+point.  If the restore point creation is successful, then this is a sufficient
+backup.  However, if the restore point creation fails for some reason, then the
+entire registry hive must be dumped manually.  Each registry file shall be saved
+in the backup defined in \ref{sec:backup_folder}.
+
+
+\subsection{Script Actions}
+\subsubsection{Registry Backup}
+\subsubsection{Kill Process}
+\subsubsection{VirusTotal Upload}
+\subsubsection{Bleeping Computer Upload}
+\subsubsection{Move (File Quarantine)}
+\subsubsection{Hosts File Reset}
+\subsubsection{Mozilla Firefox}
+\subsubsection{Google Chrome}
+\subsubsection{Security Center}
+\subsubsection{Registry Action}
+\subsubsection{LSP Chain}
+\subsubsection{Scan Actions}
+\subsubsection{Directory Listing}
+\subsubsection{DNS Check}
