@@ -1559,94 +1559,204 @@ which allow third party code to run inside \verb|lsass.exe|.
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa]
 "Authentication Packages"=multisz:${AuthenticationPackages}
 "Notification Packages"=multisz:${NotificationPackages}
+"Security Packages"=multisz:${SecurityPackages}
 \end{verbatim}
 \item[Log Format] \hfill \\
 \verb|AuthenticationPackage: ${File}| \\
 \verb|AuthenticationMissing: ${PackageName}| \\
 \verb|NotificationPackage: ${File}| \\
 \verb|NotificationMissing: ${PackageName}| \\
+\verb|SecurityPackage: ${File}| \\
+\verb|SecurityMissing: ${PackageName}|
 \item[Output Description] \hfill \\
-Both of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
+All of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
 means that the registry item contains a double null terminated list of null
 terminated strings. For each string, the local security authority loads the
 indicated DLL. Each string therefore generates a seperate Instalog log line.
 \var{File} is displayed using the standard file format defined in \ref{stdfile}.
+
+If the default values are not in place, the machine may be in a state where the
+user cannot log in. Therefore, if any of the defaults are missing, the
+indication that the item expected is missing needs to be generated. Testing will
+need to be done to determine the whitelisted items on supported operating
+systems.
 \item[Whitelisting Considerations] \hfill \\
-None at this time.
+As described above.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a fix removing the associated value from the registry.
+``Move'' shall generate a fix quarentining the affected file.
 \end{description}
 
 \subsubsection{Client Server Runtime SubSystem Server DLL}
 \begin{description}
 \item[Rationale] \hfill \\
-
+The Client Server Runtime Subsystem is responsible for implementing the Win32
+API, on top of the native (NT) API provided by the NT kernel. This subsystem
+runs inside the process known as ``\verb|csrss.exe|''. While Windows is
+starting, NT passes a long command line into \verb|csrss.exe| which tells it the
+paths of some importantant DLLs. One of these is the ``Server'' DLL, which
+malware has used as a loading point in the past.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\
+    Subsystems]
+"Windows"="${CsrssCommandLine}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|SubSystems: ${File}|
 \item[Output Description] \hfill \\
+\var{CsrssCommandLine} is the full command line used to launch the Client Server
+Runtime SubSystem. An example command line (with newlines to get it to fit here)
+is:
+\begin{verbatim}
+%SystemRoot%\system32\csrss.exe ObjectDirectory=\Windows
+SharedSection=1024,20480,768 Windows=On SubSystemType=Windows
+ServerDll=basesrv,1
+ServerDll=winsrv:UserServerDllInitialization,3
+ServerDll=winsrv:ConServerDllInitialization,2
+ServerDll=sxssrv,4 ProfileControl=Off MaxRequestThreads=16
+\end{verbatim}
 
+The first ``ServerDll'' is overwritten by malware to load a malicious DLL.
+\var{File} consists of the first ServerDll portion, starting just after the
+equals sign (\verb|=|), and continuing until the comma (\verb|,|).
+
+After \var{File} is determined, it is displayed using the standard file format
+defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
-None at this time.
+The default value, \verb|basesrv|, of the indicated file shall be whitelisted.
 \item[Fix Considerations] \hfill \\
+The ``Fix'' action shall generate a registry script resetting the default
+value for the target operating system. The ``Move'' action shall generate a
+script quarentining the indicated DLL.
 \end{description}
 
 \subsubsection{Installed Active Setup Components}
 \begin{description}
 \item[Rationale] \hfill \\
+From Wikipedia:
+\url{http://en.wikipedia.org/wiki/Active_Setup}
 
+\begin{quote}
+Active Setup is the installation technology Microsoft used for downloading and
+installing Internet Explorer versions 4 to 6. It was designed to selectively
+download and install signed Internet Explorer components via the Internet.
+This significantly reduced the amount of data to download as also the time
+required for updates. Active Setup could also resume partially completed
+downloads from the point where they were interrupted.
+
+Active Setup was also used for Microsoft Outlook 98 setup.
+
+Active Setup still available into Windows 7. It is mainly used to complete
+specific run once setup tasks for each user as they log in to a given
+machine after an active setup based package is installed. This can be
+used as a complementary technology to the MSI Self-heal feature, but is
+not dependent or related to MSI technology.
+\end{quote}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Active Setup\
+    Installed Components\${Entry}]
+"StubPath"="${File}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|ActiveSetup: [${Entry}] ${File}|
+\verb|ActiveSetup64: [${Entry}] ${File}|
 \item[Output Description] \hfill \\
-
+\var{Entry} shall be escaped using the default escape function defined in
+\var{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of right square bracket (\verb|]|). \var{File} shall be displayed
+using the default file display method defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script removing the associated \var{Entry} subkey.
+``Move'' shall generate a script quarentining the indicated file.
 \end{description}
 
 \subsubsection{Image File Execution Options}
 \begin{description}
 \item[Rationale] \hfill \\
+Image File Execution Options are used by the Windows Loader to control how a
+given binary is loaded. This allows debuggers, for instance, to be loaded early
+in the process before the Windows Loader does significant work resolving DLLs,
+libraries, and other bits.
 
+This means that when the Windows Loader tries to load a binary it finds settings
+for in the Image File Execution Options section, the debugger, if defined, is
+loaded instead of the indiciated binary. Malware uses this to redirect
+otherwise legitimate programs into launching malware instead.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\
+    Image File Execution Options\${Source}]
+"Debugger"="${Target}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|Ifeo: ${Source}->${Target}|
 \item[Output Description] \hfill \\
-
+\var{Source} shall be escaped using the default escaping method defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of dash (\verb|-|). \var{Target} shall be displayed using the default
+file display format defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a fix removing the ``Debugger'' value from the indicated
+Image File Execution Options key. ``Move'' shall generate a script quarentining
+the indiciated \var{Target}.
 \end{description}
 
 \subsubsection{File Assocations}
 \begin{description}
 \item[Rationale] \hfill \\
+File associations tell Windows how to deal with a particular file given it's
+extension. Malware can steal file associations which are important to general
+operation of the system, such as that given to ``\verb|.exe|''.
+\item[Data Sources] \hfill \\
+The following file extensions shall be checked:
+\begin{itemize}
+    \item \verb|.exe|
+    \item \verb|.bat|
+    \item \verb|.com|
+    \item \verb|.pif|
+    \item \verb|.scr|
+    \item \verb|.reg|
+    \item \verb|.txt|
+    \item \verb|.chm|
+    \item \verb|.inf|
+    \item \verb|.ini|
+    \item \verb|.vbe|
+    \item \verb|.vbs|
+    \item \verb|.jse|
+    \item \verb|.jsf|
+\end{itemize}
 
-\item[Data Sources] \hfill
+For each of these extensions, the following data is queried:
+
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_CLASSES_ROOT\${Ext}]
+@="${NamedExt}"
+[HKEY_CLASSES_ROOT\${NamedExt}\Shell]
+@="${DefaultVerb}"
+[HKEY_CLASSES_ROOT\${NamedExt}\Shell\${DefaultVerb}\Command]
+@="${Cmd}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|Association: ${Ext}->${NamedExt}->${DefaultVerb}->${Cmd}|
 \item[Output Description] \hfill \\
-
+All the variables are escaped using the general escape format defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of dash (\verb|-|), except \var{Cmd}, which has no right delimiter.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a fix which restores default values for all of the above.
+These defaults will need to be generated through testing.
 \end{description}
 
 \subsubsection{Hosts File}
