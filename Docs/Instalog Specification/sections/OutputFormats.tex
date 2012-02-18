@@ -3,20 +3,6 @@ This section defines various output formats that Instalog uses.  The formats
 defined in this section are referred to throughout this document and therefore
 have been extracted to this common section.
 
-\subsection{Section Separator Format} \label{sec:section_separator}
-A log is split up into several delimited portions called ``sections''. With the
-exception of headers and footers, all sections begin with a line of the
-following format:
-
-\begin{verbatim}
-================ ${Section Name} ===============
-\end{verbatim}
-
-That is, the name of the section with one space of padding, centered in a block
-of equals (\verb|=|) signs 50 total characters wide. In the case that a tie
-exists with respect to the centering, Instalog shall prefer placing the name of
-the section farther to the right than to the left.
-
 \subsection{Escaping Formats}
 In order to meet the requirements of machine readability and human readability,
 several escaping formats must be used depending on the type of data to produce

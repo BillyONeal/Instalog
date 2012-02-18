@@ -15,11 +15,11 @@ attempt to parse the script to ensure it does not have any syntax errors.  If
 any syntax errors are present, Instalog \textbf{must not} proceed with executing
 the script and shall instead return an error describing which line of the script
 the syntax error was found on.
-\subsubsection{Order Optimization}
+\subsubsection{Reordering}
 Since scripts are written by users, they might not be presented in an order that
-makes sense or is efficient.  For example, it does not make any sense to process
-a script that quarantines files and then kills a process.  Rather, the order
-should be optimized so that script actions have the greatest order of success.
+makes sense or is efficient.  For example, it does not make any sense to
+perform scanning actions before repair actions.  Therefore, the order should be
+optimized so that script actions have the greatest order of success.
 
 Before reordering the script, script actions must be merged.  For example, if a
 script defines two separate kill process sections, they shall be merged into one
@@ -30,30 +30,30 @@ order:
   \item 
 \end{enumerate}
 \subsubsection{Backup Folder Creation} \label{sec:backup_folder}
-%TODO: ``system altering'' needs to be defined
-If a script is determined to be system-altering, a folder must be created to
-save backups and any intermediate output files.  Each script run shall create a
-subfolder within \verb|C:\Instalog\| that is named according to the standard
-date format defined in \ref{stddate}.  A copy of the script shall be saved in
-this folder with the name ``\verb|Script.txt|''.  In addition, the script's output
+If a script contains any repair actions defined in \ref{sec:repair_actions}, a
+folder must be created to save backups and any intermediate output files.  Each
+script run shall create a subfolder within \verb|C:\Instalog\| (if this folder
+doesn't exist, it shall be created) that is named according to the standard date
+format defined in \ref{stddate}.  A copy of the script shall be saved in this
+folder with the name ``\verb|Script.txt|''.  In addition, the script's output
 shall be saved in this folder with the name ``\verb|Output.txt|''.  After each
 different script action completes, this file must be written to.  This is done
 so that if the system crashes while a script is executing, it will be possible
 to determine where in the script execution it crashed and therefore which
-actions successfully completed.  
+actions successfully completed.
 \subsubsection{Execution}
 Each action in the script shall be executed in the optimized order.  After each
 action completes, the intermediate log shall be written to as explained in
 \label{sec:backup_folder}.
 
-\subsection{General Syntax}
+\subsection{Script Syntax}
 While Instalog scripts are designed to be constructed by the GUI, the scripting
 language is designed in such a way that editing them by hand with a simple text
 editor is possible.  
 
 Actions are listed in scripts in different action sections.  Scripts are built
-by combining 1 or more action sections together.  Each action section is defined
-as:
+by combining one or more action sections together.  Each action section is
+defined as:
 \begin{verbatim}
 :${action} ${arg}
 ${items}
@@ -64,27 +64,141 @@ then \var{arg} will be whatever string follows the one space character after
 \var{action}.  For example, if there were three spaces following \var{action}
 and then some other characters, \var{arg} would contain two spaces and then
 those characters.  Most actions expect a list of items to perform an action on. 
-This is provided as \var{list}, which is a collection of 0 or more lines of
+This is provided as \var{list}, which is a collection of zero or more lines of
 \var{item}'s for the script action to operate upon.  Each \var{action} and
 \var{item} in \var{items} must be on separate lines in the script.
 
-\subsection{Output Format}
-The output format is defined differently for actions that are system-altering
-and not system-altering.
-\subsubsection{System-altering Action Output Format}
-Actions that modify a system must either succeed or fail after they have been
-performed.  If the action succeeded, it shall be emitted to the log as
+\subsection{Output Format} \label{sec:section_separator}
+The output log can be seen as a combination of three elements: a header
+containing general information about the system, information from the script
+separated into separate sections, and a footer designating the end of the log. 
+Each of these separate elements is described below.
+
+\subsubsection{Header}
+The header of an Instalog report consists of 4 lines, which are always displayed
+and shown in the same order as defined in this document. No component of the
+header is associated with any type of fix information.
+
+The first line lists information about Instalog itself. It is of the form:
+\begin{verbatim}
+Instalog ${Version}${SafebootState}
+\end{verbatim}
+
+\var{Version} is the version number of the current release of Instalog. This
+allows remote determination of cases where a user needs to upgrade their current
+copy before malware removal or system repair can continue safely.
+
+\var{SafebootState} is the string ``\verb| MINIMAL|'' if the system is currently
+booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
+the system is booted into \textit{Safe Mode with Networking}, or nothing if the
+machine was booted normally.
+
+The second line lists information about the user running Instalog, and the local
+date and time of the system when the log was generated. It has the form:
+\begin{verbatim}
+Run by ${UserName} at ${Date} [GMT ${TimeZone}]
+\end{verbatim}
+
+\var{UserName} is the current display name of the logged in user, escaped with
+the general escaping format defined in \ref{generalescape}, using a left
+delimiter of a double quote (\verb|"|), a right delimiter of a double
+quote (\verb|"|), and an escape character backslash (\verb|\|).
+
+\var{Date} is the current date when the log report was started being generated,
+using the millisecond date format specified in \ref{millidate}.
+
+\var{TimeZone} is a one sign, three digit, and one decimal point representation
+of the time zone of the machine taking the report. For instance, Eastern
+Standard Time is \verb|-4.00| or \verb|-5.00|, while Moscow Standard Time would
+be \verb|+4.00|. (The extra two digits are to allow for locales with half and
+quarter hour time zones)
+
+The third line is designed to indicate when important exploitable applications
+need to be updated, by listing their versions. It has the form:
+\begin{verbatim}
+IE: ${IE} Java: ${Java} Flash: ${Flash} Adobe: ${AdobeReader}
+\end{verbatim}
+
+The variables are the installed versions of Microsoft's Internet Explorer,
+Oracle's Java, Adobe's Flash, and Adobe's Adobe Reader. In the event one or more
+of these applications are not installed then their version is listed as
+``\verb|None|''.
+
+The fourth line contains information about the current Windows installation and
+memory state. It is of the form:
+\begin{verbatim}
+Microsoft Windows ${WindowsVersion} ${WindowsEdition} ${ProcessorArchitecture}
+${Major}.${Minor}.${Build}.${ServicePack} ${FreeRam}/${TotalRam} MB Free
+\end{verbatim}
+
+Newlines in the above are a consequence of this document and are not present in
+the output.
+
+\var{WindowsVersion} is the ``string name'' of the version of Windows in use,
+such as ``XP'', ``Vista'', or ``7''. \var{WindowsEdition} is the edition of the
+same; such as ``Home'', ``Professional'', or ``Ultimate''. The values
+\var{Major}, \var{Minor}, \var{Build}, and \var{ServicePack} match the current
+version information of the operating system in use.
+
+\var{ProcesserArchitecture} is either the string ``\verb|x86|'' or
+``\verb|x64|'', matching the installed operating system type. (Note that this is
+\textit{not} the capability of the current processor)
+
+Finally, \var{FreeRam} and \var{TotalRam} are the number of Mebibytes of memory
+that are available for use by programs on the current running system.
+
+Examples of the 4th line:
+\begin{verbatim}
+Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
+Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
+\end{verbatim}
+
+\subsubsection{Section}
+The heart of the output log is split up into several delimited portions called
+``sections''.  Each script action shall emit its own section to the log as
+
+\begin{verbatim}
+================ ${Section Name} ===============
+\end{verbatim}
+
+That is, the name of the section with one space of padding, centered in a block
+of equals (\verb|=|) signs 50 total characters wide. In the case that a tie
+exists with respect to the centering, Instalog shall prefer placing the name of
+the section farther to the right than to the left.
+
+Beneath the section header, the action can emit different status messages on
+separate lines.  The line output format is defined differently for actions that
+are scan or repair actions.
+\begin{description}
+\item[Scanning Action]
+Lines that are associated with actions that are defined in
+\ref{sec:scanning_actions} can simply have their status message emitted to the log.
+\item[Repair Action]
+Lines that are associated with actions defined in \ref{sec:repair_actions} must
+either succeed or fail after they have been performed.  If the action succeeded,
+it shall be emitted to the log as
+\vspace{-\baselineskip}
 \begin{verbatim}
 [ OK ] ${message}
 \end{verbatim}
 where \var{message} is some information about the action.  Similarly, if the
 action failed, it shall be emitted to the log as
+\vspace{-\baselineskip}
 \begin{verbatim}
 [FAIL] ${message}
 \end{verbatim}
-\subsubsection{Non-system-altering Action Output Format}
-Actions that are not system-altering can simply have their status message
-emitted to the log.
+\end{description}
+
+\subsubsection{Footer}
+The footer shall not have a section title. It is a line of the following form
+surrounded by newlines:
+\begin{verbatim}
+Instalog ${version} Finished ${Date}
+\end{verbatim}
+
+Here, \var{version} is the version of Instalog used to generate the report, and
+\var{Date} is the date when the report was completed using the millisecond date
+format defined in section \ref{millidate}.
 
 \subsection{Backup Actions}
 An important aspect of Instalog's scripting actions is that most are designed to
@@ -141,7 +255,7 @@ following sections in the following order:
 \end{enumerate}
 
 \subsection{Additional Script Sections}
-\noindent{}The following additional sections are available but they are not
+The following additional sections are available but they are not
 generated in the default report:
 \begin{description}
 \item[DNS Check] Displayed if the \verb|:dnscheck| scripting section is used.
@@ -154,19 +268,3 @@ generated in the default report:
 is used.
 \item[Registry] Displayed if the \verb|:registry| scripting action is used.
 \end{description}
-
-\subsection{Script Actions}
-\subsubsection{Registry Backup}
-\subsubsection{Kill Process}
-\subsubsection{VirusTotal Upload}
-\subsubsection{Bleeping Computer Upload}
-\subsubsection{Move (File Quarantine)}
-\subsubsection{Hosts File Reset}
-\subsubsection{Mozilla Firefox}
-\subsubsection{Google Chrome}
-\subsubsection{Security Center}
-\subsubsection{Registry Action}
-\subsubsection{LSP Chain}
-\subsubsection{Scan Actions}
-\subsubsection{Directory Listing}
-\subsubsection{DNS Check}

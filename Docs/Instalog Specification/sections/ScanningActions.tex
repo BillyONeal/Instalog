@@ -1,86 +1,7 @@
-\section{Scanning Actions}
+\section{Scanning Actions} \label{sec:scanning_actions}
 This section defines the various ``scanning'' actions that Instalog will
 support.  These actions will only gather more information about a system, but
 will not attempt to modify anything.
-
-\subsection{Header}
-The header of an Instalog report consists of 4 lines, which are always displayed
-and shown in the same order as defined in this document. No component of the
-header is associated with any type of fix information.
-
-The first line lists information about Instalog itself. It is of the form:
-\begin{verbatim}
-Instalog ${Version}${SafebootState}
-\end{verbatim}
-
-\var{Version} is the version number of the current release of Instalog. This
-allows remote determination of cases where a user needs to upgrade their current
-copy before malware removal or system repair can continue safely.
-
-\var{SafebootState} is the string ``\verb| MINIMAL|'' if the system is currently
-booted into Windows' \textit{Safe Mode}, or the string ``\verb| NETWORK|'' if
-the system is booted into \textit{Safe Mode with Networking}, or nothing if the
-machine was booted normally.
-
-The second line lists information about the user running Instalog, and the local
-date and time of the system when the log was generated. It has the form:
-\begin{verbatim}
-Run by ${UserName} at ${Date} [GMT ${TimeZone}]
-\end{verbatim}
-
-\var{UserName} is the current display name of the logged in user, escaped with
-the general escaping format defined in \ref{generalescape}, using a left
-delimiter of a double quote (\verb|"|), a right delimiter of a double
-quote (\verb|"|), and an escape character backslash (\verb|\|).
-
-\var{Date} is the current date when the log report was started being generated,
-using the millisecond date format specified in \ref{millidate}.
-
-\var{TimeZone} is a one sign, three digit, and one decimal point representation
-of the time zone of the machine taking the report. For instance, Eastern
-Standard Time is \verb|-4.00| or \verb|-5.00|, while Moscow Standard Time would
-be \verb|+4.00|. (The extra two digits are to allow for locales with half and
-quarter hour time zones)
-
-The third line is designed to indicate when important exploitable applications
-need to be updated, by listing their versions. It has the form:
-\begin{verbatim}
-IE: ${IE} Java: ${Java} Flash: ${Flash} Adobe: ${AdobeReader}
-\end{verbatim}
-
-The variables are the installed versions of Microsoft's Internet Explorer,
-Oracle's Java, Adobe's Flash, and Adobe's Adobe Reader. In the event one or more
-of these applications are not installed then their version is listed as
-``\verb|None|''.
-
-The fourth line contains information about the current Windows installation and
-memory state. It is of the form:
-\begin{verbatim}
-Microsoft Windows ${WindowsVersion} ${WindowsEdition} ${ProcessorArchitecture}
-${Major}.${Minor}.${Build}.${ServicePack} ${FreeRam}/${TotalRam} MB Free
-\end{verbatim}
-
-Newlines in the above are a consequence of this document and are not present in
-the output.
-
-\var{WindowsVersion} is the ``string name'' of the version of Windows in use,
-such as ``XP'', ``Vista'', or ``7''. \var{WindowsEdition} is the edition of the
-same; such as ``Home'', ``Professional'', or ``Ultimate''. The values
-\var{Major}, \var{Minor}, \var{Build}, and \var{ServicePack} match the current
-version information of the operating system in use.
-
-\var{ProcesserArchitecture} is either the string ``\verb|x86|'' or
-``\verb|x64|'', matching the installed operating system type. (Note that this is
-\textit{not} the capability of the current processor)
-
-Finally, \var{FreeRam} and \var{TotalRam} are the number of Mebibytes of memory
-that are available for use by programs on the current running system.
-
-Examples of the 4th line:
-\begin{verbatim}
-Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
-Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
-\end{verbatim}
 
 \subsection{Running Processes}
 \begin{description}
@@ -2576,14 +2497,3 @@ No applicable fix considerations apply.  Future versions of this tool may
 support uninstalling.  However, since some applications use non-standard
 uninstallers, support uninstalling across the board could prove difficult.
 \end{description}
-
-\subsection{Footer}
-The footer shall not have a section title. It is a line of the following form
-surrounded by newlines:
-\begin{verbatim}
-Instalog ${version} Finished ${Date}
-\end{verbatim}
-
-Here, \var{version} is the version of Instalog used to generate the report, and
-\var{Date} is the date when the report was completed using the millisecond date
-format defined in section \ref{millidate}.
