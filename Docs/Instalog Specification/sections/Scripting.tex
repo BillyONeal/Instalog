@@ -120,6 +120,40 @@ backup.  However, if the restore point creation fails for some reason, then the
 entire registry hive must be dumped manually.  Each registry file shall be saved
 in the backup defined in \ref{sec:backup_folder}.
 
+\subsection{Default Script Sections} \label{sec:default_script_sections}
+Instalog's standard (that is, run without a script) output consists of the
+following sections in the following order:
+\begin{enumerate}
+    \item Header
+    \item Running Processes
+    \item Machine PsuedoHJT Report
+    \item $n$ User PseudoHJT Reports (One for each loaded user registry on the
+    system)
+    \item Mozilla Firefox (If Mozilla Firefox is installed)
+    \item Google Chrome (If Google Chrome is installed)
+    \item Created Last 30
+    \item Find3M Report
+    \item Event Viewer (If any relevant events need be reported)
+    \item Machine Specifications
+    \item Restore Points
+    \item Installed Programs
+    \item Footer
+\end{enumerate}
+
+\subsection{Additional Script Sections}
+\noindent{}The following additional sections are available but they are not
+generated in the default report:
+\begin{description}
+\item[DNS Check] Displayed if the \verb|:dnscheck| scripting section is used.
+\item[Directory] Displayed if the \verb|:dirlook| scripting section is used.
+\item[VirusTotal] Displayed if the \verb|:virustotal| scripting section is used.
+\item[MRC Upload] Displayed if the \verb|:mrc| scripting section is used.
+\item[Process Kill] Displayed if the \verb|:kill| scripting section is used.
+\item[File Quarantine] Displayed if the \verb|:move| scripting section is used.
+\item[Security Center] Displayed if the \verb|:securitycenter| scripting section
+is used.
+\item[Registry] Displayed if the \verb|:registry| scripting action is used.
+\end{description}
 
 \subsection{Script Actions}
 \subsubsection{Registry Backup}
