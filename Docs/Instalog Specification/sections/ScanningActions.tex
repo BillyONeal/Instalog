@@ -82,12 +82,15 @@ Microsoft Windows Vista Professional N x86 6.0.6000.0 1023/8096 MB Free
 Microsoft Windows 7 Ultimate x64 6.1.7601.1 4547/8071 MB Free
 \end{verbatim}
 
-\subsection{Running Processes}
+\subsection{Running Processes (\texttt{:RunningProcess})}
 \begin{description}
 \item[Rationale] \hfill \\
 One obvious source of problems is the processes that are currently running on
 the system.  As such, each of these processes shall be listed for analysis
 purposes.  
+\item[Invocation] \hfill \\
+This can be invoked in a script by calling \verb|:RunningProccesses|.  This
+action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 The full path to the running executable shall be referred to as \var{path}.  The
 arguments to that process shall be referred to as \var{arguments}.  The
@@ -134,7 +137,7 @@ main module should then be moved into quarantine.
 \end{description}
 \end{description}
 
-\subsection{PseudoHJT Report} \label{hjtgeneral}
+\subsection{PseudoHJT Report (\texttt{:PsuedoHJT})} \label{hjtgeneral}
 The information in the PseudoHJT report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
@@ -176,6 +179,9 @@ enumerated. It is escaped using the general escaping method defined in
 \ref{generalescape}, using a right delimiter of \verb|"|, and an escape
 character of \verb|\|. The \var{sid} is the security identifier associated with
 that user. It follows a regular format, and therefore need not be escaped.
+
+The PsuedoHJT report  can be invoked in a script by calling \verb|:PsuedoHJT|. 
+This action does not require any argument or additional input.
 
 \subsubsection{Root Registry Hives}
 The log lines discussed in the remainder of \ref{hjtgeneral} are ``rooted'' at a
@@ -1940,8 +1946,8 @@ second format, and \var{Link} shall be output using the default file output
 defined in \ref{stdfile}.
 \end{description}
 
-\subsection{Mozilla Firefox}
-Mozilla Firefox (hereafter referred to as simply ``Firefox'') is a popular web
+\subsection{Firefox (\texttt{:Firefox})}
+Firefox (hereafter referred to as simply ``Firefox'') is a popular web
 browser that many users have installed on their machines.  An attack from within
 the browser is a possibility.  As such, this tool must enumerate various Firefox
 loading points to find suspicious information (if Firefox is installed).  This
@@ -1955,6 +1961,12 @@ registry key:
 
 If Firefox is installed, the following information shall be output to the log. 
 If Firefox is not installed, the entire section shall not be printed to the log.
+
+This can be invoked in a script by calling \verb|:Firefox|.  This action does
+not require any argument or additional input.  However, if additional input
+lines are supplied, then the scan action will assume that they are user
+preferences and they shall be enumerated in addition to the default preferences
+listed in \ref{sec:ff_user_preferences}.
 
 This specification is targeted for Firefox 10.0 x86 builds.  The behavior is
 undefined for other versions of Firefox but will likely be similar.
@@ -1992,7 +2004,7 @@ provided so that further fix actions can be applied to components within the
 path.
 \end{description}
 
-\subsubsection{User Preferences}
+\subsubsection{User Preferences} \label{sec:ff_user_preferences}
 \begin{description}
 \item[Rationale] \hfill \\
 Some user preferences could be overridden that would lead a user to malicious
@@ -2137,7 +2149,7 @@ process can be killed if it is still running.  When the user re-opens Firefox
 later, the plugins(s) will be removed from the file.
 \end{description}
 
-\subsection{Google Chrome}
+\subsection{Chrome (\texttt{:Chrome})}
 Google Chrome (hereafter referred to as ``Chrome'') is a popular browser that is
 extensible like Firefox.  Therefore, like Firefox, it has some potential attack
 vectors.  This section of the log shall only appear if Chrome is installed.  To
@@ -2151,7 +2163,13 @@ If Chrome is installed, the following information shall be output to the log.
 If Chrome is not installed, the entire section shall not be printed to the log.
 %TODO: multipe users
 
-This specification is targetted at Chrome 17.0.  While this information extend
+This can be invoked in a script by calling \verb|:Chrome|.  This action does
+not require any argument or additional input.  However, if additional input
+lines are supplied, then the scan action will assume that they are user
+preferences and they shall be enumerated in addition to the default preferences
+listed in \ref{sec:chrome_user_preferences}.
+
+This specification is targeted at Chrome 17.0.  While this information extend
 to other versions of the browser, the behavior will be undefined.  
 
 All of the various sections for Chrome pull from the same Preferences file:
@@ -2275,7 +2293,7 @@ Chrome will be closed.  When the user hits okay in this dialog, the Chrome
 process can be killed if it is still running.  
 \end{description}
 
-\subsubsection{Other user preferences}
+\subsubsection{Other user preferences} \label{sec:chrome_user_preferences}
 \begin{description}
 \item[Rationale] \hfill \\
 Some other user preferences, such as homepages and such could become infected by
@@ -2318,7 +2336,7 @@ appear warning the user that Chrome will be closed.  When the user hits okay in
 this dialog, the Chrome process can be killed if it is still running.
 \end{description}
 
-\subsection{Services/Drivers}
+\subsection{Services/Drivers (\texttt{:ServicesDrivers})}
 The services and drivers section enumerates all services and drivers on the
 current machine, limited by whitelist. Each line in this report is of the form
 \begin{verbatim}
@@ -2359,7 +2377,10 @@ is the name the service advertises itself as. \var{File} is the image path
 configured for the service, in the standard file enumeration format defined in
 section \ref{stdfile} and escaped using \verb|;| as the right delmiter.
 
-\subsection{Created Last 30}
+This action be invoked in a script by calling \verb|:ServicesDrivers|.  This
+action does not require any argument or additional input.
+
+\subsection{Created Last 30 (\texttt{:CreatedLast30})}
 Created Last 30 is designed to be look in interesting locations for files
 created in the last 30 days. It is defined by sUBs' DDS tool, and shall be used,
 almost verbatim, in Instalog.
@@ -2396,7 +2417,10 @@ and the following additional directories on Vista or newer.
 The output will then be sorted by creation date, then by modification date, then
 by size, then by attribute string, and finally by file path.
 
-\subsection{Find3M}
+This action can be invoked in a script by calling \verb|:CreatedLast30|.
+This action does not require any argument or additional input.
+
+\subsection{Find3M (\texttt{:Find3M})}
 Find3M is modelled after sUBs' DDS, almost without modification. It
 originally stood for ``Find files created in the last 3 months'', but has since been expanded to
 cover cases where files are in strange locations where they otherwise should not
@@ -2547,7 +2571,10 @@ Find3M shall be generated in the following manner:
     was required)
 \end{enumerate}
 
-\subsection{Event Viewer}
+This action can be invoked in a script by calling \verb|:Find3M|.
+This action does not require any argument or additional input.
+
+\subsection{Event Viewer (\texttt{:EventViewer})}
 The event viewer section shall enumerate event viewer messages from the past
 week. Each line of this report shall match
 \begin{verbatim}
@@ -2567,12 +2594,18 @@ and Warning) will be enumerated for Windows File Protection sourced events.
 The \var{EventId}'s 1000, 8023, and 10010 are whitelisted, and shall not be
 printed.
 
-\subsection{Machine Specifications}
+This action can be invoked in a script by calling \verb|:EventViewer|.
+This action does not require any argument or additional input.
+
+\subsection{Machine Specifications (\texttt{:MachineSpecifications})}
 \begin{description}
 \item[Rationale] \hfill \\
 Sometimes it is helpful for a forum assistant to have an idea of what type of
 machine the end user is working on.  This section's purpose is to provide this
 type of information.
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:MachineSpecifications|.
+This action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 This segment is generated primarily from the \verb|Win32_ComputerSystem| class
 in Windows Managment Instrumentation.
@@ -2614,7 +2647,7 @@ There are no applicable whitelist considerations.
 No applicable fix considerations apply.  
 \end{description}
 
-\subsection{Restore Points}
+\subsection{Restore Points (\texttt{:RestorePoints})}
 \begin{description}
 \item[Rationale] \hfill \\
 Restore Points were introduced in Windows XP.  They allow a user to return their
@@ -2624,6 +2657,9 @@ etc.  Users can also manually create restore points.
 
 If there are no restore points available or the system does not support restore
 points, this entire log section shall be skipped.
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:RestorePoints|.
+This action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 Restore Points can be accessed using WMI
 (\url{http://msdn.microsoft.com/en-us/library/windows/desktop/aa378951.aspx}),
@@ -2657,11 +2693,14 @@ No applicable fix considerations apply.  Future versions of this tool may
 support restoring to a certain point.  
 \end{description}
 
-\subsection{Installed Programs}
+\subsection{Installed Programs (\texttt{:InstalledPrograms})}
 \begin{description}
 \item[Rationale] \hfill \\
 It is often important to have a full list of which programs are installed on a
-user machine.  The output log shall contain a list of all installed programs.  
+user machine.  The output log shall contain a list of all installed programs. 
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:InstalledPrograms|.
+This action does not require any argument or additional input. 
 \item[Data Sources] \hfill \\
 The installed programs shall be determined by enumerating through the registry
 for all of the \var{id}'s that are present.
