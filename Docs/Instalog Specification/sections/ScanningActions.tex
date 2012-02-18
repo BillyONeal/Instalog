@@ -3,12 +3,15 @@ This section defines the various ``scanning'' actions that Instalog will
 support.  These actions will only gather more information about a system, but
 will not attempt to modify anything.
 
-\subsection{Running Processes}
+\subsection{Running Processes (\texttt{:RunningProcess})}
 \begin{description}
 \item[Rationale] \hfill \\
 One obvious source of problems is the processes that are currently running on
 the system.  As such, each of these processes shall be listed for analysis
 purposes.  
+\item[Invocation] \hfill \\
+This can be invoked in a script by calling \verb|:RunningProccesses|.  This
+action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 The full path to the running executable shall be referred to as \var{path}.  The
 arguments to that process shall be referred to as \var{arguments}.  The
@@ -55,7 +58,7 @@ main module should then be moved into quarantine.
 \end{description}
 \end{description}
 
-\subsection{PseudoHJT Report} \label{hjtgeneral}
+\subsection{PseudoHJT Report (\texttt{:PsuedoHJT})} \label{hjtgeneral}
 The information in the PseudoHJT report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
@@ -97,6 +100,9 @@ enumerated. It is escaped using the general escaping method defined in
 \ref{generalescape}, using a right delimiter of \verb|"|, and an escape
 character of \verb|\|. The \var{sid} is the security identifier associated with
 that user. It follows a regular format, and therefore need not be escaped.
+
+The PsuedoHJT report  can be invoked in a script by calling \verb|:PsuedoHJT|. 
+This action does not require any argument or additional input.
 
 \subsubsection{Root Registry Hives}
 The log lines discussed in the remainder of \ref{hjtgeneral} are ``rooted'' at a
@@ -1480,94 +1486,204 @@ which allow third party code to run inside \verb|lsass.exe|.
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa]
 "Authentication Packages"=multisz:${AuthenticationPackages}
 "Notification Packages"=multisz:${NotificationPackages}
+"Security Packages"=multisz:${SecurityPackages}
 \end{verbatim}
 \item[Log Format] \hfill \\
 \verb|AuthenticationPackage: ${File}| \\
 \verb|AuthenticationMissing: ${PackageName}| \\
 \verb|NotificationPackage: ${File}| \\
 \verb|NotificationMissing: ${PackageName}| \\
+\verb|SecurityPackage: ${File}| \\
+\verb|SecurityMissing: ${PackageName}|
 \item[Output Description] \hfill \\
-Both of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
+All of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
 means that the registry item contains a double null terminated list of null
 terminated strings. For each string, the local security authority loads the
 indicated DLL. Each string therefore generates a seperate Instalog log line.
 \var{File} is displayed using the standard file format defined in \ref{stdfile}.
+
+If the default values are not in place, the machine may be in a state where the
+user cannot log in. Therefore, if any of the defaults are missing, the
+indication that the item expected is missing needs to be generated. Testing will
+need to be done to determine the whitelisted items on supported operating
+systems.
 \item[Whitelisting Considerations] \hfill \\
-None at this time.
+As described above.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a fix removing the associated value from the registry.
+``Move'' shall generate a fix quarentining the affected file.
 \end{description}
 
 \subsubsection{Client Server Runtime SubSystem Server DLL}
 \begin{description}
 \item[Rationale] \hfill \\
-
+The Client Server Runtime Subsystem is responsible for implementing the Win32
+API, on top of the native (NT) API provided by the NT kernel. This subsystem
+runs inside the process known as ``\verb|csrss.exe|''. While Windows is
+starting, NT passes a long command line into \verb|csrss.exe| which tells it the
+paths of some importantant DLLs. One of these is the ``Server'' DLL, which
+malware has used as a loading point in the past.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\
+    Subsystems]
+"Windows"="${CsrssCommandLine}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|SubSystems: ${File}|
 \item[Output Description] \hfill \\
+\var{CsrssCommandLine} is the full command line used to launch the Client Server
+Runtime SubSystem. An example command line (with newlines to get it to fit here)
+is:
+\begin{verbatim}
+%SystemRoot%\system32\csrss.exe ObjectDirectory=\Windows
+SharedSection=1024,20480,768 Windows=On SubSystemType=Windows
+ServerDll=basesrv,1
+ServerDll=winsrv:UserServerDllInitialization,3
+ServerDll=winsrv:ConServerDllInitialization,2
+ServerDll=sxssrv,4 ProfileControl=Off MaxRequestThreads=16
+\end{verbatim}
 
+The first ``ServerDll'' is overwritten by malware to load a malicious DLL.
+\var{File} consists of the first ServerDll portion, starting just after the
+equals sign (\verb|=|), and continuing until the comma (\verb|,|).
+
+After \var{File} is determined, it is displayed using the standard file format
+defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
-None at this time.
+The default value, \verb|basesrv|, of the indicated file shall be whitelisted.
 \item[Fix Considerations] \hfill \\
+The ``Fix'' action shall generate a registry script resetting the default
+value for the target operating system. The ``Move'' action shall generate a
+script quarentining the indicated DLL.
 \end{description}
 
 \subsubsection{Installed Active Setup Components}
 \begin{description}
 \item[Rationale] \hfill \\
+From Wikipedia:
+\url{http://en.wikipedia.org/wiki/Active_Setup}
 
+\begin{quote}
+Active Setup is the installation technology Microsoft used for downloading and
+installing Internet Explorer versions 4 to 6. It was designed to selectively
+download and install signed Internet Explorer components via the Internet.
+This significantly reduced the amount of data to download as also the time
+required for updates. Active Setup could also resume partially completed
+downloads from the point where they were interrupted.
+
+Active Setup was also used for Microsoft Outlook 98 setup.
+
+Active Setup still available into Windows 7. It is mainly used to complete
+specific run once setup tasks for each user as they log in to a given
+machine after an active setup based package is installed. This can be
+used as a complementary technology to the MSI Self-heal feature, but is
+not dependent or related to MSI technology.
+\end{quote}
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Active Setup\
+    Installed Components\${Entry}]
+"StubPath"="${File}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|ActiveSetup: [${Entry}] ${File}|
+\verb|ActiveSetup64: [${Entry}] ${File}|
 \item[Output Description] \hfill \\
-
+\var{Entry} shall be escaped using the default escape function defined in
+\var{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of right square bracket (\verb|]|). \var{File} shall be displayed
+using the default file display method defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script removing the associated \var{Entry} subkey.
+``Move'' shall generate a script quarentining the indicated file.
 \end{description}
 
 \subsubsection{Image File Execution Options}
 \begin{description}
 \item[Rationale] \hfill \\
+Image File Execution Options are used by the Windows Loader to control how a
+given binary is loaded. This allows debuggers, for instance, to be loaded early
+in the process before the Windows Loader does significant work resolving DLLs,
+libraries, and other bits.
 
+This means that when the Windows Loader tries to load a binary it finds settings
+for in the Image File Execution Options section, the debugger, if defined, is
+loaded instead of the indiciated binary. Malware uses this to redirect
+otherwise legitimate programs into launching malware instead.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\
+    Image File Execution Options\${Source}]
+"Debugger"="${Target}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|Ifeo: ${Source}->${Target}|
 \item[Output Description] \hfill \\
-
+\var{Source} shall be escaped using the default escaping method defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of dash (\verb|-|). \var{Target} shall be displayed using the default
+file display format defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a fix removing the ``Debugger'' value from the indicated
+Image File Execution Options key. ``Move'' shall generate a script quarentining
+the indiciated \var{Target}.
 \end{description}
 
 \subsubsection{File Assocations}
 \begin{description}
 \item[Rationale] \hfill \\
+File associations tell Windows how to deal with a particular file given it's
+extension. Malware can steal file associations which are important to general
+operation of the system, such as that given to ``\verb|.exe|''.
+\item[Data Sources] \hfill \\
+The following file extensions shall be checked:
+\begin{itemize}
+    \item \verb|.exe|
+    \item \verb|.bat|
+    \item \verb|.com|
+    \item \verb|.pif|
+    \item \verb|.scr|
+    \item \verb|.reg|
+    \item \verb|.txt|
+    \item \verb|.chm|
+    \item \verb|.inf|
+    \item \verb|.ini|
+    \item \verb|.vbe|
+    \item \verb|.vbs|
+    \item \verb|.jse|
+    \item \verb|.jsf|
+\end{itemize}
 
-\item[Data Sources] \hfill
+For each of these extensions, the following data is queried:
+
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_CLASSES_ROOT\${Ext}]
+@="${NamedExt}"
+[HKEY_CLASSES_ROOT\${NamedExt}\Shell]
+@="${DefaultVerb}"
+[HKEY_CLASSES_ROOT\${NamedExt}\Shell\${DefaultVerb}\Command]
+@="${Cmd}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\verb|Association: ${Ext}->${NamedExt}->${DefaultVerb}->${Cmd}|
 \item[Output Description] \hfill \\
-
+All the variables are escaped using the general escape format defined in
+\ref{generalescape}, using an escape character of hash (\verb|#|), and a right
+delimiter of dash (\verb|-|), except \var{Cmd}, which has no right delimiter.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
+``Fix'' shall generate a fix which restores default values for all of the above.
+These defaults will need to be generated through testing.
 \end{description}
 
 \subsubsection{Hosts File}
@@ -1751,8 +1867,8 @@ second format, and \var{Link} shall be output using the default file output
 defined in \ref{stdfile}.
 \end{description}
 
-\subsection{Mozilla Firefox}
-Mozilla Firefox (hereafter referred to as simply ``Firefox'') is a popular web
+\subsection{Firefox (\texttt{:Firefox})}
+Firefox (hereafter referred to as simply ``Firefox'') is a popular web
 browser that many users have installed on their machines.  An attack from within
 the browser is a possibility.  As such, this tool must enumerate various Firefox
 loading points to find suspicious information (if Firefox is installed).  This
@@ -1766,6 +1882,12 @@ registry key:
 
 If Firefox is installed, the following information shall be output to the log. 
 If Firefox is not installed, the entire section shall not be printed to the log.
+
+This can be invoked in a script by calling \verb|:Firefox|.  This action does
+not require any argument or additional input.  However, if additional input
+lines are supplied, then the scan action will assume that they are user
+preferences and they shall be enumerated in addition to the default preferences
+listed in \ref{sec:ff_user_preferences}.
 
 This specification is targeted for Firefox 10.0 x86 builds.  The behavior is
 undefined for other versions of Firefox but will likely be similar.
@@ -1803,7 +1925,7 @@ provided so that further fix actions can be applied to components within the
 path.
 \end{description}
 
-\subsubsection{User Preferences}
+\subsubsection{User Preferences} \label{sec:ff_user_preferences}
 \begin{description}
 \item[Rationale] \hfill \\
 Some user preferences could be overridden that would lead a user to malicious
@@ -1948,7 +2070,7 @@ process can be killed if it is still running.  When the user re-opens Firefox
 later, the plugins(s) will be removed from the file.
 \end{description}
 
-\subsection{Google Chrome}
+\subsection{Chrome (\texttt{:Chrome})}
 Google Chrome (hereafter referred to as ``Chrome'') is a popular browser that is
 extensible like Firefox.  Therefore, like Firefox, it has some potential attack
 vectors.  This section of the log shall only appear if Chrome is installed.  To
@@ -1962,7 +2084,13 @@ If Chrome is installed, the following information shall be output to the log.
 If Chrome is not installed, the entire section shall not be printed to the log.
 %TODO: multipe users
 
-This specification is targetted at Chrome 17.0.  While this information extend
+This can be invoked in a script by calling \verb|:Chrome|.  This action does
+not require any argument or additional input.  However, if additional input
+lines are supplied, then the scan action will assume that they are user
+preferences and they shall be enumerated in addition to the default preferences
+listed in \ref{sec:chrome_user_preferences}.
+
+This specification is targeted at Chrome 17.0.  While this information extend
 to other versions of the browser, the behavior will be undefined.  
 
 All of the various sections for Chrome pull from the same Preferences file:
@@ -2086,7 +2214,7 @@ Chrome will be closed.  When the user hits okay in this dialog, the Chrome
 process can be killed if it is still running.  
 \end{description}
 
-\subsubsection{Other user preferences}
+\subsubsection{Other user preferences} \label{sec:chrome_user_preferences}
 \begin{description}
 \item[Rationale] \hfill \\
 Some other user preferences, such as homepages and such could become infected by
@@ -2129,7 +2257,7 @@ appear warning the user that Chrome will be closed.  When the user hits okay in
 this dialog, the Chrome process can be killed if it is still running.
 \end{description}
 
-\subsection{Services/Drivers}
+\subsection{Services/Drivers (\texttt{:ServicesDrivers})}
 The services and drivers section enumerates all services and drivers on the
 current machine, limited by whitelist. Each line in this report is of the form
 \begin{verbatim}
@@ -2170,7 +2298,10 @@ is the name the service advertises itself as. \var{File} is the image path
 configured for the service, in the standard file enumeration format defined in
 section \ref{stdfile} and escaped using \verb|;| as the right delmiter.
 
-\subsection{Created Last 30}
+This action be invoked in a script by calling \verb|:ServicesDrivers|.  This
+action does not require any argument or additional input.
+
+\subsection{Created Last 30 (\texttt{:CreatedLast30})}
 Created Last 30 is designed to be look in interesting locations for files
 created in the last 30 days. It is defined by sUBs' DDS tool, and shall be used,
 almost verbatim, in Instalog.
@@ -2207,7 +2338,10 @@ and the following additional directories on Vista or newer.
 The output will then be sorted by creation date, then by modification date, then
 by size, then by attribute string, and finally by file path.
 
-\subsection{Find3M}
+This action can be invoked in a script by calling \verb|:CreatedLast30|.
+This action does not require any argument or additional input.
+
+\subsection{Find3M (\texttt{:Find3M})}
 Find3M is modelled after sUBs' DDS, almost without modification. It
 originally stood for ``Find files created in the last 3 months'', but has since been expanded to
 cover cases where files are in strange locations where they otherwise should not
@@ -2358,7 +2492,10 @@ Find3M shall be generated in the following manner:
     was required)
 \end{enumerate}
 
-\subsection{Event Viewer}
+This action can be invoked in a script by calling \verb|:Find3M|.
+This action does not require any argument or additional input.
+
+\subsection{Event Viewer (\texttt{:EventViewer})}
 The event viewer section shall enumerate event viewer messages from the past
 week. Each line of this report shall match
 \begin{verbatim}
@@ -2378,12 +2515,18 @@ and Warning) will be enumerated for Windows File Protection sourced events.
 The \var{EventId}'s 1000, 8023, and 10010 are whitelisted, and shall not be
 printed.
 
-\subsection{Machine Specifications}
+This action can be invoked in a script by calling \verb|:EventViewer|.
+This action does not require any argument or additional input.
+
+\subsection{Machine Specifications (\texttt{:MachineSpecifications})}
 \begin{description}
 \item[Rationale] \hfill \\
 Sometimes it is helpful for a forum assistant to have an idea of what type of
 machine the end user is working on.  This section's purpose is to provide this
 type of information.
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:MachineSpecifications|.
+This action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 This segment is generated primarily from the \verb|Win32_ComputerSystem| class
 in Windows Managment Instrumentation.
@@ -2425,7 +2568,7 @@ There are no applicable whitelist considerations.
 No applicable fix considerations apply.  
 \end{description}
 
-\subsection{Restore Points}
+\subsection{Restore Points (\texttt{:RestorePoints})}
 \begin{description}
 \item[Rationale] \hfill \\
 Restore Points were introduced in Windows XP.  They allow a user to return their
@@ -2435,6 +2578,9 @@ etc.  Users can also manually create restore points.
 
 If there are no restore points available or the system does not support restore
 points, this entire log section shall be skipped.
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:RestorePoints|.
+This action does not require any argument or additional input.
 \item[Data Sources] \hfill \\
 Restore Points can be accessed using WMI
 (\url{http://msdn.microsoft.com/en-us/library/windows/desktop/aa378951.aspx}),
@@ -2468,11 +2614,14 @@ No applicable fix considerations apply.  Future versions of this tool may
 support restoring to a certain point.  
 \end{description}
 
-\subsection{Installed Programs}
+\subsection{Installed Programs (\texttt{:InstalledPrograms})}
 \begin{description}
 \item[Rationale] \hfill \\
 It is often important to have a full list of which programs are installed on a
-user machine.  The output log shall contain a list of all installed programs.  
+user machine.  The output log shall contain a list of all installed programs. 
+\item[Invocation] \hfill \\
+This action can be invoked in a script by calling \verb|:InstalledPrograms|.
+This action does not require any argument or additional input. 
 \item[Data Sources] \hfill \\
 The installed programs shall be determined by enumerating through the registry
 for all of the \var{id}'s that are present.
