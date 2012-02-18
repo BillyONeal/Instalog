@@ -46,7 +46,7 @@ Each action in the script shall be executed in the optimized order.  After each
 action completes, the intermediate log shall be written to as explained in
 \label{sec:backup_folder}.
 
-\subsection{Script Syntax}
+\subsection{Script Syntax} \label{sec:script_syntax}
 While Instalog scripts are designed to be constructed by the GUI, the scripting
 language is designed in such a way that editing them by hand with a simple text
 editor is possible.  
@@ -173,7 +173,7 @@ are scan or repair actions.
 \item[Scanning Action]
 Lines that are associated with actions that are defined in
 \ref{sec:scanning_actions} can simply have their status message emitted to the log.
-\item[Repair Action]
+\item[Repair Action] \label{repairoutput}
 Lines that are associated with actions defined in \ref{sec:repair_actions} must
 either succeed or fail after they have been performed.  If the action succeeded,
 it shall be emitted to the log as
@@ -211,7 +211,7 @@ other external tools.
 
 Instalog shall use two different backup procedures.  Each script action must
 dictate which backup procedure it uses.  
-\subsubsection{File Backup}
+\subsubsection{File Backup} \label{sec:file_backup}
 Rather than deleting files, Instalog shall ``quarantine'' them, that is,
 Instalog will move them from their current location to some safe location. 
 Quarantined files will be placed into a zip container in the corresponding

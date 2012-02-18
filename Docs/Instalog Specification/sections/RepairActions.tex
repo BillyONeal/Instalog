@@ -15,8 +15,19 @@ considered ``system-altering'' actions. \label{systemaltering}
 \subsection{MRC Upload}
 %Bill
 
-\subsection{File Quarantine}
-%Jacob
+\subsection{File Quarantine (\texttt{:move})}
+This simple action will put files into quarantine.  This action does not require
+any arguments, but does require a list of \var{items} (\ref{sec:script_syntax})
+to move into quarantine.  Each file in \var{items}, shall be placed into
+quarantine according to the scheme defined in \ref{sec:file_backup}.
+
+If adding the file to the compressed archive fails, then the tool must not
+attempt to delete the file.  If adding the file to the archive fails or deleting
+the file fails, then the quarantine action for the file should be considered
+failed.  Otherwise, the action should be considered a success.  
+
+Each file should be emitted to the log according to the scheme defined in
+\ref{repairoutput}.
 
 \subsection{Hosts File Reset}
 %Jacob
