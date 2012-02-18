@@ -15,7 +15,7 @@ considered ``system-altering'' actions. \label{systemaltering}
 \subsection{MRC Upload}
 %Bill
 
-\subsection{File Quarantine (\texttt{:move})}
+\subsection{File Quarantine (\texttt{:Move})}
 This simple action will put files into quarantine.  This action does not require
 any arguments, but does require a list of \var{items} (\ref{sec:script_syntax})
 to move into quarantine.  Each file in \var{items}, shall be placed into
@@ -23,14 +23,46 @@ quarantine according to the scheme defined in \ref{sec:file_backup}.
 
 If adding the file to the compressed archive fails, then the tool must not
 attempt to delete the file.  If adding the file to the archive fails or deleting
-the file fails, then the quarantine action for the file should be considered
-failed.  Otherwise, the action should be considered a success.  
+the file fails, then the quarantine action for the file shall be considered
+failed.  Otherwise, the action shall be considered a success.  
 
-Each file should be emitted to the log according to the scheme defined in
+Each file shall be emitted to the log according to the scheme defined in
 \ref{repairoutput}.
 
-\subsection{Hosts File Reset}
-%Jacob
+\subsection{Hosts File Reset (\texttt{:HostsReset})}
+
+This action resets the hosts file (\verb|%WinDir%\System32\Drivers\Etc\hosts|)
+to a default hosts file only containing entry(s) for localhost.  First, it
+shall backup the hosts file according to the scheme defined in
+\ref{sec:file_backup}.  If the backup fails, then the operation shall be
+emitted to the log as failed according \ref{repairoutput}.
+Once the file is backed up, the hosts file shall be replaced with a simple
+hosts file.  The host file varies based on the operating system:
+
+\begin{description}
+\item[Windows XP or Windows Server 2003 and older] \hfill 
+\begin{verbatim}
+# Hosts file reset by Instalog
+
+127.0.0.1       localhost
+\end{verbatim}
+\item[Windows Vista or Windows Server 2008] \hfill 
+\begin{verbatim}
+# Hosts file reset by Instalog
+
+127.0.0.1       localhost
+::1             localhost
+\end{verbatim}
+\item[Windows 7] \hfill 
+\begin{verbatim}
+# Hosts file reset by Instalog
+
+# localhost resolution handled within DNS
+\end{verbatim}
+\end{description}
+
+The status of the write operation shall be written to the log according to
+\ref{repairoutput}.  
 
 \subsection{Mozilla Firefox}
 %Jacob
