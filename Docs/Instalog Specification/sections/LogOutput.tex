@@ -496,10 +496,8 @@ accept both the process path as well as arguments.  If multiple processes exist
 that match the supplied path and arguments, all instances shall be killed. 
 \item[Quarantine]  This action will kill and quarantine the identified
 process.  This action shall accept both the process path as well as arguments. 
-The \textbf{kill} action described above shall first be followed.  The process
-should then be moved into quarantine following the procedure defined in
-\ref{quarantine}.  
-%TODO: quarantine needs to be written.
+The \textbf{kill} action described above shall first be followed.  The process'
+main module should then be moved into quarantine.
 \end{description}
 \end{description}
 
@@ -558,6 +556,31 @@ That is, \verb|HKEY_USERS| followed by the user's SID.
 
 The root hive of \verb|HKEY_LOCAL_MACHINE| or the user's hive shall be
 the variable \var{RootHive} in the log lines below.
+
+\subsubsection{Security Center}
+\begin{description}
+\item[Rationale] \hfill \\
+The Security Center serves to drive the Security Center interface in Windows
+added in Windows XP SP2. (Therefore there will be no output on operating
+systems older than this)
+\item[Data Sources] \hfill
+The Windows Managment Instrumentation's SecurityCenter and SecurityCenter2
+namespaces.
+\item[Log Format] \hfill \\
+\verb|AV: [${CLSID}] ${Enabled}${Updated} ${Name}| \\
+\verb|FW: [${CLSID}] ${Enabled}? ${Name}| \\
+\verb|AS: [${CLSID}] ${Enabled}${Updated} ${Name}|
+\item[Output Description] \hfill \\
+\var{CLSID} shall be the InstanceId of the given security product enumerated.
+\var{Enabled} shall be the letter E or the letter D, for Enabled and Disabled,
+respectively. \var{Updated} shall be the letter U for up to date, or O for out
+of date. \var{Name} shall be the advertised name of the given security product.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' is the only valid option; generating a script which removes the given
+item from the security center registrations list.
+\end{description}
 
 \subsubsection{Default Page URL}
 \begin{description}
@@ -1795,12 +1818,203 @@ HKCR\textbackslash{}CLSID.
 \end{description}
 
 \subsubsection{Shared Task Scheduler}
+\begin{description}
+\item[Rationale] \hfill \\
+The Shared Task Scheduler DLLs modify how the task scheduler operates.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+    Explorer\SharedTaskScheduler]
+"${AlternateName}"="${CLSID}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Sts: [${GeneratedName}->${CLSID}] ${File}| \\
+\verb|Sts64: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+\var{GeneratedName} shall consist of \var{Name} if it's
+contents are not blank, followed by \var{AlternateName} if it's contents are
+not blank, followed by the empty string. \var{File} uses the standard file
+output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
+the standard escaping format defined in \ref{generalescape}, using an escape
+character of hash (\verb|#|) and right delimiters of dash (\verb|-|) and
+right square bracket (\verb|]|), respectively.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the value under the
+Shared Task Scheduler registry key, and the associated key under
+HKCR\textbackslash{}CLSID.
+``Move'' shall generate a script which quarentines the indicated DLL.
+\end{description}
+
 \subsubsection{Shell Execute Hooks}
+\begin{description}
+\item[Rationale] \hfill \\
+Shell Execute Hooks provide extensions to Windows' \verb|ShellExecute| function.
+Applications can override these in order to make actions on specific files or
+similar perform some custom functionality. Malware, however, can use it as a
+loading point.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+    Explorer\ShellExecuteHooks]
+"${CLSID}"="${AlternateName}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}]
+@="${Name}"
+[HKEY_CLASSES_ROOT\CLSID\${CLSID}\InProcServer32]
+@="${File}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Seh: [${GeneratedName}->${CLSID}] ${File}| \\
+\verb|Seh64: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+\var{GeneratedName} shall consist of \var{Name} if it's
+contents are not blank, followed by \var{AlternateName} if it's contents are
+not blank, followed by the empty string. \var{File} uses the standard file
+output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
+the standard escaping format defined in \ref{generalescape}, using an escape
+character of hash (\verb|#|) and right delimiters of dash (\verb|-|) and
+right square bracket (\verb|]|), respectively.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script which removes the value under the
+Shell Execute Hooks registry key, and the associated key under
+HKCR\textbackslash{}CLSID.
+``Move'' shall generate a script which quarentines the indicated DLL.
+\end{description}
+
 \subsubsection{Security Providers}
+\begin{description}
+\item[Rationale] \hfill \\
+Security providers are loaded by the security subsystems of Windows and provide
+features such as authentication.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders]
+"SecurityProviders"="${Providers}"
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|SecurityProviders: ${File}|
+\item[Output Description] \hfill \\
+\var{Providers} is a whitespace or comma seperated list of values. A seperate
+log line shall be generated for each item in the list.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a script removing the offending security provider from
+the registry value. ``Move'' shall generate a script moving the targeted file
+into quarentine.
+\end{description}
+
 \subsubsection{Local Security Authority Settings}
+\begin{description}
+\item[Rationale] \hfill \\
+The Local Security Authority is responsible for user mode privilege checks. As
+such, it runs with a high level of privilege itself, and provides loading points
+which allow third party code to run inside \verb|lsass.exe|.
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa]
+"Authentication Packages"=multisz:${AuthenticationPackages}
+"Notification Packages"=multisz:${NotificationPackages}
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|AuthenticationPackage: ${File}| \\
+\verb|AuthenticationMissing: ${PackageName}| \\
+\verb|NotificationPackage: ${File}| \\
+\verb|NotificationMissing: ${PackageName}| \\
+\item[Output Description] \hfill \\
+Both of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
+means that the registry item contains a double null terminated list of null
+terminated strings. For each string, the local security authority loads the
+indicated DLL. Each string therefore generates a seperate Instalog log line.
+\var{File} is displayed using the standard file format defined in \ref{stdfile}.
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+``Fix'' shall generate a fix removing the associated value from the registry.
+\end{description}
+
 \subsubsection{Client Server Runtime SubSystem Server DLL}
+\begin{description}
+\item[Rationale] \hfill \\
+
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+\end{description}
+
 \subsubsection{Installed Active Setup Components}
+\begin{description}
+\item[Rationale] \hfill \\
+
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+\end{description}
+
 \subsubsection{Image File Execution Options}
+\begin{description}
+\item[Rationale] \hfill \\
+
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+\end{description}
+
+\subsubsection{File Assocations}
+\begin{description}
+\item[Rationale] \hfill \\
+
+\item[Data Sources] \hfill
+\vspace{-\baselineskip}
+\begin{verbatim}
+
+\end{verbatim}
+\item[Log Format] \hfill \\
+\verb|Seh: [${GeneratedName}->${CLSID}] ${File}|
+\item[Output Description] \hfill \\
+
+\item[Whitelisting Considerations] \hfill \\
+None at this time.
+\item[Fix Considerations] \hfill \\
+\end{description}
 
 \subsubsection{Hosts File}
 \begin{description}
