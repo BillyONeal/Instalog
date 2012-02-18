@@ -6,8 +6,18 @@ considered ``system-altering'' actions. \label{systemaltering}
 \subsection{Registry Backup}
 %Bill
 
-\subsection{Kill Process}
-%Jacob
+\subsection{Kill Process (\texttt{:KillProcess})}
+This action will kill specified process(es) that are listed in the list of
+\var{items} defined in \ref{sec:script_syntax}.  This action does not require
+any argument.  
+
+For each \var{process} listed in \var{items}, Instalog shall attempt to kill any
+and all processes matching the supplied \var{process}.  If the \var{process}
+supplies command line arguments, these must be included in the search for
+processes.  If all processes matching \var{process} were killed successfully,
+then the operation shall be considered a success.  If any one kill operation
+fails, then the entire operation shall be considered as unsuccessful.  This
+status shall be logged according to \ref{repairoutput}.
 
 \subsection{VirusTotal Upload}
 %Bill
@@ -30,14 +40,13 @@ Each file shall be emitted to the log according to the scheme defined in
 \ref{repairoutput}.
 
 \subsection{Hosts File Reset (\texttt{:HostsReset})}
-
 This action resets the hosts file (\verb|%WinDir%\System32\Drivers\Etc\hosts|)
-to a default hosts file only containing entry(s) for localhost.  First, it
-shall backup the hosts file according to the scheme defined in
-\ref{sec:file_backup}.  If the backup fails, then the operation shall be
-emitted to the log as failed according \ref{repairoutput}.
-Once the file is backed up, the hosts file shall be replaced with a simple
-hosts file.  The host file varies based on the operating system:
+to a default hosts file only containing entry(s) for localhost.  It does not
+require any additional argument or item input. First, it shall backup the hosts
+file according to the scheme defined in \ref{sec:file_backup}.  If the backup
+fails, then the operation shall be emitted to the log as failed according
+\ref{repairoutput}. Once the file is backed up, the hosts file shall be replaced
+with a simple hosts file.  The host file varies based on the operating system:
 
 \begin{description}
 \item[Windows XP or Windows Server 2003 and older] \hfill 
