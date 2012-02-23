@@ -152,7 +152,68 @@ defined in \ref{quarantine}. The only reason it needs its own name is because it
 requires Firefox not to be running first.
 
 \subsection{Google Chrome}
-%Jacob
+Google Chrome has three different fix actions associated with it.  These
+actions are described in the following three sections.
+
+If any action is present, then a section should be emitted to the log as
+``Chrome fix" according to the scheme in \ref{logoutput}.  Chrome must not
+be running for all of these operations.  If it is running, a dialog box should
+be displayed informing the user that Chrome will be killed. 
+
+\subsubsection{Plugins (\texttt{:ChromeFixPlugins})}
+This operation should act the same as the quarantine scheme
+defined in \ref{quarantine}. The only reason it needs its own name is because it
+requires Chrome not to be running first.
+
+\subsubsection{Extensions (\texttt{:ChromeFixExtensions})}
+\begin{description}
+\item[Input] \hfill \\
+This action does not require any argument, but requires additional input lines. 
+Each input line should simply be the \var{id} for each extension that should be
+removed.  
+\item[Operation] \hfill \\
+First, the files related to the \var{id} should be quarantine according to the
+scheme defined in \ref{quarantine}.  These files are located in:
+\vspace{-\baselineskip}
+\begin{verbatim}
+%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Extensions\${id}
+\end{verbatim}
+Then, the extension object matching the given extension \var{id} must be removed
+from the preferences file.
+\item[Output] \hfill \\
+The output for each quarantine operation shall be emitted to the log according
+to the scheme defined in \ref{quarantine}.  Lastly, the output from this
+operation shall be emitted to the log according to the scheme defined in
+\ref{repairoutput} with \var{message} as ``Extensions removed from preferences
+file successfully'' if the preferences file write succeeds and ``Failed to
+remove extensions from preferences file'' if the file write operation fails.
+\end{description} 
+
+\subsubsection{User Preferences (\texttt{:ChromeFixPreferences})}
+\begin{description}
+\item[Input] \hfill \\
+This action does not require any argument, but optionally will accept additional
+input lines.  Input lines can have one of two formats.  The first is simply the
+preference and then a newline.  The other format accepts a preference, and then
+a space, and then the value the preference should have (escaped according to
+the scheme defined in \ref{urlescape} with \verb|#| as the escape character and
+the newline as the right delimiter). 
+\item[Operation] \hfill \\
+This action must always reset the preferences listed in
+\ref{sec:chrome_user_preferences}.  To do this, the preferences can simply be
+deleted from the preferences file.  Then, the
+script shall process any of the optional lines.  If a preference is provided
+with no value, then it shall be removed from the preferences file.  If the
+preference does not exist, it does not have to be removed.  If there is a value
+provided with the input, then the value of the specified preference shall be
+set to the unescaped version of the value provided.  If the preference does not
+exist in the preferences file, it shall be created.
+\item[Output] \hfill \\
+The output from this operation shall be emitted to the log according to the
+scheme defined in \ref{repairoutput} with \var{message} as ``Preferences reset
+successfully'' if the file write succeeds and ``Preferences reset failed'' if
+the file write operation fails.
+\end{description} 
 
 \subsection{Security Center (\texttt{:seccenter})}
 The security center action accepts a list of \var{items} corresponding to
