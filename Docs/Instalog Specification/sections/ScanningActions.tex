@@ -2263,10 +2263,10 @@ The services and drivers section enumerates all services and drivers on the
 current machine, limited by whitelist. Each line in this report is of the form
 \begin{verbatim}
 ${State}${Start} ${ServiceName};${DisplayName};${File}
+${State}${Start} ${ServiceName};${DisplayName};${SvchostGroup}->SvchostDll}
 \end{verbatim}
 
 \noindent{}\var{State} is one of the following:
-\begin{quote}
 \begin{description}
 \item[S] Service Stopped
 \item[R?] Service Start Pending
@@ -2277,7 +2277,18 @@ ${State}${Start} ${ServiceName};${DisplayName};${File}
 \item[P] Service Paused
 \item[?] Unknown
 \end{description}
-\end{quote}
+
+Additionally, if the service indicated is part of a \verb|svchost| group as
+indicated by the service's registered command line and image path, but the
+service does not exist in the svchost registration for that group (located in
+the registry at
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Svchost]
+"${SvchostGroup}"=${Val}
+\end{verbatim}
+where \var{Val} is a \verb|REG_MULTI_SZ| containing a list of services in the
+group) then the letter \verb|D| shall be appended to \var{State}, indicating
+``Damaged''.
 
 \noindent{}\var{Start} is one of the following:
 \begin{quote}
@@ -2296,8 +2307,23 @@ manager when a process calls the \verb|StartService| function.
 
 \var{ServiceName} is the registry name used for the service. \var{DisplayName}
 is the name the service advertises itself as. \var{File} is the image path
-configured for the service, in the standard file enumeration format defined in
-section \ref{stdfile} and escaped using \verb|;| as the right delmiter.
+configured for the service. If \var{File}, after going through the standard
+resolution process defined in \ref{pathresolution}, corresponds to one of the
+\verb|svchost.exe| processes on the machine, and has arguments of the form
+``\verb| -k ${SvchostGroup}|'', then the service shall be interpreted as a
+``svchost type'' service, and the group printed using the second line format
+above. In such cases, Instalog shall enumerate the key
+\begin{verbatim}
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\${ServiceName}\Parameters]
+"DllPath"="${SvchostDll}"
+\end{verbatim}
+and display \var{SvchostDll} using the standard file output format defined in
+\ref{stdfile}. \var{SvchostGroup} shall be printed using the default escaping
+format defined in \ref{generalescape}, using an escape character of hash
+(\verb|#|) and a right delimiter of dash (\verb|-|).
+
+Otherwise (the service is not a svchost type service), \var{File} shall be
+printed directly, also using the standard file output format.
 
 This action be invoked in a script by calling \verb|:ServicesDrivers|.  This
 action does not require any argument or additional input.
