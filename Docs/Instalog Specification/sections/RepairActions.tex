@@ -3,10 +3,12 @@ This section defines all of the ``repair'' actions that Instalog will support.
 These actions modify the system's configuration in some way and are as such
 considered ``system-altering'' actions. \label{systemaltering}
 
-\subsection{Registry Backup}
-%Bill
+\subsection{Registry Backup (\texttt{:regback})}
+The registry backup script action takes no parameter or items. It merely forces
+the registry backup stage (see section \ref{sec:reg_backup}) to run, regardless
+of whether or not registry operations appear in the script.
 
-\subsection{Kill Process (\texttt{:KillProcess})}
+\subsection{Kill Process (\texttt{:kill})}
 This action will kill specified process(es) that are listed in the list of
 \var{items} defined in \ref{sec:script_syntax}.  This action does not require
 any argument.  
@@ -19,11 +21,40 @@ then the operation shall be considered a success.  If any one kill operation
 fails, then the entire operation shall be considered as unsuccessful.  This
 status shall be logged according to \ref{repairoutput}.
 
-\subsection{VirusTotal Upload}
-%Bill
+\subsection{VirusTotal Upload (\texttt{:VirusTotal})}
+The VirusTotal upload segment shall use the publicly available VirusTotal
+upload API (see \url{https://www.virustotal.com/documentation/public-api/}).
 
-\subsection{MRC Upload}
-%Bill
+One note, the public VirusTotal API is limited to 4 requests per host per
+minute, so putting large numbers of files in this section may result in
+significant error messages and/or scan failures.
+
+For each item in the set of \var{items} provided to this action as arguments,
+Instalog shall upload the file to VirusTotal, and log similar to the following
+format:
+\begin{verbatim}
+${Item} -> ${VirusTotalUrl}
+\end{verbatim}
+where the \var{VirusTotalUrl} is the URL containing the results of the
+VirusTotal check.
+
+\subsection{MRC Upload (\texttt{:mrc})}
+BleepingComputer.com operates a file upload service whereby volunteers can
+request files from users. Currently, the system operates from the web page
+\url{http://www.bleepingcomputer.com/submit-malware.php?channel=##}, where \#\#
+is the channel number assigned to the person to whom the file should be sent.
+
+The \var{arg} for this scripting action shall be defined to be the target MRC
+channel to which the upload should be sent.
+
+The first item in the set \var{items} shall be the URL to the topic which shall
+be associated with the uploads in the MRC system. If the first line cannot be
+interpreted as a URL, this step will be skipped, and no URL will be associated
+with the uploads.
+
+The remaining \var{items} shall be a set of files to upload to
+BleepingComputer.com's MRC system. For each item, Instalog shall indicate
+success or failure to upload the file in it's log output.
 
 \subsection{File Quarantine (\texttt{:Move})}
 This simple action will put files into quarantine.  This action does not require
@@ -79,21 +110,163 @@ The status of the write operation shall be written to the log according to
 \subsection{Google Chrome}
 %Jacob
 
-\subsection{Security Center}
-%Bill
+\subsection{Security Center (\texttt{:seccenter})}
+The security center action accepts a list of \var{items} corresponding to
+instance GUIDs to delete from the security center registration list. For each
+item, Instalog shall print the item, along with a message indicating success or
+failure of the deletion of the security center instance GUID from Windows
+Management Instrumentation's database.
 
-\subsection{Registry}
-%Bill
-%32/64 bit
-%Remove single MultiSZ value
-%ExpandSZ as a string
-%MultiSZ as a string
-%Remove comma seperated bit like appinitdlls
-\subsection{LSP Chain}
-%Bill
+\subsection{Registry (\texttt{:reg})}
+The registry section shall consist of a script similar to regedit's \verb|.REG|
+files. What follows describes the syntax used there, along with a few
+nonstandard extensions defined by Instalog to make working with the registry
+easier. Nonstandard extensions are indicated.
 
-\subsection{Directory Listing}
-%Whoever gets there first
+For each operation Instalog takes on behalf of the user, Instalog shall print a
+message indicating the action attempted, such as deleting a key, deleting a
+value, setting a value, creating a new key, etc., and a message indicating
+success or failure of that action.
+
+This action triggers a registry backup.
+
+A registry script consists of the following general format:
+\begin{verbatim}
+; Comments begin with semicolons and are terminated by a newline
+
+; What follows is a key specification. It begins with a string in square
+; brackets:
+[${DeleteMinus}${Bitness}${EscapeSpec}${PathToKey}]
+; After the key specification, there are zero or more value specifications
+; similar to one of the following:
+@=${Data} ;@ with no value name is the key's default value
+"${ValueName}"=${Data} ; A set of value and value modifications
+\end{verbatim}
+
+The various variables above are as follows:
+\begin{description}
+\item[\var{DeleteMinus}] shall be a minus sign (\verb|-|), or the empty string.
+If it is a minus sign, Instalog is to delete the indicated key. Any value
+actions specified for the indicated key are ignored if a key deletion is
+specified.
+\item[\var{Bitness}] is an Instalog extension. It shall be the empty string, in
+which case Instalog shall match Regedit's default behavior, or the string
+\verb|32:| or \verb|64:|, indicating the 32 bit or 64 bit view of the registry.
+(Specifically, \verb|32:| causes the key to be opened using
+\verb|KEY_WOW64_32KEY|. \verb|64:| will have no effect, because Instalog runs
+natively on x64 machines, but it is included for completeness)
+\item[\var{EscapeSpec}] is an Instalog extension, it is either the empty string,
+in which case it has no effect, or the string ``\verb|E:|'', indicating that the
+\var{PathToKey} variable shall be interpreted using the general escape method
+defined in \ref{generalescape}, using an escape character of \verb|#| and a
+right delimiter of right square bracket (\verb|]|).
+\item[\var{PathToKey}] shall indicate the path in the registry the indicated
+script targets. If indicated by \var{EscapeSpec}, this value is escaped as
+defined above.
+\item[\var{ValueName}] is the name of the value indicated by the value
+specification. It is escaped using the general escaping format defined in
+\ref{generalescape}, using an escape character of backslash (\verb|\|) and a
+right delimiter of quote (\verb|"|).
+\item[\var{Data}] a specification of a data action for Instalog to take.
+\end{description}
+
+Data actions are one of the following:
+\begin{description}
+\item[-] The minus character (\verb|-|) indicates that the user wishes to delete
+the indicated value from the registry.
+\item["\var{String}"] A string escaped using the general escaping method defined
+in \ref{generalescape}, using an escape character of \verb|\|, and a right
+delimiter of \verb|"|, indicates that the user wishes to create a value of type
+\verb|REG_SZ|, with the content indicated in \var{String}.
+\item[dword:\var{Number}] indicates the user wishes to create a value of type
+\verb|REG_DWORD|, having the value \var{Number}, which may be specified in
+literal or hexadecimal (beginning with \verb|0x|) formats.
+\item[hex:\var{HexDigits}] indicates that the user wishes to create the
+indicated value of type \verb|REG_NONE| using the data provided by
+\var{HexDigits}. \var{HexDigits} interprets it's input as hexadecimal. Any
+characters not interpretable as a hex character (such as commas), are ignored,
+excepting the backslash \verb|\|, which indicates that the hex digits
+specification shall extend to the following line.
+\item[hex(\var{Type}):\var{HexDigits}] indicates that the user wishes to create
+a value with the numerical type \var{Type}, where the numerical value
+corresponds to one of the following:
+\begin{enumerate}
+\setcounter{enumi}{0}
+    \item \verb|REG_NONE|
+    \item \verb|REG_SZ|
+    \item \verb|REG_EXPAND_SZ|
+    \item \verb|REG_BINARY|
+    \item \verb|REG_DWORD|
+    \item \verb|REG_DWORD_BIG_ENDIAN|
+    \item \verb|REG_LINK|
+    \item \verb|REG_MULTI_SZ|
+    \item \verb|REG_RESOURCE_LIST|
+    \item \verb|REG_FULL_RESOURCE_DESCRIPTOR|
+    \item \verb|REG_RESOURCE_REQUIREMENTS_LIST|
+    \item \verb|REG_QWORD|
+\end{enumerate}
+\item[hex(b):\var{HexDigits}] Same as the above, using a type of
+\verb|REG_BINARY|. This is an Instalog extension.
+\item[expand:"\var{String}"] This is an Instalog extension. Same as a normal
+string, except the type created is \verb|REG_EXPAND_SZ|.
+\item[multi:"\var{String}"] This is an Instalog extension. Same as a normal
+string, except the type created is \verb|REG_MULTI_SZ|.
+\item[multiadd:"\var{String}"] This is an Instalog extension. \var{String} is
+escaped using the default escape method defined in \ref{generalescape}, using an
+escape character of backslash (\verb|\|), and a right delimiter of quote
+(\verb|"|). This action shall read the current contents of the indicated value
+as a \verb|REG_MULTI_SZ| value, and add \var{String} from the value if it does
+not already exist. If the value is not found or the value is not already of
+type \verb|REG_MULTI_SZ|, Instalog shall print an error message.
+\item[multiminus:"\var{String}"] This is an Instalog extension. \var{String} is
+escaped using the default escape method defined in \ref{generalescape}, using an
+escape character of backslash (\verb|\|), and a right delimiter of quote
+(\verb|"|). This action shall read the current contents of the indicated value
+as a \verb|REG_MULTI_SZ| value, and remove \var{String} from the value if it
+exists. If the value is not found or the value is not already of type
+\verb|REG_MULTI_SZ|, Instalog shall print an error message.
+\item[commaadd:"\var{String}"] This is an Instalog extension. Tries to
+interpret the indicated value as a space or comma delimited list of items.
+Adds \var{String} from that list, where in the script \var{String} is escaped
+using the default escaping method defined in \ref{generalescape}, and writes the
+list back to that value using the same delimiter originally encountered in the
+value. In the event both spaces and commas are used as delimiters in the source
+key, Instalog shall write the entry back using the first found delimiter in the
+source key value.
+\item[commaminus:"\var{String}"] This is an Instalog extension. Tries to
+interpret the indicated value as a space or comma delimited list of items.
+Removes \var{String} from that list, where in the script \var{String} is escaped
+using the default escaping method defined in \ref{generalescape}, and writes the
+list back to that value using the same delimiter originally encountered in the
+value. In the event both spaces and commas are used as delimiters in the source
+key, Instalog shall write the entry back using the first found delimiter in the
+source key value.
+\end{description}
+
+\subsection{LSP Chain (\texttt{:lsp})}
+The LSP command shall accept a set of \var{items} corresponding to files to
+remove from Windows' Winsock2 Layered Service Provider chain database. (note
+that this set may be empty). Instalog shall remove the indicated file entries
+from the registry, and then repair the LSP chains.
+
+This action triggers a registry backup (see \ref{sec:reg_backup}).
+
+Repairing the LSP chains consists of the following actions:
+\begin{itemize}
+    \item Enumerating the LSP stack as indicated in \ref{sec:lsp}, and removing
+    any entries for which the indicated file no longer exists.
+    \item Removing any entries explicitly listed as \var{items} for this action
+    to process.
+    \item Renumbering the numbered LSP entry keys to return them to consecutive
+    order.
+    \item Modifying the \verb|Num_Catalog_Entries| values to correspond to the
+    actual remaining number of LSP registrations.
+\end{itemize}
+
+\subsection{Directory Listing (\texttt{:dirlook})}
+The directory listing command accepts a set of \var{items}. For each item in the
+set, the item is a directory which shall be enumerated (not recursively), and
+displayed using the default file listing format defined in \ref{filelisting}.
 
 \subsection{DNS Check}
 %Whoever gets there first

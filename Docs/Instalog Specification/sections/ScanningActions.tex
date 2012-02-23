@@ -1008,13 +1008,13 @@ None.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script which removes the key associated with
 \var{Name}, as well as the root key associated with \var{Clsid}.
-``Move'' shall generate a script which quarentines the file in question.
+``Move'' shall generate a script which quarantines the file in question.
 \end{description}
 
 \subsubsection{Internet Explorer Trusted Zone}
 \begin{description}
 \item[Rationale] \hfill \\
-The trusted zone contains domains which recieve preferential treatment (lower
+The trusted zone contains domains which receive preferential treatment (lower
 security settings) by Internet Explorer.
 \item[Data Sources] \hfill \\
 Internet Explorer's ``\verb|IInternetSecurityManager|'' interface.
@@ -1053,12 +1053,13 @@ None.
 \end{description}
 
 \subsubsection{Winsock Layered Service Providers and Namespace Providers}
+\label{sec:lsp}
 \begin{description}
 \item[Rationale] \hfill \\
 There are two types of Winsock service providers: Layered Service Providers
 (LSPs) and Namespace Service Providers (NSPs).
 
-Layered service providers are an intergal part of the Windows IP stack. When a
+Layered service providers are an integral part of the Windows IP stack. When a
 packet is sent through the network, each LSP is a ``layer'' which gets to
 inspect or modify the packet before it is sent to the network. This is used
 legitimately for applications like firewalls, but also by malware to redirect
@@ -1075,7 +1076,7 @@ service such as DNS, X.500, or NetWare Directory Services (NDS).
 
 What's more, these providers are laid out in a very specific format. If a binary
 in the chain is missing or corrupted, such as would happen by deleting a piece
-of malware using this technique, the user's internet access would be broken
+of malware using this technique, the user's Internet access would be broken
 until the chain could be restored.
 \item[Data Sources] \hfill
 \begin{verbatim}

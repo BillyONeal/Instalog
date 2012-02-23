@@ -225,14 +225,24 @@ All files quarantined by a script shall be placed in a zip file named
 path that they have on disk with the exception that the drive letter shall be
 the top-most directory.  For example, the file \verb|C:\dir\sub\file.txt| shall
 be saved in the zip as \verb|C\dir\sub\file.txt|.
-\subsubsection{Registry Backup} 
+\subsubsection{Registry Backup} \label{sec:reg_backup}
 If a script will modify the registry in any way, the registry must first be
-backed up in its entirety.  The preferred method for registry backups is a
-restore point.  Therefore, Instalog shall first attempt to create a restore
-point.  If the restore point creation is successful, then this is a sufficient
-backup.  However, if the restore point creation fails for some reason, then the
-entire registry hive must be dumped manually.  Each registry file shall be saved
-in the backup defined in \ref{sec:backup_folder}.
+backed up in its entirety.  The preferred method for registry backups is to
+create them in terms of Microsoft's System Restore feature, creating a  restore
+point. Therefore, Instalog shall first attempt to create a restore point.  If
+the restore point creation is successful, then this is a sufficient backup.
+However, if the restore point creation fails for some reason, then the entire
+registry hive must be dumped manually.  Each registry hive shall be copied into
+the backup defined in \ref{sec:backup_folder}. Specifically, the registry hives
+are defined to be (where \var{UserHive} is one hive per user loaded on the
+machine):
+\begin{enumerate}
+    \item \verb|HKEY_USERS\${UserHive}|
+    \item \verb|HKEY_LOCAL_MACHINE\SYSTEM|
+    \item \verb|HKEY_LOCAL_MACHINE\SOFTWARE|
+    \item \verb|HKEY_LOCAL_MACHINE\SAM|
+    \item \verb|HKEY_LOCAL_MACHINE\HARDWARE|
+\end{enumerate}
 
 \subsection{Default Script Sections} \label{sec:default_script_sections}
 Instalog's standard (that is, run without a script) output consists of the
