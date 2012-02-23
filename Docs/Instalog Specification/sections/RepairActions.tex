@@ -270,5 +270,17 @@ The directory listing command accepts a set of \var{items}. For each item in the
 set, the item is a directory which shall be enumerated (not recursively), and
 displayed using the default file listing format defined in \ref{filelisting}.
 
-\subsection{DNS Check}
-%Whoever gets there first
+\subsection{DNS Check (\texttt{:dnscheck})}
+The script action DNS Check shall except a list of domains as \var{items} to
+check using the normal DNS checking procedure first outlined in section
+(\ref{sec:hjt_dnscheck}). The log output, however, is different. This action
+shall not attempt to make judgement calls with respect to whether a domain is
+good or bad, and simply prints out all the values generated as part of the
+DNSCheck enumeration. Each item in the set of \var{items} generates a line
+similar to:
+\begin{verbatim}
+${Item}->${IP}->${ReverseDNS}
+\end{verbatim}
+where the values of \var{Item} and \var{ReverseDNS} are as specified in the
+PseudoHJT section, and \var{IP} is the primary IP address to which \var{Item}
+was resolved.
