@@ -172,26 +172,28 @@ right delimiter of quote (\verb|"|).
 
 Data actions are one of the following:
 \begin{description}
-\item[-] The minus character (\verb|-|) indicates that the user wishes to delete
-the indicated value from the registry.
-\item["\var{String}"] A string escaped using the general escaping method defined
-in \ref{generalescape}, using an escape character of \verb|\|, and a right
+\item[\texttt{-}] The minus character (\verb|-|) indicates that the user wishes
+to delete the indicated value from the registry.
+\item[\texttt{"\var{String}"}] A string escaped using the general escaping
+method defined in \ref{generalescape}, using an escape character of \verb|\|, and a right
 delimiter of \verb|"|, indicates that the user wishes to create a value of type
 \verb|REG_SZ|, with the content indicated in \var{String}.
-\item[dword:\var{Number}] indicates the user wishes to create a value of type
-\verb|REG_DWORD|, having the value \var{Number}, which may be specified in
+\item[\texttt{dword:\var{Number}}] indicates the user wishes to create a value
+of type \verb|REG_DWORD|, having the value \var{Number}, which may be specified in
 literal or hexadecimal (beginning with \verb|0x|) formats.
-\item[hex:\var{HexDigits}] indicates that the user wishes to create the
+\item[\texttt{qword:\var{Number}}] same as \verb|dword|, except a
+\verb|REG_QWORD| value.
+\item[\texttt{hex:\var{HexDigits}}] indicates that the user wishes to create the
 indicated value of type \verb|REG_NONE| using the data provided by
 \var{HexDigits}. \var{HexDigits} interprets it's input as hexadecimal. Any
 characters not interpretable as a hex character (such as commas), are ignored,
 excepting the backslash \verb|\|, which indicates that the hex digits
 specification shall extend to the following line.
-\item[hex(\var{Type}):\var{HexDigits}] indicates that the user wishes to create
-a value with the numerical type \var{Type}, where the numerical value
+\item[\texttt{hex(\var{Type}):\var{HexDigits}}] indicates that the user wishes
+to create a value with the numerical type \var{Type}, where the numerical value
 corresponds to one of the following:
 \begin{enumerate}
-\setcounter{enumi}{0}
+\setcounter{enumi}{-1}
     \item \verb|REG_NONE|
     \item \verb|REG_SZ|
     \item \verb|REG_EXPAND_SZ|
@@ -205,27 +207,27 @@ corresponds to one of the following:
     \item \verb|REG_RESOURCE_REQUIREMENTS_LIST|
     \item \verb|REG_QWORD|
 \end{enumerate}
-\item[hex(b):\var{HexDigits}] Same as the above, using a type of
+\item[\texttt{hex(b):\var{HexDigits}}] Same as the above, using a type of
 \verb|REG_BINARY|. This is an Instalog extension.
-\item[expand:"\var{String}"] This is an Instalog extension. Same as a normal
-string, except the type created is \verb|REG_EXPAND_SZ|.
-\item[multi:"\var{String}"] This is an Instalog extension. Same as a normal
-string, except the type created is \verb|REG_MULTI_SZ|.
-\item[multiadd:"\var{String}"] This is an Instalog extension. \var{String} is
-escaped using the default escape method defined in \ref{generalescape}, using an
+\item[\texttt{expand:"\var{String}"}] This is an Instalog extension. Same as a
+normal string, except the type created is \verb|REG_EXPAND_SZ|.
+\item[\texttt{multi:"\var{String}"}] This is an Instalog extension. Same as a
+normal string, except the type created is \verb|REG_MULTI_SZ|.
+\item[\texttt{multiadd:"\var{String}"}] This is an Instalog extension.
+\var{String} is escaped using the default escape method defined in \ref{generalescape}, using an
 escape character of backslash (\verb|\|), and a right delimiter of quote
 (\verb|"|). This action shall read the current contents of the indicated value
 as a \verb|REG_MULTI_SZ| value, and add \var{String} from the value if it does
 not already exist. If the value is not found or the value is not already of
 type \verb|REG_MULTI_SZ|, Instalog shall print an error message.
-\item[multiminus:"\var{String}"] This is an Instalog extension. \var{String} is
-escaped using the default escape method defined in \ref{generalescape}, using an
+\item[\texttt{multiminus:"\var{String}"}] This is an Instalog extension.
+\var{String} is escaped using the default escape method defined in \ref{generalescape}, using an
 escape character of backslash (\verb|\|), and a right delimiter of quote
 (\verb|"|). This action shall read the current contents of the indicated value
 as a \verb|REG_MULTI_SZ| value, and remove \var{String} from the value if it
 exists. If the value is not found or the value is not already of type
 \verb|REG_MULTI_SZ|, Instalog shall print an error message.
-\item[commaadd:"\var{String}"] This is an Instalog extension. Tries to
+\item[\texttt{commaadd:"\var{String}"}] This is an Instalog extension. Tries to
 interpret the indicated value as a space or comma delimited list of items.
 Adds \var{String} from that list, where in the script \var{String} is escaped
 using the default escaping method defined in \ref{generalescape}, and writes the
@@ -233,8 +235,8 @@ list back to that value using the same delimiter originally encountered in the
 value. In the event both spaces and commas are used as delimiters in the source
 key, Instalog shall write the entry back using the first found delimiter in the
 source key value.
-\item[commaminus:"\var{String}"] This is an Instalog extension. Tries to
-interpret the indicated value as a space or comma delimited list of items.
+\item[\texttt{commaminus:"\var{String}"}] This is an Instalog extension. Tries
+to interpret the indicated value as a space or comma delimited list of items.
 Removes \var{String} from that list, where in the script \var{String} is escaped
 using the default escaping method defined in \ref{generalescape}, and writes the
 list back to that value using the same delimiter originally encountered in the
