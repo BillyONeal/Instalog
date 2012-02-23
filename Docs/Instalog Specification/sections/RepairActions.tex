@@ -56,7 +56,7 @@ The remaining \var{items} shall be a set of files to upload to
 BleepingComputer.com's MRC system. For each item, Instalog shall indicate
 success or failure to upload the file in it's log output.
 
-\subsection{File Quarantine (\texttt{:Move})}
+\subsection{File Quarantine (\texttt{:Move})} \label{quarantine}
 This simple action will put files into quarantine.  This action does not require
 any arguments, but does require a list of \var{items} (\ref{sec:script_syntax})
 to move into quarantine.  Each file in \var{items}, shall be placed into
@@ -105,7 +105,51 @@ The status of the write operation shall be written to the log according to
 \ref{repairoutput}.  
 
 \subsection{Mozilla Firefox}
-%Jacob
+Mozilla Firefox has three different fix actions associated with it.  These
+actions are described in the following three sections.
+
+Each action will operate on the contents of the default Firefox profile.
+
+If any action is present, then a section should be emitted to the log as
+``Firefox fix" according to the scheme in \ref{logoutput}.  Firefox must not
+be running for all of these operations.  If it is running, a dialog box should
+be displayed informing the user that Firefox will be killed.  
+
+\subsubsection{User Preferences (\texttt{:FirefoxFixPreferences})}
+\begin{description}
+\item[Input] \hfill \\
+This action does not require any argument, but optionally will accept additional
+input lines.  Input lines can have one of two formats.  The first is simply the
+preference and then a newline.  The other format accepts a preference, and then
+a space, and then the value the preference should have (escaped according to
+the scheme defined in \ref{urlescape} with \verb|#| as the escape character and
+the newline as the right delimiter). 
+\item[Operation] \hfill \\
+This action must always reset the preferences listed in
+\ref{sec:ff_user_preferences}.  To do this, the preferences can simply be
+deleted from the preferences file in the default Firefox profile.  Then, the
+script shall process any of the optional lines.  If a preference is provided
+with no value, then it shall be removed from the preferences file.  If the
+preference does not exist, it does not have to be removed.  If there is a value
+provided with the input, then the value of the specified preference shall be
+set to the unescaped version of the value provided.  If the preference does not
+exist in the preferences file, it shall be created.
+\item[Output] \hfill \\
+The output from this operation shall be emitted to the log according to the
+scheme defined in \ref{repairoutput} with \var{message} as ``Preferences reset
+successfully'' if the file write succeeds and ``Preferences reset failed'' if
+the file write operation fails.
+\end{description}
+
+\subsubsection{Extensions and Themes (\texttt{:FirefoxFixExtension})}
+This operation should act the same as the quarantine scheme
+defined in \ref{quarantine}. The only reason it needs its own name is because it
+requires Firefox not to be running first.
+
+\subsubsection{Plugins (\texttt{:FirefoxFixPlugins})}
+This operation should act the same as the quarantine scheme
+defined in \ref{quarantine}. The only reason it needs its own name is because it
+requires Firefox not to be running first.
 
 \subsection{Google Chrome}
 %Jacob
