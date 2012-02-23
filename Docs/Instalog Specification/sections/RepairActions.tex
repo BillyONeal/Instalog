@@ -110,9 +110,9 @@ actions are described in the following three sections.
 
 Each action will operate on the contents of the default Firefox profile.
 
-If any action is present, then a section should be emitted to the log as
+If any action is present, then a section shall be emitted to the log as
 ``Firefox fix" according to the scheme in \ref{logoutput}.  Firefox must not
-be running for all of these operations.  If it is running, a dialog box should
+be running for all of these operations.  If it is running, a dialog box shall
 be displayed informing the user that Firefox will be killed.  
 
 \subsubsection{User Preferences (\texttt{:FirefoxFixPreferences})}
@@ -121,7 +121,7 @@ be displayed informing the user that Firefox will be killed.
 This action does not require any argument, but optionally will accept additional
 input lines.  Input lines can have one of two formats.  The first is simply the
 preference and then a newline.  The other format accepts a preference, and then
-a space, and then the value the preference should have (escaped according to
+a space, and then the value the preference shall have (escaped according to
 the scheme defined in \ref{urlescape} with \verb|#| as the escape character and
 the newline as the right delimiter). 
 \item[Operation] \hfill \\
@@ -142,12 +142,12 @@ the file write operation fails.
 \end{description}
 
 \subsubsection{Extensions and Themes (\texttt{:FirefoxFixExtension})}
-This operation should act the same as the quarantine scheme
+This operation shall act the same as the quarantine scheme
 defined in \ref{quarantine}. The only reason it needs its own name is because it
 requires Firefox not to be running first.
 
 \subsubsection{Plugins (\texttt{:FirefoxFixPlugins})}
-This operation should act the same as the quarantine scheme
+This operation shall act the same as the quarantine scheme
 defined in \ref{quarantine}. The only reason it needs its own name is because it
 requires Firefox not to be running first.
 
@@ -155,13 +155,13 @@ requires Firefox not to be running first.
 Google Chrome has three different fix actions associated with it.  These
 actions are described in the following three sections.
 
-If any action is present, then a section should be emitted to the log as
+If any action is present, then a section shall be emitted to the log as
 ``Chrome fix" according to the scheme in \ref{logoutput}.  Chrome must not
-be running for all of these operations.  If it is running, a dialog box should
+be running for all of these operations.  If it is running, a dialog box shall
 be displayed informing the user that Chrome will be killed. 
 
 \subsubsection{Plugins (\texttt{:ChromeFixPlugins})}
-This operation should act the same as the quarantine scheme
+This operation shall act the same as the quarantine scheme
 defined in \ref{quarantine}. The only reason it needs its own name is because it
 requires Chrome not to be running first.
 
@@ -169,10 +169,10 @@ requires Chrome not to be running first.
 \begin{description}
 \item[Input] \hfill \\
 This action does not require any argument, but requires additional input lines. 
-Each input line should simply be the \var{id} for each extension that should be
+Each input line shall simply be the \var{id} for each extension that shall be
 removed.  
 \item[Operation] \hfill \\
-First, the files related to the \var{id} should be quarantine according to the
+First, the files related to the \var{id} shall be quarantine according to the
 scheme defined in \ref{quarantine}.  These files are located in:
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -195,7 +195,7 @@ remove extensions from preferences file'' if the file write operation fails.
 This action does not require any argument, but optionally will accept additional
 input lines.  Input lines can have one of two formats.  The first is simply the
 preference and then a newline.  The other format accepts a preference, and then
-a space, and then the value the preference should have (escaped according to
+a space, and then the value the preference shall have (escaped according to
 the scheme defined in \ref{urlescape} with \verb|#| as the escape character and
 the newline as the right delimiter). 
 \item[Operation] \hfill \\

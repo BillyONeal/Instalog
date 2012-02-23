@@ -124,7 +124,7 @@ The Security Center serves to drive the Security Center interface in Windows
 added in Windows XP SP2. (Therefore there will be no output on operating
 systems older than this)
 \item[Data Sources] \hfill
-The Windows Managment Instrumentation's SecurityCenter and SecurityCenter2
+The Windows Management Instrumentation's SecurityCenter and SecurityCenter2
 namespaces.
 \item[Log Format] \hfill \\
 \verb|AV: [${CLSID}] ${Enabled}${Updated} ${Name}| \\
@@ -588,7 +588,7 @@ string.
 This default entry is the legitimate system default and shall be whitelisted.
 \item[Fix Considerations] \hfill \\
 For the non ``DefaultMissing'' lines, both ``Move'' and ``Fix'' are valid.
-``Move'' shall generate a script which quarentines the indicated file (if it
+``Move'' shall generate a script which quarantines the indicated file (if it
 exists). ``Fix'' shall generate a fix removing the URLSearchHook from the
 registry.
 
@@ -600,7 +600,7 @@ script restoring the default value.
 \begin{description}
 \item[Rationale] \hfill \\
 The shell is responsible for drawing the user's taskbar, start menu, icons, etc.
-Sometimes users legitimately replace the shell with alterates such as xplorer2.
+Sometimes users legitimately replace the shell with alternates such as xplorer2.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -615,7 +615,7 @@ section \ref{stdfile}.
 \item[Whitelist Considerations] \hfill \\
 The default value if \var{Shell}, ``\verb|explorer.exe|'', shall be whitelisted.
 \item[Fix Considerations] \hfill \\
-The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Move'' shall generate a script quarantining the file in question.
 The option ``Fix'' shall restore the default registry value.
 \end{description}
 
@@ -624,7 +624,7 @@ The option ``Fix'' shall restore the default registry value.
 \item[Rationale] \hfill \\
 Userinit performs user initialization procedures for Windows, to get a user's
 session ready for use. If it is damaged, or disabled, users' attempts to log in
-will immedately cause them to log out.
+will immediately cause them to log out.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -639,7 +639,7 @@ section \ref{stdfile}.
 \item[Whitelist Considerations] \hfill \\
 The default value if \var{Userinit}, ``\verb|userinit.exe|'', shall be whitelisted.
 \item[Fix Considerations] \hfill \\
-The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Move'' shall generate a script quarantining the file in question.
 The option ``Fix'' shall restore the default registry value.
 \end{description}
 
@@ -661,7 +661,7 @@ section \ref{stdfile}.
 \item[Whitelist Considerations] \hfill \\
 The default value if \var{UIHost}, ``\verb|logonui.exe|'', shall be whitelisted.
 \item[Fix Considerations] \hfill \\
-The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Move'' shall generate a script quarantining the file in question.
 The option ``Fix'' shall restore the default registry value.
 \end{description}
 
@@ -685,7 +685,7 @@ section \ref{stdfile}.
 \item[Whitelist Considerations] \hfill \\
 The default value if \var{TaskMan}, ``\verb|taskmgr.exe|'', shall be whitelisted.
 \item[Fix Considerations] \hfill \\
-The option ``Move'' shall generate a script quarentining the file in question.
+The option ``Move'' shall generate a script quarantining the file in question.
 The option ``Fix'' shall restore the default registry value.
 \end{description}
 
@@ -793,7 +793,7 @@ fix which removes the specific toolbar value, and it's associated subkey of
 \subsubsection{Explorer Bars}
 \begin{description}
 \item[Rationale] \hfill \\
-Explorer Bars are Windows Explorer's equivelent of toolbars.
+Explorer Bars are Windows Explorer's equivalent of toolbars.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
@@ -875,7 +875,7 @@ the last path component of the registry key from which the data is taken.
 \item[Whitelisting Considerations] \hfill \\
 This entry is not whitelisted.
 \item[Fix Considerations] \hfill \\
-``Move'' shall generate a fix which quarentines the indicated file. ``Fix''
+``Move'' shall generate a fix which quarantines the indicated file. ``Fix''
 shall generate a fix which erases the indicated value.
 \end{description}
 
@@ -1123,7 +1123,7 @@ For LSPs, the file is determined by unpacking the ``PackedCatalogEntry'' binary
 blob, which (fortunately) begins with a null terminated string containing the
 full path to the binary providing the layer.
 
-For NSPs, things are simpler; the registry value indiciated provides a direct
+For NSPs, things are simpler; the registry value indicated provides a direct
 path to the file in question.
 
 For both types, the catalog location in the registry is taken from the root
@@ -1152,7 +1152,7 @@ Note that these entries shall be whitelisted if and only if they exist. If they
 do not exist then the chain may be broken, and this needs to be visible in the
 report in some way.
 \item[Fix Considerations] \hfill \\
-For the log lines with files, ``Move'' shall generate a script which quarentines
+For the log lines with files, ``Move'' shall generate a script which quarantines
 the offending file, and repairs the chain in question.
 For the log lines without files, ``Fix'' shall generate a script which repairs
 the chain in question.
@@ -1286,7 +1286,7 @@ None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script which deletes the registry key mentioned as
 \var{Item}, as well as the associated CLSID key defined by \var{CLSID}. ``Move''
-shall generate a script quarentineing the file in question.
+shall generate a script quarantining the file in question.
 \end{description}
 
 \subsubsection{Winlogon Notify}
@@ -1311,7 +1311,7 @@ using the default file format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script which deletes the registry key mentioned as
-\var{Name}. ``Move'' shall generate a script which quarentines the associated
+\var{Name}. ``Move'' shall generate a script which quarantines the associated
 file.
 \end{description}
 
@@ -1333,13 +1333,13 @@ processes on the system.
 \verb|AppinitDll64: ${File}|
 \item[Output Description] \hfill \\
 \var{Dlls} is a comma or space delimited list of DLLs. Each individual DLL shall
-be turned into a seperate line in the log, using the default file display format
+be turned into a separate line in the log, using the default file display format
 defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
-``Fix'' shall generate a script which removes the single indiciated DLL from the
-registry. ``Move'' shall generate a script which quarentines the indicated DLL.
+``Fix'' shall generate a script which removes the single indicated DLL from the
+registry. ``Move'' shall generate a script which quarantines the indicated DLL.
 \end{description}
 
 \subsubsection{Shell Object Service Delay Load}
@@ -1375,7 +1375,7 @@ None at this time.
 ``Fix'' shall generate a script which removes the value under the
 ShellObjectServiceDelayLoad registry key, and the associated key under
 HKCR\textbackslash{}CLSID.
-``Move'' shall generate a script which quarentines the indicated DLL.
+``Move'' shall generate a script which quarantines the indicated DLL.
 \end{description}
 
 \subsubsection{Shared Task Scheduler}
@@ -1410,7 +1410,7 @@ None at this time.
 ``Fix'' shall generate a script which removes the value under the
 Shared Task Scheduler registry key, and the associated key under
 HKCR\textbackslash{}CLSID.
-``Move'' shall generate a script which quarentines the indicated DLL.
+``Move'' shall generate a script which quarantines the indicated DLL.
 \end{description}
 
 \subsubsection{Shell Execute Hooks}
@@ -1448,7 +1448,7 @@ None at this time.
 ``Fix'' shall generate a script which removes the value under the
 Shell Execute Hooks registry key, and the associated key under
 HKCR\textbackslash{}CLSID.
-``Move'' shall generate a script which quarentines the indicated DLL.
+``Move'' shall generate a script which quarantines the indicated DLL.
 \end{description}
 
 \subsubsection{Security Providers}
@@ -1465,14 +1465,14 @@ features such as authentication.
 \item[Log Format] \hfill \\
 \verb|SecurityProviders: ${File}|
 \item[Output Description] \hfill \\
-\var{Providers} is a whitespace or comma seperated list of values. A seperate
+\var{Providers} is a whitespace or comma separated list of values. A separate
 log line shall be generated for each item in the list.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script removing the offending security provider from
 the registry value. ``Move'' shall generate a script moving the targeted file
-into quarentine.
+into quarantine.
 \end{description}
 
 \subsubsection{Local Security Authority Settings}
@@ -1500,7 +1500,7 @@ which allow third party code to run inside \verb|lsass.exe|.
 All of the indicated registry values are of type \verb|REG_MULTI_SZ|. This
 means that the registry item contains a double null terminated list of null
 terminated strings. For each string, the local security authority loads the
-indicated DLL. Each string therefore generates a seperate Instalog log line.
+indicated DLL. Each string therefore generates a separate Instalog log line.
 \var{File} is displayed using the standard file format defined in \ref{stdfile}.
 
 If the default values are not in place, the machine may be in a state where the
@@ -1512,7 +1512,7 @@ systems.
 As described above.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a fix removing the associated value from the registry.
-``Move'' shall generate a fix quarentining the affected file.
+``Move'' shall generate a fix quarantining the affected file.
 \end{description}
 
 \subsubsection{Client Server Runtime SubSystem Server DLL}
@@ -1522,7 +1522,7 @@ The Client Server Runtime Subsystem is responsible for implementing the Win32
 API, on top of the native (NT) API provided by the NT kernel. This subsystem
 runs inside the process known as ``\verb|csrss.exe|''. While Windows is
 starting, NT passes a long command line into \verb|csrss.exe| which tells it the
-paths of some importantant DLLs. One of these is the ``Server'' DLL, which
+paths of some important DLLs. One of these is the ``Server'' DLL, which
 malware has used as a loading point in the past.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
@@ -1557,7 +1557,7 @@ The default value, \verb|basesrv|, of the indicated file shall be whitelisted.
 \item[Fix Considerations] \hfill \\
 The ``Fix'' action shall generate a registry script resetting the default
 value for the target operating system. The ``Move'' action shall generate a
-script quarentining the indicated DLL.
+script quarantining the indicated DLL.
 \end{description}
 
 \subsubsection{Installed Active Setup Components}
@@ -1601,7 +1601,7 @@ using the default file display method defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a script removing the associated \var{Entry} subkey.
-``Move'' shall generate a script quarentining the indicated file.
+``Move'' shall generate a script quarantining the indicated file.
 \end{description}
 
 \subsubsection{Image File Execution Options}
@@ -1614,7 +1614,7 @@ libraries, and other bits.
 
 This means that when the Windows Loader tries to load a binary it finds settings
 for in the Image File Execution Options section, the debugger, if defined, is
-loaded instead of the indiciated binary. Malware uses this to redirect
+loaded instead of the indicated binary. Malware uses this to redirect
 otherwise legitimate programs into launching malware instead.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
@@ -1634,8 +1634,8 @@ file display format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Fix'' shall generate a fix removing the ``Debugger'' value from the indicated
-Image File Execution Options key. ``Move'' shall generate a script quarentining
-the indiciated \var{Target}.
+Image File Execution Options key. ``Move'' shall generate a script quarantining
+the indicated \var{Target}.
 \end{description}
 
 \subsubsection{File Assocations}
@@ -1820,7 +1820,7 @@ The only valid option is ``Fix''. It shall generate a fix which erases the
 \subsubsection{INI Autostarts}
 \begin{description}
 \item[Rationale] \hfill \\
-These autostart locations are maintained by Windows for compatability with the
+These autostart locations are maintained by Windows for compatibility with the
 Win9x series of operating systems.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
