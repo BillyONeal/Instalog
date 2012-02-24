@@ -21,15 +21,16 @@ For most types of information Instalog enumerates, such as Windows file paths,
 the exact method C uses is unsuitable; backslashes occur far too often inside
 file paths for the backslash as an escape character to make a good choice.
 Legacy applications like the command processor (\texttt{cmd.exe}) get around
-such problems by implementing complicated escaping schemes, but these are
-designed with specific input data in mind (file paths and command line
-switches, for instance), which is not the case for most reported data.
+such problems by implementing complicated escaping schemes (defined in section
+\ref{winescape} below), but these are designed with specific input data in mind
+(file paths and command line switches, for instance), which is not the case for
+most reported data.
 
 \label{generalescape}
 Therefore, Instalog shall use define a general escape function that works in a
 manner similar to C's string literal escapes, but which allows arbitrary
-starting, termination, and escaping characters. The input to the escape function
-is raw data obtained from some data source, and the output is the same data with
+termination, and escaping characters. The input to the escape function is raw
+data obtained from some data source, and the output is the same data with
 the following textual replacements: 
 
 \begin{itemize}

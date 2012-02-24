@@ -3,11 +3,6 @@ This section defines all of the ``repair'' actions that Instalog will support.
 These actions modify the system's configuration in some way and are as such
 considered ``system-altering'' actions. \label{systemaltering}
 
-\subsection{Registry Backup (\texttt{:regback})}
-The registry backup script action takes no parameter or items. It merely forces
-the registry backup stage (see section \ref{sec:reg_backup}) to run, regardless
-of whether or not registry operations appear in the script.
-
 \subsection{Kill Process (\texttt{:kill})}
 This action will kill specified process(es) that are listed in the list of
 \var{items} defined in \ref{sec:script_syntax}.  This action does not require
@@ -222,7 +217,7 @@ item, Instalog shall print the item, along with a message indicating success or
 failure of the deletion of the security center instance GUID from Windows
 Management Instrumentation's database.
 
-\subsection{Registry (\texttt{:reg})}
+\subsection{Registry (\texttt{:reg})} \label{sec:registry}
 The registry section shall consist of a script similar to regedit's \verb|.REG|
 files. What follows describes the syntax used there, along with a few
 nonstandard extensions defined by Instalog to make working with the registry
