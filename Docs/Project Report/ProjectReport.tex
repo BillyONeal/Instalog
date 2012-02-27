@@ -79,24 +79,63 @@ machine to generate and run a suitable fix script.
 
 
 \section{Introduction}
-This section is an introduction to the project and will usually be a much longer
-version of the Abstract (you can regard this as an expanded version of the
-abstract). It should describe the project.
-However, unlike the abstract, it should be written for a reader knowledgeable in
-computer science. It should also include as numbered subsections:
+\subsection{Background}
+% TODO Bill?  Otherwise, I'll just add some details to Abstract
+
+\subsection{Related Work}
+Instalog is inspired by several similar tools which all share some basic
+functionality.  In many ways, Instalog can be viewed as an evolution of
+these tools:
 
 \begin{itemize}
-  \item Relevant background	
-  \item Project description (what it is, goals, technical issues, etc.) in more
-  technical detail than the abstract; it should include a detailed description
-  of the problem,
-  \item Summary of progress and results obtained,
-  \item Related (prior) work, and
-  \item Prelude of things to come in the upcoming sections of the report. 
+    \item TrendMicro's {\em Hijack This} (HJT)
+    \item ``sUBs'' {\em Doesn't Do Squat} (DDS)
+    \item ``random/random'''s {\em Random's System Information Tool} (RSIT)
+    \item ``OldTimer'''s {\em OTA}, {\em OTS}, and {\em OTL} (formerly
+    OTAnalyzeIt, OTScanIt, and OTListIt, respectively)
+    \item Sysinternals' {\em Autoruns}
+    \item Runscanner's {\em Runscanner}
 \end{itemize}
 
-You should also describe in this section sources of data (if any), as well as
-any topic that you deem to be important.
+All of these tools purport to accomplish similar goals to Instalog. However,
+each of these tools has bugs or specific behavior which cause problems for at
+least one of Instalog's three intended user groups.  Specifically, the above
+tools contain one or more of the above problems:
+
+\begin{itemize}
+    \item Incorrect handling and escaping of log data
+    \item Lack of published specifications, documentation, or source code
+    \item Outstanding bugs that the authors are unwilling or unable to fix
+    \item Lack of scriptability, for the purposes of modifying log output and
+    malware removal.
+    \item Lack of 64 bit support.
+    \item Lack of Unicode support.
+    \item Lack of enumeration of some types of useful log information.
+\end{itemize}
+
+Instalog will attempt to solve those problems by combining characteristics of
+the above tools which are deemed useful while mixing in a few tricks of its
+own.
+
+\subsection{Project Description}
+Project description (what it is, goals, technical issues, etc.) in more
+technical detail than the abstract; it should include a detailed description of
+the problem,
+
+\subsection{Progress}
+As of this writing, the majority of the work has been planning and documentation
+(primarily in writing the specifications).  Since the first use of this tool is
+for information gathering, several weeks of time had to be spent in carefully
+identifying where the information would be gathered from, how it would be
+displayed, and how it would be whitelisted.  Since the second use of this tool
+is for fixing machines, the fix script specification had to be designed
+incredibly carefully, which took about a week.  The work done in this respect is
+found in the documents referenced in section~\ref{software_requirements} and
+section~\ref{software_specifications}.
+% TODO Update with any further items.  Also make sure the references differ
+
+\subsection{Report Structure}
+% TODO Write this section once report is complete
 
 \newpage
 
@@ -142,6 +181,10 @@ information, with likely components on
   design, etc.)
   \item Design Document
 \end{itemize}
+
+\label{software_requirements}
+\label{software_specifications}
+\label{software_design}
 
 \newpage
 
