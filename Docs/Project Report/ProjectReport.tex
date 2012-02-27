@@ -32,12 +32,48 @@ Case Western Reserve University
 
 
 \section{Abstract}
-The abstract is a brief description of the project which should be
-understandable to everyone. Do not use words or acronyms which are not commonly
-known. It should state succinctly the objectives, the approach used, suitable
-for a person outside the CS domain, summarize what the project is about, what is
-achieved, and brief details on its components, issues, etc.
-Should be no more than one page.
+The Microsoft Windows operating system is a complicated system.  When it is
+working, everything is fine.  However, when something goes wrong, it is often a
+frustrating experience troubleshooting what the problem is, so frequently the
+easiest fix is to backup the machine and then reformat it and reinstall Windows.
+This approach can severely impact productivity and is complicated for
+non-technical users.  
+
+One common source of problems for users of the Windows operating system is
+infection from malware.  This has caused there to be a sizable market for
+antimalware software.  This software is very effective at removing common
+infections because at a high level, the software vendors simply need to maintain
+a list of common infections and the safe way to remove them.  Some tools are
+even moderately effective at removing unknown threats by using heuristic
+techniques.  However, these techniques have limited effectiveness especially
+against obscure or new malware.  
+
+Therefore, a demand exists for tools that aid users in removing these obscure
+malware infections.  This project, Instalog, is a response to this need. 
+Instalog is designed to be a tool with two purposes: information gathering and
+system repair.
+
+First, it scans Windows installations to gather as much information as possible
+about the machine.  It then filters this information using whitelists to remove
+mundane information like system defaults.  It outputs a log of information that
+is non-standard on the machine which will hopefully aid an expert in identifying
+what the root cause of an infection is.
+
+Second, Instalog provides a capacity to fix infections.  Given a log output,
+experts can generate scripts to fix an infection either by hand or by using the
+GUI.  Instalog can run these scripts to remove an infection.  
+
+Instalog is designed such that it can support three different ``user classes.'' 
+The first is that of a ``home user'' that has an infected machine but doesn't
+know how to fix it.  This user can use Instalog to scan their machine and then
+post it online to get assistance.  Here, an ``expert'' can download the ``home
+user's'' log, analyze it, and produce a fix script for them to run.  The ``home
+user'' can then download this script and run it using Instalog to fix their
+machine.  This process may involve several iterations.  The other user case is
+that of a ``system administrator'' that plays both roles -- ``system
+administrators'' use Instalog to scan their machines and know enough about the
+machine to generate and run a suitable fix script.  
+
 \newpage
 
 
@@ -95,7 +131,7 @@ components on
   \item Application Software Specifications
   \item Software Architecture (i.e., client-server architecture; three-tiered
   design, etc.)
-  \itemDesign Document
+  \item Design Document
 \end{itemize}
 \newpage
 
