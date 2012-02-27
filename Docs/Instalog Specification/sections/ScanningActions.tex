@@ -689,7 +689,7 @@ display format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
-fix which removes the specific browser helper object key, and it's associated
+fix which removes the specific browser helper object key, and its associated
 subkey of \verb|HKCR\CLSID|.
 \end{description}
 
@@ -729,7 +729,7 @@ display format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
-fix which removes the specific toolbar value, and it's associated subkey of
+fix which removes the specific toolbar value, and its associated subkey of
 \verb|HKCR\CLSID|.
 \end{description}
 
@@ -767,7 +767,7 @@ display format defined in \ref{stdfile}.
 None at this time.
 \item[Fix Considerations] \hfill \\
 ``Move'' shall generate a fix which moves \var{File}. ``Fix'' shall generate a
-fix which removes the specific explorer bar value, and it's associated subkey of
+fix which removes the specific explorer bar value, and its associated subkey of
 \verb|HKCR\CLSID|.
 \end{description}
 
@@ -1305,8 +1305,8 @@ even in safe mode.
 \verb|Ssodl: [${GeneratedName}->${CLSID}] ${File}| \\
 \verb|Ssodl64: [${GeneratedName}->${CLSID}] ${File}|
 \item[Output Description] \hfill \\
-\var{GeneratedName} shall consist of \var{Name} if it's
-contents are not blank, followed by \var{AlternateName} if it's contents are
+\var{GeneratedName} shall consist of \var{Name} if its
+contents are not blank, followed by \var{AlternateName} if its contents are
 not blank, followed by the empty string. \var{File} uses the standard file
 output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
 the standard escaping format defined in \ref{generalescape}, using an escape
@@ -1340,8 +1340,8 @@ The Shared Task Scheduler DLLs modify how the task scheduler operates.
 \verb|Sts: [${GeneratedName}->${CLSID}] ${File}| \\
 \verb|Sts64: [${GeneratedName}->${CLSID}] ${File}|
 \item[Output Description] \hfill \\
-\var{GeneratedName} shall consist of \var{Name} if it's
-contents are not blank, followed by \var{AlternateName} if it's contents are
+\var{GeneratedName} shall consist of \var{Name} if its
+contents are not blank, followed by \var{AlternateName} if its contents are
 not blank, followed by the empty string. \var{File} uses the standard file
 output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
 the standard escaping format defined in \ref{generalescape}, using an escape
@@ -1378,8 +1378,8 @@ loading point.
 \verb|Seh: [${GeneratedName}->${CLSID}] ${File}| \\
 \verb|Seh64: [${GeneratedName}->${CLSID}] ${File}|
 \item[Output Description] \hfill \\
-\var{GeneratedName} shall consist of \var{Name} if it's
-contents are not blank, followed by \var{AlternateName} if it's contents are
+\var{GeneratedName} shall consist of \var{Name} if its
+contents are not blank, followed by \var{AlternateName} if its contents are
 not blank, followed by the empty string. \var{File} uses the standard file
 output format defined in \ref{stdfile}. \var{GeneratedName} and \var{CLSID} use
 the standard escaping format defined in \ref{generalescape}, using an escape
@@ -1584,7 +1584,7 @@ the indicated \var{Target}.
 \subsubsection{File Assocations}
 \begin{description}
 \item[Rationale] \hfill \\
-File associations tell Windows how to deal with a particular file given it's
+File associations tell Windows how to deal with a particular file given its
 extension. Malware can steal file associations which are important to general
 operation of the system, such as that given to ``\verb|.exe|''.
 \item[Data Sources] \hfill \\

@@ -87,7 +87,7 @@ requirement of general escaping this will cause no effect on the unescaped
 data).
 
 \subsubsection{CommandLineToArgvW Escaping Format} \label{winescape}
-Windows' own \verb|CommandLineToArgvW| function defines it's own escaping
+Windows' own \verb|CommandLineToArgvW| function defines its own escaping
 scheme. This format is delimited on both the left and right by quote (\verb|"|)
 characters. Instalog shall interpret this format exactly as Windows' function
 does. Quoting MSDN:
@@ -134,7 +134,7 @@ If the given value is fewer than the number of digits available, they shall be
 zero padded to take up as many spaces as that item has been assigned.
 
 \subsection{Path Formats}
-Instalog uses several path formats across it's log output.
+Instalog uses several path formats across its log output.
 
 \subsubsection{Path Resolution} \label{pathresolution}
 Windows often does not provide Instalog with direct path information; providing
@@ -175,7 +175,7 @@ replacements must be done in the following order.
 After this heuristic is applied, the resulting path should correspond to a Win32
 path.
 
-The second phase consists of separation of the executable path from it's
+The second phase consists of separation of the executable path from its
 arguments. This is done in the same way that Windows' own \verb|CreateProcessW|
 API call does. It is based on the current value of the environment variables
 \verb|%PATH%| and \verb|%PATHEXT%|. The first defines to Windows where
