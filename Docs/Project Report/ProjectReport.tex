@@ -6,6 +6,7 @@
 \newcommand{\var}[1]{\texttt{\$\{#1\}}}
 \usepackage[colorlinks=false,pdfborder=0 0 0]{hyperref}
 \usepackage{graphicx}
+\usepackage[numbib]{tocbibind}
 
 \title{Instalog Project Report \\
 Interim Report 1}
@@ -123,21 +124,24 @@ technical detail than the abstract; it should include a detailed description of
 the problem,
 
 \subsection{Progress}
-As of this writing, the majority of the work has been planning and documentation
-(primarily in writing the specifications).  Since the first use of this tool is
-for information gathering, several weeks of time had to be spent in carefully
-identifying where the information would be gathered from, how it would be
-displayed, and how it would be whitelisted.  Since the second use of this tool
-is for fixing machines, the fix script specification had to be designed
-incredibly carefully, which took about a week.  The work done in this respect is
-found in the documents referenced in section~\ref{software_requirements} and
-section~\ref{software_specifications}.  
-% TODO Update with any further items.  Also make sure the references differ
+As of this writing, most of the work done so far has been in the direction of
+getting the entire project planned out with requirements and specifications.
+More details on the project's progress are available in
+section~\ref{project_progress}.
 
-For more information, please refer to section~\ref{project_progress}.
+Since the requirements and specifications wound up being so much more than
+initially anticipated when starting this product, at the suggestion of the
+professor, we have put a scope limit on the product.  Essentially, the most
+basic of the scanning functionality will be delivered by the end of the Senior
+Project course.  The remaining functionality will be implemented in the authors'
+remaining free time before summer internships and employment begins.  For more
+details on the scope limit, please refer to section~\ref{scope_limit}.
+% TODO Update with any further items.  Also make sure the references differ
 
 \subsection{Report Structure}
 % TODO Write this section once report is complete
+This report is structured using a modified version of the structure proposed in
+\cite{ReportGuidelines}.
 
 \newpage
 
@@ -229,9 +233,49 @@ information, with likely components on
 
 
 
+\section{Scope Limit} \label{scope_limit}
+The scope of this project is much larger than can be reasonably finished in the
+time-frame for the course.  As is mentioned in sections 
+\ref{project_management} and \ref{project_progress}, it has taken five weeks
+just to write the requirements and specifications for the project.  Therefore,
+due to the sheer amount of features this tool will have as well as the amount of
+testing on varying environments that will be required, at the suggestion of the
+professor of the Senior Project course, the authors have instituted a scope
+limit for the completion of the project.  Since the scanning functionality is
+the most valuable part of the tool, this functionality will be completed in time
+for the project deadline of the course.  If this functionality is completed and
+verified quickly and there is time to spare, the following features will be
+added in the specified order:
+
+\begin{enumerate}
+    \item Scripting 
+    \item GUI 
+    \item Enumeration of Firefox data
+    \item Enumeration of Google Chrome data
+    \item Spoofed DNS check
+    \item ``Value Added'' scripting actions, such as MRC upload or VirusTotal
+    upload
+    \item Checkboxes and fix generation on the GUI
+\end{enumerate}
+
+In the event any of these features are added, Instalog will remain a functional,
+shippable, well-tested, production-quality tool, suitable for the final senior
+project submission.  If a feature is attempted but cannot be developed to a
+satisfactory level in time for the submission, a previously stable release of
+the tool will be reverted to and turned in.  
+
+The authors of this tool will complete any remaining deliverables outside of the
+Senior Project course in the free time between when classes and summer
+internships / employment begins.  
+
+\newpage
+
+
+
 \section{Project Management and Administrative Details}
-Design/update your Gantt chart to show any changes in milestones, timetable, or
-responsibility (especially if there are multiple team members). Be sure to
+\label{project_management} 
+Design/update your Gantt chart to show any changes in
+milestones, timetable, or responsibility (especially if there are multiple team members). Be sure to
 properly indicate who is actually performing each task and the degree of
 completion of each task.
 
@@ -265,8 +309,15 @@ This section should discuss any testing and evaluation done so far.
 
 
 \section{Project Progress} \label{project_progress}
-This section should summarize the progress (or the lack of it) so far, and
-address any issues that have arisen recently.
+As of this writing, the majority of the work has been planning and documentation
+(primarily in writing the specifications).  Since the first use of this tool is
+for information gathering, several weeks of time had to be spent in carefully
+identifying where the information would be gathered from, how it would be
+displayed, and how it would be whitelisted.  Since the second use of this tool
+is for fixing machines, the fix script specification had to be designed
+incredibly carefully, which took about a week.  The work done in this respect is
+found in the documents referenced in section~\ref{software_requirements} and
+section~\ref{software_specifications}.  
 
 \newpage
 
@@ -285,15 +336,14 @@ solve.
 
 
 
-\section{References}
-Any references to the literature, web sites, etc., should follow the ACM
-citation standards (Just look at the ACM publications).
+\bibliography{ProjectReport}{}
+\bibliographystyle{plain}
 
 \newpage
 
 
 
-\section{Licensing}
+\section{License}
 Instalog itself is to be released under the two clause form of the BSD license,
 which is reprinted below:
 
