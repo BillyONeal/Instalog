@@ -131,8 +131,10 @@ displayed, and how it would be whitelisted.  Since the second use of this tool
 is for fixing machines, the fix script specification had to be designed
 incredibly carefully, which took about a week.  The work done in this respect is
 found in the documents referenced in section~\ref{software_requirements} and
-section~\ref{software_specifications}.
+section~\ref{software_specifications}.  
 % TODO Update with any further items.  Also make sure the references differ
+
+For more information, please refer to section~\ref{project_progress}.
 
 \subsection{Report Structure}
 % TODO Write this section once report is complete
@@ -236,7 +238,7 @@ completion of each task.
 Describe how well the project management plan is working. Were there unforeseen
 problems with any of the tasks that you have had to work around? Are there
 delays in obtaining parts or software? Were major changes to the management plan
-or back-up plans required and implemented? What work arounds were necessary to
+or back-up plans required and implemented? What work-arounds were necessary to
 keep the project on schedule? It is very important that you describe any changes
 in the project plan since the proposal and the reasons for them.
 Finally, use your management plan to carefully think about what can be
@@ -262,7 +264,7 @@ This section should discuss any testing and evaluation done so far.
 
 
 
-\section{Project Progress}
+\section{Project Progress} \label{project_progress}
 This section should summarize the progress (or the lack of it) so far, and
 address any issues that have arisen recently.
 
@@ -291,14 +293,50 @@ citation standards (Just look at the ACM publications).
 
 
 
+\section{Licensing}
+Instalog itself is to be released under the two clause form of the BSD license,
+which is reprinted below:
+
+\begin{verbatim}
+Copyright © 2012, Jacob Snyder, Billy O'Neal III, and "sUBs"
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met: 
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\end{verbatim}
+
+This document, along with all other documentation related to Instalog,  is to be
+released under the Creative Commons Attribution 3.0 Unported license. Human
+readable and lawyer readable versions of this license can be found at
+\url{http://creativecommons.org/licenses/by/3.0/}.
+
+\newpage
+
+
+
 \section{Appendices}
 Use appendices as appropriate. The parts that are necessary are colored in red.
 This section can also have, if any, descriptions about background components to
 the system and their design:
 
 \begin{itemize}
-  \item Database Design.  Simply follow the database design document
-  specifications from EECS 341.
   \item User Manual.  This is a manual for users to use the system, describing,
   if any, rules and procedures.
   \item Programmers Manual.  This is a manual for a programmer to take your
@@ -306,10 +344,9 @@ the system and their design:
   \item Third-party software use and its incorporation to the project.  Examples
   may be graph drawing software, visualization software, XML-related software,
   etc.
-  \item Lower-level components such as web services, SOAP functionality,
-  AJAX-related design discussions, etc. 
   \item Any figures, drawings, and anything else which is too detailed and/or
   too long to put anywhere else in the report. 
+  \item License information
 \end{itemize}
 
 \newpage
