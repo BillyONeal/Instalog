@@ -142,20 +142,57 @@ section~\ref{software_specifications}.
 
 
 \section{Application}
-In this section, you will discuss the application you will build in more detail,
-giving the reader a vision about the final product and its capabilities. It
-should also point out to
+Instalog can be seen as having three different distinct components:
 
-\begin{itemize}
-  \item Itemized and prioritized challenges that lie ahead, in terms of the
-  algorithms, problems, data integration, etc.
-  \item How the project team is planning to address the listed challenges, and
-  who in the team is attacking what.
-  \item Application Specifications 
-\end{itemize}
+\begin{enumerate}
+  \item Scanning
+  \item Scripting and Repairing
+  \item GUI
+\end{enumerate}
 
-Algorithms or techniques used to solve these challenges and issues will be
-covered in detail in the next section (methodology).
+Each of these components will be expanded on in the following subsections.
+
+\subsection{Scanning}
+Instalog's scanning abilities are the information-gathering and whitelist
+capabilities that will be provided to the user.  Instalog will scan a number of
+different types of information such as registry keys, browser settings, and
+recently modified files.  These different information points are picked because
+they are primarily ``loading points,'' that is, they are locations that malware
+would need to modify to be loaded.  Each information point will be filtered
+using whitelists that will remove default values and values that are known to be
+safe.  What will be left is information that is unique to the user's computer,
+hopefully some of which provides information about the malware.
+
+A big challenge with this is the sheer amount of data that is being included in
+the scan.  The Instalog project team plan on getting around this by writing
+meticulously detailed requirements and specifications documents to make sure
+each behavior is well defined before starting to implement the project.
+Another challenge with this is making the scan run quickly.  The biggest
+challenge is to simply test the scanning behavior.  Since it is impossible to
+anticipate every possible machine configuration, the software must be robust
+enough to handle varying scenarios across all of the targeted versions of
+Windows.
+
+\subsection{Scripting and Repairing}
+The next component is Instalog's ability to run scripts and repair systems. 
+Instalog will define a scripting language that enables common actions such as
+process killing, registry actions, and file quarantine.  It will also provide
+scripting actions to run all of the available scanning actions.  This will allow
+a script to gather more information about a system if necessary.  
+
+The biggest challenge to this is similar to the scanning challenge -- it will be
+very difficult to thoroughly test this.  It is \textit{imperative} that this
+functionality is tested extensively though because one mistake in this component
+could lead to data loss on a user's machine.  
+
+\subsection{GUI}
+The final component of Instalog is the graphical user interface (GUI).  This
+interface will allow users to run scans, run scripts, and build scripts based on
+scan outputs.  The challenge here is building the GUI using the native GUI
+controls, especially since some of the proposed screens such as the script
+builder are incredibly complex.  Additionally, the script builder must be tested
+heavily as well, because if a poor script is built, this could also lead to data
+loss on a user's machine.  
 
 \newpage
 
