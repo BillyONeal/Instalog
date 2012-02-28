@@ -32,7 +32,7 @@ Case Western Reserve University
 
 
 
-\section{Abstract}
+\section{Abstract} \label{abstract}
 The Microsoft Windows operating system is a complicated system.  When it is
 working, everything is fine.  However, when something goes wrong, it is often a
 frustrating experience troubleshooting what the problem is, so frequently the
@@ -79,8 +79,11 @@ machine to generate and run a suitable fix script.
 
 
 
-\section{Introduction}
+\section{Introduction} \label{introduction}
 \subsection{Background}
+Project description (what it is, goals, technical issues, etc.) in more
+technical detail than the abstract; it should include a detailed description of
+the problem,
 % TODO Bill?  Otherwise, I'll just add some details to Abstract
 
 \subsection{Related Work}
@@ -118,11 +121,6 @@ Instalog will attempt to solve those problems by combining characteristics of
 the above tools which are deemed useful while mixing in a few tricks of its
 own.
 
-\subsection{Project Description}
-Project description (what it is, goals, technical issues, etc.) in more
-technical detail than the abstract; it should include a detailed description of
-the problem,
-
 \subsection{Progress}
 As of this writing, most of the work done so far has been in the direction of
 getting the entire project planned out with requirements and specifications.
@@ -143,11 +141,32 @@ details on the scope limit, please refer to section~\ref{scope_limit}.
 This report is structured using a modified version of the structure proposed in
 \cite{ReportGuidelines}.
 
+This report begins with the proposed Abstract (section~\ref{abstract}),
+Introduction (section~\ref{introduction}), and Application
+(section~\ref{application}) sections.  The Methodology section is not an
+explicit section in this document as it has been integrated into the other
+documentation of the project.  Therefore, the report dives straight into the
+heart of the documentation of the project in the Software Design section
+(section~\ref{software_design}).  Since the documentation for this project is
+extremely long, this section simply introduces the documents and references them
+as external documents.  The proposed User Interface section has been included in
+the documents listed in the Software Design section.  Similarly, the proposed
+Testing and Evaluation section has been merged into the Software Design section
+as a separate stand-alone document. This report then introduces the
+aforementioned Scope Limit (section~\ref{scope_limit}) and then moves into the
+finer points of the Project Management and Administrative Details
+(section~\ref{project_management}) and Project Progress
+(section~\ref{project_progress}) sections.  The report then mentions the legal
+details for the project in the License section (section~\ref{license}).  Lastly,
+the report references any additional external documents in the Appendices
+section (section~\ref{appendices}) and then lists all of the references made in
+the document in the References section.
+
 \newpage
 
 
 
-\section{Application}
+\section{Application} \label{application}
 Instalog can be seen as having three different distinct components:
 
 \begin{enumerate}
@@ -204,15 +223,6 @@ loss on a user's machine.
 
 
 
-\section{Methodology}
-This section should discuss any data structure design/maintenance problems, or
-algorithmic problems/challenges, and how they will be/are solved; time and space
-complexity analysis (if needed) of your algorithms, etc.
-
-\newpage
-
-
-
 \section{Software Design}
 This section will describe the progress towards the usual software design
 information, with likely components on
@@ -228,6 +238,7 @@ information, with likely components on
 \label{software_requirements}
 \label{software_specifications}
 \label{software_design}
+\label{testing_and_evaluation}
 
 \newpage
 
@@ -292,22 +303,6 @@ realistically done by your team between now and the end of the semester.
 
 
 
-\section{User Interface}
-This section contains the user interface of the application. It should have
-numbered figures with titles and screenshots of the GUI components, as well as
-explanations.
-
-\newpage
-
-
-
-\section{Testing and Evaluation}
-This section should discuss any testing and evaluation done so far.
-
-\newpage
-
-
-
 \section{Project Progress} \label{project_progress}
 As of this writing, the majority of the work has been planning and documentation
 (primarily in writing the specifications).  Since the first use of this tool is
@@ -323,7 +318,7 @@ section~\ref{software_specifications}.
 
 
 
-\section{Discussion and Conclusions}
+\section{Discussion and Conclusions} \label{discussion}
 These conclusions are not really conclusions since your project is not yet
 finished. In this section you should discuss whether the project is on schedule
 for completion at the end of the semester. Are there major problems which
@@ -336,14 +331,7 @@ solve.
 
 
 
-\bibliography{ProjectReport}{}
-\bibliographystyle{plain}
-
-\newpage
-
-
-
-\section{License}
+\section{License} \label{license}
 Instalog itself is to be released under the two clause form of the BSD license,
 which is reprinted below:
 
@@ -381,7 +369,7 @@ readable and lawyer readable versions of this license can be found at
 
 
 
-\section{Appendices}
+\section{Appendices} \label{appendices}
 Use appendices as appropriate. The parts that are necessary are colored in red.
 This section can also have, if any, descriptions about background components to
 the system and their design:
@@ -398,6 +386,13 @@ the system and their design:
   too long to put anywhere else in the report. 
   \item License information
 \end{itemize}
+
+\newpage
+
+
+
+\bibliography{ProjectReport}{} 
+\bibliographystyle{plain}
 
 \newpage
 
