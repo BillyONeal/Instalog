@@ -224,21 +224,58 @@ loss on a user's machine.
 
 
 \section{Software Design}
-This section will describe the progress towards the usual software design
-information, with likely components on
+The nature of this tool is that there are a lot of small little features that
+collectively make up each component mentioned in the Application section
+(section~\ref{application}).  Alone, each small feature of the tool is quite
+manageable and straightforward.  However, when all of the pieces are put
+together, there is actually an impressive amount of detail and small nuances
+that are required to adequately explain each feature.  Therefore, instead of
+including the Software Requirements, Software Specifications, Software Design,
+and Testing and Validation documents in this report, they have been written and
+included as stand-alone documents.  This was done with the intent of making this
+document more readable as well as making each document more maintainable when
+they inevitably have to be updated or modified throughout the product
+development lifecycle.  Each document is briefly introduced, explained, and
+referenced in the following subsections.  Please refer to the specified
+documents for more details.
 
-\begin{itemize}
-  \item Application Software Requirements
-  \item Application Software Specifications
-  \item Software Architecture (i.e., client-server architecture; three-tiered
-  design, etc.)
-  \item Design Document
-\end{itemize}
-
+\subsection{Software Requirements}
 \label{software_requirements}
+The Software Requirements document \cite{Requirements} is designed to be read by
+a mostly non-technical audience.  It describes the various features that the
+project will have and what criteria these features must meet to be considered
+implemented successfully.  This document is written at a fairly high-level view
+as the problem space is fairly well defined for this project.
+
+\subsection{Software Specifications}
 \label{software_specifications}
+The Software Specifications document \cite{Specification} is the document that
+visits each requirement in the above Software Requirements document.  This
+document is quite long because it describes in meticulous detail how each
+feature will function, how it must behave, where the data will be pulled from,
+etc.  The intent of this document is that it will make the actual design,
+implementation, and testing of the project much easier because the behavior is
+well defined from the start.  This document has also been released in private
+security volunteer circles for validation, and has been modified slightly at the
+suggestions of a few individuals.  
+
+\subsection{Software Design}
 \label{software_design}
+The Software Design document \cite{Design} is the document that describes how
+each feature will be implemented.  This document is not complete as of yet, as
+it will evolve as development on the tool continues.  
+
+\subsection{Testing and Validation}
 \label{testing_and_evaluation}
+The Testing and Validation document \cite{Testing} is the document that
+describes how the tool will be tested and checked to ensure it is implemented
+properly.  As mentioned previously, testing the tool is going to be a big hurdle
+and one of the main focuses of the authors of this tool.  
+
+Since the requirements and specifications phase has just been completed and the
+design phase has just begun, the testing document is not complete either. 
+Rather, like the Software Design Document \cite{Design}, it will grow as the
+development of this tool progresses.  
 
 \newpage
 
