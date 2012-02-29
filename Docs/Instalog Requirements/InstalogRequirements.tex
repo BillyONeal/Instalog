@@ -73,6 +73,22 @@ remotely.
 
 
 \section{Scripting Requirements} \label{scripting}
+The main functionality of this tool will be implemented with ``scripts.''  Each
+script will specify what actions should be taken by the tool.  For instance, the
+default scan in section~\ref{scanning} could be implemented with a script. 
+Scripts can also be written by users either by hand or by using the GUI
+(section~\ref{gui}).  As such, scripts should be written in human-readable text.
+Since scripts will frequently be posted to online forums, the script format must
+be designed such that information will not be lost when posting to forums
+(whitespace, URLs, unicode characters, etc.).  Not only should scripts be
+capable of scanning a machine, this is also the method that Instalog will use
+for repairing a user's machine (section~\ref{repair}).
+
+\newpage
+
+
+
+\section{Output Requirements} \label{output}
 One of the main features of this tool is the logging capability.  The log will
 be separated into multiple ``sections,'' where each section has similar
 information grouped under it.  There will be a default script of actions that is
@@ -84,7 +100,7 @@ more targeted information about a system.
 
 
 
-\section{Scanning Requirements}
+\section{Scanning Requirements} \label{scanning}
 One of the main functionalities of Instalog is its ability to scan a machine to
 gather information that will be useful for system diagnostics.  There are a
 number of different scan features that the tool will support.  These features
@@ -115,15 +131,16 @@ are briefly described below.
     \item[Installed Programs] This will list all installed programs.
 \end{description}
 
-Each of these options will run in the default scanning script.  All of these
-actions are designed to be non-invasive, meaning that they should not modify the
-user's machine in any way.  
+Each of these options will run in the default scanning script.  Each option
+should also be callable from a custom script as described in
+section~\ref{scripting}.  All of these actions are designed to be non-invasive,
+meaning that they should not modify the user's machine in any way.
 
 \newpage
 
 
 
-\section{Repair Action Requirements}
+\section{Repair Action Requirements} \label{repair}
 A fix script is a textual representation of the actions that should be taken to
 clean up a system.  Most of the log sections listed in the previous section will
 have fix actions associated with them.  Again, the specifics about this are too
@@ -137,7 +154,7 @@ backup before they proceed so that the action taken can be reverted.
 
 
 
-\section{Graphical User Interface Requirements}
+\section{Graphical User Interface Requirements} \label{gui}
 The graphical user interface will be the only method for interfacing with this
 tool.  The interface is designed such that it will enable all three of the user
 classes described in the ``Intended Users'' section to go through their
