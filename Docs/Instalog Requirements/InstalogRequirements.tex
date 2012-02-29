@@ -72,7 +72,7 @@ remotely.
 
 
 
-\section{Scripting Requirements}
+\section{Scripting Requirements} \label{scripting}
 One of the main features of this tool is the logging capability.  The log will
 be separated into multiple ``sections,'' where each section has similar
 information grouped under it.  There will be a default script of actions that is
@@ -85,38 +85,39 @@ more targeted information about a system.
 
 
 \section{Scanning Requirements}
-Below are the default log sections that should be presented after a default scan
-has been run.
-\begin{enumerate}
-    \item Header
-    \item Running Processes
-    \item Machine PsuedoHJT Report
-    \item $n$ User PseudoHJT Reports (One for each loaded user registry on the
-    system)
-    \item Mozilla Firefox (if Mozilla Firefox is installed)
-    \item Google Chrome (if Google Chrome is installed)
-    \item ``Interesting'' files present on the filesystem based on date, time,
-    location, etc.
-    \item Event Viewer (if any relevant events need be reported)
-    \item Machine Specifications
-    \item Restore Points
-    \item Installed Programs
-    \item Footer
-\end{enumerate}
-\subsubsection{Additional Log Sections}
-These log sections are not included in the default scan, but can be run
-optionally through a custom script.
-\begin{enumerate}
-\item DNS Check
-	\item Directory 
-	\item VirusTotal 
-	\item MRC Upload
-	\item Process Kill
-	\item File Quarantine
-	\item Security Center
-	\item Registry 32 Bit
-	\item Registry 64 Bit
-\end{enumerate}
+One of the main functionalities of Instalog is its ability to scan a machine to
+gather information that will be useful for system diagnostics.  There are a
+number of different scan features that the tool will support.  These features
+are briefly described below.
+
+\begin{description}
+    \item[Running Processes] This will list the currently running processes for
+    all users on the machine.
+    \item[PsuedoHJT Report] This will implement functionality similar to
+    \textit{Hijack This} or \textit{DDS}.  It will run for the machine as well
+    as for each user on the system.
+    \item[Mozilla Firefox] This will common Firefox infection routes including
+    but not limited to extensions, plugins, and preferences.
+    \item[Google Chrome] This will common Chrome infection routes including
+    but not limited to extensions, plugins, and preferences.
+    \item[Services/Drivers] This will list all of the services and drivers on a
+    system.
+    \item[Created Last 30] This is designed to be the same report as the Created
+    Last 30 report from \textit{DDS}, which lists the files from target
+    locations that have been updated in the last thirty days.
+    \item[Find3M] This is designed to be the same report as the Find3M report
+    from \textit{DDS}, which essentially lists ``interesting'' files that have
+    been updated in the last three months.
+    \item[Event Viewer] This will report any problems in the Windows event log.
+    \item[Machine Specifications] This will list important system specifications
+    such as processor type, disk partitions, etc.
+    \item[Restore Points] This will list all existing restore points.
+    \item[Installed Programs] This will list all installed programs.
+\end{description}
+
+Each of these options will run in the default scanning script.  All of these
+actions are designed to be non-invasive, meaning that they should not modify the
+user's machine in any way.  
 
 \newpage
 
