@@ -323,7 +323,7 @@ internships / employment begins.
 \section{Project Management and Administrative Details}
 \label{project_management} 
 When the concept for this project was originally realized, the intent was that
-the entire project would be implemented, tested, and shipable by the end of the
+the entire project would be implemented, tested, and shippable by the end of the
 Senior Project class.  However, since the authors have other courses as well as
 jobs and extra-curricular activities, it gradually became evident that the
 original timeline would not be even remotely feasible.  For instance, the
@@ -384,6 +384,13 @@ to be tested.
 
 
 \section{Project Progress} \label{project_progress}
+In the above sections, it was mentioned that the original timeline for the
+product was unrealistically aggressive.  In the timeline, the specification
+documents would have been completed in a weekend and the scanning features would
+have been implemented by now.  It is now obvious that this is unrealistic and
+potentially dangerous for future users of this tool.  Therefore, the Scope Limit
+(section~\ref{scope_limit}) was put into place to keep the project realistic.  
+
 As of this writing, the majority of the work has been planning and documentation
 (primarily in writing the specifications).  Since the first use of this tool is
 for information gathering, several weeks of time had to be spent in carefully
@@ -393,6 +400,25 @@ is for fixing machines, the fix script specification had to be designed
 incredibly carefully, which took about a week.  The work done in this respect is
 found in the documents referenced in section~\ref{software_requirements} and
 section~\ref{software_specifications}.  
+
+While it may seem strange that very little code has been written yet, it is
+important to keep things in perspective.  The aforementioned documents are over
+one hundred pages in length.  Going through the commit history in the source
+control indicates that about eighty hours of time were spent on this
+documentation alone.  The reasoning for this is that the documentation has to be
+incredibly precise and detailed so that the behavior is well defined before
+starting the project.  This is important because this product will be scanning
+and modifying integral parts of the Windows operating system.  Therefore, no
+room could be left for error in the original design of the product.  This will
+also hopefully make the actual implementation of the project more
+straightforward because a majority of the thinking and design has been done in
+advance.  Lastly, it is important to remember that the scope of this project
+reaches beyond the timeline for this class.  Even though the documentation for
+the total project took this long to write, the intent is that only the first
+major component of the project will be implemented.  The fact that the semester
+is almost half over is not a concern because the remaining features will be
+implemented outside of the course and the features that will be delivered by the
+end of the semester will result in a shippable and complete product.  
 
 \newpage
 
