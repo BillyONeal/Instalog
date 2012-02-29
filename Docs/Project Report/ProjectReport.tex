@@ -247,17 +247,17 @@ project will have and what criteria these features must meet to be considered
 implemented successfully.  This document is written at a fairly high-level view
 as the problem space is fairly well defined for this project.
 
-\subsection{Software Specifications}
+\subsection{Software Requirements Specifications}
 \label{software_specifications}
-The Software Specifications document \cite{Specification} is the document that
-visits each requirement in the above Software Requirements document.  This
-document is quite long because it describes in meticulous detail how each
-feature will function, how it must behave, where the data will be pulled from,
-etc.  The intent of this document is that it will make the actual design,
-implementation, and testing of the project much easier because the behavior is
-well defined from the start.  This document has also been released in private
-security volunteer circles for validation, and has been modified slightly at the
-suggestions of a few individuals.  
+The Software Requirements Specifications document \cite{Specification} is the
+document that visits each requirement in the above Software Requirements
+document.  This document is quite long because it describes in meticulous detail
+how each feature will function, how it must behave, where the data will be
+pulled from, etc.  The intent of this document is that it will make the actual
+design, implementation, and testing of the project much easier because the
+behavior is well defined from the start.  This document has also been released
+in private security volunteer circles for validation, and has been modified
+slightly at the suggestions of a few individuals.
 
 \subsection{Software Design}
 \label{software_design}
@@ -322,19 +322,62 @@ internships / employment begins.
 
 \section{Project Management and Administrative Details}
 \label{project_management} 
-Design/update your Gantt chart to show any changes in
-milestones, timetable, or responsibility (especially if there are multiple team members). Be sure to
-properly indicate who is actually performing each task and the degree of
-completion of each task.
+When the concept for this project was originally realized, the intent was that
+the entire project would be implemented, tested, and shipable by the end of the
+Senior Project class.  However, since the authors have other courses as well as
+jobs and extra-curricular activities, it gradually became evident that the
+original timeline would not be even remotely feasible.  For instance, the
+original hope was the entire Software Requirements Specification
+\cite{Specification} would be finished in a day over the weekend.  Despite
+working on the document for an entire weekend, the document was not finished in
+the intended time period.  In fact, it took several weeks to finish the
+document.  
 
-Describe how well the project management plan is working. Were there unforeseen
-problems with any of the tasks that you have had to work around? Are there
-delays in obtaining parts or software? Were major changes to the management plan
-or back-up plans required and implemented? What work-arounds were necessary to
-keep the project on schedule? It is very important that you describe any changes
-in the project plan since the proposal and the reasons for them.
-Finally, use your management plan to carefully think about what can be
-realistically done by your team between now and the end of the semester.
+Around the due date of the Project Proposal, the authors spent some time
+developing a realistic view of the project.  Out of this came the Scope Limit
+(section~\ref{scope_limit}) explained in the preceding section.  It was decided
+that instead of letting standards slip and shipping a shoddy product that could
+potentially ruin users' machines, that instead the first component of the
+product would be implemented and tested well.  Then, after the course, work
+would continue on the remaining items.  The hope is that since the Specification
+Document was written so thoroughly, the implementation and testing will not be
+as time consuming and that the timeline can be shortened and more features can
+be implemented.  However, given the oversights that were present in the original
+timeline, this is the best realistic timeline that is possible at the moment.  
+
+\begin{figure}[h]
+  	\centering
+	\includegraphics[scale=.7]{figures/GanttChart.png}
+  	\caption{Gantt Chart}
+  	\label{gantt}
+\end{figure}
+
+The Gantt Chart for the project is included in Figure~\ref{gantt}.  Currently,
+roughly 40\% of the semester has elapsed, and the specification document has
+just been finished.  Until spring break, the scanning feature will be designed
+and have a testing plan established.  Then, over spring break, the first
+prototypes of the scanning features will be started.  The hope is that a
+reasonably complete proof of concept will be ready and demo-able by the Interim
+Report \#2 milestone.  Then, for a little more than two weeks, the product will
+be tested according to the established plan on all target operating systems.  A
+beta version of the project will also be released in a few closed circles of the
+security community for evaluation and usability testing.  Lastly, the product
+will be finalized and shipped in the last few days before the final report is
+due.  The intent is that at this point, the tool will be ready to start taking
+over for existing scanning tools.  
+
+The authors of the tool plan on using pair programming at the very beginning of
+the project to establish a good common codebase.  Then, once a fairly
+standardized way of implementing scanning features is established, the design
+and test documents will be updated and finalized for the scanning features. 
+Then, the authors will use test driven development and alternate between writing
+scanning features and testing each other's features.  Ideally, this will ease
+the burden of testing when it comes to validating the product on each target
+operating system.  To test the product on the various target operating systems,
+the authors will use virtual machines.  Since both authors have MSDN licenses,
+getting the required installation media and licenses is not an issue.  In fact,
+the majority of the virtual machines are already installed, updated, and ready
+to be tested.  
 
 \newpage
 
