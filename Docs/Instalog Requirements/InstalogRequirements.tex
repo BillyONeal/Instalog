@@ -30,7 +30,7 @@ Case Western Reserve University
 
 
 
-\section{Intended Users}
+\section{Intended Users} \label{users}
 Instalog is designed with three types of target users in mind. These ``user
 classes'' are listed in the following sections.
 
@@ -89,12 +89,19 @@ for repairing a user's machine (section~\ref{repair}).
 
 
 \section{Output Requirements} \label{output}
-One of the main features of this tool is the logging capability.  The log will
-be separated into multiple ``sections,'' where each section has similar
-information grouped under it.  There will be a default script of actions that is
-provided with the tool that will be performed as the first part of this tool.   
-There will also be additional script actions that a script can specify to gather
-more targeted information about a system.
+Each script that is run (see section~\ref{scripting}) will produce some sort of
+output.  The general form of the output log is that it will be composed of a
+header, output split into sections, and a footer. The header of the output log
+will contain various information about the system that it run on (Instalog
+version, Windows version, date/time of the run, etc.). The output from the
+script will be split into separate ``sections,'' each section with various
+associated details.  The footer will be a short ending to the log that will
+basically ensure that the entire document is complete.  
+
+Like the scripting language, the output shall be designed such that it can be
+pasted into forums and other websites.  It should also be human-readable as well
+as machine-parsable to support either an expert with a text editor or the GUI
+workflow through the tool.  
 
 \newpage
 
@@ -141,11 +148,32 @@ meaning that they should not modify the user's machine in any way.
 
 
 \section{Repair Action Requirements} \label{repair}
-A fix script is a textual representation of the actions that should be taken to
-clean up a system.  Most of the log sections listed in the previous section will
-have fix actions associated with them.  Again, the specifics about this are too
-detailed to include in a document of this scope, but will be explained in full
-in the specification document.
+As opposed to script actions (section~\ref{scripting}), repair actions are
+system modifying and as such, should be used more cautiously.  Instalog should
+support the following repair actions:
+
+\begin{description}
+\item[Kill Process] This will kill the process(es) matching the specified query.
+\item[VirusTotal Upload] This will upload specified file(s) to VirusTotal, an
+online tool that scans files using all major antivirus tools.
+\item[MRC Upload] This will upload specified file(s) to Malware Bytes' online
+virus database.
+\item[File Quarantine] As opposed to simply deleting files, the repair action is
+instead to ``quarantine'' them, which means to move them from their original
+location to a safe location.
+\item[Hosts File Reset] This action will restore the Hosts file to a sensible
+default.
+\item[Mozilla Firefox Fixes] These actions will fix various Firefox problems
+that are scanned for.  
+\item[Google Chrome] These actions will fix various Chrome problems
+that are scanned for.  
+\item[Security Center] This will remove specified security registrations.
+\item[Registry] This will run standard reg script and maintain a backup.
+\item[LSP Chain] This will manipulate the LSP chain in the registry and then fix
+after all specified operations have completed.
+\item[Directory Listing] This will simply enumerate the contents of a directory
+\item[DNS Check] This will run a DNS check on the supplied domain.
+\end{description}
 
 One very important requirement of fix script actions is that they MUST create a
 backup before they proceed so that the action taken can be reverted.  
@@ -157,11 +185,12 @@ backup before they proceed so that the action taken can be reverted.
 \section{Graphical User Interface Requirements} \label{gui}
 The graphical user interface will be the only method for interfacing with this
 tool.  The interface is designed such that it will enable all three of the user
-classes described in the ``Intended Users'' section to go through their
-appropriate workflows.  As such, the GUI must bridge the gap between being
-simple enough for home users to use yet complicated enough for power users to
-build complex fix scripts.  This balance is achieved by splitting the GUI up
-into several screens for completing various parts of the workflow.
+classes described in section~\ref{users} to go through their appropriate
+workflows.  As such, the GUI must bridge the gap between being simple enough for
+home users to use yet complicated enough for power users to build complex fix
+scripts.  This balance is achieved by splitting the GUI up into several screens
+for completing various parts of the workflow.  The GUI should remain response
+through all actions. 
 
 Like the other sections, enumerating all of the requirements and specifications
 of this would be beyond the scope of this document.  This being said, the GUI
@@ -176,13 +205,15 @@ should include the following screens:
   \item Finished screen
 \end{enumerate}
 
-This screens will be connected in the manner described in Figure 1.
+Despite having a GUI, experts should still be able to read output logs and edit
+fix scripts in a text editor.  
 
 \newpage
 
 
 
 \section{Other Requirements}
+\subsection{Target Operating Systems}
 Instalog will support all Microsoft Windows NT variants released later than
 Windows 2000 for x86 and x64 based computers.  Specifically, this tool shall
 support:
@@ -196,6 +227,11 @@ support:
   \item Windows Server 2008 (x86 and x64, RTM, SP1, and SP2)
   \item Windows Server 2008 R2 (x64, RTM, and SP1)
 \end{itemize}
+
+\subsection{Internationalization}
+The tool should be easy translate to other languages.  The script language and
+output language need not be changed.  Basically, the only thing that would need
+to be translated would be the GUI assets.  
 
 \newpage
 
