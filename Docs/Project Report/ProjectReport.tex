@@ -164,11 +164,11 @@ as a separate stand-alone document. This report then introduces the
 aforementioned Scope Limit (section~\ref{scope_limit}) and then moves into the
 finer points of the Project Management and Administrative Details
 (section~\ref{project_management}) and Project Progress
-(section~\ref{project_progress}) sections.  The report then mentions the legal
-details for the project in the License section (section~\ref{license}).  Lastly,
-the report references any additional external documents in the Appendices
-section (section~\ref{appendices}) and then lists all of the references made in
-the document in the References section.
+(section~\ref{project_progress}) sections.  The report then references any
+additional external documents in the External Documents section
+(section~\ref{documents}) and then lists all of the references made in the
+document in the References section.  Lastly, the report mentions the legal
+details for the project in the License appendix (appendix~\ref{license}).
 
 \newpage
 
@@ -231,7 +231,7 @@ loss on a user's machine.
 
 
 
-\section{Software Design}
+\section{Software Design} \label{design}
 The nature of this tool is that there are a lot of small little features that
 collectively make up each component mentioned in the Application section
 (section~\ref{application}).  Alone, each small feature of the tool is quite
@@ -455,6 +455,26 @@ documents precisely explain how the product is supposed to behave.
 
 
 
+\section{External Documents} \label{documents}
+As of this writing, there are not currently any additional external documents
+beyond the documents listed in section~\ref{design}.  By the final release of
+the product, however, there will be a user's manual and programmer's manual that
+will be included as external projects.  A list of third-party software use and
+incorporation in the project will be included in the Design Document
+\cite{Design}.
+
+\newpage
+
+
+
+\bibliography{ProjectReport}{} 
+\bibliographystyle{plain}
+
+\newpage
+
+
+
+\appendix
 \section{License} \label{license}
 Instalog itself is to be released under the two clause form of the BSD license,
 which is reprinted below:
@@ -488,24 +508,6 @@ This document, along with all other documentation related to Instalog,  is to be
 released under the Creative Commons Attribution 3.0 Unported license. Human
 readable and lawyer readable versions of this license can be found at
 \url{http://creativecommons.org/licenses/by/3.0/}.
-
-\newpage
-
-
-
-\section{Appendices} \label{appendices}
-As of this writing, there are not currently any appendices.  By the final
-release of the product, however, there will be a user's manual and programmer's
-manual that will be included as external projects.  A list of third-party
-software use and incorporation in the project will be included in the Design
-Document \cite{Design}.  
-
-\newpage
-
-
-
-\bibliography{ProjectReport}{} 
-\bibliographystyle{plain}
 
 \newpage
 
