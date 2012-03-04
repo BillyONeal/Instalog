@@ -10,6 +10,13 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gtest\gtest.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="gtest-all.cc" />
+    <ClCompile Include="gtest_main.cc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{922332AC-248C-4E97-812E-566DCE1EA78C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -73,8 +80,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
