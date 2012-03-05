@@ -474,7 +474,6 @@ namespace Instalog { namespace SystemFacades {
 			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
 			return target;
 		}
-		ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
 		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
 		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
 		CLIENT_ID cid;
@@ -484,7 +483,7 @@ namespace Instalog { namespace SystemFacades {
 		OBJECT_ATTRIBUTES attribs;
 		std::memset(&attribs, 0, sizeof(attribs));
 		attribs.Length = sizeof(attribs);
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
+		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, &attribs, &cid);
 		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
 		if (errorCheck != ERROR_SUCCESS)
 		{
@@ -515,7 +514,6 @@ namespace Instalog { namespace SystemFacades {
 			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
 			return target;
 		}
-		ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
 		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
 		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
 		CLIENT_ID cid;
@@ -525,7 +523,7 @@ namespace Instalog { namespace SystemFacades {
 		OBJECT_ATTRIBUTES attribs;
 		std::memset(&attribs, 0, sizeof(attribs));
 		attribs.Length = sizeof(attribs);
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
+		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, &attribs, &cid);
 		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
 		if (errorCheck != ERROR_SUCCESS)
 		{

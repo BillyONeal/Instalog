@@ -18,7 +18,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				Win32Exception::ThrowFromLastError();
 			}
-			privileges.PrivilegeCount = 0;
+			privileges.PrivilegeCount = 1;
 			privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 			if (::LookupPrivilegeValueW(nullptr, privilegeName, &privileges.Privileges[0].Luid) == 0)
 			{
@@ -31,7 +31,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 		~ScopedPrivilege()
 		{
-			privileges.Privileges[0].Attributes = SE_PRIVILEGE_REMOVED;
+			privileges.Privileges[0].Attributes = 0;
 			::AdjustTokenPrivileges(hThisProcessToken, FALSE, &privileges, 0, nullptr, nullptr);
 			::CloseHandle(hThisProcessToken);
 		}
