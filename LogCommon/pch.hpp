@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <iterator>
+#include <functional>
 
 #define NOMINMAX
 #define NTDDI_VERSION 0x05010200
