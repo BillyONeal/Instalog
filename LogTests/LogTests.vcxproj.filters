@@ -26,5 +26,8 @@
     <ClCompile Include="RuntimeDynamicLinkerTest.cpp">
       <Filter>SystemFacades</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessTest.cpp">
+      <Filter>SystemFacades</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -19,6 +19,13 @@
       <Filter>SystemFacades</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Process.hpp">
+      <Filter>SystemFacades</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleCloser.hpp">
+      <Filter>SystemFacades</Filter>
+    </ClInclude>
+    <ClInclude Include="RuntimeDynamicLinker.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -27,10 +34,10 @@
     <ClCompile Include="Win32Exception.cpp">
       <Filter>SystemFacades</Filter>
     </ClCompile>
-    <ClCompile Include="RuntimeDynamicLinker.hpp">
+    <ClCompile Include="RuntimeDynamicLinker.cpp">
       <Filter>SystemFacades</Filter>
     </ClCompile>
-    <ClCompile Include="RuntimeDynamicLinker.cpp">
+    <ClCompile Include="Process.cpp">
       <Filter>SystemFacades</Filter>
     </ClCompile>
   </ItemGroup>
