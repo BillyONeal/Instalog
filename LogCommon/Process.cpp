@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include <cstring>
+#include <functional>
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "RuntimeDynamicLinker.hpp"
@@ -463,22 +464,23 @@ namespace Instalog { namespace SystemFacades {
 		: id_(pid)
 	{ }
 
-	std::wstring Process::GetExecutablePath() const
+	static std::wstring GetProcessStr(std::size_t processId, std::function<UNICODE_STRING&(RTL_USER_PROCESS_PARAMETERS&)> stringTargetSelector)
 	{
-		if (GetProcessId() == 0)
+		if (processId == 0)
 		{
 			return L"System Idle Process";
 		}
-		if (GetProcessId() == 4)
+		if (processId == 4)
 		{
 			wchar_t target[MAX_PATH] = L"";
-			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
+			::GetWindowsDirectoryW(target, MAX_PATH);
+			::wcscat_s(target, MAX_PATH, L"System32\\Ntoskrnl.exe");
 			return target;
 		}
 		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
 		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
 		CLIENT_ID cid;
-		cid.UniqueProcess = GetProcessId();
+		cid.UniqueProcess = processId;
 		cid.UniqueThread = 0;
 		HANDLE hProc = INVALID_HANDLE_VALUE;
 		OBJECT_ATTRIBUTES attribs;
@@ -494,53 +496,37 @@ namespace Instalog { namespace SystemFacades {
 		errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
 		PEB *pebAddr = basicInfo.PebBaseAddress;
 		PEB peb;
-		::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr);
+		if (::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
 		RTL_USER_PROCESS_PARAMETERS params;
-		::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr);
+		if (::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
 		std::wstring result;
-		result.resize(params.ImagePathName.Length / sizeof(wchar_t));
-		::ReadProcessMemory(hProc, params.ImagePathName.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr);
+		UNICODE_STRING &targetString = stringTargetSelector(params);
+		result.resize(targetString.Length / sizeof(wchar_t));
+		if (::ReadProcessMemory(hProc, targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
 		return result;
+	}
+
+	std::wstring Process::GetExecutablePath() const
+	{
+		return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
+			return params.ImagePathName;
+		});
 	}
 
 	std::wstring Process::GetCmdLine() const
 	{
-		if (GetProcessId() == 0)
-		{
-			return L"System Idle Process";
-		}
-		if (GetProcessId() == 4)
-		{
-			wchar_t target[MAX_PATH] = L"";
-			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
-			return target;
-		}
-		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
-		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
-		CLIENT_ID cid;
-		cid.UniqueProcess = GetProcessId();
-		cid.UniqueThread = 0;
-		HANDLE hProc = INVALID_HANDLE_VALUE;
-		OBJECT_ATTRIBUTES attribs;
-		std::memset(&attribs, 0, sizeof(attribs));
-		attribs.Length = sizeof(attribs);
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, &attribs, &cid);
-		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
-		if (errorCheck != ERROR_SUCCESS)
-		{
-			Win32Exception::ThrowFromNtError(errorCheck);
-		}
-		PROCESS_BASIC_INFORMATION basicInfo;
-		errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
-		PEB *pebAddr = basicInfo.PebBaseAddress;
-		PEB peb;
-		::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr);
-		RTL_USER_PROCESS_PARAMETERS params;
-		::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr);
-		std::wstring result;
-		result.resize(params.CommandLine.Length / sizeof(wchar_t));
-		::ReadProcessMemory(hProc, params.CommandLine.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr);
-		return result;
+		return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
+			return params.CommandLine;
+		});
 	}
 
 }}
