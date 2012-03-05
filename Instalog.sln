@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogCommon", "LogCommon\LogC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogTests", "LogTests\LogTests.vcxproj", "{922332AC-248C-4E97-812E-566DCE1EA78C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogWhitelistBuilder", "LogWhitelistBuilder\LogWhitelistBuilder.vcxproj", "{42C70A0E-0024-40D6-8A5D-8956E39247F8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogWhitelistBuilderTests", "LogWhitelistBuilderTests\LogWhitelistBuilderTests.vcxproj", "{CB256925-0040-4FF6-8E31-1D79276BBB70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -23,6 +27,14 @@ Global
 		{922332AC-248C-4E97-812E-566DCE1EA78C}.Debug|Win32.Build.0 = Debug|Win32
 		{922332AC-248C-4E97-812E-566DCE1EA78C}.Release|Win32.ActiveCfg = Release|Win32
 		{922332AC-248C-4E97-812E-566DCE1EA78C}.Release|Win32.Build.0 = Release|Win32
+		{42C70A0E-0024-40D6-8A5D-8956E39247F8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{42C70A0E-0024-40D6-8A5D-8956E39247F8}.Debug|Win32.Build.0 = Debug|Win32
+		{42C70A0E-0024-40D6-8A5D-8956E39247F8}.Release|Win32.ActiveCfg = Release|Win32
+		{42C70A0E-0024-40D6-8A5D-8956E39247F8}.Release|Win32.Build.0 = Release|Win32
+		{CB256925-0040-4FF6-8E31-1D79276BBB70}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CB256925-0040-4FF6-8E31-1D79276BBB70}.Debug|Win32.Build.0 = Debug|Win32
+		{CB256925-0040-4FF6-8E31-1D79276BBB70}.Release|Win32.ActiveCfg = Release|Win32
+		{CB256925-0040-4FF6-8E31-1D79276BBB70}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
