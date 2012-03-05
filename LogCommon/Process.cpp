@@ -1,7 +1,9 @@
+#include <cstring>
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "RuntimeDynamicLinker.hpp"
 #include "HandleCloser.hpp"
+#include "ScopedPrivilege.hpp"
 #include "Process.hpp"
 
 namespace {
@@ -395,11 +397,15 @@ namespace Instalog { namespace SystemFacades {
 			{
 				informationBlock.resize(goalLength);
 			}
-			errorCheck = ntQuerySysInfo(SystemProcessInformation, &informationBlock[0], informationBlock.size(), &goalLength);
+			errorCheck = ntQuerySysInfo(
+				SystemProcessInformation,
+				&informationBlock[0],
+				static_cast<ULONG>(informationBlock.size()),
+				&goalLength);
 		}
 		if (errorCheck != 0)
 		{
-			Win32Exception::Throw(errorCheck);
+			Win32Exception::ThrowFromNtError(errorCheck);
 		}
 	}
 
@@ -424,7 +430,15 @@ namespace Instalog { namespace SystemFacades {
 		if (blockPtr == end_)
 			return;
 		SYSTEM_PROCESS_INFORMATION const *casted = reinterpret_cast<SYSTEM_PROCESS_INFORMATION const*>(&*blockPtr);
-		blockPtr += casted->NextEntryOffset;
+		std::size_t offset = casted->NextEntryOffset;
+		if (offset == 0)
+		{
+			blockPtr = end_;
+		}
+		else
+		{
+			blockPtr += offset;
+		}
 	}
 
 	bool ProcessIterator::equal( ProcessIterator const& other ) const
@@ -450,19 +464,43 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring Process::GetExecutablePath() const
 	{
+		if (GetProcessId() == 0)
+		{
+			return L"System Idle Process";
+		}
+		if (GetProcessId() == 4)
+		{
+			wchar_t target[MAX_PATH] = L"";
+			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
+			return target;
+		}
+		ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
 		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
 		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
 		CLIENT_ID cid;
 		cid.UniqueProcess = GetProcessId();
 		cid.UniqueThread = 0;
-		HANDLE hProc;
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, nullptr, &cid);
+		HANDLE hProc = INVALID_HANDLE_VALUE;
+		OBJECT_ATTRIBUTES attribs;
+		std::memset(&attribs, 0, sizeof(attribs));
+		attribs.Length = sizeof(attribs);
+		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
 		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
 		if (errorCheck != ERROR_SUCCESS)
 		{
-			Win32Exception::Throw(errorCheck);
+			Win32Exception::ThrowFromNtError(errorCheck);
 		}
-		return L"";
+		PROCESS_BASIC_INFORMATION basicInfo;
+		errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+		PEB *pebAddr = basicInfo.PebBaseAddress;
+		PEB peb;
+		::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr);
+		RTL_USER_PROCESS_PARAMETERS params;
+		::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr);
+		std::wstring result;
+		result.resize(params.ImagePathName.Length / sizeof(wchar_t));
+		::ReadProcessMemory(hProc, params.ImagePathName.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr);
+		return result;
 	}
 
 }}

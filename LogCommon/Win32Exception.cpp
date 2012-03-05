@@ -3,6 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 #include <memory>
+#include "RuntimeDynamicLinker.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
@@ -60,6 +61,15 @@ namespace Instalog { namespace SystemFacades {
 			NULL);
 		buff.reset(buffPtr);
 		return std::string(buffPtr, bufferLength);
+	}
+
+	void Win32Exception::ThrowFromNtError( NTSTATUS errorCode )
+	{
+		typedef ULONG (WINAPI *RtlNtStatusToDosErrorFunc)(
+			__in  NTSTATUS Status
+			);
+		RtlNtStatusToDosErrorFunc conv = ntdll.GetProcAddress<RtlNtStatusToDosErrorFunc>("RtlNtStatusToDosError");
+		Throw(conv(errorCode));
 	}
 
 }} // namespace Instalog::SystemFacades

@@ -7,7 +7,9 @@ namespace Instalog { namespace SystemFacades {
 	{
 		void operator()(void* hClosed)
 		{
-			::CloseHandle(reinterpret_cast<HANDLE>(hClosed));
+			HANDLE handle = reinterpret_cast<HANDLE>(hClosed);
+			if (handle != INVALID_HANDLE_VALUE)
+				::CloseHandle(handle);
 		}
 	};
 

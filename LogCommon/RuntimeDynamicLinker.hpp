@@ -1,7 +1,7 @@
 #pragma once
-
 #include <string>
 #include <Windows.h>
+#include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -15,7 +15,12 @@ namespace Instalog { namespace SystemFacades {
 		template <typename FuncT>
 		FuncT GetProcAddress(char const* functionName)
 		{
-			return reinterpret_cast<FuncT>(::GetProcAddress(hModule, functionName));
+			FuncT answer = reinterpret_cast<FuncT>(::GetProcAddress(hModule, functionName));
+			if (!answer)
+			{
+				Win32Exception::ThrowFromLastError();
+			}
+			return answer;
 		}
 	};
 

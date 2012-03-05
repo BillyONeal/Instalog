@@ -4,11 +4,13 @@
 #define PSAPI_VERSION 1
 #include <Psapi.h>
 #include "gtest/gtest.h"
+#include <LogCommon/Win32Exception.hpp>
 #include <LogCommon/Process.hpp>
 
 #pragma comment(lib, "psapi.lib")
 
 using Instalog::SystemFacades::ProcessEnumerator;
+using Instalog::SystemFacades::ErrorAccessDeniedException;
 
 TEST(Process, CanEnumerateAndCompareToProcessIds)
 {
@@ -19,17 +21,22 @@ TEST(Process, CanEnumerateAndCompareToProcessIds)
 
 TEST(Process, CanGetModuleBaseName)
 {
-	wchar_t baseNameBuffer[MAX_PATH];
-	::GetModuleBaseNameW(::GetCurrentProcess(), NULL, baseNameBuffer, MAX_PATH);
-	std::wstring baseName = baseNameBuffer;
+	wchar_t currentProcessExecutable[MAX_PATH];
+	::GetModuleFileName(NULL, currentProcessExecutable, MAX_PATH);
+	std::wstring baseName = currentProcessExecutable;
 	ProcessEnumerator enumerator;
-	bool couldFindModuleBaseName = false;
+	bool couldFindMyOwnProcess = false;
 	for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
 	{
-		if (it->GetExecutablePath() == baseName) 
+		try
 		{
-			couldFindModuleBaseName = true;
+			if (it->GetExecutablePath() == baseName) 
+			{
+				couldFindMyOwnProcess = true;
+			}
 		}
+		catch (ErrorAccessDeniedException const&)
+		{ } //Not much we can really do about these.
 	}
-	ASSERT_TRUE(couldFindModuleBaseName);
+	ASSERT_TRUE(couldFindMyOwnProcess);
 }

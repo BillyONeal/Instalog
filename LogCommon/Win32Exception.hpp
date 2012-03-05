@@ -18,6 +18,7 @@ namespace Instalog { namespace SystemFacades {
 		static void Throw(DWORD lastError);
 		/// <summary>Throws a WindowsApiException based on the last error.</summary>
 		static void ThrowFromLastError() { Throw(::GetLastError()); };
+		static void ThrowFromNtError(NTSTATUS errorCode);
 		/// <summary>Returns the Winerror.h error code for the exception.</summary>
 		virtual DWORD GetErrorCode() const = 0;
 		/// <summary>Returns a wide character string of the current Windows API
