@@ -35,6 +35,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>Precompiled</Filter>
     </ClCompile>
+    <ClCompile Include="HandleCloserTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h">
