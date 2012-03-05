@@ -157,6 +157,7 @@
     </ClCompile>
     <ClCompile Include="ProcessTest.cpp" />
     <ClCompile Include="RuntimeDynamicLinkerTest.cpp" />
+    <ClCompile Include="ScopedPrivilegeTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h" />
