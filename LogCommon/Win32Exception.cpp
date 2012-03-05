@@ -17,6 +17,7 @@ namespace Instalog { namespace SystemFacades {
 		case ERROR_ACCESS_DENIED: throw ErrorAccessDeniedException();
 		case ERROR_ALREADY_EXISTS: throw ErrorAlreadyExistsException();
 		case ERROR_INVALID_PARAMETER: throw ErrorInvalidParameterException();
+		case ERROR_MOD_NOT_FOUND: throw ErrorModuleNotFoundException();
 		default: throw GenericException(lastError);
 		}
 	}

@@ -17,6 +17,7 @@
     <ClCompile Include="FileTest.cpp" />
     <ClCompile Include="gtest-all.cc" />
     <ClCompile Include="gtest_main.cc" />
+    <ClCompile Include="RuntimeDynamicLinkerTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogCommon\LogCommon.vcxproj">

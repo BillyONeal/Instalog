@@ -89,4 +89,9 @@ namespace Instalog { namespace SystemFacades {
 		DWORD GetErrorCode() const { return ERROR_INVALID_PARAMETER; };
 	};
 
+	struct ErrorModuleNotFoundException : public Win32Exception
+	{
+		DWORD GetErrorCode() const { return ERROR_MOD_NOT_FOUND; };
+	};
+
 }}

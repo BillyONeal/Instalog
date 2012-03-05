@@ -26,5 +26,11 @@
     <ClCompile Include="Win32Exception.cpp">
       <Filter>SystemFacades</Filter>
     </ClCompile>
+    <ClCompile Include="RuntimeDynamicLinker.hpp">
+      <Filter>SystemFacades</Filter>
+    </ClCompile>
+    <ClCompile Include="RuntimeDynamicLinker.cpp">
+      <Filter>SystemFacades</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

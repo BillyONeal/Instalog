@@ -16,6 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp" />
+    <ClCompile Include="RuntimeDynamicLinker.cpp" />
+    <ClCompile Include="RuntimeDynamicLinker.hpp" />
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
