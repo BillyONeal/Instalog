@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "File.hpp"
 #include "Win32Exception.hpp"
 

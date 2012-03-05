@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include <cstring>
 #include <windows.h>
 #include "Win32Exception.hpp"

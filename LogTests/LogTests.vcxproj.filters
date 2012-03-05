@@ -12,6 +12,9 @@
     <Filter Include="Header Files\gtest">
       <UniqueIdentifier>{39af35e3-79f6-4e8f-b259-707bd5966bbc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Precompiled">
+      <UniqueIdentifier>{b19a3daf-7da9-424f-973e-fb3d47997dc7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileTest.cpp">
@@ -29,10 +32,16 @@
     <ClCompile Include="RuntimeDynamicLinkerTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Precompiled</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h">
       <Filter>Header Files\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.hpp">
+      <Filter>Precompiled</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

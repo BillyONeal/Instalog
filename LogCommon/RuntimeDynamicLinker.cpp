@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "Win32Exception.hpp"
 #include "RuntimeDynamicLinker.hpp"
 

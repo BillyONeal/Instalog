@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "gtest/gtest.h"
 #include "LogCommon/File.hpp"
 #include "LogCommon/Win32Exception.hpp"
