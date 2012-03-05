@@ -7,7 +7,7 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	void WindowsApiException::Throw(DWORD lastError)
+	void Win32Exception::Throw(DWORD lastError)
 	{
 		switch(lastError)
 		{
@@ -29,7 +29,7 @@ namespace Instalog { namespace SystemFacades {
 		};
 	};
 
-	std::wstring WindowsApiException::GetWideMessage() const
+	std::wstring Win32Exception::GetWideMessage() const
 	{
 		std::unique_ptr<void, LocalFreeHelper> buff;
 		LPWSTR buffPtr;
@@ -45,7 +45,7 @@ namespace Instalog { namespace SystemFacades {
 		return std::wstring(buffPtr, bufferLength);
 	}
 
-	std::string WindowsApiException::GetCharMessage() const
+	std::string Win32Exception::GetCharMessage() const
 	{
 		std::unique_ptr<void, LocalFreeHelper> buff;
 		LPSTR buffPtr;

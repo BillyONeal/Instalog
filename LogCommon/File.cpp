@@ -15,7 +15,7 @@ namespace Instalog { namespace SystemFacades {
 	{
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			WindowsApiException::ThrowFromLastError();
+			Win32Exception::ThrowFromLastError();
 		}
 	}
 
@@ -24,10 +24,12 @@ namespace Instalog { namespace SystemFacades {
 		::CloseHandle(hFile);
 	}
 
-	// TODO: Throw exception :D
 	void File::Delete( std::wstring const& filename)
 	{
-		::DeleteFileW(filename.c_str());
+		if (::DeleteFileW(filename.c_str()) == 0) 
+		{
+			Win32Exception::ThrowFromLastError();
+		}
 	}
 
 	bool File::Exists( std::wstring const& filename)

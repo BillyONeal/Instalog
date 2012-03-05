@@ -31,3 +31,8 @@ TEST(File, CanDelete)
 	File::Delete(L"./DeleteMe.txt");
 	ASSERT_FALSE(File::Exists(L"./DeleteMe.txt"));
 }
+
+TEST(File, DeleteChecksError)
+{
+	ASSERT_THROW(File::Delete(L"./IDoNotExist.txt"), ErrorFileNotFoundException);
+}
