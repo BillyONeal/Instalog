@@ -19,7 +19,7 @@ TEST(Process, CanEnumerateAndCompareToProcessIds)
 	ASSERT_NE(std::find(enumerator.begin(), enumerator.end(), currentProcess), enumerator.end());
 }
 
-TEST(Process, CanGetModuleBaseName)
+TEST(Process, CanGetProcessExecutables)
 {
 	wchar_t currentProcessExecutable[MAX_PATH];
 	::GetModuleFileName(NULL, currentProcessExecutable, MAX_PATH);
@@ -31,6 +31,27 @@ TEST(Process, CanGetModuleBaseName)
 		try
 		{
 			if (it->GetExecutablePath() == baseName) 
+			{
+				couldFindMyOwnProcess = true;
+			}
+		}
+		catch (ErrorAccessDeniedException const&)
+		{ } //Not much we can really do about these.
+	}
+	ASSERT_TRUE(couldFindMyOwnProcess);
+}
+
+TEST(Process, CanGetProcessCommandLines)
+{
+	wchar_t const* currentProcessCmdLine = ::GetCommandLineW();
+	std::wstring baseName = currentProcessCmdLine;
+	ProcessEnumerator enumerator;
+	bool couldFindMyOwnProcess = false;
+	for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+	{
+		try
+		{
+			if (it->GetCommandLine() == baseName) 
 			{
 				couldFindMyOwnProcess = true;
 			}

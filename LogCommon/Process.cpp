@@ -503,4 +503,45 @@ namespace Instalog { namespace SystemFacades {
 		return result;
 	}
 
+	std::wstring Process::GetCommandLine() const
+	{
+		if (GetProcessId() == 0)
+		{
+			return L"System Idle Process";
+		}
+		if (GetProcessId() == 4)
+		{
+			wchar_t target[MAX_PATH] = L"";
+			::ExpandEnvironmentStringsW(L"%WINDIR%\\System32\\Ntoskrnl.exe", target, MAX_PATH);
+			return target;
+		}
+		ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
+		NtOpenProcessFunc ntOpen = ntdll.GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
+		NtQueryInformationProcessFunc ntQuery = ntdll.GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
+		CLIENT_ID cid;
+		cid.UniqueProcess = GetProcessId();
+		cid.UniqueThread = 0;
+		HANDLE hProc = INVALID_HANDLE_VALUE;
+		OBJECT_ATTRIBUTES attribs;
+		std::memset(&attribs, 0, sizeof(attribs));
+		attribs.Length = sizeof(attribs);
+		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
+		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
+		if (errorCheck != ERROR_SUCCESS)
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		PROCESS_BASIC_INFORMATION basicInfo;
+		errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+		PEB *pebAddr = basicInfo.PebBaseAddress;
+		PEB peb;
+		::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr);
+		RTL_USER_PROCESS_PARAMETERS params;
+		::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr);
+		std::wstring result;
+		result.resize(params.CommandLine.Length / sizeof(wchar_t));
+		::ReadProcessMemory(hProc, params.CommandLine.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr);
+		return result;
+	}
+
 }}
