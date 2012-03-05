@@ -11,6 +11,7 @@
 #pragma comment(lib, "psapi.lib")
 
 using Instalog::SystemFacades::ProcessEnumerator;
+using Instalog::SystemFacades::Process;
 using Instalog::SystemFacades::ErrorAccessDeniedException;
 
 TEST(Process, CanEnumerateAndCompareToProcessIds)
@@ -18,6 +19,30 @@ TEST(Process, CanEnumerateAndCompareToProcessIds)
 	std::size_t currentProcess = ::GetCurrentProcessId();
 	ProcessEnumerator enumerator;
 	ASSERT_NE(std::find(enumerator.begin(), enumerator.end(), currentProcess), enumerator.end());
+}
+
+TEST(Process, CanRunConcurrentSearches)
+{
+	ProcessEnumerator enumerator;
+	std::vector<Process> processesA;
+	std::vector<Process> processesB;
+	ProcessEnumerator::iterator itDoubled = enumerator.begin();
+	for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+	{
+		processesA.push_back(*it);
+		if (itDoubled != enumerator.end())
+		{
+			processesB.push_back(*itDoubled);
+			++itDoubled;
+		}
+		if (itDoubled != enumerator.end())
+		{
+			processesB.push_back(*itDoubled);
+			++itDoubled;
+		}
+	}
+
+	ASSERT_EQ(processesA, processesB);
 }
 
 TEST(Process, CanGetProcessExecutables)
