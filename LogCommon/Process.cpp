@@ -486,7 +486,7 @@ namespace Instalog { namespace SystemFacades {
 		OBJECT_ATTRIBUTES attribs;
 		std::memset(&attribs, 0, sizeof(attribs));
 		attribs.Length = sizeof(attribs);
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, &attribs, &cid);
+		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
 		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
 		if (errorCheck != ERROR_SUCCESS)
 		{
