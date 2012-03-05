@@ -4,6 +4,9 @@
     <Filter Include="GTest">
       <UniqueIdentifier>{e2cc51e3-f103-4497-95b6-f284f63056cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SystemFacades">
+      <UniqueIdentifier>{abf8f51d-d87f-4a76-ae72-d7c5a6034ca0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h">
@@ -11,7 +14,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gtest_main.cc" />
-    <ClCompile Include="gtest-all.cc" />
+    <ClCompile Include="gtest-all.cc">
+      <Filter>GTest</Filter>
+    </ClCompile>
+    <ClCompile Include="gtest_main.cc">
+      <Filter>GTest</Filter>
+    </ClCompile>
+    <ClCompile Include="FileTest.cpp">
+      <Filter>SystemFacades</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

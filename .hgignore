@@ -1,4 +1,4 @@
-syntax: glob
+syntax:glob
 Instalog.sdf
 *.vcxproj.user
 Debug/*
@@ -13,3 +13,9 @@ Docs/Project Report/*.pdf
 Docs/Project Report/tmp/*
 Docs/Instalog Requirements/tmp/*
 Docs/Instalog Requirements/*.pdf
+LogCommon/Release/*
+LogTests/Release/*
+ipch/*
+Release/*
+Instalog.v11.suo
+*.opensdf
