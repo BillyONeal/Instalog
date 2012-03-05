@@ -503,7 +503,7 @@ namespace Instalog { namespace SystemFacades {
 		return result;
 	}
 
-	std::wstring Process::GetCommandLine() const
+	std::wstring Process::GetCmdLine() const
 	{
 		if (GetProcessId() == 0)
 		{

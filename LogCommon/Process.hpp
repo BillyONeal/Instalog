@@ -10,7 +10,7 @@ namespace Instalog { namespace SystemFacades {
 	public:
 		explicit Process(std::size_t pid);
 		std::size_t GetProcessId() const;
-		std::wstring GetCommandLine() const;
+		std::wstring GetCmdLine() const;
 		std::wstring GetExecutablePath() const;
 		void Terminate();
 	};

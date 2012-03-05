@@ -51,7 +51,7 @@ TEST(Process, CanGetProcessCommandLines)
 	{
 		try
 		{
-			if (it->GetCommandLine() == baseName) 
+			if (it->GetCmdLine() == baseName) 
 			{
 				couldFindMyOwnProcess = true;
 			}
