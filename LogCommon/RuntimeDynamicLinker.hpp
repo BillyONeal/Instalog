@@ -11,6 +11,12 @@ namespace Instalog { namespace SystemFacades {
 	public:
 		RuntimeDynamicLinker(std::wstring const& filename);
 		~RuntimeDynamicLinker();
+
+		template <typename FuncT>
+		FuncT GetProcAddress(char const* functionName)
+		{
+			return reinterpret_cast<FuncT>(::GetProcAddress(hModule, functionName));
+		}
 	};
 
 }}
