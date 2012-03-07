@@ -1,3 +1,4 @@
+#define _VARIADIC_MAX 10
 #include <cstdlib>
 #include <cstring>
 #include <memory>

@@ -29,6 +29,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>Precompiled</Filter>
     </ClCompile>
+    <ClCompile Include="Registry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -51,6 +54,9 @@
     </ClInclude>
     <ClInclude Include="pch.hpp">
       <Filter>Precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="Registry.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

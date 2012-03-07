@@ -98,6 +98,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,6 +116,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,6 +138,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Process.cpp" />
+    <ClCompile Include="Registry.cpp" />
     <ClCompile Include="RuntimeDynamicLinker.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
@@ -143,6 +146,7 @@
     <ClInclude Include="File.hpp" />
     <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="Registry.hpp" />
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />
