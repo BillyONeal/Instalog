@@ -143,6 +143,7 @@
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="pch.hpp" />

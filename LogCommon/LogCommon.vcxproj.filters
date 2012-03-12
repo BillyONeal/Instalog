@@ -58,5 +58,8 @@
     <ClInclude Include="Registry.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DdkStructures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

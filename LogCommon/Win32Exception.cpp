@@ -65,7 +65,7 @@ namespace Instalog { namespace SystemFacades {
 		typedef ULONG (WINAPI *RtlNtStatusToDosErrorFunc)(
 			__in  NTSTATUS Status
 			);
-		RtlNtStatusToDosErrorFunc conv = ntdll.GetProcAddress<RtlNtStatusToDosErrorFunc>("RtlNtStatusToDosError");
+		RtlNtStatusToDosErrorFunc conv = GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>("RtlNtStatusToDosError");
 		Throw(conv(errorCode));
 	}
 

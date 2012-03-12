@@ -10,7 +10,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring name_;
 	public:
 		RegistryValue(HKEY hKey, std::wstring const& name);
-		RegistryValue(HKEY kKey, std::wstring && name);
+		RegistryValue(HKEY hKey, std::wstring && name);
 		RegistryValue(RegistryValue const& other);
 		RegistryValue(RegistryValue && other);
 	};
@@ -18,12 +18,10 @@ namespace Instalog { namespace SystemFacades {
 	class RegistryKey
 	{
 		HKEY hKey_;
+		RegistryKey(HKEY hKey);
 		RegistryKey(RegistryKey const& other); //Noncopyable
+		RegistryKey& operator=(RegistryKey const& other);
 	public:
-		RegistryKey(HKEY hKeyRoot, std::wstring const& subkey, DWORD options, REGSAM samDesired);
-		RegistryKey(HKEY hKeyRoot, wchar_t const* subkey, DWORD options, REGSAM samDesired);
-		RegistryKey(RegistryKey const& hKey, std::wstring const& subkey, DWORD options, REGSAM samDesired);
-		RegistryKey(RegistryKey const& hKey, wchar_t const* subkey, DWORD options, REGSAM samDesired);
 		RegistryKey(RegistryKey && other);
 		~RegistryKey();
 		HKEY GetHkey() const;
@@ -31,8 +29,13 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue GetValue(std::wstring && name);
 		RegistryValue operator[](std::wstring const& name);
 		RegistryValue operator[](std::wstring && name);
-		void Delete();
-		static void Delete(HKEY targetRootKey, std::wstring const& targetSubkey);
+
+		std::unique_ptr<RegistryKey> Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		std::unique_ptr<RegistryKey> Create(
+			std::wstring const& key,
+			REGSAM samDesired = KEY_ALL_ACCESS,
+			DWORD options = REG_OPTION_NON_VOLATILE,
+		);
 	};
 
 }}

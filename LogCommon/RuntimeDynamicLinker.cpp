@@ -18,5 +18,10 @@ namespace Instalog { namespace SystemFacades {
 		::FreeLibrary(hModule);
 	}
 
-	RuntimeDynamicLinker ntdll(L"ntdll.dll");
+	RuntimeDynamicLinker& GetNtDll()
+	{
+		static RuntimeDynamicLinker ntdll(L"ntdll.dll");
+		return ntdll;
+	}
+
 }}

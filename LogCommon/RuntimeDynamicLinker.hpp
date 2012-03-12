@@ -24,5 +24,5 @@ namespace Instalog { namespace SystemFacades {
 		}
 	};
 
-	extern RuntimeDynamicLinker ntdll;
+	RuntimeDynamicLinker& GetNtDll();
 }}
