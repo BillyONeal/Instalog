@@ -151,7 +151,15 @@
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />
+    <ClInclude Include="Scripting.hpp" />
+    <ClInclude Include="StringUtilities.hpp" />
+    <ClInclude Include="UserInterface.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Scripting.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
