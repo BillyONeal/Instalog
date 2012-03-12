@@ -1,26 +1,31 @@
 #include "pch.hpp"
-#include <ntdef.h>
+#include <cassert>
+#include <limits>
 #include "Win32Exception.hpp"
+#include "RuntimeDynamicLinker.hpp"
 #include "Registry.hpp"
 #include "DdkStructures.h"
 
 namespace Instalog { namespace SystemFacades {
 
+	static NtOpenKeyFunc PNtOpenKey = GetNtDll().GetProcAddress<NtOpenKeyFunc>("NtOpenKey");
+	static NtCreateKeyFunc PNtCreateKey = GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
+	static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
 
 	RegistryKey::~RegistryKey()
 	{
 		if (hKey_ != INVALID_HANDLE_VALUE)
 		{
-			::RegCloseKey(hKey_);
+			PNtClose(hKey_);
 		}
 	}
 
-	HKEY RegistryKey::GetHkey() const
+	HANDLE RegistryKey::GetHkey() const
 	{
 		return hKey_;
 	}
 
-	RegistryKey::RegistryKey( HKEY hKey )
+	RegistryKey::RegistryKey( HANDLE hKey )
 	{
 		hKey_ = hKey;
 	}
@@ -28,7 +33,7 @@ namespace Instalog { namespace SystemFacades {
 	RegistryKey::RegistryKey( RegistryKey && other )
 	{
 		hKey_ = other.hKey_;
-		other.hKey_ = reinterpret_cast<HKEY>(INVALID_HANDLE_VALUE);
+		other.hKey_ = INVALID_HANDLE_VALUE;
 	}
 
 	RegistryValue RegistryKey::operator[]( std::wstring const& name )
@@ -51,12 +56,58 @@ namespace Instalog { namespace SystemFacades {
 		return RegistryValue(hKey_, name);
 	}
 
-	RegistryValue::RegistryValue( HKEY hKey, std::wstring const& name )
+	std::unique_ptr<RegistryKey> RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	{
+		HANDLE hOpened;
+		OBJECT_ATTRIBUTES attribs;
+		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
+		attribs.Length = sizeof(attribs);
+		attribs.RootDirectory = NULL;
+		attribs.ObjectName = &ustrKey;
+		attribs.Attributes = OBJ_CASE_INSENSITIVE;
+		attribs.SecurityDescriptor = NULL;
+		attribs.SecurityQualityOfService = NULL;
+		NTSTATUS errorCheck = PNtOpenKey(&hOpened, samDesired, &attribs);
+		if (NT_SUCCESS(errorCheck))
+		{
+			return std::unique_ptr<RegistryKey>(new RegistryKey(hOpened));
+		}
+		else
+		{
+			::SetLastError(errorCheck);
+			return std::unique_ptr<RegistryKey>(nullptr);
+		}
+	}
+
+	std::unique_ptr<RegistryKey> RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	{
+		HANDLE hOpened;
+		OBJECT_ATTRIBUTES attribs;
+		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
+		attribs.Length = sizeof(attribs);
+		attribs.RootDirectory = NULL;
+		attribs.ObjectName = &ustrKey;
+		attribs.Attributes = OBJ_CASE_INSENSITIVE;
+		attribs.SecurityDescriptor = NULL;
+		attribs.SecurityQualityOfService = NULL;
+		NTSTATUS errorCheck = PNtCreateKey(&hOpened, samDesired, &attribs, NULL, NULL, options, NULL);
+		if (NT_SUCCESS(errorCheck))
+		{
+			return std::unique_ptr<RegistryKey>(new RegistryKey(hOpened));
+		}
+		else
+		{
+			::SetLastError(errorCheck);
+			return std::unique_ptr<RegistryKey>(nullptr);
+		}
+	}
+
+	RegistryValue::RegistryValue( HANDLE hKey, std::wstring const& name )
 		: hKey_(hKey)
 		, name_(name)
 	{ }
 
-	RegistryValue::RegistryValue( HKEY hKey, std::wstring && name )
+	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))
 	{ }

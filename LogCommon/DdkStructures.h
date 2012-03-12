@@ -1,30 +1,190 @@
 #pragma once
+#include <string>
+#include <limits>
+#include <cassert>
+
+//All of the definitions in this header are copied from the Windows Driver Kit.
+
 extern "C" {
 
-#define NTSTATUS LONG
+	// begin_ntndis begin_windbgkd
+	//
+	// NTSTATUS
+	//
+
+	typedef __success(return >= 0) LONG NTSTATUS;
+	/*lint -save -e624 */  // Don't complain about different typedefs.
+	typedef NTSTATUS *PNTSTATUS;
+	/*lint -restore */  // Resume checking for different typedefs.
+
+#if _WIN32_WINNT >= 0x0600
+	typedef CONST NTSTATUS *PCNTSTATUS;
+#endif // _WIN32_WINNT >= 0x0600
+
+	//
+	//  Status values are 32 bit values layed out as follows:
+	//
+	//   3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1
+	//   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+	//  +---+-+-------------------------+-------------------------------+
+	//  |Sev|C|       Facility          |               Code            |
+	//  +---+-+-------------------------+-------------------------------+
+	//
+	//  where
+	//
+	//      Sev - is the severity code
+	//
+	//          00 - Success
+	//          01 - Informational
+	//          10 - Warning
+	//          11 - Error
+	//
+	//      C - is the Customer code flag
+	//
+	//      Facility - is the facility code
+	//
+	//      Code - is the facility's status code
+	//
+
+	//
+	// Generic test for success on any status value (non-negative numbers
+	// indicate success).
+	//
+
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+
+	//
+	// Generic test for information on any status value.
+	//
+
+#define NT_INFORMATION(Status) ((((ULONG)(Status)) >> 30) == 1)
+
+	//
+	// Generic test for warning on any status value.
+	//
+
+#define NT_WARNING(Status) ((((ULONG)(Status)) >> 30) == 2)
+
+	//
+	// Generic test for error on any status value.
+	//
+
+#define NT_ERROR(Status) ((((ULONG)(Status)) >> 30) == 3)
+
+	// end_windbgkd
+	// begin_winnt
+#define APPLICATION_ERROR_MASK       0x20000000
+#define ERROR_SEVERITY_SUCCESS       0x00000000
+#define ERROR_SEVERITY_INFORMATIONAL 0x40000000
+#define ERROR_SEVERITY_WARNING       0x80000000
+#define ERROR_SEVERITY_ERROR         0xC0000000
+	// end_winnt
+
 
 #define MAX_UNICODE_PATH	32767L
 
 typedef DWORD ACCESS_MASK;
 
-typedef struct T_LSA_UNICODE_STRING {
+//
+// Unicode strings are counted 16-bit character strings. If they are
+// NULL terminated, Length does not include trailing NULL.
+//
+
+typedef struct _UNICODE_STRING {
 	USHORT Length;
 	USHORT MaximumLength;
-	PWSTR  Buffer;
-} LSA_UNICODE_STRING, 
-	*PLSA_UNICODE_STRING, 
-	UNICODE_STRING, 
-	*PUNICODE_STRING;
+#ifdef MIDL_PASS
+	[size_is(MaximumLength / 2), length_is((Length) / 2) ] USHORT * Buffer;
+#else // MIDL_PASS
+	__field_bcount_part(MaximumLength, Length) PWCH   Buffer;
+#endif // MIDL_PASS
+} UNICODE_STRING;
+typedef UNICODE_STRING *PUNICODE_STRING;
+typedef const UNICODE_STRING *PCUNICODE_STRING;
+
+//
+// Valid values for the Attributes field
+//
+
+#define OBJ_INHERIT             0x00000002L
+#define OBJ_PERMANENT           0x00000010L
+#define OBJ_EXCLUSIVE           0x00000020L
+#define OBJ_CASE_INSENSITIVE    0x00000040L
+#define OBJ_OPENIF              0x00000080L
+#define OBJ_OPENLINK            0x00000100L
+#define OBJ_KERNEL_HANDLE       0x00000200L
+#define OBJ_FORCE_ACCESS_CHECK  0x00000400L
+#define OBJ_VALID_ATTRIBUTES    0x000007F2L
+
+//
+// Object Attributes structure
+//
+
+typedef struct _OBJECT_ATTRIBUTES64 {
+	ULONG Length;
+	ULONG64 RootDirectory;
+	ULONG64 ObjectName;
+	ULONG Attributes;
+	ULONG64 SecurityDescriptor;
+	ULONG64 SecurityQualityOfService;
+} OBJECT_ATTRIBUTES64;
+typedef OBJECT_ATTRIBUTES64 *POBJECT_ATTRIBUTES64;
+typedef CONST OBJECT_ATTRIBUTES64 *PCOBJECT_ATTRIBUTES64;
+
+typedef struct _OBJECT_ATTRIBUTES32 {
+	ULONG Length;
+	ULONG RootDirectory;
+	ULONG ObjectName;
+	ULONG Attributes;
+	ULONG SecurityDescriptor;
+	ULONG SecurityQualityOfService;
+} OBJECT_ATTRIBUTES32;
+typedef OBJECT_ATTRIBUTES32 *POBJECT_ATTRIBUTES32;
+typedef CONST OBJECT_ATTRIBUTES32 *PCOBJECT_ATTRIBUTES32;
 
 typedef struct _OBJECT_ATTRIBUTES {
-	ULONG           Length;
-	HANDLE          RootDirectory;
+	ULONG Length;
+	HANDLE RootDirectory;
 	PUNICODE_STRING ObjectName;
-	ULONG           Attributes;
-	PVOID           SecurityDescriptor;
-	PVOID           SecurityQualityOfService;
-}  OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
+	ULONG Attributes;
+	PVOID SecurityDescriptor;        // Points to type SECURITY_DESCRIPTOR
+	PVOID SecurityQualityOfService;  // Points to type SECURITY_QUALITY_OF_SERVICE
+} OBJECT_ATTRIBUTES;
+typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
 typedef CONST OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
+
+//++
+//
+// VOID
+// InitializeObjectAttributes(
+//     __out POBJECT_ATTRIBUTES p,
+//     __in PUNICODE_STRING n,
+//     __in ULONG a,
+//     __in HANDLE r,
+//     __in PSECURITY_DESCRIPTOR s
+//     )
+//
+//--
+
+#define InitializeObjectAttributes( p, n, a, r, s ) { \
+	(p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
+	(p)->RootDirectory = r;                             \
+	(p)->Attributes = a;                                \
+	(p)->ObjectName = n;                                \
+	(p)->SecurityDescriptor = s;                        \
+	(p)->SecurityQualityOfService = NULL;               \
+}
+
+// RTL_ to avoid collisions in the global namespace.
+// I don't believe there are possible/likely constant RootDirectory
+// or SecurityDescriptor values other than NULL, so they are hardcoded.
+// As well, the string will generally be const, so we cast that away.
+#define RTL_CONSTANT_OBJECT_ATTRIBUTES(n, a) \
+{ sizeof(OBJECT_ATTRIBUTES), NULL, RTL_CONST_CAST(PUNICODE_STRING)(n), a, NULL, NULL }
+
+// This synonym is more appropriate for initializing what isn't actually const.
+#define RTL_INIT_OBJECT_ATTRIBUTES(n, a) RTL_CONSTANT_OBJECT_ATTRIBUTES(n, a)
+
 
 typedef struct T_CLIENT_ID {
 	std::size_t UniqueProcess;
@@ -95,7 +255,7 @@ typedef enum T_SYSTEM_INFORMATION_CLASS {
 	SystemPrioritySeperation,
 	SystemPlugPlayBusInformation,
 	SystemDockInformation,
-	SystemPowerInformation,
+	SystemPowerInformationUNUSED,
 	SystemProcessorSpeedInformation,
 	SystemCurrentTimeZoneInformation,
 	SystemLookasideInformation
@@ -386,4 +546,14 @@ typedef NTSTATUS (NTAPI *NtOpenKeyFunc)(
 	__in POBJECT_ATTRIBUTES //Path and such
 	);
 
+}
+
+inline UNICODE_STRING WstringToUnicodeString(std::wstring const& target)
+{
+	UNICODE_STRING result;
+	result.Buffer = const_cast<wchar_t*>(target.c_str());
+	assert(target.size()*sizeof(wchar_t) < std::numeric_limits<USHORT>::max());
+	result.Length = static_cast<USHORT>(target.size())*sizeof(wchar_t);
+	result.MaximumLength = result.Length + 2;
+	return result;
 }
