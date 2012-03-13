@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <exception>
 #include <windows.h>
 
 namespace Instalog
@@ -37,11 +38,92 @@ namespace Instalog
 
 	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightCharacter = L'\0');
 
-	template<typename InIter, typename OutIter>
-	inline InIter Unescape(InIter begin, InIter end, OutIter target, wchar_t escapeCharacter, wchar_t rightCharacter = L'\0')
+	class MalformedEscapedSequence : std::exception 
 	{
-		for (; begin != end; ++begin)
+		inline const char *what() const
 		{
+			return "Malformed escaped sequence in supplied string";
+		}
+	};
+
+	class InvalidHexCharacter : std::exception 
+	{
+		inline const char *what() const
+		{
+			return "Invalid hex character in supplied string";
+		}
+	};
+
+	template<typename InIter, typename OutIter>
+	inline InIter Unescape(InIter begin, InIter end, OutIter target, wchar_t escapeCharacter = L'#', wchar_t endDelimiter = L'\0')
+	{
+		for (; begin != end && *begin != endDelimiter; ++begin)
+		{
+			if (*begin != escapeCharacter)
+			{
+				*target = *begin;
+				++target;
+			}
+			else
+			{
+				begin++;
+				if (begin == end)
+				{
+					throw MalformedEscapedSequence();
+				}
+
+				switch (*begin)
+				{
+				case L'0': *target = 0x00; ++target; break;
+				case L'b': *target = 0x08; ++target; break;
+				case L'f': *target = 0x0C; ++target; break;
+				case L'n': *target = 0x0A; ++target; break;
+				case L'r': *target = 0x0D; ++target; break;
+				case L't': *target = 0x09; ++target; break;
+				case L'v': *target = 0x0B; ++target; break;
+				default:
+					if (*begin == escapeCharacter)
+					{
+						*target = *begin;
+						++target;
+					}
+					else if (*begin == L'x')
+					{
+						++begin;
+						if (begin == end)
+						{
+							throw MalformedEscapedSequence();
+						}
+
+						wchar_t hexString[] = L"0xXX";
+						for (int i = 2; i < 3; ++i)
+						{
+							if (!(*begin >= L'0' && *begin <= L'9') &&
+								!(*begin >= L'A' && *begin <= L'F') &&
+								!(*begin >= L'a' && *begin <= L'f'))
+							{
+								throw InvalidHexCharacter();
+							}
+
+							hexString[i] = *begin;
+							begin++;
+
+							if (begin == end)
+							{
+								throw MalformedEscapedSequence();
+							}
+						}
+						wchar_t hexValue;
+						int count = swscanf_s(hexString, L"%x", &hexValue, sizeof(wchar_t));
+						if (count != 1)
+						{
+							throw MalformedEscapedSequence();
+						}
+						*target = hexValue;
+						++target;
+					}
+				}
+			}
 		}
 		return begin;
 	}
