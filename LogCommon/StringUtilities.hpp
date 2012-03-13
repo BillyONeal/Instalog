@@ -54,17 +54,30 @@ namespace Instalog
 		}
 	};
 
+	inline char UnHexCharacter(wchar_t hexCharacter)
+	{
+		if (hexCharacter >= L'0' && hexCharacter <= L'9')
+		{
+			return static_cast<char>(hexCharacter - L'0');
+		}
+		if (hexCharacter >= L'A' && hexCharacter <= L'F')
+		{
+			return static_cast<char>(hexCharacter - L'A' + 10);
+		}
+		if (hexCharacter >= L'a' && hexCharacter <= L'a')
+		{
+			return static_cast<char>(hexCharacter - L'a' + 10);
+		}
+		throw InvalidHexCharacter();
+	}
+
 	template<typename InIter, typename OutIter>
 	inline InIter Unescape(InIter begin, InIter end, OutIter target, wchar_t escapeCharacter = L'#', wchar_t endDelimiter = L'\0')
 	{
+		wchar_t temp;
 		for (; begin != end && *begin != endDelimiter; ++begin)
 		{
-			if (*begin != escapeCharacter)
-			{
-				*target = *begin;
-				++target;
-			}
-			else
+			if (*begin == escapeCharacter)
 			{
 				begin++;
 				if (begin == end)
@@ -74,56 +87,41 @@ namespace Instalog
 
 				switch (*begin)
 				{
-				case L'0': *target = 0x00; ++target; break;
-				case L'b': *target = 0x08; ++target; break;
-				case L'f': *target = 0x0C; ++target; break;
-				case L'n': *target = 0x0A; ++target; break;
-				case L'r': *target = 0x0D; ++target; break;
-				case L't': *target = 0x09; ++target; break;
-				case L'v': *target = 0x0B; ++target; break;
-				default:
-					if (*begin == escapeCharacter)
+				case L'0': *target = 0x00; break;
+				case L'b': *target = 0x08; break;
+				case L'f': *target = 0x0C; break;
+				case L'n': *target = 0x0A; break;
+				case L'r': *target = 0x0D; break;
+				case L't': *target = 0x09; break;
+				case L'v': *target = 0x0B; break;
+				case L'x':
+					if (std::distance(begin, end) < 3) throw MalformedEscapedSequence();
+					temp = 0;
+					for (unsigned int idx = 0; idx < 2; ++idx)
 					{
-						*target = *begin;
-						++target;
+						temp <<= 4;
+						temp |= UnHexCharacter(*++begin);
 					}
-					else if (*begin == L'x')
+					*target = temp;
+					break;
+				case L'u':
+					if (std::distance(begin, end) < 5) throw MalformedEscapedSequence();
+					temp = 0;
+					for (unsigned int idx = 0; idx < 4; ++idx)
 					{
-						++begin;
-						if (begin == end)
-						{
-							throw MalformedEscapedSequence();
-						}
-
-						wchar_t hexString[] = L"0xXX";
-						for (int i = 2; i < 3; ++i)
-						{
-							if (!(*begin >= L'0' && *begin <= L'9') &&
-								!(*begin >= L'A' && *begin <= L'F') &&
-								!(*begin >= L'a' && *begin <= L'f'))
-							{
-								throw InvalidHexCharacter();
-							}
-
-							hexString[i] = *begin;
-							begin++;
-
-							if (begin == end)
-							{
-								throw MalformedEscapedSequence();
-							}
-						}
-						wchar_t hexValue;
-						int count = swscanf_s(hexString, L"%x", &hexValue, sizeof(wchar_t));
-						if (count != 1)
-						{
-							throw MalformedEscapedSequence();
-						}
-						*target = hexValue;
-						++target;
+						temp <<= 4;
+						temp |= UnHexCharacter(*++begin);
 					}
+					*target = temp;
+					break;
+				default:   *target = *begin; break;
 				}
 			}
+			else
+			{
+				*target = *begin;
+			}
+			++target;
 		}
 		return begin;
 	}
