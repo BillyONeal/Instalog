@@ -87,3 +87,16 @@ TEST(Process, CanGetProcessCommandLines)
 	}
 	ASSERT_TRUE(couldFindMyOwnProcess);
 }
+
+TEST(Process, NtoskrnlIsInTheBuilding)
+{
+	ProcessEnumerator enumerator;
+	bool foundNtosKrnl = false;
+	for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+	{
+		if (it->GetProcessId() == 4) 
+		{
+			ASSERT_STREQ(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath().c_str());
+		}
+	}
+}

@@ -140,6 +140,7 @@
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="RuntimeDynamicLinker.cpp" />
+    <ClCompile Include="ScanningSections.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
@@ -149,7 +150,7 @@
     <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Registry.hpp" />
-    <ClInclude Include="RunningProcesses.hpp" />
+    <ClInclude Include="ScanningSections.hpp" />
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />

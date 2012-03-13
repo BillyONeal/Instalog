@@ -100,8 +100,15 @@ namespace Instalog { namespace SystemFacades {
 		if (processId == 4)
 		{
 			wchar_t target[MAX_PATH] = L"";
-			::GetWindowsDirectoryW(target, MAX_PATH);
-			::wcscat_s(target, MAX_PATH, L"System32\\Ntoskrnl.exe");
+			UINT len = ::GetWindowsDirectoryW(target, MAX_PATH) - 1;
+			if (target[len] == L'\\')
+			{
+				::wcscat_s(target + len, MAX_PATH - len, L"System32\\Ntoskrnl.exe");
+			}
+			else
+			{
+				::wcscat_s(target + len, MAX_PATH - len, L"\\System32\\Ntoskrnl.exe");
+			}
 			return target;
 		}
 		NtOpenProcessFunc ntOpen = GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");

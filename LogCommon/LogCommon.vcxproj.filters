@@ -38,6 +38,9 @@
     <ClCompile Include="StringUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ScanningSections.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -76,7 +79,7 @@
     <ClInclude Include="StringUtilities.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RunningProcesses.hpp">
+    <ClInclude Include="ScanningSections.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
