@@ -14,4 +14,11 @@ namespace Instalog
 		virtual void LogMessage(std::wstring const&) = 0;
 	};
 
+	struct DoNothingUserInterface : public IUserInterface
+	{
+		virtual void ReportProgressPercent(std::size_t) {}
+		virtual void ReportFinished() {}
+		virtual void LogMessage(std::wstring const&) {}
+	};
+
 }

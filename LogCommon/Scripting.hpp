@@ -31,8 +31,7 @@ namespace Instalog
 		virtual ~ISectionDefinition() {}
 		virtual std::wstring GetName() const = 0;
 		virtual LogSectionPriorities GetPriority() const = 0;
-		virtual bool Parallelizable() const { return true; }
-		virtual void Execute(std::ostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options) = 0;
+		virtual void Execute(std::wostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const = 0;
 	};
 
 	class Script;
@@ -53,6 +52,7 @@ namespace Instalog
 		Script(ScriptDispatcher const* parent);
 		std::map<ScriptSection, std::vector<std::wstring>> const& GetSections() const;
 		void Add(ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options);
+		void Run(std::wostream& logOutput, IUserInterface *ui) const;
 	};
 
 	class UnknownScriptSectionException : public std::exception
