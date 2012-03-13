@@ -110,4 +110,12 @@ namespace Instalog
 		return sections;
 	}
 
+	void Script::Run( std::wostream& logOutput, IUserInterface *ui ) const
+	{
+		for (auto begin = sections.cbegin(), end = sections.cend(); begin != end; ++begin)
+		{
+			begin->first.targetSection->Execute(logOutput, ui, begin->first, begin->second);
+		}
+	}
+
 }
