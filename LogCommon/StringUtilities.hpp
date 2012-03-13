@@ -7,6 +7,10 @@ namespace Instalog
 
 	inline std::string ConvertUnicode(const std::wstring &uni)
 	{
+		if (uni.empty())
+		{
+			return std::string();
+		}
 		INT length;
 		BOOL blank;
 		length = WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL,"?",&blank);
@@ -17,6 +21,10 @@ namespace Instalog
 	}
 	inline std::wstring ConvertUnicode(const std::string &uni)
 	{
+		if (uni.empty())
+		{
+			return std::wstring();
+		}
 		INT length;
 		length = MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL);
 		std::vector<wchar_t> resultRaw(length);

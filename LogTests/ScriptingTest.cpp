@@ -97,3 +97,127 @@ TEST_F(ScriptDispatcherTest, TrailingWhitespace)
 	ASSERT_EQ(L"", it->first.argument);
 	ASSERT_TRUE(it->second.empty());
 }
+
+TEST_F(ScriptDispatcherTest, ContainedWhitespace)
+{
+	const wchar_t example[] =
+		L"\r\n\r\n\r\n:one\r\nexample\nexample2\r\n\r\n"
+		L":twosies\r\n\r\n\r\n";
+	Script s(dispatcher.Parse(example));
+	ASSERT_EQ(2, s.GetSections().size());
+	ScriptSection ss;
+	ss.targetSection = one;
+	auto it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+	std::vector<std::wstring> answer;
+	answer.push_back(L"example");
+	answer.push_back(L"example2");
+	ASSERT_EQ(answer, it->second);
+	ss.targetSection = two;
+	it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+	ASSERT_TRUE(it->second.empty());
+}
+
+TEST_F(ScriptDispatcherTest, ArgumentsParsed)
+{
+	const wchar_t example[] =
+		L"\r\n\r\n\r\n:one example\nexample2\r\n\r\n"
+		L":twosies\r\n\r\n\r\n";
+	Script s(dispatcher.Parse(example));
+	ASSERT_EQ(2, s.GetSections().size());
+	ScriptSection ss;
+	ss.targetSection = one;
+	ss.argument = L"example";
+	auto it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"example", it->first.argument);
+	std::vector<std::wstring> answer;
+	answer.push_back(L"example2");
+	ASSERT_EQ(answer, it->second);
+	ss.targetSection = two;
+	ss.argument.clear();
+	it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+	ASSERT_TRUE(it->second.empty());
+}
+
+TEST_F(ScriptDispatcherTest, ArgumentsWhitespaceSignificant)
+{
+	const wchar_t example[] =
+		L"\r\n\r\n\r\n:one    example\nexample2\r\n\r\n"
+		L":twosies\r\n\r\n\r\n";
+	Script s(dispatcher.Parse(example));
+	ASSERT_EQ(2, s.GetSections().size());
+	ScriptSection ss;
+	ss.targetSection = one;
+	ss.argument = L"   example";
+	auto it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"   example", it->first.argument);
+	std::vector<std::wstring> answer;
+	answer.push_back(L"example2");
+	ASSERT_EQ(answer, it->second);
+	ss.targetSection = two;
+	ss.argument.clear();
+	it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+	ASSERT_TRUE(it->second.empty());
+}
+
+TEST_F(ScriptDispatcherTest, TakesSingleArgument)
+{
+	const wchar_t example[] =
+		L":one";
+	Script s(dispatcher.Parse(example));
+	ASSERT_EQ(1, s.GetSections().size());
+	ScriptSection ss;
+	ss.targetSection = one;
+	auto it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+}
+
+TEST_F(ScriptDispatcherTest, Merges)
+{
+	const wchar_t example[] =
+		L":one\nexample\nexample2\r\nmerged\r\n"
+		L":twosies\r\n\r\n\r\n"
+		L":one\nmerged\nmerged2";
+	Script s(dispatcher.Parse(example));
+	ASSERT_EQ(2, s.GetSections().size());
+	ScriptSection ss;
+	ss.targetSection = one;
+	auto it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	std::vector<std::wstring> answer;
+	answer.push_back(L"example");
+	answer.push_back(L"example2");
+	answer.push_back(L"merged");
+	answer.push_back(L"merged");
+	answer.push_back(L"merged2");
+	ASSERT_EQ(answer, it->second);
+	ss.targetSection = two;
+	it = s.GetSections().find(ss);
+	ASSERT_NE(s.GetSections().end(), it);
+	ASSERT_EQ(L"", it->first.argument);
+	ASSERT_TRUE(it->second.empty());
+}
+
+TEST_F(ScriptDispatcherTest, UnknownThrows)
+{
+	const wchar_t example[] =
+		L":unknown";
+	EXPECT_THROW(Script s(dispatcher.Parse(example)), UnknownScriptSectionException);
+}
+
+TEST_F(ScriptDispatcherTest, EmptyThrows)
+{
+	const wchar_t example[] =
+		L":";
+	EXPECT_THROW(Script s(dispatcher.Parse(example)), UnknownScriptSectionException);
+}

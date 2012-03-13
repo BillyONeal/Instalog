@@ -46,8 +46,7 @@ namespace Instalog
 			{
 				++sectionStart;
 			}
-			std::wstring::iterator argumentStart = sectionStart;
-			argumentStart = std::find_if(argumentStart, begin->end(), iswspace);
+			std::wstring::iterator argumentStart = std::find_if(sectionStart, begin->end(), iswspace);
 			std::wstring scriptTarget(sectionStart, argumentStart);
 			to_lower(scriptTarget);
 
