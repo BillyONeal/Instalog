@@ -1,8 +1,30 @@
 #pragma once
 #include <string>
+#include <windows.h>
 
 namespace Instalog
 {
+
+	inline std::string ConvertUnicode(const std::wstring &uni)
+	{
+		INT length;
+		BOOL blank;
+		length = WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL,"?",&blank);
+		std::vector<char> resultRaw(length);
+		WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length,"?",&blank);
+		std::string result(resultRaw.begin(), resultRaw.end());
+		return result;
+	}
+	inline std::wstring ConvertUnicode(const std::string &uni)
+	{
+		INT length;
+		length = MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL);
+		std::vector<wchar_t> resultRaw(length);
+		MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length);
+		std::wstring result(resultRaw.begin(), resultRaw.end());
+		return result;
+	}
+
 	void Escape(std::wstring &target, wchar_t escapeCharacter, wchar_t rightCharacter = L'\0');
 	void UrlEscape(std::wstring &target, wchar_t escapeCharacter, wchar_t rightCharacter = L'\0');
 	template<typename InIter, typename OutIter>

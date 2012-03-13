@@ -29,7 +29,7 @@ TEST(Registry, CanOpenKey)
 		Win32Exception::ThrowFromNtError(last);
 	}
 	RegistryKey::Ptr keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
-	EXPECT_TRUE(keyOpenedAgain.get());
+	EXPECT_TRUE(keyOpenedAgain.get() != 0);
 	::RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\NonexistentTestKeyHere");
 }
 

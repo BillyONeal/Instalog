@@ -148,6 +148,7 @@
     <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Registry.hpp" />
+    <ClInclude Include="RunningProcesses.hpp" />
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />
