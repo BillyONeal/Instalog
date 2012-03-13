@@ -497,21 +497,10 @@ TEST(StringUtilities, UnescapeVerticalTabCharacter)
 	EXPECT_EQ(escaped.end(), it);
 }
 
-TEST(StrintUtilities, UnescapeOtherASCII)
+TEST(StringUtilities, UnescapeOtherASCII)
 {
 	for (wchar_t c = 0x00; c < 0x1F; ++c)
 	{
-		if (c == 0x00 ||
-			c == 0x08 ||
-			c == 0x0C ||
-			c == 0x0A ||
-			c == 0x0D ||
-			c == 0x09 ||
-			c == 0x0B)
-		{
-			continue;
-		}
-
 		wchar_t escapedChar[5];
 		swprintf_s(escapedChar, 5, L"#x%02X", c);
 		std::wstring escaped = escapedChar;
@@ -534,27 +523,119 @@ TEST(StrintUtilities, UnescapeOtherASCII)
 	}
 }
 
-// TEST(StringUtilities, UnescapeEscapeCharacterasdf)
-// {
-// 	std::wstring escaped = L"#]";
-// 	std::wstring unescaped;
-// 	Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
-// 	ASSERT_EQ(L"#", unescaped);
-// }
+TEST(StringUtilities, UnescapeUnicode)
+{
+	srand((int)time(NULL));
+	int increment = rand() % 10000;
+	for (wchar_t c = 0x0080; c < std::numeric_limits<wchar_t>::max() - 10000; c += increment)
+	{
+		wchar_t escapedChar[7];
+		swprintf_s(escapedChar, 7, L"#u%04X", c);
+		std::wstring escaped = escapedChar;
+		std::wstring unescaped;
+		std::wstring expected;
+		expected.push_back(c);
+		std::wstring::iterator it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+		EXPECT_EQ(expected, unescaped);
+		EXPECT_EQ(escaped.end(), it);
+	}
 
-// TEST(StringUtilities, UnescapeEscapeCharacterBackInserter)
-// {
-// 	std::wstring escaped(L"Has#uABCDescapes");
-// 	std::wstring unescaped;
-// 	Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
-// 	ASSERT_EQ(L"Has\uABCDescapes", unescaped);
-// }
-// 
-// TEST(StringUtilities, UnescapeEscapeCharacter)
-// {
-// 	std::wstring escaped(L"Has#uABCDescapes");
-// 	std::wstring unescaped;
-// 	unescaped.resize(11);
-// 	Unescape(escaped.begin(), escaped.end(), unescaped.begin());
-// 	ASSERT_EQ(L"Has\uABCDescapes", unescaped);
-// }
+	{
+		std::wstring escaped = L"#uFFFF";
+		std::wstring unescaped;
+		std::wstring expected;
+		expected.push_back(0xFFFF);
+		std::wstring::iterator it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+		EXPECT_EQ(expected, unescaped);
+		EXPECT_EQ(escaped.end(), it);
+	}
+}
+
+TEST(StringUtilities, UnescapeWhitespace)
+{
+	std::wstring escaped, unescaped;
+	std::wstring::iterator it;
+
+	escaped = L"start # end";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"start  end", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"start # # end";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"start   end", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"# end";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L" end", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"# # end";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"  end", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"start # ";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"start  ", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+}
+
+TEST(StringUtilities, UnescapeNonEscaped)
+{
+	for (wchar_t c = 0x1F + 1; c < 0x79; ++c)
+	{
+		if (c == L'#' || c == L' ')
+		{
+			continue;
+		}
+		std::wstring escaped(1, c);
+		std::wstring unescaped;
+		std::wstring::iterator it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+		EXPECT_EQ(escaped, unescaped);
+		EXPECT_EQ(escaped.end(), it);
+	}
+
+	for (wchar_t c = 0x1F + 1; c < 0x79; ++c)
+	{
+		if (c == L'#' || c == L' ')
+		{
+			continue;
+		}
+		std::wstring escaped(1, c);
+		std::wstring unescaped;
+		std::wstring::iterator it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+		EXPECT_EQ(escaped, unescaped);
+		EXPECT_EQ(escaped.end(), it);
+	}
+}
+
+TEST(StringUtilities, UnescapeUrl)
+{
+	std::wstring escaped, unescaped;
+	std::wstring::iterator it;
+
+	escaped = L"htt#p";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"http", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"htt##p";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"htt#p", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"hthtt#ptp";
+	it = Unescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"hthttptp", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+}
