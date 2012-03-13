@@ -162,6 +162,7 @@
     <ClCompile Include="RuntimeDynamicLinkerTest.cpp" />
     <ClCompile Include="ScopedPrivilegeTest.cpp" />
     <ClCompile Include="ScriptingTest.cpp" />
+    <ClCompile Include="StringUtilitiesTest.cpp" />
     <ClCompile Include="Win32ExceptionTest.cpp" />
   </ItemGroup>
   <ItemGroup>
