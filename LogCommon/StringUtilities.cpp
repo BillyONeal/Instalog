@@ -8,7 +8,7 @@ namespace Instalog
 	static void EscapeHelper(std::wstring &target, wchar_t escapeCharacter, wchar_t rightDelimiter, bool escapeHTTP)
 	{
 		int httpState = 0;
-		for (int i = 0; i < target.length(); ++i)
+		for (std::wstring::size_type i = 0; i < target.size(); ++i)
 		{
 			switch (target[i])
 			{
@@ -49,7 +49,7 @@ namespace Instalog
 				else if (target[i] >= 0x0080)
 				{
 					wchar_t hex[7];
-					swprintf_s(hex, 7, L"%cx%04X", escapeCharacter, target[i]);
+					swprintf_s(hex, 7, L"%cu%04X", escapeCharacter, target[i]);
 					target.replace(i, 1, hex);
 				}
 			}
