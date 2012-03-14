@@ -54,7 +54,7 @@ TEST(Path, BothAreEmpty)
 	EXPECT_EQ(L"", Append(L"", L""));
 }
 
-static void TestResolve(std::wstring source, std::wstring const& expected)
+static void TestResolve(std::wstring const& expected, std::wstring source)
 {
 	ResolveFromCommandLine(source);
 	ASSERT_EQ(expected, source);

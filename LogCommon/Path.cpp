@@ -54,33 +54,35 @@ namespace Instalog { namespace Path {
 		{
 			wchar_t windir[MAX_PATH];
 			UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
-			path.insert(0, windir, len);
-			path.insert(0, L"\\system32\\");
+			windir[len] = L'\\';
+			path.insert(0, windir, len + 1);
 		}
 		else if (boost::istarts_with(path, L"systemroot\\"))
 		{
 			wchar_t windir[MAX_PATH];
 			UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
-			windir[len++] = L'\\';
-			path.insert(0, windir, len);
+			windir[len] = L'\\';
+			path.replace(0, 11, windir, len + 1);
 		}
 	}
 
 	static std::vector<std::wstring> getSplitPath()
 	{
+		using namespace std::placeholders;
 		std::vector<std::wstring> splitPath;
 		wchar_t pathBuf[32767] = L""; // 32767 is max size of environment variable
 		UINT len = ::GetEnvironmentVariableW(L"PATH", pathBuf, 32767);
-		boost::split(splitPath, pathBuf, std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L';'));
+		boost::split(splitPath, pathBuf, std::bind(std::equal_to<wchar_t>(), _1, L';'));
 		return splitPath;
 	}
 
 	static std::vector<std::wstring> getSplitPathExt()
 	{
+		using namespace std::placeholders;
 		std::vector<std::wstring> splitPathExt;
 		wchar_t pathExtBuf[32767] = L""; // 32767 is max size of environment variable
 		UINT len = ::GetEnvironmentVariableW(L"PATH", pathExtBuf, 32767);
-		boost::split(splitPathExt, pathExtBuf, std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L';'));
+		boost::split(splitPathExt, pathExtBuf, std::bind(std::equal_to<wchar_t>(), _1, L';'));
 		return splitPathExt;
 	}
 
@@ -112,7 +114,7 @@ namespace Instalog { namespace Path {
 	static void StripArgumentsFromPath(std::wstring &path)
 	{
 		// For each spot where there's a space, try all the extensions
-		for (std::wstring::iterator subpath = find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = find(subpath, path.end(), L' '))
+		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath, path.end(), L' '))
 		{
 			if (TryExtensions(path, subpath))
 				return;
@@ -132,7 +134,7 @@ namespace Instalog { namespace Path {
 		}
 	}
 
-	static void ResolveFromCommandLine(std::wstring &path)
+	void ResolveFromCommandLine(std::wstring &path)
 	{
 		NativePathToWin32Path(path);
 		StripArgumentsFromPath(path);
