@@ -53,3 +53,49 @@ TEST(Path, BothAreEmpty)
 {
 	EXPECT_EQ(L"", Append(L"", L""));
 }
+
+static void TestResolve(std::wstring source, std::wstring const& expected)
+{
+	ResolveFromCommandLine(source);
+	ASSERT_EQ(expected, source);
+}
+
+TEST(PathResolution, CanonicalPathUnchanged)
+{
+	TestResolve(L"C:\\Windows\\Explorer.exe", L"C:\\Windows\\Explorer.exe");
+}
+
+TEST(PathResolution, NativePathsCanonicalized)
+{
+	TestResolve(L"C:\\Windows\\Explorer.exe", L"\\??\\C:\\Windows\\Explorer.exe");
+}
+
+TEST(PathResolution, NtPathsCanonicalized)
+{
+	TestResolve(L"C:\\Windows\\Explorer.exe", L"\\\\?\\C:\\Windows\\Explorer.exe");
+}
+
+TEST(PathResolution, GlobalrootRemoved)
+{
+	TestResolve(L"C:\\Windows\\Explorer.exe", L"globalroot\\C:\\Windows\\Explorer.exe");
+}
+
+TEST(PathResolution, SlashGlobalrootRemoved)
+{
+	TestResolve(L"C:\\Windows\\Explorer.exe", L"\\globalroot\\C:\\Windows\\Explorer.exe");
+}
+
+TEST(PathResolution, System32Replaced)
+{
+	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"system32\\Explorer.exe");
+}
+
+TEST(PathResolution, System32SlashedReplaced)
+{
+	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"\\system32\\Explorer.exe");
+}
+
+TEST(PathResolution, WindDirReplaced)
+{
+	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"\\system32\\Explorer.exe");
+}
