@@ -639,3 +639,148 @@ TEST(StringUtilities, UnescapeUrl)
 	EXPECT_EQ(escaped.end(), it);
 	unescaped.clear();
 }
+
+TEST(StringUtilities, CmdLineToArgWEscape)
+{
+	std::wstring unescaped, escaped;
+	std::wstring::iterator it;
+
+	unescaped = L"\"nothing needs escaping here!\"";
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"nothing needs escaping here!\"", escaped);
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\\end\""; // 1 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\end\"", escaped); // 1 \'s
+	EXPECT_EQ(unescaped.end(), it); 
+	escaped.clear();
+
+	unescaped = L"\"start\\\\end\""; // 2 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\\\end\"", escaped); // 2 \'s
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\\\\\\end\""; // 3 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\\\\\end\"", escaped); // 3 \'s
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\\\\\\\\end\""; // 4 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\\\\\\\end\"", escaped); // 4 \'s
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\\\\\\\\\\end\""; // 5 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\\\\\\\\\end\"", escaped); // 5 \'s
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\"end\""; // 0 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_EQ(L"\"start\\\"end\"", escaped); // 1 \'s (n = 0)
+	EXPECT_EQ(unescaped.end(), it); 
+	escaped.clear();
+
+	unescaped = L"\"start\\\"end\""; // 1 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_TRUE(L"\"start\\\\\"end\"" == escaped || L"\"start\\\\\\\"end\"" == escaped); // 2 or 3 \'s (n = 1)
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+
+	unescaped = L"\"start\\\\\"end\"\""; // 2 \'s
+	it = CmdLineToArgvWEscape(unescaped.begin(), unescaped.end(), std::back_inserter(escaped));
+	EXPECT_TRUE(L"\"start\\\\\\\\\"end" == escaped || L"\"start\\\\\\\\\\\"end" == escaped); // 4 or 5 \'s (n = 2)
+	EXPECT_EQ(unescaped.end(), it);
+	escaped.clear();
+}
+
+TEST(StringUtilities, CmdLineToArgWUnescape)
+{
+	std::wstring escaped, unescaped;
+	std::wstring::iterator it;
+
+	escaped = L"\"nothing needs escaping here!\"";
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"nothing needs escaping here!\"", unescaped);
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\end\""; // 1 \'s
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\end\"", unescaped); // 1 \'s
+	EXPECT_EQ(escaped.end(), it); 
+	unescaped.clear();
+
+	escaped = L"\"start\\\\end\""; // 2 \'s
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\end\"", unescaped); // 2 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\end\""; // 3 \'s
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\\\end\"", unescaped); // 3 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\\\end\""; // 4 \'s
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\\\\\end\"", unescaped); // 4 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\\\\\end\""; // 5 \'s
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\\\\\\\end\"", unescaped); // 5 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\"end\""; // 1 \'s (n = 0)
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\"end\"", unescaped); // 1 \'s
+	EXPECT_EQ(escaped.end(), it); 
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\"end\""; // 2 \'s (n = 1)
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\"end\"", unescaped); // 1 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\\"end\""; // 3 \'s (n = 1)
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\"end\"", unescaped); // 1 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\\\\"end\""; // 4 \'s (n = 2)
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\\"end\"", unescaped); // 2 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\\\\\\\"end\""; // 5 \'s (n = 2)
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\\\\\"end\"", unescaped); // 2 \'s
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start end\"after";
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start end\"", unescaped); 
+	EXPECT_EQ(escaped.end(), it);
+	unescaped.clear();
+
+	escaped = L"\"start\\\"end\"after";
+	it = CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), std::back_inserter(unescaped));
+	EXPECT_EQ(L"\"start\"end\"", unescaped); 
+	EXPECT_EQ(find(find(escaped.begin(), escaped.end(), L'\"'), escaped.end(), L'\"'), it);
+	unescaped.clear();
+}
+

@@ -125,9 +125,17 @@ namespace Instalog
 		}
 		return begin;
 	}
+
 	template<typename InIter, typename OutIter>
-	inline InIter CmdLineToArgvWUnEscape(InIter begin, InIter end, OutIter target)
+	inline InIter CmdLineToArgvWEscape(InIter begin, InIter end, OutIter target)
 	{
+		return begin;
+	}
+
+	template<typename InIter, typename OutIter>
+	inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
+	{
+		return begin;
 	}
 	void Header(std::wstring &headerText, std::size_t headerWidth = 50);
 }
