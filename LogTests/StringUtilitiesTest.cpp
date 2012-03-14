@@ -707,3 +707,25 @@ TEST(StringUtilities, EmptyCmdArgVThrows)
 	std::wstring escaped;
 	ASSERT_THROW(CmdLineToArgvWUnescape(escaped.begin(), escaped.end(), escaped.begin()), MalformedEscapedSequence);
 }
+
+TEST(StringUtilities, SimpleHeaderCorrect)
+{
+	std::wstring tested(L"Example");
+	Header(tested);
+	ASSERT_EQ(L"===================== Example ====================", tested);
+}
+
+TEST(StringUtilities, EvenHeaderCorrect)
+{
+	std::wstring tested(L"Foobar");
+	Header(tested);
+	ASSERT_EQ(L"===================== Foobar =====================", tested);
+}
+
+TEST(StringUtilities, TooLong)
+{
+	std::wstring tested(L"FoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobar");
+	Header(tested);
+	ASSERT_EQ(L"FoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobarFoobar", tested);
+}
+

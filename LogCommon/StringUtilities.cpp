@@ -128,4 +128,19 @@ namespace Instalog
 		return "Malformed escaped sequence in supplied string";
 	}
 
+	void Header( std::wstring &headerText, std::size_t headerWidth /*= 50*/ )
+	{
+		if (headerText.size() + 2 > headerWidth)
+			return;
+		headerText.reserve(headerWidth);
+		std::size_t nonTextWidth = headerWidth - headerText.size();
+		std::size_t totalEquals = nonTextWidth - 2;
+		std::size_t rightEquals = totalEquals / 2;
+		std::size_t leftEquals = totalEquals - rightEquals;
+		headerText.insert(headerText.begin(), leftEquals + 1, L'=');
+		headerText[leftEquals] = L' ';
+		headerText.insert(headerText.end(), 1, L' ');
+		headerText.insert(headerText.end(), rightEquals, L'=');
+	}
+
 }
