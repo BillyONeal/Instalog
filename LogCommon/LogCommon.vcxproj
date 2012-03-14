@@ -148,6 +148,7 @@
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="HandleCloser.hpp" />
+    <ClInclude Include="Path.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Registry.hpp" />
     <ClInclude Include="ScanningSections.hpp" />
