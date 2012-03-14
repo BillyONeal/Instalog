@@ -88,4 +88,44 @@ namespace Instalog
 	{
 		EscapeHelper(target, escapeCharacter, rightCharacter, true);
 	}
+
+	std::string ConvertUnicode(const std::wstring &uni)
+	{
+		if (uni.empty())
+		{
+			return std::string();
+		}
+		INT length;
+		BOOL blank;
+		length = WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL,"?",&blank);
+		std::vector<char> resultRaw(length);
+		WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length,"?",&blank);
+		std::string result(resultRaw.begin(), resultRaw.end());
+		return result;
+	}
+	std::wstring ConvertUnicode(const std::string &uni)
+	{
+		if (uni.empty())
+		{
+			return std::wstring();
+		}
+		INT length;
+		length = MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL);
+		std::vector<wchar_t> resultRaw(length);
+		MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length);
+		std::wstring result(resultRaw.begin(), resultRaw.end());
+		return result;
+	}
+
+	char const* InvalidHexCharacter::what() const
+	{
+		return "Invalid hex character in supplied string";
+	}
+
+
+	char const* MalformedEscapedSequence::what() const
+	{
+		return "Malformed escaped sequence in supplied string";
+	}
+
 }
