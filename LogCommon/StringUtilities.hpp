@@ -6,52 +6,19 @@
 namespace Instalog
 {
 
-	inline std::string ConvertUnicode(const std::wstring &uni)
-	{
-		if (uni.empty())
-		{
-			return std::string();
-		}
-		INT length;
-		BOOL blank;
-		length = WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL,"?",&blank);
-		std::vector<char> resultRaw(length);
-		WideCharToMultiByte(CP_ACP,WC_NO_BEST_FIT_CHARS,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length,"?",&blank);
-		std::string result(resultRaw.begin(), resultRaw.end());
-		return result;
-	}
-	inline std::wstring ConvertUnicode(const std::string &uni)
-	{
-		if (uni.empty())
-		{
-			return std::wstring();
-		}
-		INT length;
-		length = MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),NULL,NULL);
-		std::vector<wchar_t> resultRaw(length);
-		MultiByteToWideChar(CP_ACP,MB_COMPOSITE,uni.c_str(),static_cast<int>(uni.length()),&resultRaw[0],length);
-		std::wstring result(resultRaw.begin(), resultRaw.end());
-		return result;
-	}
-
+	std::string ConvertUnicode(const std::wstring &uni);
+	std::wstring ConvertUnicode(const std::string &uni);
 	void GeneralEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
-
 	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightCharacter = L'\0');
 
 	class MalformedEscapedSequence : std::exception 
 	{
-		inline const char *what() const
-		{
-			return "Malformed escaped sequence in supplied string";
-		}
+		virtual char const* what() const;
 	};
 
 	class InvalidHexCharacter : std::exception 
 	{
-		inline const char *what() const
-		{
-			return "Invalid hex character in supplied string";
-		}
+		virtual char const* what() const;
 	};
 
 	inline char UnHexCharacter(wchar_t hexCharacter)
@@ -127,15 +94,44 @@ namespace Instalog
 	}
 
 	template<typename InIter, typename OutIter>
-	inline InIter CmdLineToArgvWEscape(InIter begin, InIter end, OutIter target)
-	{
-		return begin;
-	}
-
-	template<typename InIter, typename OutIter>
 	inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
 	{
-		return begin;
+		if (std::distance(begin, end) < 2 || *begin != L'"')
+		{
+			// ""s are required
+			throw MalformedEscapedSequence();
+		}
+		++begin; //Skip "
+		std::size_t backslashCount = 0;
+		for(; begin != end; ++begin)
+		{
+			switch(*begin)
+			{
+			case L'\\':
+				backslashCount++;
+				break;
+			case L'"':
+				if (backslashCount)
+				{
+					std::fill_n(target, backslashCount / 2, L'\\');
+					*target++ = L'"';
+					backslashCount = 0;
+				}
+				else
+				{
+					return ++begin;
+				}
+				break;
+			default:
+				if (backslashCount)
+				{
+					std::fill_n(target, backslashCount, L'\\');
+					backslashCount = 0;
+				}
+				*target++ = *begin;
+			}
+		}
+		throw MalformedEscapedSequence();
 	}
 	void Header(std::wstring &headerText, std::size_t headerWidth = 50);
 }
