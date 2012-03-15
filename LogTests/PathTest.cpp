@@ -138,7 +138,7 @@ TEST(PathResolution, System32SlashedReplaced)
 
 TEST(PathResolution, WindDirReplaced)
 {
-	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"\systemroot\system32\\Ntoskrnl.exe");
+	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"\\systemroot\\system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, DefaultKernelFoundOnPath)

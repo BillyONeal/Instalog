@@ -2,6 +2,7 @@
 #include "Path.hpp"
 #include <boost/algorithm/string.hpp>
 #include "File.hpp"
+#include "StringUtilities.hpp"
 
 namespace Instalog { namespace Path {
 
@@ -129,18 +130,20 @@ namespace Instalog { namespace Path {
 		}
 
 		// Search with no path extension
-		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat)))
+		std::wstring pathNoPathExtension = std::wstring(searchpath.begin(), extensionat);
+		if (SystemFacades::File::Exists(pathNoPathExtension) && !SystemFacades::File::IsDirectory(pathNoPathExtension)) 
 		{
-			searchpath.erase(extensionat, searchpath.end());
+			searchpath = pathNoPathExtension;
 			return true;
 		}
 
 		// Try the available path extensions
 		for (std::vector<std::wstring>::iterator splitPathExtIt = splitPathExt.begin(); splitPathExtIt != splitPathExt.end(); ++splitPathExtIt)
 		{
-			if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat).append(*splitPathExtIt))) 
+			std::wstring pathPathExtension = std::wstring(searchpath.begin(), extensionat).append(*splitPathExtIt);
+			if (SystemFacades::File::Exists(pathPathExtension) && !SystemFacades::File::IsDirectory(pathPathExtension)) 
 			{
-				searchpath.replace(extensionat, searchpath.end(), splitPathExtIt->begin(), splitPathExtIt->end());
+				searchpath = pathPathExtension;
 				return true;
 			}
 		}
@@ -216,11 +219,26 @@ namespace Instalog { namespace Path {
 
 	bool ResolveFromCommandLine(std::wstring &path)
 	{
-		NativePathToWin32Path(path);
-		if (StripArgumentsFromPath(path))
+		if (path.size() > 0)
 		{
-			Prettify(path.begin(), path.end());
-			return !SystemFacades::File::IsDirectory(path);
+			if (path[0] == L'\"')
+			{
+				std::wstring unescaped;
+				CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
+				path = unescaped;
+				return SystemFacades::File::Exists(unescaped) && !SystemFacades::File::IsDirectory(unescaped);
+			}
+			else
+			{
+				NativePathToWin32Path(path);
+				bool status = StripArgumentsFromPath(path);
+				if (status)
+				{
+					Prettify(path.begin(), path.end());
+					return status;
+				}
+			}
+
 		}
 
 		return false;
