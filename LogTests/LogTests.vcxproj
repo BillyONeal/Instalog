@@ -166,6 +166,7 @@
     <ClCompile Include="ScriptingTest.cpp" />
     <ClCompile Include="StockOutputFormatsTest.cpp" />
     <ClCompile Include="StringUtilitiesTest.cpp" />
+    <ClCompile Include="WhitelistTest.cpp" />
     <ClCompile Include="Win32ExceptionTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,9 @@
     <ProjectReference Include="..\LogCommon\LogCommon.vcxproj">
       <Project>{2823e2c6-d995-4944-a45d-1feb3fdddae9}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

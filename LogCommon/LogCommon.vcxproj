@@ -156,6 +156,7 @@
     <ClCompile Include="ScanningSections.cpp" />
     <ClCompile Include="StockOutputFormats.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
+    <ClCompile Include="Whitelist.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,7 @@
     <ClInclude Include="StockOutputFormats.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />
+    <ClInclude Include="Whitelist.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +187,9 @@
     <ResourceCompile Include="CommonWhitelists.rc">
       <NullTerminateStrings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</NullTerminateStrings>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Running Processes.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

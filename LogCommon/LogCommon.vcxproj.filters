@@ -12,6 +12,9 @@
     <Filter Include="Precompiled">
       <UniqueIdentifier>{fde33c8a-7b14-420a-a07c-30155b312cac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Whitelists">
+      <UniqueIdentifier>{960e73c8-6776-4c56-bae9-fd2115f6b151}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -45,6 +48,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StockOutputFormats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Whitelist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -97,8 +103,16 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Whitelist.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Running Processes.txt">
+      <Filter>Whitelists</Filter>
+    </None>
   </ItemGroup>
 </Project>
