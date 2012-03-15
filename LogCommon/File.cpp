@@ -13,7 +13,7 @@ namespace Instalog { namespace SystemFacades {
 		LPSECURITY_ATTRIBUTES securityAttributes, 
 		DWORD createdDisposition, 
 		DWORD flags
-	)
+		)
 		: hFile(::CreateFileW(filename.c_str(), desiredAccess, shareMode, securityAttributes, createdDisposition, flags, nullptr))
 	{
 		if (hFile == INVALID_HANDLE_VALUE)
@@ -53,6 +53,15 @@ namespace Instalog { namespace SystemFacades {
 		return info;
 	}
 
+	unsigned __int64 File::GetSize( std::wstring const& filename )
+	{
+		WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(filename);
+		unsigned __int64 size = fad.nFileSizeHigh;
+		size <<= 32;
+		size |= fad.nFileSizeLow;
+		return size;
+	}
+
 	std::vector<char> File::ReadBytes( unsigned int bytesToRead ) const
 	{
 		std::vector<char> bytes(bytesToRead);
@@ -62,7 +71,7 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		
+
 		if (bytesRead < bytesToRead)
 		{
 			bytes.resize(bytesRead);
@@ -150,6 +159,16 @@ namespace Instalog { namespace SystemFacades {
 			Win32Exception::ThrowFromLastError();
 		}
 		return fad;
+	}
+
+	DWORD File::GetAttributes( std::wstring const& filename )
+	{
+		DWORD answer = ::GetFileAttributesW(filename.c_str());
+		if (answer == INVALID_FILE_ATTRIBUTES)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+		return answer;
 	}
 
 }}

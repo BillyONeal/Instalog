@@ -172,3 +172,8 @@ TEST(File, ExtendedAttributesStaticFailsNonexistent)
 {
 	EXPECT_THROW(File::GetExtendedAttributes(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
 }
+
+TEST(File, AttributesStaticFailsNonexistent)
+{
+	EXPECT_THROW(File::GetAttributes(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
+}
