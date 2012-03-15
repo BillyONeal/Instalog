@@ -225,6 +225,7 @@ namespace Instalog { namespace Path {
 			{
 				std::wstring unescaped;
 				CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
+				Prettify(unescaped.begin(), unescaped.end());
 				path = unescaped;
 				return SystemFacades::File::Exists(unescaped) && !SystemFacades::File::IsDirectory(unescaped);
 			}
