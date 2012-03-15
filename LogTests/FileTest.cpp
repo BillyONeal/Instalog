@@ -37,3 +37,33 @@ TEST(File, DeleteChecksError)
 {
 	ASSERT_THROW(File::Delete(L"./IDoNotExist.txt"), ErrorFileNotFoundException);
 }
+
+TEST(File, FileExists)
+{
+	ASSERT_TRUE(File::Exists(L"C:\\Windows\\Explorer.exe"));
+}
+
+TEST(File, DirectoryExists)
+{
+	ASSERT_TRUE(File::Exists(L"C:\\Windows"));
+}
+
+TEST(File, NotExists)
+{
+	ASSERT_FALSE(File::Exists(L".\\I Do Not Exist!"));
+}
+
+TEST(File, IsDirectoryExists)
+{
+	ASSERT_TRUE(File::IsDirectory(L"C:\\Windows"));
+}
+
+TEST(File, IsDirectoryNotExists)
+{
+	ASSERT_FALSE(File::IsDirectory(L".\\I Do Not Exist!"));
+}
+
+TEST(File, IsDirectoryFile)
+{
+	ASSERT_FALSE(File::IsDirectory(L"C:\\Windows\\Explorer.exe"));
+}

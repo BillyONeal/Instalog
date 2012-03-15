@@ -20,6 +20,7 @@ namespace Instalog { namespace SystemFacades {
 		~File();
 		static void Delete(std::wstring const&);
 		static bool Exists(std::wstring const&);
+		static bool IsDirectory(std::wstring const&);
 	};
 
 }}

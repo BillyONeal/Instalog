@@ -40,4 +40,11 @@ namespace Instalog { namespace SystemFacades {
 		return attributes != INVALID_FILE_ATTRIBUTES;
 	}
 
+	bool File::IsDirectory( std::wstring const& filename)
+	{
+		DWORD attributes = ::GetFileAttributesW(filename.c_str());
+
+		return attributes == FILE_ATTRIBUTE_DIRECTORY;
+	}
+
 }}
