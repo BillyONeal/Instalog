@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <windows.h>
 
 namespace Instalog { namespace SystemFacades {
@@ -18,9 +19,11 @@ namespace Instalog { namespace SystemFacades {
 			DWORD = FILE_ATTRIBUTE_NORMAL
 		);
 		~File();
-		static void Delete(std::wstring const&);
-		static bool Exists(std::wstring const&);
-		static bool IsDirectory(std::wstring const&);
+		std::vector<char> ReadBytes(int bytesToRead);
+		static void Delete(std::wstring const& filename);
+		static bool Exists(std::wstring const& filename);
+		static bool IsDirectory(std::wstring const& filename);
+		static bool IsExecutable(std::wstring const& filename);
 	};
 
 }}
