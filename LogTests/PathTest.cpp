@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include <string>
+#include <iterator>
 #include <boost/algorithm/string/split.hpp>
 #include "LogCommon/Win32Exception.hpp"
 #include "LogCommon/File.hpp"
@@ -55,6 +56,12 @@ TEST(PathAppendTest, PathIsEmpty)
 TEST(PathAppendTest, BothAreEmpty)
 {
 	EXPECT_EQ(L"", Append(L"", L""));
+}
+
+TEST(PathAppendTest, AppendFailure)
+{
+	EXPECT_EQ(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found",
+		Append(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64", L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found"));
 }
 
 TEST(PathPrettify, CorrectOutput)
@@ -149,11 +156,11 @@ TEST(PathResolution, RundllVundo)
 	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"rundll32 ntoskrnl,ShellExecute");
 }
 
-struct PathResolutionFs : public testing::Test
+struct PathResolutionPathOrderFixture : public testing::Test
 {
 	std::vector<std::wstring> pathItems;
 	std::wstring const fileName;
-	PathResolutionFs()
+	PathResolutionPathOrderFixture()
 		: fileName(L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found")
 	{ }
 	virtual void SetUp()
@@ -163,6 +170,7 @@ struct PathResolutionFs : public testing::Test
 		DWORD pathLen = ::GetEnvironmentVariableW(L"PATH", nullptr, 0);
 		pathBuffer.resize(pathLen);
 		::GetEnvironmentVariable(L"PATH", &pathBuffer[0], pathLen);
+		pathBuffer.pop_back(); //remove null
 		boost::algorithm::split(pathItems, pathBuffer, std::bind(std::equal_to<wchar_t>(), _1, L';'));
 		ASSERT_LE(3, pathItems.size());
 		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(),
@@ -170,19 +178,63 @@ struct PathResolutionFs : public testing::Test
 	}
 };
 
-TEST_F(PathResolutionFs, DISABLED_NoCreateFails)
+TEST_F(PathResolutionPathOrderFixture, NoCreateFails)
 {
 	TestResolve(fileName, fileName, false);
 }
 
-TEST_F(PathResolutionFs, DISABLED_SeesLastPathItem)
+TEST_F(PathResolutionPathOrderFixture, SeesLastPathItem)
 {
 	HANDLE hFile = ::CreateFileW(pathItems.back().c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
 	TestResolve(pathItems.back(), fileName);
 	::CloseHandle(hFile);
 }
 
-TEST_F(PathResolutionFs, DISABLED_RespectsPathOrder)
+TEST_F(PathResolutionPathOrderFixture, RespectsPathOrder)
+{
+	HANDLE hFile = ::CreateFileW(pathItems[1].c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	HANDLE hFile2 = ::CreateFileW(pathItems[2].c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	TestResolve(pathItems[1], fileName);
+	::CloseHandle(hFile);
+	::CloseHandle(hFile2);
+}
+
+struct PathResolutionPathExtOrderFixture : public testing::Test
+{
+	std::vector<std::wstring> pathItems;
+	std::wstring const fileName;
+	PathResolutionPathExtOrderFixture()
+		: fileName(L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMeExt")
+	{ }
+	virtual void SetUp()
+	{
+		using namespace std::placeholders;
+		std::wstring pathBuffer;
+		DWORD pathLen = ::GetEnvironmentVariableW(L"PATHEXT", nullptr, 0);
+		pathBuffer.resize(pathLen);
+		::GetEnvironmentVariable(L"PATHEXT", &pathBuffer[0], pathLen);
+		pathBuffer.pop_back(); //remove null
+		boost::algorithm::split(pathItems, pathBuffer, std::bind(std::equal_to<wchar_t>(), _1, L';'));
+		ASSERT_LE(3, pathItems.size());
+		std::for_each(pathItems.begin(), pathItems.end(), [this] (std::wstring& a) { a.insert(0, fileName); } );
+		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(),
+			std::bind(Append, L"C:\\Windows\\System32", _1));
+	}
+};
+
+TEST_F(PathResolutionPathExtOrderFixture, NoCreateFails)
+{
+	TestResolve(fileName, fileName, false);
+}
+
+TEST_F(PathResolutionPathExtOrderFixture, SeesLastPathItem)
+{
+	HANDLE hFile = ::CreateFileW(pathItems.back().c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	TestResolve(pathItems.back(), fileName);
+	::CloseHandle(hFile);
+}
+
+TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
 {
 	HANDLE hFile = ::CreateFileW(pathItems[1].c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
 	HANDLE hFile2 = ::CreateFileW(pathItems[2].c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
