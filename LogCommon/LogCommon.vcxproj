@@ -142,6 +142,7 @@
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="RuntimeDynamicLinker.cpp" />
     <ClCompile Include="ScanningSections.cpp" />
+    <ClCompile Include="StockOutputFormats.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
   </ItemGroup>
@@ -157,6 +158,7 @@
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />
     <ClInclude Include="Scripting.hpp" />
+    <ClInclude Include="StockOutputFormats.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
