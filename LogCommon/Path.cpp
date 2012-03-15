@@ -41,7 +41,7 @@ namespace Instalog { namespace Path {
 		}
 	}
 
-	static std::wstring getWindowsDirectory()
+	std::wstring GetWindowsPath()
 	{
 		wchar_t windir[MAX_PATH];
 		UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
@@ -59,7 +59,7 @@ namespace Instalog { namespace Path {
 		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"globalroot\\")) { chop += 11; }		
 		path.erase(path.begin(), chop);
 
-		static std::wstring windowsDirectory = getWindowsDirectory();
+		static std::wstring windowsDirectory = GetWindowsPath();
 		if (boost::istarts_with(path, L"system32\\"))
 		{
 			path.insert(0, windowsDirectory);
@@ -92,7 +92,7 @@ namespace Instalog { namespace Path {
 
 	static bool RundllCheck(std::wstring &path)
 	{
-		static std::wstring rundllpath = getWindowsDirectory().append(L"System32\\rundll32");
+		static std::wstring rundllpath = GetWindowsPath().append(L"System32\\rundll32");
 		
 		if (boost::istarts_with(path, rundllpath))
 		{
@@ -202,7 +202,7 @@ namespace Instalog { namespace Path {
 				std::wstring unescaped;
 				std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
 				Prettify(unescaped.begin(), unescaped.end());
-				if (boost::istarts_with(unescaped, getWindowsDirectory().append(L"System32\\rundll32")))
+				if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
 				{
 					std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
 					if (startOfArgument != path.end())
