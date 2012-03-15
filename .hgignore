@@ -21,3 +21,4 @@ Instalog.v11.suo
 *.opensdf
 syntax: glob
 Instalog.sln.docstates.suo
+LogCommon/CommonWhitelists.aps

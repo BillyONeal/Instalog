@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <vector>
 #include <exception>
 #include "StringUtilities.hpp"
 #include "UserInterface.hpp"
