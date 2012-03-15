@@ -12,7 +12,7 @@ using Instalog::SystemFacades::Win32Exception;
 
 namespace Instalog {
 
-	Whitelist::Whitelist( __int32 whitelistId )
+	Whitelist::Whitelist( __int32 whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
 	{
 		using namespace std::placeholders;
 
@@ -36,13 +36,21 @@ namespace Instalog {
 		boost::algorithm::split(innards, boost::make_iterator_range(resourceDataCasted, resourceDataCasted + (resourceLen / sizeof(wchar_t))),
 			std::bind(std::equal_to<wchar_t>(), _1, L'\n'));
 		std::for_each(innards.begin(), innards.end(), std::bind(boost::algorithm::to_lower<std::wstring>, _1, std::locale()));
+		std::for_each(innards.begin(), innards.end(), [&replacements] (std::wstring &a) {
+			std::for_each(replacements.begin(), replacements.end(), [&a] (std::pair<std::wstring, std::wstring> const&b) {
+				if (boost::algorithm::starts_with(a, b.first))
+				{
+					a.replace(a.begin(), a.begin() + b.first.size(), b.second);
+				}
+			});
+		});
 		std::sort(innards.begin(), innards.end());
 	}
 
-	bool Whitelist::IsOnWhitelist( std::wstring const& checked ) const
+	bool Whitelist::IsOnWhitelist( std::wstring checked ) const
 	{
-		std::wstring lowercased(boost::algorithm::to_lower_copy(checked));
-		return std::binary_search(innards.begin(), innards.end(), lowercased);
+		boost::algorithm::to_lower(checked);
+		return std::binary_search(innards.begin(), innards.end(), checked);
 	}
 
 }
