@@ -3,6 +3,7 @@
 #include <boost/io/ios_state.hpp>
 #include <windows.h>
 #include "Win32Exception.hpp"
+#include "Path.hpp"
 #include "StockOutputFormats.hpp"
 
 namespace Instalog {
@@ -42,11 +43,13 @@ namespace Instalog {
 	{
 
 	}
-	void WriteDefaultFileOutput(std::wostream &str, std::wstring const& targetFile)
+	void WriteDefaultFileOutput( std::wostream &str, std::wstring const& targetFile )
 	{
-
+		std::wstring tmp(targetFile);
+		WriteDefaultFileOutput(str, std::move(tmp));
 	}
-	void WriteFileListingFile( std::wostream &str, std::wstring const& targetFile )
+
+	void WriteDefaultFileOutput( std::wostream &str, std::wstring && targetFile )
 	{
 
 	}
