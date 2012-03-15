@@ -24,6 +24,14 @@ TEST(File, CloseActuallyCalled)
 	ASSERT_FALSE(File::Exists(L"./CloseActuallyCalled.txt"));
 }
 
+TEST(File, CanReadBytes)
+{
+	File explorer(L"C:\\Windows\\Explorer.exe");
+	std::vector<char> bytes = explorer.ReadBytes(2);
+	EXPECT_EQ('M', bytes[0]);
+	EXPECT_EQ('Z', bytes[1]);
+}
+
 TEST(File, CanDelete)
 {
 	{
@@ -67,3 +75,19 @@ TEST(File, IsDirectoryFile)
 {
 	ASSERT_FALSE(File::IsDirectory(L"C:\\Windows\\Explorer.exe"));
 }
+
+TEST(File, IsExecutable)
+{
+	ASSERT_TRUE(File::IsExecutable(L"C:\\Windows\\Explorer.exe"));
+}
+
+TEST(File, IsExecutablNonExecutable)
+{
+	ASSERT_FALSE(File::IsExecutable(L"C:\\Windows\\System32\\drivers\\etc\\hosts"));
+}
+
+TEST(File, IsExecutableDirectory)
+{
+	ASSERT_FALSE(File::IsExecutable(L"C:\\Windows"));
+}
+
