@@ -91,6 +91,11 @@ static void TestResolve(std::wstring const& expected, std::wstring source, bool 
 	EXPECT_EQ(expected, source);
 }
 
+TEST(PathResolution, EmptyGivesEmpty)
+{
+	TestResolve(L"", L"", false);
+}
+
 TEST(PathResolution, DoesNotExistUnchanged)
 {
 	TestResolve(L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", false);
@@ -156,6 +161,11 @@ TEST(PathResolution, RundllVundo)
 	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"rundll32 ntoskrnl,ShellExecute");
 }
 
+TEST(PathResolution, RundllVundoSpaces)
+{
+	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"rundll32                                                 ntoskrnl,ShellExecute");
+}
+
 TEST(PathResolution, QuotedPath)
 {
 	TestResolve(L"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe", L"\"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe\"  Arguments Arguments Arguments");
@@ -164,8 +174,25 @@ TEST(PathResolution, QuotedPath)
 TEST(PathResolution, QuotedPathWithQuote)
 {
 	HANDLE hFile = ::CreateFileW(L"C:\\File With \" Quote", GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
-	TestResolve(L"C:\\File With \" Quote", L"\"C:\\File With \" Quote\" Argument arg arg");
+	TestResolve(L"C:\\File With \" Quote", L"\"C:\\File With \\\" Quote\" Argument arg arg");
 	::CloseHandle(hFile);
+}
+
+TEST(PathResolution, QuotedPathNonexistent)
+{
+	TestResolve(L"C:\\File With \" Quote", L"\"C:\\File With \\\" Quote\" Argument arg arg", false);
+}
+
+TEST(PathResolution, QuotedPathRundll)
+{
+	HANDLE hFile = ::CreateFileW(L"C:\\ExampleTestingFile.exe", GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	TestResolve(L"C:\\Exampletestingfile.exe", L"\"C:\\Windows\\System32\\Rundll32.exe\" \"C:\\ExampleTestingFile.exe,Argument arg arg\"");
+	::CloseHandle(hFile);
+}
+
+TEST(PathResolution, QuotedPathRundllAndQuotes)
+{
+	TestResolve(L"C:\\File With \" Quote", L"\"C:\\Windows\\System32\\Rundll32.exe\" \"C:\\File With \" Quote,Argument arg arg\"", false);
 }
 
 struct PathResolutionPathOrderFixture : public testing::Test
