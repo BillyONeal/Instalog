@@ -29,7 +29,28 @@ namespace Instalog { namespace SystemFacades {
 
 	unsigned __int64 File::GetSize() const
 	{
-		return 0;
+		BY_HANDLE_FILE_INFORMATION info = GetExtendedAttributes();
+
+		unsigned __int64 highSize = info.nFileSizeHigh;
+		highSize <<= 32;
+		return highSize + info.nFileSizeLow;
+	}
+
+	DWORD File::GetAttributes() const
+	{
+		return GetExtendedAttributes().dwFileAttributes;
+	}
+
+	BY_HANDLE_FILE_INFORMATION File::GetExtendedAttributes() const
+	{
+		BY_HANDLE_FILE_INFORMATION info;
+
+		if (GetFileInformationByHandle(hFile, &info) == false)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+
+		return info;
 	}
 
 	std::vector<char> File::ReadBytes( unsigned int bytesToRead ) const
