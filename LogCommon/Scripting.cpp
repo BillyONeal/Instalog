@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include "Scripting.hpp"
+#include "StringUtilities.hpp"
 
 using namespace boost::algorithm;
 
@@ -114,6 +115,9 @@ namespace Instalog
 	{
 		for (auto begin = sections.cbegin(), end = sections.cend(); begin != end; ++begin)
 		{
+			auto header = begin->first.targetSection->GetName();
+			Instalog::Header(header);
+			logOutput << header << L"\n";
 			begin->first.targetSection->Execute(logOutput, ui, begin->first, begin->second);
 		}
 	}
