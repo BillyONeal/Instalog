@@ -21,3 +21,68 @@ TEST(StockFormats, InvalidDateThrows)
 	std::wostringstream ss;
 	EXPECT_THROW(WriteDefaultDateFormat(ss, ft), SystemFacades::ErrorInvalidParameterException);
 }
+
+static void testWriteFileAttributes(unsigned __int32 attributes, std::wstring expected)
+{
+	std::wostringstream ss;
+	WriteFileAttributes(ss, attributes);
+	EXPECT_EQ(expected, ss.str());
+}
+
+TEST(StockFormats, WriteFileAttributes_nothing)
+{
+	testWriteFileAttributes(0, L"------w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_d)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_DIRECTORY, L"d-----w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_c)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_COMPRESSED, L"-c----w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_s)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_SYSTEM, L"--s---w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_h)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_HIDDEN, L"---h--w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_a)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_ARCHIVE, L"----a-w-");
+}
+
+TEST(StockFormats, WriteFileAttributes_t)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_TEMPORARY, L"-----tw-");
+}
+
+TEST(StockFormats, WriteFileAttributes_readonly)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_READONLY, L"------r-");
+}
+
+TEST(StockFormats, WriteFileAttributes_r)
+{
+	testWriteFileAttributes(FILE_ATTRIBUTE_REPARSE_POINT, L"------wr");
+}
+
+TEST(StockFormats, WriteFileAttributes_everything)
+{
+	testWriteFileAttributes(
+		FILE_ATTRIBUTE_DIRECTORY | 
+		FILE_ATTRIBUTE_COMPRESSED | 
+		FILE_ATTRIBUTE_SYSTEM | 
+		FILE_ATTRIBUTE_HIDDEN | 
+		FILE_ATTRIBUTE_ARCHIVE | 
+		FILE_ATTRIBUTE_TEMPORARY | 
+		FILE_ATTRIBUTE_READONLY | 
+		FILE_ATTRIBUTE_REPARSE_POINT, L"dcshatrr");
+}

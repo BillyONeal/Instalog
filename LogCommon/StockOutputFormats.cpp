@@ -29,9 +29,47 @@ namespace Instalog {
 	{
 
 	}
-	void WriteFileAttributes(std::wostream &str, unsigned __int64 time)
+	void WriteFileAttributes( std::wostream &str, unsigned __int32 attributes )
 	{
+		if (attributes & FILE_ATTRIBUTE_DIRECTORY)
+			str << L'd';
+		else
+			str << L'-';
 
+		if (attributes & FILE_ATTRIBUTE_COMPRESSED)
+			str << L'c';
+		else
+			str << L'-';
+
+		if (attributes & FILE_ATTRIBUTE_SYSTEM)
+			str << L's';
+		else
+			str << L'-';
+
+		if (attributes & FILE_ATTRIBUTE_HIDDEN)
+			str << L'h';
+		else
+			str << L'-';
+
+		if (attributes & FILE_ATTRIBUTE_ARCHIVE)
+			str << L'a';
+		else
+			str << L'-';
+
+		if (attributes & FILE_ATTRIBUTE_TEMPORARY)
+			str << L't';
+		else
+			str << L'-';
+
+		if (attributes & FILE_ATTRIBUTE_READONLY)
+			str << L'r';
+		else
+			str << L'w';
+
+		if (attributes & FILE_ATTRIBUTE_REPARSE_POINT)
+			str << L'r';
+		else
+			str << L'-';
 	}
 	void WriteDefaultFileOutput(std::wostream &str, std::wstring const& targetFile)
 	{
