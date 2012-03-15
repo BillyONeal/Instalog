@@ -2,6 +2,7 @@
 #include <sstream>
 #include "gtest/gtest.h"
 #include "LogCommon/StockOutputFormats.hpp"
+#include "LogCommon/File.hpp"
 #include "LogCommon/Win32Exception.hpp"
 
 using namespace testing;
@@ -111,7 +112,16 @@ TEST(StockFormats, DefaultFileNonexistent)
 
 TEST(StockFormats, DefaultFileWithCompany)
 {
+	using Instalog::SystemFacades::File;
 	std::wstringstream ss;
-	WriteDefaultFileOutput(ss, L"C:\\Windows\\Explorer.exe");
-	EXPECT_EQ(L"C:\\Windows\\Explorer.exe [2355208 2012-02-18 02:53:25 Microsoft Corporation]", ss.str());
+	WriteDefaultFileOutput(ss, L"Explorer");
+	WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
+	std::wstringstream expected;
+	expected << L"C:\\Windows\\Explorer.exe [" << fad.nFileSizeLow << L' ';
+	unsigned __int64 ctime = 
+		static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+		| fad.ftCreationTime.dwLowDateTime;
+	WriteDefaultDateFormat(expected, ctime);
+	expected << L" Microsoft Corporation]";
+	EXPECT_EQ(expected.str(), ss.str());
 }
