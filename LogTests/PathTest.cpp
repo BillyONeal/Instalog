@@ -60,6 +60,11 @@ static void TestResolve(std::wstring const& expected, std::wstring source)
 	ASSERT_EQ(expected, source);
 }
 
+TEST(PathResolution, DoesNotExistUnchanged)
+{
+	TestResolve(L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe");
+}
+
 TEST(PathResolution, CanonicalPathUnchanged)
 {
 	TestResolve(L"C:\\Windows\\Explorer.exe", L"C:\\Windows\\Explorer.exe");
@@ -87,15 +92,15 @@ TEST(PathResolution, SlashGlobalrootRemoved)
 
 TEST(PathResolution, System32Replaced)
 {
-	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"system32\\Explorer.exe");
+	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, System32SlashedReplaced)
 {
-	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"\\system32\\Explorer.exe");
+	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"\\system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, WindDirReplaced)
 {
-	TestResolve(L"C:\\Windows\\System32\\Explorer.exe", L"\\system32\\Explorer.exe");
+	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"\\system32\\Ntoskrnl.exe");
 }
