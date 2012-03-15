@@ -21,9 +21,9 @@ namespace Instalog { namespace SystemFacades {
 		~File();
 		unsigned __int64 GetSize() const;
 		DWORD GetAttributes() const;
+		BY_HANDLE_FILE_INFORMATION GetExtendedAttributes() const;
 		std::vector<char> ReadBytes(unsigned int bytesToRead) const;
 		bool WriteBytes(std::vector<char> const& bytes); // TODO: const?
-		BY_HANDLE_FILE_INFORMATION GetExtendedAttributes() const;
 		static unsigned __int64 GetSize(std::wstring const& filename);
 		static DWORD GetAttributes(std::wstring const& filename);
 		static WIN32_FILE_ATTRIBUTE_DATA GetExtendedAttributes(std::wstring const& filename);

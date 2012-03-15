@@ -26,10 +26,40 @@ TEST(File, CloseActuallyCalled)
 	ASSERT_FALSE(File::Exists(L"./CloseActuallyCalled.txt"));
 }
 
-// TEST(File, GetSizeUsingHandle)
-// {
-// 	File unitUnderTest(L"./CloseActuallyCalled.txt", GENERIC_READ, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE);
-// }
+TEST(File, GetSizeHandle)
+{
+	std::vector<char> bytesToWrite;
+	bytesToWrite.push_back('t');
+	bytesToWrite.push_back('e');
+	bytesToWrite.push_back('s');
+	bytesToWrite.push_back('t');
+
+	// Write to the file
+	{
+		File fileToWriteTo(L"./GetSizeHandle.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS);
+		fileToWriteTo.WriteBytes(bytesToWrite);
+	}
+
+	// Read from the file
+	{
+		File fileToReadFrom(L"./GetSizeHandle.txt", GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE);
+		EXPECT_EQ(4, fileToReadFrom.GetSize());
+	}
+}
+
+TEST(File, GetAttributesHandle)
+{
+	// Write to the file
+	{
+		File fileToWriteTo(L"./GetAttributesHandle.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS);
+	}
+
+	// Read from the file
+	{
+		File fileToReadFrom(L"./GetAttributesHandle.txt", GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE);
+		EXPECT_EQ(FILE_ATTRIBUTE_ARCHIVE, fileToReadFrom.GetAttributes());
+	}
+}
 
 TEST(File, CanReadBytes)
 {
@@ -49,7 +79,7 @@ TEST(File, CanWriteBytes)
 
 	// Write to the file
 	{
-		File fileToWriteTo(L"./CanWriteBytes.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW);
+		File fileToWriteTo(L"./CanWriteBytes.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS);
 		EXPECT_TRUE(fileToWriteTo.WriteBytes(bytesToWrite));
 	}
 
@@ -63,7 +93,7 @@ TEST(File, CanWriteBytes)
 
 TEST(File, CantWriteBytesToReadOnlyFile)
 {
-	File fileToWriteTo(L"./CantWriteBytesToReadOnlyFile.txt", GENERIC_READ, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE);
+	File fileToWriteTo(L"./CantWriteBytesToReadOnlyFile.txt", GENERIC_READ, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE);
 
 	std::vector<char> bytesToWrite;
 	bytesToWrite.push_back('t');
