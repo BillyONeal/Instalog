@@ -54,15 +54,15 @@ TEST(Path, BothAreEmpty)
 	EXPECT_EQ(L"", Append(L"", L""));
 }
 
-static void TestResolve(std::wstring const& expected, std::wstring source)
+static void TestResolve(std::wstring const& expected, std::wstring source, bool expectedReturn = true)
 {
-	ResolveFromCommandLine(source);
-	ASSERT_EQ(expected, source);
+	EXPECT_EQ(expectedReturn, ResolveFromCommandLine(source));
+	EXPECT_EQ(expected, source);
 }
 
 TEST(PathResolution, DoesNotExistUnchanged)
 {
-	TestResolve(L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe");
+	TestResolve(L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe", false);
 }
 
 TEST(PathResolution, CanonicalPathUnchanged)

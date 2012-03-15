@@ -111,17 +111,17 @@ namespace Instalog { namespace Path {
 		return false;
 	}
 	
-	static void StripArgumentsFromPath(std::wstring &path)
+	static bool StripArgumentsFromPath(std::wstring &path)
 	{
 		// Just try the file
 		if (TryExtensions(path, path.end()))
-			return;
+			return true;
 
 		// For each spot where there's a space, try all the extensions
 		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath, path.end(), L' '))
 		{
 			if (TryExtensions(path, subpath))
-				return;
+				return true;
 		}
 
 		// Prepend the path with each path from %PATH% and try all the extensions
@@ -129,19 +129,21 @@ namespace Instalog { namespace Path {
 		for (std::vector<std::wstring>::iterator splitPathIt = splitPath.begin(); splitPathIt != splitPath.end(); ++splitPathIt)
 		{
 			std::wstring longpath(*splitPathIt);
-			Append(longpath, path);
+			longpath.append(path);
 			if (TryExtensions(longpath, longpath.end()))
 			{
 				path = longpath;
-				return;
+				return true;
 			}
 		}
+
+		return false;
 	}
 
-	void ResolveFromCommandLine(std::wstring &path)
+	bool ResolveFromCommandLine(std::wstring &path)
 	{
 		NativePathToWin32Path(path);
-		StripArgumentsFromPath(path);
+		return StripArgumentsFromPath(path);
 	}
 
 }}
