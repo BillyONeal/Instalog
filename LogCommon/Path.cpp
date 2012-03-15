@@ -180,11 +180,36 @@ namespace Instalog { namespace Path {
 		return false;
 	}
 
+	void Prettify(std::wstring::iterator first, std::wstring::iterator last)
+	{
+		bool upperCase = true;
+		for(; first != last; ++first)
+		{
+			if (upperCase)
+			{
+				*first = towupper(*first);
+				upperCase = false;
+			}
+			else
+			{
+				if (*first == L'\\')
+				{
+					upperCase = true;
+				}
+				else
+				{
+					*first = towlower(*first);
+				}
+			}
+		}
+	}
+
 	bool ResolveFromCommandLine(std::wstring &path)
 	{
 		NativePathToWin32Path(path);
 		if (StripArgumentsFromPath(path))
 		{
+			Prettify(path.begin(), path.end());
 			return !SystemFacades::File::IsDirectory(path);
 		}
 
