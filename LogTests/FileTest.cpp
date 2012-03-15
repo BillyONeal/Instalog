@@ -5,6 +5,7 @@
 
 using Instalog::SystemFacades::File;
 using Instalog::SystemFacades::ErrorFileNotFoundException;
+using Instalog::SystemFacades::ErrorAccessDeniedException;
 
 TEST(File, CanOpenDefault)
 {
@@ -24,12 +25,52 @@ TEST(File, CloseActuallyCalled)
 	ASSERT_FALSE(File::Exists(L"./CloseActuallyCalled.txt"));
 }
 
+// TEST(File, GetSizeUsingHandle)
+// {
+// 	File unitUnderTest(L"./CloseActuallyCalled.txt", GENERIC_READ, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE);
+// }
+
 TEST(File, CanReadBytes)
 {
 	File explorer(L"C:\\Windows\\Explorer.exe");
 	std::vector<char> bytes = explorer.ReadBytes(2);
 	EXPECT_EQ('M', bytes[0]);
 	EXPECT_EQ('Z', bytes[1]);
+}
+
+TEST(File, CanWriteBytes)
+{
+	std::vector<char> bytesToWrite;
+	bytesToWrite.push_back('t');
+	bytesToWrite.push_back('e');
+	bytesToWrite.push_back('s');
+	bytesToWrite.push_back('t');
+
+	// Write to the file
+	{
+		File fileToWriteTo(L"./CanWriteBytes.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW);
+		EXPECT_TRUE(fileToWriteTo.WriteBytes(bytesToWrite));
+	}
+
+	// Read from the file
+	{
+		File fileToReadFrom(L"./CanWriteBytes.txt", GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE);
+		std::vector<char> bytesRead = fileToReadFrom.ReadBytes(4);
+		EXPECT_EQ(bytesToWrite, bytesRead);
+	}
+}
+
+TEST(File, CantWriteBytesToReadOnlyFile)
+{
+	File fileToWriteTo(L"./CantWriteBytesToReadOnlyFile.txt", GENERIC_READ, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE);
+
+	std::vector<char> bytesToWrite;
+	bytesToWrite.push_back('t');
+	bytesToWrite.push_back('e');
+	bytesToWrite.push_back('s');
+	bytesToWrite.push_back('t');
+
+	EXPECT_THROW(fileToWriteTo.WriteBytes(bytesToWrite), ErrorAccessDeniedException);
 }
 
 TEST(File, CanDelete)

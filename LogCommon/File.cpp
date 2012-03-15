@@ -27,6 +27,11 @@ namespace Instalog { namespace SystemFacades {
 		::CloseHandle(hFile);
 	}
 
+	unsigned __int64 File::GetSize() const
+	{
+		return 0;
+	}
+
 	std::vector<char> File::ReadBytes( unsigned int bytesToRead ) const
 	{
 		std::vector<char> bytes(bytesToRead);
@@ -43,6 +48,21 @@ namespace Instalog { namespace SystemFacades {
 		}
 
 		return bytes;
+	}
+
+	bool File::WriteBytes( std::vector<char> const& bytes )
+	{
+		DWORD bytesWritten;
+
+		if (WriteFile(hFile, bytes.data(), (DWORD)bytes.size(), &bytesWritten, NULL) == false)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+
+		if (bytesWritten == bytes.size())
+			return true;
+		else
+			return false;
 	}
 
 	void File::Delete( std::wstring const& filename)
