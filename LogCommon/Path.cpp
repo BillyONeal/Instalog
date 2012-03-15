@@ -138,10 +138,35 @@ namespace Instalog { namespace Path {
 		}
 	}
 
+	void Prettify(std::wstring::iterator first, std::wstring::iterator last)
+	{
+		bool upperCase = true;
+		for(; first != last; ++first)
+		{
+			if (upperCase)
+			{
+				*first = towupper(*first);
+				upperCase = false;
+			}
+			else
+			{
+				if (*first == L'\\')
+				{
+					upperCase = true;
+				}
+				else
+				{
+					*first = towlower(*first);
+				}
+			}
+		}
+	}
+
 	void ResolveFromCommandLine(std::wstring &path)
 	{
 		NativePathToWin32Path(path);
 		StripArgumentsFromPath(path);
+		Prettify(path.begin(), path.end());
 	}
 
 }}
