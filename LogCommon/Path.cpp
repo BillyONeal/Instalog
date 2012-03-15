@@ -143,7 +143,12 @@ namespace Instalog { namespace Path {
 	bool ResolveFromCommandLine(std::wstring &path)
 	{
 		NativePathToWin32Path(path);
-		return StripArgumentsFromPath(path);
+		if (StripArgumentsFromPath(path))
+		{
+			return !SystemFacades::File::IsDirectory(path);
+		}
+
+		return false;
 	}
 
 }}
