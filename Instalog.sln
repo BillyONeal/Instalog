@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogCommon", "LogCommon\LogC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogTests", "LogTests\LogTests.vcxproj", "{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogWhitelistBuilder", "LogWhitelistBuilder\LogWhitelistBuilder.vcxproj", "{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -41,14 +39,6 @@ Global
 		{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}.Release|Win32.Build.0 = Release|Win32
 		{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}.Release|x64.ActiveCfg = Release|x64
 		{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}.Release|x64.Build.0 = Release|x64
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Debug|Win32.Build.0 = Debug|Win32
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Debug|x64.ActiveCfg = Debug|x64
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Debug|x64.Build.0 = Debug|x64
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Release|Win32.ActiveCfg = Release|Win32
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Release|Win32.Build.0 = Release|Win32
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Release|x64.ActiveCfg = Release|x64
-		{2CDA15F5-EC42-4F5B-A8E7-195AC5DD60B4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
