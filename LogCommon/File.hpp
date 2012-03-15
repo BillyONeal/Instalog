@@ -19,7 +19,7 @@ namespace Instalog { namespace SystemFacades {
 			DWORD = FILE_ATTRIBUTE_NORMAL
 		);
 		~File();
-		std::vector<char> ReadBytes(int bytesToRead);
+		std::vector<char> ReadBytes(unsigned int bytesToRead);
 		static void Delete(std::wstring const& filename);
 		static bool Exists(std::wstring const& filename);
 		static bool IsDirectory(std::wstring const& filename);

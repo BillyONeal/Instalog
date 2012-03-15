@@ -25,7 +25,7 @@ namespace Instalog { namespace SystemFacades {
 		::CloseHandle(hFile);
 	}
 
-	std::vector<char> File::ReadBytes( int bytesToRead )
+	std::vector<char> File::ReadBytes( unsigned int bytesToRead )
 	{
 		std::vector<char> bytes(bytesToRead);
 		DWORD bytesRead = 0;
