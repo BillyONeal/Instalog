@@ -93,6 +93,5 @@ TEST(File, IsExecutableDirectory)
 
 TEST(File, GetsCompanyInformation)
 {
-	File f(L"C:\\Windows\\Explorer.exe");
-	EXPECT_EQ(L"Microsoft Corporation", f.GetCompany());
+	EXPECT_EQ(L"Microsoft Corporation", File::GetCompany(L"C:\\Windows\\Explorer.exe"));
 }

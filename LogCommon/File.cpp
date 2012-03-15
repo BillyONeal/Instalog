@@ -2,6 +2,8 @@
 #include "File.hpp"
 #include "Win32Exception.hpp"
 
+#pragma comment(lib, "Version.lib")
+
 namespace Instalog { namespace SystemFacades {
 
 	File::File( 
@@ -75,6 +77,28 @@ namespace Instalog { namespace SystemFacades {
 		File executable = File(filename);
 		std::vector<char> bytes = executable.ReadBytes(2);
 		return bytes[0] == 'M' && bytes[1] == 'Z';
+	}
+
+	std::wstring File::GetCompany(std::wstring const& filename)
+	{
+		DWORD infoSize = ::GetFileVersionInfoSizeW(filename.c_str(), 0);
+		if (infoSize == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+		std::vector<char> buff(infoSize);
+		if (::GetFileVersionInfoW(filename.c_str(), 0, static_cast<DWORD>(buff.size()), buff.data()) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+		wchar_t const targetPath[] = L"\\StringFileInfo\\040904B0\\CompanyName";
+		void * companyData;
+		UINT len;
+		if (::VerQueryValueW(buff.data(), targetPath, &companyData, &len) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+		return std::wstring(static_cast<wchar_t *>(companyData), len-1);
 	}
 
 }}

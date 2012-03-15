@@ -22,7 +22,6 @@ namespace Instalog { namespace SystemFacades {
 		unsigned __int64 GetSize() const;
 		DWORD GetAttributes() const;
 		std::vector<char> ReadBytes(unsigned int bytesToRead) const;
-		std::wstring GetCompany() const;
 		BY_HANDLE_FILE_INFORMATION GetExtendedAttributes() const;
 		static unsigned __int64 GetSize(std::wstring const& filename);
 		static DWORD GetAttributes(std::wstring const& filename);
@@ -31,6 +30,7 @@ namespace Instalog { namespace SystemFacades {
 		static bool Exists(std::wstring const& filename);
 		static bool IsDirectory(std::wstring const& filename);
 		static bool IsExecutable(std::wstring const& filename);
+		static std::wstring GetCompany(std::wstring const& target);
 	};
 
 }}
