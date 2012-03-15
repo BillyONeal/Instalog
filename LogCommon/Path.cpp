@@ -91,10 +91,26 @@ namespace Instalog { namespace Path {
 
 	static bool RundllCheck(std::wstring &path)
 	{
-		static std::wstring rundllpath = getWindowsDirectory().append(L"System32/rundll32.exe");
+		static std::wstring rundllpath = getWindowsDirectory().append(L"System32\\rundll32");
 		
-		if (boost::iequals(rundllpath, path))
+		if (boost::istarts_with(path, rundllpath))
 		{
+			std::wstring::iterator firstComma = std::find(path.begin() + rundllpath.size(), path.end(), L',');
+			if (firstComma == path.end())
+			{
+				return false;
+			}
+			path.erase(firstComma, path.end());
+			path.erase(path.begin(), path.begin() + rundllpath.size());
+			if (boost::istarts_with(path, L".exe"))
+			{
+				path.erase(0, 4);
+			}
+			boost::trim(path);
+			if (path.size() == 0)
+			{
+				return false;
+			}
 			ResolveFromCommandLine(path);
 			return true;
 		}
@@ -105,22 +121,16 @@ namespace Instalog { namespace Path {
 	static bool TryExtensions( std::wstring &searchpath, std::wstring::iterator extensionat ) 
 	{
 		static std::vector<std::wstring> splitPathExt = getSplitPathExt();
+		
+		// Try rundll32 check first
+		if (RundllCheck(searchpath))
+		{
+			return true;
+		}
 
 		// Search with no path extension
 		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat)))
 		{
-			// Check if it contains rundll32
-			if (extensionat != searchpath.end())
-			{
-				std::wstring remainder(extensionat++, searchpath.end());
-				if (RundllCheck(remainder))
-				{
-					searchpath = remainder;
-					return SystemFacades::File::Exists(searchpath);
-				}
-			}
-
-			// Doesn't contain rundll32
 			searchpath.erase(extensionat, searchpath.end());
 			return true;
 		}
@@ -130,20 +140,29 @@ namespace Instalog { namespace Path {
 		{
 			if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat).append(*splitPathExtIt))) 
 			{
-				// Check if it contains rundll32
-				if (extensionat != searchpath.end())
-				{
-					std::wstring remainder(extensionat++, searchpath.end());
-					if (RundllCheck(remainder))
-					{
-						searchpath = remainder;
-						return SystemFacades::File::Exists(searchpath);
-					}
-				}
-
-				// Doesn't contain rundll32
 				searchpath.replace(extensionat, searchpath.end(), splitPathExtIt->begin(), splitPathExtIt->end());
-				searchpath.erase(extensionat + splitPathExtIt->size(), searchpath.end());
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	static bool TryExtensionsAndPaths( std::wstring &path, std::wstring::iterator spacelocation ) 
+	{
+		// First, try all of the available extensions
+		if (TryExtensions(path, spacelocation))
+			return true;
+
+		// Second, try to prepend it with each path in %PATH% and try each extension
+		static std::vector<std::wstring> splitPath = getSplitPath();
+		for (std::vector<std::wstring>::iterator splitPathIt = splitPath.begin(); splitPathIt != splitPath.end(); ++splitPathIt)
+		{
+			std::wstring longpath = Path::Append(*splitPathIt, std::wstring(path.begin(), path.end()));
+			std::wstring::iterator longpathspacelocation = longpath.end() - std::distance(spacelocation, path.end());
+			if (TryExtensions(longpath, longpathspacelocation))
+			{
+				path = longpath;
 				return true;
 			}
 		}
@@ -153,28 +172,19 @@ namespace Instalog { namespace Path {
 	
 	static bool StripArgumentsFromPath(std::wstring &path)
 	{
-		// Just try the file
-		if (TryExtensions(path, path.end()))
-			return true;
-
-		// For each spot where there's a space, try all the extensions
-		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath, path.end(), L' '))
+		// For each spot where there's a space, try all available extensions
+		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath + 1, path.end(), L' '))
 		{
-			if (TryExtensions(path, subpath))
-				return true;
-		}
-
-		// Prepend the path with each path from %PATH% and try all the extensions
-		static std::vector<std::wstring> splitPath = getSplitPath();
-		for (std::vector<std::wstring>::iterator splitPathIt = splitPath.begin(); splitPathIt != splitPath.end(); ++splitPathIt)
-		{
-			std::wstring longpath(*splitPathIt);
-			longpath.append(path);
-			if (TryExtensions(longpath, longpath.end()))
+			if (TryExtensionsAndPaths(path, subpath))
 			{
-				path = longpath;
 				return true;
 			}
+		}	
+
+		// Try all available extensions for the whole path
+		if (TryExtensionsAndPaths(path, path.end()))
+		{
+			return true;
 		}
 
 		return false;
