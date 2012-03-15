@@ -2,6 +2,8 @@
 #include "resource.h"
 #include <functional>
 #include <algorithm>
+#include <iostream>
+#include <iterator>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <windows.h>
@@ -51,6 +53,11 @@ namespace Instalog {
 	{
 		boost::algorithm::to_lower(checked);
 		return std::binary_search(innards.begin(), innards.end(), checked);
+	}
+
+	void Whitelist::PrintAll( std::wostream & str ) const
+	{
+		std::copy(innards.begin(), innards.end(), std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
 	}
 
 }

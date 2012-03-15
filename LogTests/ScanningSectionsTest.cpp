@@ -34,14 +34,20 @@ TEST_F(RunningProcessesTest, PriorityIsScanning)
 
 TEST_F(RunningProcessesTest, SvchostHasFullLine)
 {
-	std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs\n";
+	std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs";
 	Go();
 	ASSERT_PRED2((boost::algorithm::contains<std::wstring, std::wstring>), ss.str(), svcHost);
 }
 
 TEST_F(RunningProcessesTest, ExplorerDoesNotHaveFullLine)
 {
-	std::wstring svcHost = L"C:\\Windows\\Explorer.EXE\n";
+	std::wstring explorer = L"C:\\Windows\\Explorer.exe\n";
 	Go();
-	ASSERT_PRED2((boost::algorithm::contains<std::wstring, std::wstring>), ss.str(), svcHost);
+	ASSERT_PRED2((boost::algorithm::contains<std::wstring, std::wstring>), ss.str(), explorer);
+}
+
+TEST_F(RunningProcessesTest, NtoskrnlNotPresent)
+{
+	Go();
+	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
 }

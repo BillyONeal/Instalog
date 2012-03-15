@@ -1,7 +1,10 @@
 #include "pch.hpp"
 #include <vector>
 #include <boost/algorithm/string/case_conv.hpp>
+#include "resource.h"
 #include "Process.hpp"
+#include "Path.hpp"
+#include "Whitelist.hpp"
 #include "ScopedPrivilege.hpp"
 #include "Win32Exception.hpp"
 #include "ScanningSections.hpp"
@@ -15,17 +18,15 @@ namespace Instalog
 		using Instalog::SystemFacades::ScopedPrivilege;
 
 		std::vector<std::wstring> fullPrintList;
-		std::wstring winDir;
-		winDir.resize(MAX_PATH);
-		UINT winDirSize = ::GetWindowsDirectoryW(&winDir[0], MAX_PATH);
-		winDir.resize(winDirSize);
-		fullPrintList.push_back(winDir + L"\\system32\\svchost.exe");
-		fullPrintList.push_back(winDir + L"\\System32\\svchost.exe");
-		fullPrintList.push_back(winDir + L"\\system32\\svchost");
-		fullPrintList.push_back(winDir + L"\\System32\\svchost");
-		fullPrintList.push_back(winDir + L"\\system32\\rundll32.exe");
-		fullPrintList.push_back(winDir + L"\\System32\\rundll32.exe");
-		std::sort(fullPrintList.begin(), fullPrintList.end());
+		std::wstring winDir = Path::GetWindowsPath();
+		fullPrintList.push_back(Path::Append(winDir, L"System32\\Svchost.exe"));
+		fullPrintList.push_back(Path::Append(winDir, L"System32\\Svchost"));
+		fullPrintList.push_back(Path::Append(winDir, L"System32\\Rundll32.exe"));
+		fullPrintList.push_back(Path::Append(winDir, L"Syswow64\\Rundll32.exe"));
+		boost::algorithm::to_lower(winDir);
+		std::vector<std::pair<std::wstring, std::wstring>> replacements;
+		replacements.emplace_back(std::pair<std::wstring, std::wstring>(L"c:\\windows\\", winDir));
+		Whitelist w(IDR_RUNNINGPROCESSESWHITELIST, replacements);
 
 		ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
 		ProcessEnumerator enumerator;
@@ -34,7 +35,12 @@ namespace Instalog
 			try
 			{
 				std::wstring executable = it->GetExecutablePath();
-				if (std::binary_search(fullPrintList.begin(), fullPrintList.end(), executable))
+				if (w.IsOnWhitelist(executable))
+				{
+					continue;
+				}
+				Path::Prettify(executable.begin(), executable.end());
+				if (std::find(fullPrintList.begin(), fullPrintList.end(), executable) != fullPrintList.end())
 				{
 					logOutput << it->GetCmdLine() << L"\n";
 				}

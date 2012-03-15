@@ -152,6 +152,9 @@
       <Project>{2823e2c6-d995-4944-a45d-1feb3fdddae9}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
