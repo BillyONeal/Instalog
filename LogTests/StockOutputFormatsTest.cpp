@@ -108,3 +108,10 @@ TEST(StockFormats, DefaultFileNonexistent)
 	WriteDefaultFileOutput(ss, L"C:\\Does\\Not\\Exist.exe");
 	EXPECT_EQ(L"C:\\Does\\Not\\Exist.exe [x]", ss.str());
 }
+
+TEST(StockFormats, DefaultFileWithCompany)
+{
+	std::wstringstream ss;
+	WriteDefaultFileOutput(ss, L"C:\\Windows\\Explorer.exe");
+	EXPECT_EQ(L"C:\\Windows\\Explorer.exe [2355208 2012-02-18 02:53:25 Microsoft Corporation]", ss.str());
+}

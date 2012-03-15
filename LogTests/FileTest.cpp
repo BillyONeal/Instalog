@@ -5,6 +5,7 @@
 
 using Instalog::SystemFacades::File;
 using Instalog::SystemFacades::ErrorFileNotFoundException;
+using Instalog::SystemFacades::ErrorPathNotFoundException;
 
 TEST(File, CanOpenDefault)
 {
@@ -94,4 +95,9 @@ TEST(File, IsExecutableDirectory)
 TEST(File, GetsCompanyInformation)
 {
 	EXPECT_EQ(L"Microsoft Corporation", File::GetCompany(L"C:\\Windows\\Explorer.exe"));
+}
+
+TEST(File, ExtendedAttributesStaticFailsNonexistent)
+{
+	EXPECT_THROW(File::GetExtendedAttributes(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
 }

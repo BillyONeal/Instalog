@@ -4,7 +4,11 @@
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "Path.hpp"
+#include "File.hpp"
 #include "StockOutputFormats.hpp"
+
+using Instalog::SystemFacades::Win32Exception;
+using Instalog::SystemFacades::File;
 
 namespace Instalog {
 
@@ -14,7 +18,7 @@ namespace Instalog {
 		SYSTEMTIME st;
 		if (FileTimeToSystemTime(reinterpret_cast<FILETIME const*>(&time), &st) == 0)
 		{
-			SystemFacades::Win32Exception::ThrowFromLastError();
+			Win32Exception::ThrowFromLastError();
 		}
 		wios_fill_saver saveFill(str);
 		ios_flags_saver saveFlags(str);
@@ -81,15 +85,32 @@ namespace Instalog {
 		else
 			str << L'-';
 	}
-	void WriteDefaultFileOutput( std::wostream &str, std::wstring const& targetFile )
+	void WriteDefaultFileOutput( std::wostream &str, std::wstring targetFile )
 	{
-		std::wstring tmp(targetFile);
-		WriteDefaultFileOutput(str, std::move(tmp));
-	}
-
-	void WriteDefaultFileOutput( std::wostream &str, std::wstring && targetFile )
-	{
-		str << targetFile << L" [x]";
+		if (Path::ResolveFromCommandLine(targetFile) == false)
+		{
+			str << targetFile << L" [x]";
+			return;
+		}
+		std::wstring companyInfo(L" ");
+		try
+		{
+			companyInfo.append(File::GetCompany(targetFile));
+		}
+		catch (Win32Exception const&)
+		{
+			companyInfo = L"";
+		}
+		WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
+		unsigned __int64 size = 
+			static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+			| fad.nFileSizeLow;
+		str << targetFile << L" [" << size << L' ';
+		unsigned __int64 ctime = 
+			static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+			| fad.ftCreationTime.dwLowDateTime;
+		WriteDefaultDateFormat(str, ctime);
+		str << companyInfo << L"]";
 	}
 
 }

@@ -101,4 +101,14 @@ namespace Instalog { namespace SystemFacades {
 		return std::wstring(static_cast<wchar_t *>(companyData), len-1);
 	}
 
+	WIN32_FILE_ATTRIBUTE_DATA File::GetExtendedAttributes( std::wstring const& filename )
+	{
+		WIN32_FILE_ATTRIBUTE_DATA fad;
+		if (::GetFileAttributesExW(filename.c_str(), GetFileExInfoStandard, &fad) == 0)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+		return fad;
+	}
+
 }}
