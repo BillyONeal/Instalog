@@ -4,54 +4,75 @@
 
 using namespace Instalog::Path;
 
-TEST(Path, NoSlashes)
+TEST(PathAppendTest, NoSlashes)
 {
 	EXPECT_EQ(L"one\\two", Append(L"one", L"two"));
 }
 
-TEST(Path, PathHasSlashes)
+TEST(PathAppendTest, PathHasSlashes)
 {
 	EXPECT_EQ(L"one\\two", Append(L"one\\", L"two"));
 }
 
-TEST(Path, MoreHasSlashes)
+TEST(PathAppendTest, MoreHasSlashes)
 {
 	EXPECT_EQ(L"one\\two", Append(L"one", L"\\two"));
 }
 
-TEST(Path, BothHaveSlashes)
+TEST(PathAppendTest, BothHaveSlashes)
 {
 	EXPECT_EQ(L"one\\two", Append(L"one\\", L"\\two"));
 }
 
-TEST(Path, PathHasManySlashes)
+TEST(PathAppendTest, PathHasManySlashes)
 {
 	EXPECT_EQ(L"one\\\\\\two", Append(L"one\\\\\\", L"two"));
 }
 
-TEST(Path, MoreHasManySlashes)
+TEST(PathAppendTest, MoreHasManySlashes)
 {
 	EXPECT_EQ(L"one\\\\\\two", Append(L"one", L"\\\\\\two"));
 }
 
-TEST(Path, BothHaveManySlashes)
+TEST(PathAppendTest, BothHaveManySlashes)
 {
 	EXPECT_EQ(L"one\\\\\\\\\\two", Append(L"one\\\\\\", L"\\\\\\two"));
 }
 
-TEST(Path, MoreIsEmpty)
+TEST(PathAppendTest, MoreIsEmpty)
 {
 	EXPECT_EQ(L"one", Append(L"one", L""));
 }
 
-TEST(Path, PathIsEmpty)
+TEST(PathAppendTest, PathIsEmpty)
 {
 	EXPECT_EQ(L"two", Append(L"", L"two"));
 }
 
-TEST(Path, BothAreEmpty)
+TEST(PathAppendTest, BothAreEmpty)
 {
 	EXPECT_EQ(L"", Append(L"", L""));
+}
+
+TEST(PathPrettify, CorrectOutput)
+{
+	std::wstring path(L"C:\\ExAmPlE\\FooBar\\Target.EXE");
+	Prettify(path.begin(), path.end());
+	ASSERT_EQ(L"C:\\Example\\Foobar\\Target.exe", path);
+}
+
+TEST(PathPrettify, DriveCapitalized)
+{
+	std::wstring path(L"c:\\Example\\Foobar\\Target.exe");
+	Prettify(path.begin(), path.end());
+	ASSERT_EQ(L"C:\\Example\\Foobar\\Target.exe", path);
+}
+
+TEST(PathPrettify, SpacesOkay)
+{
+	std::wstring path(L"C:\\Example\\Foo bar\\Target.exe");
+	Prettify(path.begin(), path.end());
+	ASSERT_EQ(L"C:\\Example\\Foo bar\\Target.exe", path);
 }
 
 static void TestResolve(std::wstring const& expected, std::wstring source, bool expectedReturn = true)
