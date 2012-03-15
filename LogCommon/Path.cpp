@@ -168,6 +168,7 @@ namespace Instalog { namespace Path {
 	{
 		NativePathToWin32Path(path);
 		if (StripArgumentsFromPath(path))
+		{
 			Prettify(path.begin(), path.end());
 			return !SystemFacades::File::IsDirectory(path);
 		}
