@@ -61,6 +61,55 @@ TEST(File, GetAttributesHandle)
 	}
 }
 
+TEST(File, GetExtendedAttributes)
+{
+	File explorer(L"C:\\Windows\\Explorer.exe");
+	BY_HANDLE_FILE_INFORMATION a = explorer.GetExtendedAttributes();
+
+	WIN32_FILE_ATTRIBUTE_DATA b = File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
+
+	EXPECT_EQ(a.dwFileAttributes, b.dwFileAttributes);
+	EXPECT_EQ(a.ftCreationTime.dwLowDateTime, b.ftCreationTime.dwLowDateTime);
+	EXPECT_EQ(a.ftCreationTime.dwHighDateTime, b.ftCreationTime.dwHighDateTime);
+	EXPECT_EQ(a.ftLastAccessTime.dwLowDateTime, b.ftLastAccessTime.dwLowDateTime);
+	EXPECT_EQ(a.ftLastAccessTime.dwHighDateTime, b.ftLastAccessTime.dwHighDateTime);
+	EXPECT_EQ(a.ftLastWriteTime.dwLowDateTime, b.ftLastWriteTime.dwLowDateTime);
+	EXPECT_EQ(a.ftLastWriteTime.dwHighDateTime, b.ftLastWriteTime.dwHighDateTime);
+	EXPECT_EQ(a.nFileSizeHigh, b.nFileSizeHigh);
+	EXPECT_EQ(a.nFileSizeLow, b.nFileSizeLow);
+}
+
+TEST(File, GetSizeNoHandle)
+{
+	std::vector<char> bytesToWrite;
+	bytesToWrite.push_back('t');
+	bytesToWrite.push_back('e');
+	bytesToWrite.push_back('s');
+	bytesToWrite.push_back('t');
+
+	// Write to the file
+	{
+		File fileToWriteTo(L"./GetSizeNoHandle.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS);
+		fileToWriteTo.WriteBytes(bytesToWrite);
+	}
+
+	EXPECT_EQ(4, File::GetSize(L"./GetSizeNoHandle.txt"));
+
+	File::Delete(L"GetSizeNoHandle.txt");
+}
+
+TEST(File, GetAttributesNoHandle)
+{
+	// Write to the file
+	{
+		File fileToWriteTo(L"./GetAttributesNoHandle.txt", GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS);
+	}
+
+	EXPECT_EQ(FILE_ATTRIBUTE_ARCHIVE, File::GetAttributes(L"./GetAttributesNoHandle.txt"));
+
+	File::Delete(L"./GetAttributesNoHandle.txt");
+}
+
 TEST(File, CanReadBytes)
 {
 	File explorer(L"C:\\Windows\\Explorer.exe");
@@ -176,4 +225,9 @@ TEST(File, ExtendedAttributesStaticFailsNonexistent)
 TEST(File, AttributesStaticFailsNonexistent)
 {
 	EXPECT_THROW(File::GetAttributes(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
+}
+
+TEST(File, GetSizeStaticFailsNonexistent)
+{
+	EXPECT_THROW(File::GetSize(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
 }
