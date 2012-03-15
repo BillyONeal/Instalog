@@ -40,6 +40,14 @@ namespace Instalog { namespace Path {
 		}
 	}
 
+	static std::wstring getWindowsDirectory()
+	{
+		wchar_t windir[MAX_PATH];
+		UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
+		windir[len++] = L'\\';
+		return std::wstring(windir, len);
+	}
+
 	static void NativePathToWin32Path(std::wstring &path)
 	{
 		// Remove \, ??\, \?\, and globalroot\ 
@@ -50,19 +58,14 @@ namespace Instalog { namespace Path {
 		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"globalroot\\")) { chop += 11; }		
 		path.erase(path.begin(), chop);
 
+		static std::wstring windowsDirectory = getWindowsDirectory();
 		if (boost::istarts_with(path, L"system32\\"))
 		{
-			wchar_t windir[MAX_PATH];
-			UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
-			windir[len] = L'\\';
-			path.insert(0, windir, len + 1);
+			path.insert(0, windowsDirectory);
 		}
 		else if (boost::istarts_with(path, L"systemroot\\"))
 		{
-			wchar_t windir[MAX_PATH];
-			UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
-			windir[len] = L'\\';
-			path.replace(0, 11, windir, len + 1);
+			path.replace(0, 11, windowsDirectory);
 		}
 	}
 
@@ -86,13 +89,38 @@ namespace Instalog { namespace Path {
 		return splitPathExt;
 	}
 
+	static bool RundllCheck(std::wstring &path)
+	{
+		static std::wstring rundllpath = getWindowsDirectory().append(L"System32/rundll32.exe");
+		
+		if (boost::iequals(rundllpath, path))
+		{
+			ResolveFromCommandLine(path);
+			return true;
+		}
+
+		return false;
+	}
+
 	static bool TryExtensions( std::wstring &searchpath, std::wstring::iterator extensionat ) 
 	{
 		static std::vector<std::wstring> splitPathExt = getSplitPathExt();
 
 		// Search with no path extension
-		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat))) 
+		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat)))
 		{
+			// Check if it contains rundll32
+			if (extensionat != searchpath.end())
+			{
+				std::wstring remainder(extensionat++, searchpath.end());
+				if (RundllCheck(remainder))
+				{
+					searchpath = remainder;
+					return SystemFacades::File::Exists(searchpath);
+				}
+			}
+
+			// Doesn't contain rundll32
 			searchpath.erase(extensionat, searchpath.end());
 			return true;
 		}
@@ -102,6 +130,18 @@ namespace Instalog { namespace Path {
 		{
 			if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat).append(*splitPathExtIt))) 
 			{
+				// Check if it contains rundll32
+				if (extensionat != searchpath.end())
+				{
+					std::wstring remainder(extensionat++, searchpath.end());
+					if (RundllCheck(remainder))
+					{
+						searchpath = remainder;
+						return SystemFacades::File::Exists(searchpath);
+					}
+				}
+
+				// Doesn't contain rundll32
 				searchpath.replace(extensionat, searchpath.end(), splitPathExtIt->begin(), splitPathExtIt->end());
 				searchpath.erase(extensionat + splitPathExtIt->size(), searchpath.end());
 				return true;
