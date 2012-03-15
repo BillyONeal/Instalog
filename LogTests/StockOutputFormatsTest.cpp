@@ -125,3 +125,26 @@ TEST(StockFormats, DefaultFileWithCompany)
 	expected << L" Microsoft Corporation]";
 	EXPECT_EQ(expected.str(), ss.str());
 }
+
+TEST(StockFormats, Listing)
+{
+	using Instalog::SystemFacades::File;
+	std::wstringstream ss;
+	WriteFileListingFile(ss, L"C:\\Windows\\Explorer.exe");
+	WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
+	std::wstringstream expected;
+	unsigned __int64 ctime = 
+		static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+		| fad.ftCreationTime.dwLowDateTime;
+	unsigned __int64 mtime = 
+		static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+		| fad.ftLastWriteTime.dwLowDateTime;
+	WriteDefaultDateFormat(expected, ctime);
+	expected << L" . ";
+	WriteDefaultDateFormat(expected, mtime);
+	expected << L' ' << fad.nFileSizeLow << L' ';
+	WriteFileAttributes(expected, fad.dwFileAttributes);
+	expected << L" C:\\Windows\\Explorer.exe";
+	EXPECT_EQ(expected.str(), ss.str());
+}
+
