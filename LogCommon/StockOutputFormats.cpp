@@ -113,4 +113,24 @@ namespace Instalog {
 		str << companyInfo << L"]";
 	}
 
+	void WriteFileListingFile( std::wostream &str, std::wstring const& targetFile )
+	{
+		WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
+		unsigned __int64 size = 
+			static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+			| fad.nFileSizeLow;
+		unsigned __int64 ctime = 
+			static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+			| fad.ftCreationTime.dwLowDateTime;
+		unsigned __int64 mtime = 
+			static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+			| fad.ftLastWriteTime.dwLowDateTime;
+		WriteDefaultDateFormat(str, ctime);
+		str << L" . ";
+		WriteDefaultDateFormat(str, mtime);
+		str << L' ' << size << L' ';
+		WriteFileAttributes(str, fad.dwFileAttributes);
+		str << L' ' << targetFile;
+	}
+
 }
