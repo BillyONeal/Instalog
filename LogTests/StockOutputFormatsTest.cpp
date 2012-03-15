@@ -21,3 +21,18 @@ TEST(StockFormats, InvalidDateThrows)
 	std::wostringstream ss;
 	EXPECT_THROW(WriteDefaultDateFormat(ss, ft), SystemFacades::ErrorInvalidParameterException);
 }
+
+TEST(StockFormats, DateMsIsCorrect)
+{
+	unsigned __int64 ft = 123412341234ull;
+	std::wostringstream ss;
+	WriteMillisecondDateFormat(ss, ft);
+	EXPECT_EQ(L"1601-01-01 03:25:41.0234", ss.str());
+}
+
+TEST(StockFormats, InvalidMsDateThrows)
+{
+	unsigned __int64 ft = 0xF000000000000000ull;
+	std::wostringstream ss;
+	EXPECT_THROW(WriteMillisecondDateFormat(ss, ft), SystemFacades::ErrorInvalidParameterException);
+}

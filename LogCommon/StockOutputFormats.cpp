@@ -6,8 +6,8 @@
 #include "StockOutputFormats.hpp"
 
 namespace Instalog {
-	
-	void WriteDefaultDateFormat(std::wostream &str, unsigned __int64 time)
+
+	static void DateFormatImpl(std::wostream &str, unsigned __int64 time, bool ms)
 	{
 		using namespace boost::io;
 		SYSTEMTIME st;
@@ -24,10 +24,19 @@ namespace Instalog {
 			<< std::setw(2) << st.wHour << L':'
 			<< std::setw(2) << st.wMinute << L':'
 			<< std::setw(2) << st.wSecond;
+		if (ms)
+		{
+			str << L'.' << std::setw(4) << st.wMilliseconds;
+		}
+	}
+	
+	void WriteDefaultDateFormat(std::wostream &str, unsigned __int64 time)
+	{
+		DateFormatImpl(str, time, false);
 	}
 	void WriteMillisecondDateFormat(std::wostream &str, unsigned __int64 time)
 	{
-
+		DateFormatImpl(str, time, true);
 	}
 	void WriteFileAttributes(std::wostream &str, unsigned __int64 time)
 	{
