@@ -81,7 +81,7 @@ namespace Instalog { namespace Path {
 		using namespace std::placeholders;
 		std::vector<std::wstring> splitPathExt;
 		wchar_t pathExtBuf[32767] = L""; // 32767 is max size of environment variable
-		UINT len = ::GetEnvironmentVariableW(L"PATH", pathExtBuf, 32767);
+		UINT len = ::GetEnvironmentVariableW(L"PATHEXT", pathExtBuf, 32767);
 		boost::split(splitPathExt, pathExtBuf, std::bind(std::equal_to<wchar_t>(), _1, L';'));
 		return splitPathExt;
 	}
@@ -91,7 +91,7 @@ namespace Instalog { namespace Path {
 		static std::vector<std::wstring> splitPathExt = getSplitPathExt();
 
 		// Search with no path extension
-		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat))) // TODO: Is is possible to do this without making a new string?
+		if (SystemFacades::File::Exists(std::wstring(searchpath.begin(), extensionat))) 
 		{
 			searchpath.erase(extensionat, searchpath.end());
 			return true;
@@ -113,6 +113,10 @@ namespace Instalog { namespace Path {
 	
 	static void StripArgumentsFromPath(std::wstring &path)
 	{
+		// Just try the file
+		if (TryExtensions(path, path.end()))
+			return;
+
 		// For each spot where there's a space, try all the extensions
 		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath, path.end(), L' '))
 		{
