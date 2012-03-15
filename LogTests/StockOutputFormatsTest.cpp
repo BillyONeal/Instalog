@@ -101,3 +101,10 @@ TEST(StockFormats, WriteFileAttributes_everything)
 		FILE_ATTRIBUTE_READONLY | 
 		FILE_ATTRIBUTE_REPARSE_POINT, L"dcshatrr");
 }
+
+TEST(StockFormats, DefaultFileNonexistent)
+{
+	std::wstringstream ss;
+	WriteDefaultFileOutput(ss, L"C:\\Does\\Not\\Exist.exe");
+	EXPECT_EQ(L"C:\\Does\\Not\\Exist.exe [x]", ss.str());
+}
