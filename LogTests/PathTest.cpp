@@ -156,6 +156,18 @@ TEST(PathResolution, RundllVundo)
 	TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"rundll32 ntoskrnl,ShellExecute");
 }
 
+TEST(PathResolution, QuotedPath)
+{
+	TestResolve(L"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe", L"\"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe\"  Arguments Arguments Arguments");
+}
+
+TEST(PathResolution, QuotedPathWithQuote)
+{
+	HANDLE hFile = ::CreateFileW(L"C:\\File With \" Quote", GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	TestResolve(L"C:\\File With \" Quote", L"\"C:\\File With \" Quote\" Argument arg arg");
+	::CloseHandle(hFile);
+}
+
 struct PathResolutionPathOrderFixture : public testing::Test
 {
 	std::vector<std::wstring> pathItems;
