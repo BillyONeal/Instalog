@@ -193,6 +193,45 @@ namespace Instalog { namespace Path {
 		return false;
 	}
 
+	bool ResolveFromCommandLine(std::wstring &path)
+	{
+		if (path.size() > 0)
+		{
+			if (path[0] == L'\"')
+			{
+				std::wstring unescaped;
+				std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
+				Prettify(unescaped.begin(), unescaped.end());
+				if (boost::istarts_with(unescaped, getWindowsDirectory().append(L"System32\\rundll32")))
+				{
+					std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
+					if (startOfArgument != path.end())
+					{
+						unescaped.push_back(L' ');
+						CmdLineToArgvWUnescape(startOfArgument, path.end(), std::back_inserter(unescaped)); // Unescape the argument
+						RundllCheck(unescaped);
+					}
+				}
+
+				path = unescaped;
+				return SystemFacades::File::Exists(unescaped) && !SystemFacades::File::IsDirectory(unescaped);
+			}
+			else
+			{
+				NativePathToWin32Path(path);
+				bool status = StripArgumentsFromPath(path);
+				if (status)
+				{
+					Prettify(path.begin(), path.end());
+					return status;
+				}
+			}
+
+		}
+
+		return false;
+	}
+
 	void Prettify(std::wstring::iterator first, std::wstring::iterator last)
 	{
 		bool upperCase = true;
@@ -215,34 +254,6 @@ namespace Instalog { namespace Path {
 				}
 			}
 		}
-	}
-
-	bool ResolveFromCommandLine(std::wstring &path)
-	{
-		if (path.size() > 0)
-		{
-			if (path[0] == L'\"')
-			{
-				std::wstring unescaped;
-				CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
-				Prettify(unescaped.begin(), unescaped.end());
-				path = unescaped;
-				return SystemFacades::File::Exists(unescaped) && !SystemFacades::File::IsDirectory(unescaped);
-			}
-			else
-			{
-				NativePathToWin32Path(path);
-				bool status = StripArgumentsFromPath(path);
-				if (status)
-				{
-					Prettify(path.begin(), path.end());
-					return status;
-				}
-			}
-
-		}
-
-		return false;
 	}
 
 }}
