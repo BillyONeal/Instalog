@@ -67,3 +67,5 @@ TEST(Registry, CanOpenSubkey)
 	RegistryKey::Ptr subKey = RegistryKey::Open(rootKey, L"Windows", KEY_ALL_ACCESS);
 	EXPECT_NE(nullptr, subKey.get());
 }
+
+

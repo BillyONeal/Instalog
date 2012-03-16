@@ -37,24 +37,14 @@ namespace Instalog { namespace SystemFacades {
 		other.hKey_ = INVALID_HANDLE_VALUE;
 	}
 
-	RegistryValue RegistryKey::operator[]( std::wstring const& name )
+	RegistryValue RegistryKey::operator[]( std::wstring name )
 	{
-		return GetValue(name);
+		return GetValue(std::move(name));
 	}
 
-	RegistryValue RegistryKey::operator[]( std::wstring && name )
+	RegistryValue RegistryKey::GetValue( std::wstring name )
 	{
-		return GetValue(name);
-	}
-
-	RegistryValue RegistryKey::GetValue( std::wstring const& name )
-	{
-		return RegistryValue(hKey_, name);
-	}
-
-	RegistryValue RegistryKey::GetValue( std::wstring && name )
-	{
-		return RegistryValue(hKey_, name);
+		return RegistryValue(hKey_, std::move(name));
 	}
 
 	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
@@ -132,19 +122,9 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	RegistryValue::RegistryValue( HANDLE hKey, std::wstring const& name )
-		: hKey_(hKey)
-		, name_(name)
-	{ }
-
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))
-	{ }
-
-	RegistryValue::RegistryValue( RegistryValue const& other )
-		: hKey_(other.hKey_)
-		, name_(other.name_)
 	{ }
 
 	RegistryValue::RegistryValue( RegistryValue && other )
