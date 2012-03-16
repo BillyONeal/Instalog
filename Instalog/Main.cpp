@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fcntl.h>
+#include <io.h>
 #include <windows.h>
 #include "LogCommon/UserInterface.hpp"
 #include "LogCommon/Scripting.hpp"
@@ -8,11 +10,11 @@ struct ConsoleInterface : public Instalog::IUserInterface
 {
 	virtual void ReportProgressPercent(std::size_t progress)
 	{
-		std::cout << progress << " percent complete.\n";
+		std::wcout << progress << L" percent complete.\n";
 	}
 	virtual void ReportFinished()
 	{
-		std::cout << "Complete.\n";
+		std::wcout << L"Complete.\n";
 	}
 	virtual void LogMessage(std::wstring const& str)
 	{
@@ -24,6 +26,7 @@ using namespace Instalog;
 
 int main()
 {
+	_setmode(_fileno(stdout), _O_WTEXT);
 	ScriptDispatcher sd;
 	sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
 	wchar_t const defaultScript[] =
