@@ -28,7 +28,7 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		char queryServiceConfigBuffer[8192];
+		char queryServiceConfigBuffer[8192 /* (8K bytes maximum size) */];
 		DWORD bytesNeeded = 0; // not needed
 		if (QueryServiceConfig(serviceHandle, reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(queryServiceConfigBuffer), 8192, &bytesNeeded) == false)
 		{
@@ -76,30 +76,25 @@ namespace Instalog { namespace SystemFacades {
 	{
 		std::vector<Service> services;
 
-		std::vector<char> servicesBuffer;
-		DWORD bytesNeeded = 0;
+		char servicesBuffer[65536 /* (64K bytes max size) */];
+		DWORD bytesNeeded = 0; // not needed
 		DWORD servicesReturned = 0;
 		DWORD resumeHandle = 0;
-		BOOL status = EnumServicesStatusW(scmHandle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL, NULL, 0, &bytesNeeded, &servicesReturned, &resumeHandle);
-		DWORD error = GetLastError();
-		if (error != ERROR_INSUFFICIENT_BUFFER && error != ERROR_MORE_DATA)
-		{
-			Win32Exception::Throw(error);
-		}
+		BOOL status = false;
+		DWORD error = ERROR_MORE_DATA;
 
-		while (status == false)
+		while (status == false && error == ERROR_MORE_DATA)
 		{
-			servicesBuffer.resize(bytesNeeded);
-			status = EnumServicesStatusW(scmHandle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL, reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBuffer.data()), static_cast<DWORD>(servicesBuffer.size()), &bytesNeeded, &servicesReturned, &resumeHandle);
+			status = EnumServicesStatusW(scmHandle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL, reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBuffer), 65536, &bytesNeeded, &servicesReturned, &resumeHandle);
 			error = GetLastError();
 			if (status == false && error != ERROR_MORE_DATA)
 			{
 				Win32Exception::Throw(error);
 			}
 
-			for (std::vector<char>::iterator it = servicesBuffer.begin(); servicesReturned > 0; --servicesReturned, it += sizeof(ENUM_SERVICE_STATUSW))
+			for (char* servicesBufferLocation = servicesBuffer; servicesReturned > 0; --servicesReturned, servicesBufferLocation += sizeof(ENUM_SERVICE_STATUSW))
 			{
-				ENUM_SERVICE_STATUS *enumServiceStatus = reinterpret_cast<ENUM_SERVICE_STATUSW*>(&(*it));
+				ENUM_SERVICE_STATUS *enumServiceStatus = reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBufferLocation);
 				services.push_back(Service(enumServiceStatus->lpServiceName, enumServiceStatus->lpDisplayName, enumServiceStatus->ServiceStatus, scmHandle));
 			}
 		}
