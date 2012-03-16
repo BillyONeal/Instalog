@@ -8,7 +8,7 @@ using namespace Instalog;
 
 struct TestingSectionDefinition : public ISectionDefinition
 {
-    virtual void Execute(std::wostream& logOutput, IUserInterface *ui, ScriptSection const& section, std::vector<std::wstring> const& vect) const
+    virtual void Execute(std::wostream& logOutput, ScriptSection const& section, std::vector<std::wstring> const& vect) const
     {
         std::wstring vectWritten;
         if (vect.size())

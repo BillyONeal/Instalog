@@ -11,12 +11,12 @@ namespace Instalog
 	void GeneralEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
 	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightCharacter = L'\0');
 
-	class MalformedEscapedSequence : std::exception 
+	class MalformedEscapedSequence : public std::exception 
 	{
 		virtual char const* what() const;
 	};
 
-	class InvalidHexCharacter : std::exception 
+	class InvalidHexCharacter : public std::exception 
 	{
 		virtual char const* what() const;
 	};

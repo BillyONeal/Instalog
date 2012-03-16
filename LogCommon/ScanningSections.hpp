@@ -12,6 +12,6 @@ namespace Instalog
 		{
 			return SCANNING;
 		}
-		virtual void Execute(std::wostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
 	};
 }

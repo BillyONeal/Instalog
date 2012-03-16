@@ -91,7 +91,6 @@ TEST(Process, CanGetProcessCommandLines)
 TEST(Process, NtoskrnlIsInTheBuilding)
 {
 	ProcessEnumerator enumerator;
-	bool foundNtosKrnl = false;
 	for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
 	{
 		if (it->GetProcessId() == 4) 

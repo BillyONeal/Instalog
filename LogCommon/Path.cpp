@@ -70,24 +70,25 @@ namespace Instalog { namespace Path {
 		}
 	}
 
-	static std::vector<std::wstring> getSplitPath()
+	static std::vector<std::wstring> getSplitEnvironmentVariable(wchar_t const* variable)
 	{
 		using namespace std::placeholders;
-		std::vector<std::wstring> splitPath;
-		wchar_t pathBuf[32767] = L""; // 32767 is max size of environment variable
-		UINT len = ::GetEnvironmentVariableW(L"PATH", pathBuf, 32767);
-		boost::split(splitPath, pathBuf, std::bind(std::equal_to<wchar_t>(), _1, L';'));
-		return splitPath;
+		std::vector<std::wstring> splitVar;
+		wchar_t buf[32767] = L""; // 32767 is max size of environment variable
+		UINT len = ::GetEnvironmentVariableW(variable, buf, 32767);
+		auto range = boost::make_iterator_range(buf, buf + len);
+		boost::split(splitVar, range, std::bind(std::equal_to<wchar_t>(), _1, L';'));
+		return splitVar;
+	}
+
+	static std::vector<std::wstring> getSplitPath()
+	{
+		return getSplitEnvironmentVariable(L"PATH");
 	}
 
 	static std::vector<std::wstring> getSplitPathExt()
 	{
-		using namespace std::placeholders;
-		std::vector<std::wstring> splitPathExt;
-		wchar_t pathExtBuf[32767] = L""; // 32767 is max size of environment variable
-		UINT len = ::GetEnvironmentVariableW(L"PATHEXT", pathExtBuf, 32767);
-		boost::split(splitPathExt, pathExtBuf, std::bind(std::equal_to<wchar_t>(), _1, L';'));
-		return splitPathExt;
+		return getSplitEnvironmentVariable(L"PATHEXT");
 	}
 
 	static bool RundllCheck(std::wstring &path)

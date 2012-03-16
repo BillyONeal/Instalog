@@ -11,7 +11,7 @@
 
 namespace Instalog
 {
-	void RunningProcesses::Execute( std::wostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options ) const
+	void RunningProcesses::Execute( std::wostream& logOutput, ScriptSection const&, std::vector<std::wstring> const& ) const
 	{
 		using Instalog::SystemFacades::ProcessEnumerator;
 		using Instalog::SystemFacades::ErrorAccessDeniedException;

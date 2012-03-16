@@ -32,7 +32,7 @@ namespace Instalog
 		virtual ~ISectionDefinition() {}
 		virtual std::wstring GetName() const = 0;
 		virtual LogSectionPriorities GetPriority() const = 0;
-		virtual void Execute(std::wostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const = 0;
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const = 0;
 	};
 
 	class Script;

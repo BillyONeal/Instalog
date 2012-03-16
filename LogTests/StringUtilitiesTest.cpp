@@ -121,7 +121,7 @@ TEST(StringUtilities, General_OtherASCII)
 TEST(StringUtilities, General_Unicode)
 {
 	srand((int)time(NULL));
-	int increment = rand() % 10000;
+	wchar_t increment = rand() % 10000;
 	for (wchar_t c = 0x0080; c < std::numeric_limits<wchar_t>::max() - 10000; c += increment)
 	{
 		std::wstring str(1, c);
@@ -294,7 +294,7 @@ TEST(StringUtilities, Url_OtherASCII)
 TEST(StringUtilities, Url_Unicode)
 {
 	srand((int)time(NULL));
-	int increment = rand() % 10000;
+	wchar_t increment = rand() % 10000;
 	for (wchar_t c = 0x0080; c < std::numeric_limits<wchar_t>::max() - 10000; c += increment)
 	{
 		std::wstring str(1, c);
@@ -526,7 +526,7 @@ TEST(StringUtilities, UnescapeOtherASCII)
 TEST(StringUtilities, UnescapeUnicode)
 {
 	srand((int)time(NULL));
-	int increment = rand() % 10000;
+	wchar_t increment = rand() % 10000;
 	for (wchar_t c = 0x0080; c < std::numeric_limits<wchar_t>::max() - 10000; c += increment)
 	{
 		wchar_t escapedChar[7];

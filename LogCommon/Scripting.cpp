@@ -123,7 +123,7 @@ namespace Instalog
 			ui->LogMessage(message);
 			Instalog::Header(header);
 			logOutput << header << L"\n";
-			begin->first.targetSection->Execute(logOutput, ui, begin->first, begin->second);
+			begin->first.targetSection->Execute(logOutput, begin->first, begin->second);
 		}
 		WriteScriptFooter(logOutput);
 		ui->ReportFinished();

@@ -9,16 +9,11 @@ struct RunningProcessesTest : public testing::Test
 {
 	RunningProcesses rp;
 	std::wostringstream ss;
-	std::unique_ptr<IUserInterface> ui;
 	ScriptSection section;
 	std::vector<std::wstring> options;
-	virtual void SetUp()
-	{
-		ui.reset(new DoNothingUserInterface);
-	}
 	void Go()
 	{
-		rp.Execute(ss, ui.get(), section, options);
+		rp.Execute(ss, section, options);
 	}
 };
 

@@ -60,7 +60,7 @@ TEST(Win32Exception, CanThrowGenericException)
 {
 	try
 	{
-		Win32Exception::Throw(-1);
+		Win32Exception::Throw(static_cast<DWORD>(-1));
 	}
 	catch (Win32Exception const& ex)
 	{
