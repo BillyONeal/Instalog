@@ -31,7 +31,6 @@ namespace Instalog { namespace SystemFacades {
 			Win32Exception::ThrowFromLastError();
 		}
 		std::vector<char> queryServiceConfigBuffer;
-		DWORD bufferSize = 0;
 		DWORD bytesNeeded = 0;
 		QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded);
 		DWORD queryServiceConfigError = GetLastError();
