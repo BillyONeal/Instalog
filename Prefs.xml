@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<Prefs>
+  <DocComment>
+    <CommentStyle value="Doxygen" />
+    <Separator value="(No first line separator)" />
+    <SeparatorB value="(No last line separator)" />
+    <LineHeader2 value="/// " />
+    <AlignBlockStartColumns value="false" />
+    <VBSeparator value="'''-------------------------------------------------------------------------------------------------" />
+    <VBSeparatorB value="'''-------------------------------------------------------------------------------------------------" />
+    <LineHeader />
+    <DateCulture value="" />
+    <SingleLinePrefix value="///&lt; " />
+    <SingleLineSuffix value="(None)" />
+    <SingleLineMinColumn value="0" />
+    <LineCommentOnSameLine value="false" />
+    <WordWrapColumn value="100" />
+    <BlanksAbove value="1" />
+    <BlanksAfterRegion value="0" />
+    <BlanksBelow value="0" />
+    <BlanksBetweenEntries value="true" />
+    <SimpleFormatForOneLiners value="true" />
+    <ThisObjectName value="instance" />
+    <DuplicateBaseDocs value="true" />
+    <AddSeeForBases value="false" />
+    <SummaryOnlyForBases value="false" />
+    <AddSeeForOverrides value="false" />
+    <SummaryOnlyForOverrides value="false" />
+    <WordWrapRelative value="false" />
+    <DateFormat value="d" />
+    <LiveCommentUpdate value="true" />
+    <LiveCommentCreation value="true" />
+    <ConvertEntities value="true" />
+    <TidyOnPaste value="true" />
+    <AddDocTableForEnums value="false" />
+    <LiveSLCommentUpdate value="true" />
+  </DocComment>
+  <Doxygen>
+    <CommandPrefix value="@" />
+    <SuppressBriefTags value="false" />
+    <SuppressPrototypes value="true" />
+    <SuppressAuthor value="true" />
+    <SuppressDate value="true" />
+  </Doxygen>
+  <Format>
+    <EntrySuppressNewlines value="true" />
+    <EntryTag value="Indent" />
+    <EntryNewline value="Nothing" />
+    <EntryBody value="Nothing" />
+    <SingleTag value="Indent" />
+    <SingleBody value="Space" />
+    <GroupSuppressNewlines value="true" />
+    <GroupTag value="Indent" />
+    <GroupNewline value="Indent" />
+    <GroupBody value="Nothing" />
+    <AlignBlockStartColumns value="true" />
+    <AccessLevelsToComment value="all" />
+  </Format>
+  <Misc>
+    <RulesPath value="" />
+    <UserName value="(Use login name)" />
+    <ShowOutliningCmds value="false" />
+    <ShowCppCmds value="true" />
+    <ShowClipboardCmds value="false" />
+    <ShowContextCmds value="true" />
+  </Misc>
+  <DocXml>
+    <BlockFormatNew />
+    <BlockFormatOld />
+    <BlockFormatForGroup />
+    <SuppressAuthorDate value="false" />
+  </DocXml>
+  <Variables>
+    <StyleCop value="false" />
+  </Variables>
+  <OutlineDocComment>
+    <OnOpenDoc value="false" />
+    <SkipFirstLine value="true" />
+    <EatTrailingBlank value="true" />
+  </OutlineDocComment>
+  <OutlineRegion>
+    <OnOpenDoc value="false" />
+    <Tidy value="false" />
+  </OutlineRegion>
+  <OutlineAttr>
+    <OnOpenDoc value="false" />
+    <EatBlanks value="true" />
+  </OutlineAttr>
+  <CopyAsText>
+    <StripIndent value="false" />
+    <TabSize value="0" />
+  </CopyAsText>
+  <AddAccessMethods>
+    <VarTemplate value="varName_" />
+    <MemberPrefix />
+    <MethodTemplate value="GetVarName,SetVarName" />
+    <ParamTemplate value="varName" />
+  </AddAccessMethods>
+  <ImplementMethod>
+    <AddDocComment value="false" />
+    <ReturnToOrigDoc value="true" />
+  </ImplementMethod>
+  <Columnise>
+    <MinimiseWhitespace value="true" />
+  </Columnise>
+</Prefs>
