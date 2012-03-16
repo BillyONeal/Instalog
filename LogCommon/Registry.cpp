@@ -4,7 +4,6 @@
 #include "Win32Exception.hpp"
 #include "RuntimeDynamicLinker.hpp"
 #include "Registry.hpp"
-#include "DdkStructures.h"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -12,6 +11,7 @@ namespace Instalog { namespace SystemFacades {
 	static NtCreateKeyFunc PNtCreateKey = GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
 	static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
 	static NtDeleteKeyFunc PNtDeleteKey = GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
+	static NtEnumerateKeyFunc PNtEnumerateKey = GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
 
 	RegistryKey::~RegistryKey()
 	{
@@ -37,34 +37,23 @@ namespace Instalog { namespace SystemFacades {
 		other.hKey_ = INVALID_HANDLE_VALUE;
 	}
 
-	RegistryValue RegistryKey::operator[]( std::wstring const& name )
+	RegistryValue RegistryKey::operator[]( std::wstring name )
 	{
-		return GetValue(name);
+		return GetValue(std::move(name));
 	}
 
-	RegistryValue RegistryKey::operator[]( std::wstring && name )
+	RegistryValue RegistryKey::GetValue( std::wstring name )
 	{
-		return GetValue(name);
+		return RegistryValue(hKey_, std::move(name));
 	}
 
-	RegistryValue RegistryKey::GetValue( std::wstring const& name )
-	{
-		return RegistryValue(hKey_, name);
-	}
-
-	RegistryValue RegistryKey::GetValue( std::wstring && name )
-	{
-		return RegistryValue(hKey_, name);
-	}
-
-	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
+	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
 	{
 		HANDLE hOpened;
 		OBJECT_ATTRIBUTES attribs;
-		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
 		attribs.Length = sizeof(attribs);
 		attribs.RootDirectory = hRoot;
-		attribs.ObjectName = &ustrKey;
+		attribs.ObjectName = &key;
 		attribs.Attributes = OBJ_CASE_INSENSITIVE;
 		attribs.SecurityDescriptor = NULL;
 		attribs.SecurityQualityOfService = NULL;
@@ -80,12 +69,23 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
+	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
+	{
+		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
+		return RegistryKeyOpen(hRoot, ustrKey, samDesired);
+	}
+
 	std::unique_ptr<RegistryKey> RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
 	{
 		return RegistryKeyOpen(0, key, samDesired);
 	}
 
 	std::unique_ptr<RegistryKey> RegistryKey::Open( RegistryKey::Ptr const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	{
+		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
+	}
+
+	RegistryKey::Ptr RegistryKey::Open( RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
 	{
 		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
 	}
@@ -132,24 +132,45 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	RegistryValue::RegistryValue( HANDLE hKey, std::wstring const& name )
-		: hKey_(hKey)
-		, name_(name)
-	{ }
+	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameBegin() const
+	{
+		return RegistrySubkeyNameIterator(hKey_, 0);
+	}
+
+	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameEnd() const
+	{
+		return RegistrySubkeyNameIterator(hKey_, 999);
+	}
 
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))
 	{ }
 
-	RegistryValue::RegistryValue( RegistryValue const& other )
-		: hKey_(other.hKey_)
-		, name_(other.name_)
-	{ }
-
 	RegistryValue::RegistryValue( RegistryValue && other )
 		: hKey_(other.hKey_)
 		, name_(std::move(other.name_))
 	{ }
+
+	std::wstring const& RegistrySubkeyNameIterator::dereference() const
+	{
+		static std::wstring empty(L"");
+		return empty;
+	}
+
+	void RegistrySubkeyNameIterator::increment()
+	{
+		currentIndex++;
+	}
+
+	void RegistrySubkeyNameIterator::decrement()
+	{
+		currentIndex--;
+	}
+
+	bool RegistrySubkeyNameIterator::equal( RegistrySubkeyNameIterator const& other ) const
+	{
+		return currentIndex == other.currentIndex;
+	}
 
 }}
