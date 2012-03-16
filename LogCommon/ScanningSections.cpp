@@ -56,4 +56,10 @@ namespace Instalog
 		}
 	}
 
+
+	void ServicesDrivers::Execute( std::wostream& logOutput, IUserInterface *ui, ScriptSection const& sectionData, std::vector<std::wstring> const& options ) const
+	{
+
+	}
+
 }

@@ -158,6 +158,7 @@
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="RuntimeDynamicLinker.cpp" />
     <ClCompile Include="ScanningSections.cpp" />
+    <ClCompile Include="ServiceControlManager.cpp" />
     <ClCompile Include="StockOutputFormats.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="Whitelist.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="RuntimeDynamicLinker.hpp" />
     <ClInclude Include="Scripting.hpp" />
+    <ClInclude Include="ServiceControlManager.hpp" />
     <ClInclude Include="StockOutputFormats.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />

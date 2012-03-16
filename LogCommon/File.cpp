@@ -75,7 +75,7 @@ namespace Instalog { namespace SystemFacades {
 	{
 		DWORD bytesWritten;
 
-		if (WriteFile(hFile, bytes.data(), (DWORD)bytes.size(), &bytesWritten, NULL) == false)
+		if (WriteFile(hFile, bytes.data(), static_cast<DWORD>(bytes.size()), &bytesWritten, NULL) == false)
 		{
 			Win32Exception::ThrowFromLastError();
 		}
