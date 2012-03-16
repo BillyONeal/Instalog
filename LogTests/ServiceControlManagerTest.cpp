@@ -77,8 +77,8 @@ TEST(ServiceControlManager, DISABLED_RpcSsSvchostService) // TODO: This fails un
 
 	ASSERT_NE(rcpss, services.end());
 	EXPECT_EQ(L"Remote Procedure Call (RPC)", rcpss->getDisplayName());
-	EXPECT_EQ(L"R", rcpss->getState()) << L"This will fail if rcpss is not running";
-	EXPECT_EQ(SERVICE_AUTO_START, rcpss->getStart()) << L"This will fail if rcpss is not configured to auto-start";
+	EXPECT_EQ(L"R", rcpss->getState()) << L"This will fail if RpcSs is not running";
+	EXPECT_EQ(SERVICE_AUTO_START, rcpss->getStart()) << L"This will fail if RpcSs is not configured to auto-start";
 	EXPECT_EQ(L"C:\\Windows\\System32\\Svchost.exe", rcpss->getFilepath());
 	EXPECT_EQ(L"rpcss", rcpss->getSvchostGroup());
 	EXPECT_EQ(L"C:\\Windows\\System32\\Rpcss.dll", rcpss->getSvchostDll());

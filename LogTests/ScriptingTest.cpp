@@ -34,6 +34,10 @@ struct TestingSectionDefinition : public ISectionDefinition
 
 struct OneSectionDefinition : public TestingSectionDefinition
 {
+	virtual std::wstring GetScriptCommand() const
+	{
+		return L"one";
+	}
     virtual std::wstring GetName() const
     {
         return L"OnE";
@@ -46,6 +50,10 @@ struct OneSectionDefinition : public TestingSectionDefinition
 
 struct TwoSectionDefinition : public TestingSectionDefinition
 {
+	virtual std::wstring GetScriptCommand() const
+	{
+		return L"twosies";
+	}
     virtual std::wstring GetName() const
     {
         return L"Twosies";

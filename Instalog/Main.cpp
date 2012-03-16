@@ -29,8 +29,9 @@ int main()
 	_setmode(_fileno(stdout), _O_WTEXT);
 	ScriptDispatcher sd;
 	sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
+	sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
 	wchar_t const defaultScript[] =
-		L":RunningProcesses";
+		L":RunningProcesses\n:ServicesDrivers";
 	Script s = sd.Parse(defaultScript);
 	std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 	s.Run(std::wcout, ui.get());

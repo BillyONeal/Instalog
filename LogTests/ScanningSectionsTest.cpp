@@ -46,3 +46,27 @@ TEST_F(RunningProcessesTest, NtoskrnlNotPresent)
 	Go();
 	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
 }
+
+struct ServicesDriversTest : public testing::Test
+{
+	ServicesDrivers sd;
+	std::wostringstream ss;
+	ScriptSection section;
+	std::vector<std::wstring> options;
+	void Go()
+	{
+		sd.Execute(ss, section, options);
+	}
+};
+
+TEST_F(ServicesDriversTest, Tcpip)
+{
+	Go();
+	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys\n")) << L"This will fail if Tcpip is not running or does not autostart";
+}
+
+TEST_F(ServicesDriversTest, DISABLED_RpcSsSvchost) // TODO: This fails until svchost registry stuff is implemented
+{
+	Go();
+	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll\n")) << L"This will fail if RpcSs is not running or does not autostart";;
+}

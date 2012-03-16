@@ -17,10 +17,9 @@ namespace Instalog
 
 	void ScriptDispatcher::AddSectionType( std::unique_ptr<ISectionDefinition> sectionTypeToAdd )
 	{
-		std::wstring title(sectionTypeToAdd->GetName());
-		title.erase(std::remove(title.begin(), title.end(), L' '), title.end());
-		to_lower(title);
-		sectionTypes.emplace(std::make_pair(std::move(title), std::move(sectionTypeToAdd)));
+		std::wstring scriptCommand(sectionTypeToAdd->GetScriptCommand());
+		to_lower(scriptCommand);
+		sectionTypes.emplace(std::make_pair(std::move(scriptCommand), std::move(sectionTypeToAdd)));
 	}
 
 	Script ScriptDispatcher::Parse( std::wstring const& script ) const

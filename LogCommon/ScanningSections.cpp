@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include "resource.h"
 #include "Process.hpp"
+#include "ServiceControlManager.hpp"
 #include "Path.hpp"
 #include "Whitelist.hpp"
 #include "ScopedPrivilege.hpp"
@@ -53,6 +54,30 @@ namespace Instalog
 			{
 				logOutput << L"[Access Denied (PID=" << it->GetProcessId() << L")]\n";
 			}
+		}
+	}
+
+
+	void ServicesDrivers::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		using Instalog::SystemFacades::ServiceControlManager;
+		using Instalog::SystemFacades::Service;
+
+		ServiceControlManager scm;
+		std::vector<Service> services = scm.GetServices();
+
+		for (auto service = services.begin(); service != services.end(); ++service)
+		{
+			logOutput << service->getState() << service->getStart() << L' ' << service->getServiceName() << L';' << service->getDisplayName() << L';';
+			if (service->isSvchostService())
+			{
+				logOutput << service->getSvchostGroup() << L"->" << service->getSvchostDll();
+			}
+			else
+			{
+				logOutput << service->getFilepath();
+			}
+			logOutput << L'\n';
 		}
 	}
 
