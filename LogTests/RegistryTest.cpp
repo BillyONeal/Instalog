@@ -36,7 +36,7 @@ TEST(Registry, CanOpenKey)
 TEST(Registry, CantOpenNonexistentKey)
 {
 	RegistryKey::Ptr keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
-	ASSERT_TRUE(keyOpenedAgain.get() != nullptr);
+	ASSERT_TRUE(keyOpenedAgain.get() == nullptr);
 }
 
 TEST(Registry, CanCreateSubkey)
@@ -73,4 +73,6 @@ TEST(Registry, CanEnumerateSubKeyNames)
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey);
 	std::vector<std::wstring> subKeyNames(systemKey->SubKeyNameBegin(), systemKey->SubKeyNameEnd());
+	std::vector<std::wstring> defaultItems;
+	defaultItems.push_back(L"");
 }
