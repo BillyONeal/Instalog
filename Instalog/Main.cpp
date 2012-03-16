@@ -35,4 +35,6 @@ int main()
 	Script s = sd.Parse(defaultScript);
 	std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 	s.Run(std::wcout, ui.get());
+	std::wcout << "Press enter to exit\n";
+	std::cin.get();
 }
