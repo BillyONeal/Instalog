@@ -252,6 +252,10 @@ TEST(ScriptTest, CanExecute)
     std::unique_ptr<IUserInterface> ui(new DoNothingUserInterface);
     std::wostringstream logOutput;
     s.Run(logOutput, ui.get());
+	std::wstring out(logOutput.str());
+	out.pop_back(); // \n
+	out.erase(std::find(out.rbegin(), out.rend(), L'\n').base(), out.end());
+	out.erase(out.begin(), std::find(out.begin(), out.end(), L'='));
     ASSERT_EQ(L"======================= OnE ======================\nOnE section has argument \"argArg\" and options \n{OptionOne}\n===================== Twosies ====================\nTwosies section has argument \"\" and options \n{OptionTwo}\n{OptionThree}\n",
-		logOutput.str());
+		out);
 }

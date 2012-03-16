@@ -461,17 +461,13 @@ namespace Instalog {
 		GetUserName(userName, &userNameLength);
 		log << std::wstring(userName, userNameLength - 1);
 		log << L" on ";
-		FILETIME ft;
-		GetSystemTimeAsFileTime(&ft);
 
 		TIME_ZONE_INFORMATION tzInfo;
 		if (GetTimeZoneInformation(&tzInfo) == TIME_ZONE_ID_DAYLIGHT)
 		{
 			tzInfo.Bias += tzInfo.DaylightBias;
 		}
-		unsigned __int64 localTime = FiletimeToInteger(ft);
-		localTime -= static_cast<unsigned __int64>(tzInfo.Bias) * 60 * 10000000;
-		WriteMillisecondDateFormat(log, localTime);
+		WriteCurrentMillisecondDate(log);
 		log << L" [GMT " << std::showpos << (-tzInfo.Bias / 60) << L':'
 			<< std::noshowpos << std::setw(2) << std::setfill(L'0')
 			<< (-tzInfo.Bias % 60) << L"]\n";
@@ -490,6 +486,8 @@ namespace Instalog {
 	void WriteScriptFooter( std::wostream &log )
 	{
 		log << L"Instalog " INSTALOG_VERSION L" finished ";
+		WriteCurrentMillisecondDate(log);
+		log << L'\n';
 	}
 
 	void WriteCurrentMillisecondDate( std::wostream &str )
