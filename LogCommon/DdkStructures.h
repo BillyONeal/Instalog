@@ -546,6 +546,9 @@ typedef NTSTATUS (NTAPI *NtOpenKeyFunc)(
 	__in POBJECT_ATTRIBUTES //Path and such
 	);
 
+typedef NTSTATUS (NTAPI *NtDeleteKeyFunc)(
+	__in HANDLE
+	);
 }
 
 inline UNICODE_STRING WstringToUnicodeString(std::wstring const& target)

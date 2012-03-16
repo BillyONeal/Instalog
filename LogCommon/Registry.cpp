@@ -11,6 +11,7 @@ namespace Instalog { namespace SystemFacades {
 	static NtOpenKeyFunc PNtOpenKey = GetNtDll().GetProcAddress<NtOpenKeyFunc>("NtOpenKey");
 	static NtCreateKeyFunc PNtCreateKey = GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
 	static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
+	static NtDeleteKeyFunc PNtDeleteKey = GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
 
 	RegistryKey::~RegistryKey()
 	{
@@ -56,13 +57,13 @@ namespace Instalog { namespace SystemFacades {
 		return RegistryValue(hKey_, name);
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
 	{
 		HANDLE hOpened;
 		OBJECT_ATTRIBUTES attribs;
 		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
 		attribs.Length = sizeof(attribs);
-		attribs.RootDirectory = NULL;
+		attribs.RootDirectory = hRoot;
 		attribs.ObjectName = &ustrKey;
 		attribs.Attributes = OBJ_CASE_INSENSITIVE;
 		attribs.SecurityDescriptor = NULL;
@@ -79,13 +80,23 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	std::unique_ptr<RegistryKey> RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	{
+		return RegistryKeyOpen(0, key, samDesired);
+	}
+
+	std::unique_ptr<RegistryKey> RegistryKey::Open( RegistryKey::Ptr const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	{
+		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
+	}
+
+	static std::unique_ptr<RegistryKey> RegistryKeyCreate( HANDLE hRoot, std::wstring const& key, REGSAM samDesired, DWORD options )
 	{
 		HANDLE hOpened;
 		OBJECT_ATTRIBUTES attribs;
 		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
 		attribs.Length = sizeof(attribs);
-		attribs.RootDirectory = NULL;
+		attribs.RootDirectory = hRoot;
 		attribs.ObjectName = &ustrKey;
 		attribs.Attributes = OBJ_CASE_INSENSITIVE;
 		attribs.SecurityDescriptor = NULL;
@@ -99,6 +110,25 @@ namespace Instalog { namespace SystemFacades {
 		{
 			::SetLastError(errorCheck);
 			return std::unique_ptr<RegistryKey>(nullptr);
+		}
+	}
+
+	std::unique_ptr<RegistryKey> RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	{
+		return RegistryKeyCreate(0, key, samDesired, options);
+	}
+
+	std::unique_ptr<RegistryKey> RegistryKey::Create( RegistryKey::Ptr const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	{
+		return RegistryKeyCreate(parent->GetHkey(), key, samDesired, options);
+	}
+
+	void RegistryKey::Delete()
+	{
+		NTSTATUS errorCheck = PNtDeleteKey(GetHkey());
+		if (NT_ERROR(errorCheck))
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
 		}
 	}
 

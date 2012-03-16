@@ -19,12 +19,11 @@ namespace Instalog { namespace SystemFacades {
 	class RegistryKey
 	{
 		HANDLE hKey_;
-		explicit RegistryKey(HANDLE hKey);
 		RegistryKey(RegistryKey const& other); //Noncopyable
 		RegistryKey& operator=(RegistryKey const& other);
 	public:
 		typedef std::unique_ptr<RegistryKey> Ptr;
-
+		explicit RegistryKey(HANDLE hKey);
 		RegistryKey(RegistryKey && other);
 		~RegistryKey();
 		HANDLE GetHkey() const;
@@ -32,9 +31,17 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue GetValue(std::wstring && name);
 		RegistryValue operator[](std::wstring const& name);
 		RegistryValue operator[](std::wstring && name);
+		void Delete();
 
 		static Ptr Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static Ptr Open(Ptr const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
 		static Ptr Create(
+			std::wstring const& key,
+			REGSAM samDesired = KEY_ALL_ACCESS,
+			DWORD options = REG_OPTION_NON_VOLATILE
+		);
+		static Ptr Create(
+			Ptr const& parent,
 			std::wstring const& key,
 			REGSAM samDesired = KEY_ALL_ACCESS,
 			DWORD options = REG_OPTION_NON_VOLATILE
