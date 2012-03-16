@@ -73,6 +73,8 @@ TEST(ServiceControlManager, DISABLED_RpcSsSvchostService) // TODO: This fails un
 
 	auto rcpss = std::find_if(services.begin(), services.end(), [] (Service const& service) -> bool { 
 		return service.getServiceName() == L"RpcSs";
+		//Triggers compiler bug
+		//return boost::algorithm::iequals(service.getServiceName(), L"RpcSs");
 	});
 
 	ASSERT_NE(rcpss, services.end());
