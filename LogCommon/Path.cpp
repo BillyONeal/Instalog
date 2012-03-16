@@ -53,9 +53,9 @@ namespace Instalog { namespace Path {
 	{
 		// Remove \, ??\, \?\, and globalroot\ 
 		std::wstring::iterator chop = path.begin();
-		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"\\")) { chop += 1; }
-		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"??\\")) { chop += 3; }
-		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"\\?\\")) { chop += 3; }
+		if (boost::starts_with(boost::make_iterator_range(chop, path.end()), L"\\")) { chop += 1; }
+		if (boost::starts_with(boost::make_iterator_range(chop, path.end()), L"??\\")) { chop += 3; }
+		if (boost::starts_with(boost::make_iterator_range(chop, path.end()), L"\\?\\")) { chop += 3; }
 		if (boost::istarts_with(boost::make_iterator_range(chop, path.end()), L"globalroot\\")) { chop += 11; }		
 		path.erase(path.begin(), chop);
 

@@ -52,6 +52,14 @@ TEST(Registry, CanCreateSubkey)
 	subKey->Delete();
 }
 
+TEST(Registry, CanDelete)
+{
+	RegistryKey::Ptr keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", DELETE);
+	keyUnderTest->Delete();
+	keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere");
+	ASSERT_EQ(nullptr, keyUnderTest.get());
+}
+
 TEST(Registry, CanOpenSubkey)
 {
 	RegistryKey::Ptr rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
