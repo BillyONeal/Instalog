@@ -549,6 +549,28 @@ typedef NTSTATUS (NTAPI *NtOpenKeyFunc)(
 typedef NTSTATUS (NTAPI *NtDeleteKeyFunc)(
 	__in HANDLE
 	);
+
+typedef enum _KEY_INFORMATION_CLASS {
+	KeyBasicInformation            = 0,
+	KeyNodeInformation             = 1,
+	KeyFullInformation             = 2,
+	KeyNameInformation             = 3,
+	KeyCachedInformation           = 4,
+	KeyFlagsInformation            = 5,
+	KeyVirtualizationInformation   = 6,
+	KeyHandleTagsInformation       = 7,
+	MaxKeyInfoClass                = 8 
+} KEY_INFORMATION_CLASS;
+
+typedef NTSTATUS (NTAPI *NtEnumerateKeyFunc) (
+	__in       HANDLE KeyHandle,
+	__in       ULONG Index,
+	__in       KEY_INFORMATION_CLASS KeyInformationClass,
+	__out_opt  PVOID KeyInformation,
+	__in       ULONG Length,
+	__out      PULONG ResultLength
+	);
+
 }
 
 inline UNICODE_STRING WstringToUnicodeString(std::wstring const& target)

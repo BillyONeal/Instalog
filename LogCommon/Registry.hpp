@@ -2,6 +2,9 @@
 #include <string>
 #include <memory>
 #include <windows.h>
+#include <boost/noncopyable.hpp>
+#include <boost/iterator/iterator_facade.hpp>
+#include "DdkStructures.h"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -14,11 +17,27 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue(RegistryValue && other);
 	};
 
-	class RegistryKey
+	class RegistrySubkeyNameIterator
+		: public boost::iterator_facade<RegistrySubkeyNameIterator, std::wstring,  boost::bidirectional_traversal_tag, std::wstring const&>
+	{
+		friend class boost::iterator_core_access;
+		HANDLE hKey_;
+		DWORD currentIndex;
+		std::wstring name;
+		void Update();
+	public:
+		RegistrySubkeyNameIterator(HANDLE hKey)
+			: hKey_(hKey)
+		{ }
+		std::wstring const& dereference() const;
+		void increment();
+		void decrement();
+		bool equal(RegistrySubkeyNameIterator const& other) const;
+	};
+
+	class RegistryKey : boost::noncopyable
 	{
 		HANDLE hKey_;
-		RegistryKey(RegistryKey const& other); //Noncopyable
-		RegistryKey& operator=(RegistryKey const& other);
 	public:
 		typedef std::unique_ptr<RegistryKey> Ptr;
 		explicit RegistryKey(HANDLE hKey);
@@ -29,8 +48,12 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue operator[](std::wstring name);
 		void Delete();
 
+		RegistrySubkeyNameIterator SubKeyNameBegin() const;
+		RegistrySubkeyNameIterator SubKeyNameEnd() const;
+
 		static Ptr Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
 		static Ptr Open(Ptr const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static Ptr Open(RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired);
 		static Ptr Create(
 			std::wstring const& key,
 			REGSAM samDesired = KEY_ALL_ACCESS,
