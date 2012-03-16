@@ -106,6 +106,12 @@
     <ClInclude Include="Whitelist.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="InstalogVersion.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32Glue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />

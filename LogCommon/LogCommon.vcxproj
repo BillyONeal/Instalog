@@ -163,6 +163,7 @@
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="HandleCloser.hpp" />
+    <ClInclude Include="InstalogVersion.hpp" />
     <ClInclude Include="Path.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Registry.hpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="UserInterface.hpp" />
     <ClInclude Include="Whitelist.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
+    <ClInclude Include="Win32Glue.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Scripting.cpp">
