@@ -20,11 +20,11 @@ namespace Instalog { namespace SystemFacades {
 	{
 		friend class boost::iterator_core_access;
 		std::vector<unsigned char>::const_iterator blockPtr, end_;
-	public:
 		void increment();
 		bool equal(ProcessIterator const& other) const;
 		Process dereference() const;
-
+	public:
+		ProcessIterator() {}
 		ProcessIterator(
 			std::vector<unsigned char>::const_iterator start,
 			std::vector<unsigned char>::const_iterator end

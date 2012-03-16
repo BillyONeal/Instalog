@@ -23,16 +23,15 @@ namespace Instalog { namespace SystemFacades {
 		friend class boost::iterator_core_access;
 		HANDLE hKey_;
 		DWORD currentIndex;
-		std::wstring name;
-		void Update();
-	public:
-		RegistrySubkeyNameIterator(HANDLE hKey)
-			: hKey_(hKey)
-		{ }
 		std::wstring const& dereference() const;
 		void increment();
 		void decrement();
 		bool equal(RegistrySubkeyNameIterator const& other) const;
+	public:
+		RegistrySubkeyNameIterator() {}
+		RegistrySubkeyNameIterator(HANDLE hKey, DWORD index)
+			: hKey_(hKey), currentIndex(index)
+		{ }
 	};
 
 	class RegistryKey : boost::noncopyable

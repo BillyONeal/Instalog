@@ -132,6 +132,16 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
+	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameBegin() const
+	{
+		return RegistrySubkeyNameIterator(hKey_, 0);
+	}
+
+	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameEnd() const
+	{
+		return RegistrySubkeyNameIterator(hKey_, 999);
+	}
+
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))
@@ -144,7 +154,8 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring const& RegistrySubkeyNameIterator::dereference() const
 	{
-		return name;
+		static std::wstring empty(L"");
+		return empty;
 	}
 
 	void RegistrySubkeyNameIterator::increment()
@@ -160,11 +171,6 @@ namespace Instalog { namespace SystemFacades {
 	bool RegistrySubkeyNameIterator::equal( RegistrySubkeyNameIterator const& other ) const
 	{
 		return currentIndex == other.currentIndex;
-	}
-
-	void RegistrySubkeyNameIterator::Update()
-	{
-
 	}
 
 }}
