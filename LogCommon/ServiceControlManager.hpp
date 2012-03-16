@@ -6,6 +6,8 @@ namespace Instalog { namespace SystemFacades {
 
 	class Service
 	{
+		SC_HANDLE serviceHandle;
+
 		std::wstring serviceName;
 		std::wstring displayName;
 		std::wstring state;
@@ -15,6 +17,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring svchostDll;
 	public:
 		Service(std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle);
+		~Service();
 		std::wstring const& getServiceName() const { return serviceName; }
 		std::wstring const& getDisplayName() const { return displayName; }
 		std::wstring const& getState() const { return state; }
@@ -22,7 +25,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring const& getFilepath() const { return filepath; }
 		std::wstring const& getSvchostGroup() const { return svchostGroup; }
 		std::wstring const& getSvchostDll() const { return svchostDll; }
-		bool isSvchostService() const { return svchostGroup.empty() && svchostDll.empty(); }
+		bool isSvchostService() const { return !svchostGroup.empty() || !svchostDll.empty(); }
 	};
 
 	class ServiceControlManager

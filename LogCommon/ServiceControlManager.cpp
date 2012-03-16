@@ -6,12 +6,10 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	Service::Service( std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle )
+	Service::Service( std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle ) 
+		: serviceName(serviceName)
+		, displayName(displayName)
 	{
-		// Set the service and display name
-		this->serviceName = serviceName;
-		this->displayName = displayName;
-
 		// Set the state
 		switch (status.dwCurrentState)
 		{
@@ -30,23 +28,13 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		std::vector<char> queryServiceConfigBuffer;
-		DWORD bytesNeeded = 0;
-		QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded);
-		DWORD queryServiceConfigError = GetLastError();
-		if (queryServiceConfigError != ERROR_INSUFFICIENT_BUFFER)
+		char queryServiceConfigBuffer[8192];
+		DWORD bytesNeeded = 0; // not needed
+		if (QueryServiceConfig(serviceHandle, reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(queryServiceConfigBuffer), 8192, &bytesNeeded) == false)
 		{
-			CloseServiceHandle(serviceHandle);
-			Win32Exception::Throw(queryServiceConfigError);
-		}
-		queryServiceConfigBuffer.resize(bytesNeeded);
-		if (QueryServiceConfig(serviceHandle, reinterpret_cast<QUERY_SERVICE_CONFIGW*>(queryServiceConfigBuffer.data()), static_cast<DWORD>(queryServiceConfigBuffer.size()), &bytesNeeded) == false)
-		{
-			CloseServiceHandle(serviceHandle);
 			Win32Exception::ThrowFromLastError();
 		}
-		CloseServiceHandle(serviceHandle);
-		QUERY_SERVICE_CONFIGW *queryServiceConfig = reinterpret_cast<QUERY_SERVICE_CONFIGW*>(&(*queryServiceConfigBuffer.begin()));
+		QUERY_SERVICE_CONFIGW *queryServiceConfig = reinterpret_cast<QUERY_SERVICE_CONFIGW*>(queryServiceConfigBuffer);
 
 		// Set the start type
 		this->start = queryServiceConfig->dwStartType;
@@ -62,6 +50,11 @@ namespace Instalog { namespace SystemFacades {
 			this->svchostGroup.erase(this->svchostGroup.begin(), boost::ifind_first(this->svchostGroup, L"-k").end());			
 			boost::trim(this->svchostGroup);
 		}
+	}
+
+	Service::~Service()
+	{
+		CloseServiceHandle(serviceHandle);
 	}
 
 	ServiceControlManager::ServiceControlManager( DWORD desiredAccess /* = SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE */ )
