@@ -496,7 +496,7 @@ namespace Instalog {
 		FILETIME ft;
 		GetLocalTime(&st);
 		SystemTimeToFileTime(&st, &ft);
-		unsigned __int64 msDate = FiletimeToInteger(ft);
+		unsigned __int64 msDate = Instalog::FiletimeToInteger(ft);
 		WriteMillisecondDateFormat(str, msDate);
 	}
 

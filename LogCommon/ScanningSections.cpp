@@ -8,6 +8,7 @@
 #include "Whitelist.hpp"
 #include "ScopedPrivilege.hpp"
 #include "Win32Exception.hpp"
+#include "StockOutputFormats.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -71,11 +72,12 @@ namespace Instalog
 			logOutput << service->getState() << service->getStart() << L' ' << service->getServiceName() << L';' << service->getDisplayName() << L';';
 			if (service->isSvchostService())
 			{
-				logOutput << service->getSvchostGroup() << L"->" << service->getSvchostDll();
+				logOutput << service->getSvchostGroup() << L"->";
+				WriteDefaultFileOutput(logOutput, service->getSvchostDll());
 			}
 			else
 			{
-				logOutput << service->getFilepath();
+				WriteDefaultFileOutput(logOutput, service->getFilepath());
 			}
 			logOutput << L'\n';
 		}

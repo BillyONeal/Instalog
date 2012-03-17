@@ -3,6 +3,7 @@
 
 namespace Instalog
 {
+	/// @brief	Running processes scanning section
 	struct RunningProcesses : public ISectionDefinition
 	{
 		virtual std::wstring GetScriptCommand() const
@@ -20,6 +21,7 @@ namespace Instalog
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
 	};
 
+	/// @brief	Services/drivers scanning section
 	struct ServicesDrivers : public ISectionDefinition
 	{
 		virtual std::wstring GetScriptCommand() const

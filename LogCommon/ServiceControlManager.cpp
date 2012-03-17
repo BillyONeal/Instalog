@@ -52,9 +52,29 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
+	Service::Service( Service && s ) 
+		: serviceHandle(std::move(s.serviceHandle))
+		, serviceName(std::move(s.serviceName))
+		, displayName(std::move(s.displayName))
+		, state(std::move(s.state))
+		, start(s.start)
+		, filepath(std::move(s.filepath))
+		, svchostGroup(std::move(s.svchostGroup))
+		, svchostDll(std::move(s.svchostDll))
+	{
+		s.serviceHandle = NULL;
+	}
+
 	Service::~Service()
 	{
 		CloseServiceHandle(serviceHandle);
+	}
+
+	Service& Service::operator=( Service s )
+	{
+		Service copied = Service(std::move(s));
+		std::swap(*this, copied);
+		return *this;
 	}
 
 	ServiceControlManager::ServiceControlManager( DWORD desiredAccess /* = SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE */ )
@@ -99,6 +119,6 @@ namespace Instalog { namespace SystemFacades {
 			}
 		}
 
-		return services;
+		return std::move(services);
 	}
 }}
