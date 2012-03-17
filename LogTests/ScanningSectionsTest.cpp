@@ -17,6 +17,11 @@ struct RunningProcessesTest : public testing::Test
 	}
 };
 
+TEST_F(RunningProcessesTest, CommandIsrunningprocesses)
+{
+	ASSERT_EQ(L"runningprocesses", rp.GetScriptCommand());
+}
+
 TEST_F(RunningProcessesTest, NameIsRunningProcesses)
 {
 	ASSERT_EQ(L"Running Processes", rp.GetName());
@@ -59,14 +64,30 @@ struct ServicesDriversTest : public testing::Test
 	}
 };
 
-TEST_F(ServicesDriversTest, Tcpip)
+TEST_F(ServicesDriversTest, ScriptCommandIsCorrect)
+{
+	ASSERT_EQ(L"servicesdrivers", sd.GetScriptCommand());
+}
+
+TEST_F(ServicesDriversTest, NameIsCorrect)
+{
+	ASSERT_EQ(L"Services/Drivers", sd.GetName());
+}
+
+TEST_F(ServicesDriversTest, ActuallyGotOutput)
 {
 	Go();
-	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys [")) << L"This will fail if Tcpip is not running or does not autostart";
+	ASSERT_FALSE(ss.str().empty());
+}
+
+TEST_F(ServicesDriversTest, TcpipWhitelisted)
+{
+	Go();
+	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
 }
 
 TEST_F(ServicesDriversTest, DISABLED_RpcSsSvchost) // TODO: This fails until svchost registry stuff is implemented
 {
 	Go();
-	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll [")) << L"This will fail if RpcSs is not running or does not autostart";;
+	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"));
 }

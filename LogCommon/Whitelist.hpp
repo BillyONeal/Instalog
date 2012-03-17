@@ -15,9 +15,10 @@ namespace Instalog {
 		/// @brief	Constructor.
 		///
 		/// @param	whitelistId 	Identifier for the whitelist from the resource file.
-		/// @param	replacements	(optional) the replacements.  These are in the form of pairs of strings.  For each string in the whitelist, if it matches the 
-		/// 						first part of any pair, then it will be replaced with the second part of the pair.
-		Whitelist(__int32 whitelistId, std::vector<std::pair<std::wstring, std::wstring>> const& replacements = std::vector<std::pair<std::wstring, std::wstring>>() );
+		/// @param	replacements	(optional) the replacements.  These are in the form of pairs of strings.  Matches from the first part of the pair are replaced with the second part.
+		/// 
+		/// @throws	Win32Exception on error
+		Whitelist(__int32 whitelistId, std::vector<std::pair<std::wstring, std::wstring>> const& replacements = std::vector<std::pair<std::wstring, std::wstring>>());
 
 		/// @brief	Query if an item should be whitelisted
 		///
