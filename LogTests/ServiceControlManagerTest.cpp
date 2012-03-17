@@ -16,20 +16,20 @@ static std::vector<Service> const& GetCachedServices()
 	if (services.empty())
 	{
 		ServiceControlManager scm;
-		services = scm.GetServices();
+		services = std::move(scm.GetServices());
 	}
 	return services;
 }
 
 TEST(ServiceControlManager, GetServices)
 {
-	std::vector<Service> services = GetCachedServices();
+	std::vector<Service> const& services = GetCachedServices();
 	EXPECT_FALSE(services.empty());
 }
 
 TEST(ServiceControlManager, DISABLED_FieldsSetCorrectly) // TODO: This fails until svchost registry stuff is implemented
 {
-	std::vector<Service> services = GetCachedServices();
+	std::vector<Service> const& services = GetCachedServices();
 	
 	for (auto it = services.begin(); it != services.end(); ++it)
 	{
@@ -51,7 +51,7 @@ TEST(ServiceControlManager, DISABLED_FieldsSetCorrectly) // TODO: This fails unt
 
 TEST(ServiceControlManager, TcpipService)
 {
-	std::vector<Service> services = GetCachedServices();
+	std::vector<Service> const& services = GetCachedServices();
 
 	auto tcpip = std::find_if(services.begin(), services.end(), [] (Service const& service) -> bool { 
 		return service.getServiceName() == L"Tcpip";
@@ -69,7 +69,7 @@ TEST(ServiceControlManager, TcpipService)
 
 TEST(ServiceControlManager, DISABLED_RpcSsSvchostService) // TODO: This fails until svchost registry stuff is implemented
 {
-	std::vector<Service> services = GetCachedServices();
+	std::vector<Service> const& services = GetCachedServices();
 
 	auto rcpss = std::find_if(services.begin(), services.end(), [] (Service const& service) -> bool { 
 		return service.getServiceName() == L"RpcSs";

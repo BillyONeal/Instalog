@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
+#include <boost/noncopyable.hpp>
 #include <windows.h>
 
 namespace Instalog { namespace SystemFacades {
 
 	/// @brief	A simple wrapper around Services for the Services/Driver scanning section
-	class Service
+	class Service : boost::noncopyable
 	{
 		SC_HANDLE serviceHandle;
 
@@ -16,11 +17,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring filepath;
 		std::wstring svchostGroup;
 		std::wstring svchostDll;
-
-// 		Service(Service const&);
-// 		Service& operator=(Service const&);
 	public:
-
 		/// Constructor.  Opens a handle to the Service and populates the various member variables
 		///
 		/// @param serviceName Service name of the service.
@@ -30,8 +27,21 @@ namespace Instalog { namespace SystemFacades {
 		/// 
 		/// @throw	Win32Exception on error
 		Service(std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle);
+
+		/// @brief	Move constructor.
+		///
+		/// @param [in,out]	s	The Service to move.
+		Service(Service && s);
+
 		/// Destructor.  Frees the handle to the Service
 		~Service();
+
+		/// @brief	Copy assignment operator.
+		///
+		/// @param	s	The Service to copy.
+		///
+		/// @return	A shallow copy of this instance.
+		Service& operator=(Service s);
 
 		/// Gets the service name.
 		///
