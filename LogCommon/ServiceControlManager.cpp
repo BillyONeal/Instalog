@@ -56,6 +56,7 @@ namespace Instalog { namespace SystemFacades {
 		: serviceHandle(std::move(s.serviceHandle))
 		, serviceName(std::move(s.serviceName))
 		, displayName(std::move(s.displayName))
+		, state(std::move(s.state))
 		, start(s.start)
 		, filepath(std::move(s.filepath))
 		, svchostGroup(std::move(s.svchostGroup))
