@@ -4,20 +4,50 @@
 #include <windows.h>
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	A nice wrapper for throwing exceptions around Win32 errors
 	class Win32Exception : public std::exception
 	{
 		DWORD errorCode_;
 	public:
+		/// @brief	Constructor
+		///
+		/// @param	errorCode	The error code
 		Win32Exception(DWORD errorCode) : errorCode_(errorCode) {};
+
+		/// @brief	Throws a specified error directly
+		///
+		/// @param	lastError	The error code to throw (usually a captured error code)
 		static void Throw(DWORD lastError);
+
+		/// @brief	Throw from last error.
 		static void ThrowFromLastError() { Throw(::GetLastError()); };
+
+		/// @brief	Throw from a specified NT error
+		///
+		/// @param	errorCode	The error code to throw (usually a captured error code)
 		static void ThrowFromNtError(NTSTATUS errorCode);
+
+		/// @brief	Gets the error code.
+		///
+		/// @return	The error code.
 		DWORD GetErrorCode() const
 		{
 			return errorCode_;
 		}
+
+		/// @brief	Gets the wide message.
+		///
+		/// @return	The wide message.
 		std::wstring GetWideMessage() const;
+
+		/// @brief	Gets the character message.
+		///
+		/// @return	The character message.
 		std::string GetCharMessage() const;
+
+		/// @brief	Gets the message for the exception
+		///
+		/// @return	Exception message
 		virtual const char* what() const
 		{
 			static std::string buff;

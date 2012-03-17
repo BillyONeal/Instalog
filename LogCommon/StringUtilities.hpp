@@ -5,17 +5,41 @@
 
 namespace Instalog
 {
-
+	/// @brief	Convert wide string to narrow string
+	///
+	/// @param	uni	The string to convert
+	///
+	/// @return	The narrow string
 	std::string ConvertUnicode(const std::wstring &uni);
-	std::wstring ConvertUnicode(const std::string &uni);
-	void GeneralEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
-	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightCharacter = L'\0');
 
+	/// @brief	Convert narrow string to wide string
+	///
+	/// @param	uni	The string to convert
+	///
+	/// @return	The wide string
+	std::wstring ConvertUnicode(const std::string &uni);
+
+	/// @brief	Escapes strings according to the general escape scheme
+	///
+	/// @param [in,out]	target 	String to escape
+	/// @param	escapeCharacter	(optional) the escape character.
+	/// @param	rightDelimiter 	(optional) the right delimiter.
+	void GeneralEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
+
+	/// @brief	Escapes strings according to the url escape scheme
+	///
+	/// @param [in,out]	target 	String to escape
+	/// @param	escapeCharacter	(optional) the escape character.
+	/// @param	rightDelimiter 	(optional) the right delimiter.
+	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
+
+	/// @brief	Malformed escaped sequence 
 	class MalformedEscapedSequence : public std::exception 
 	{
 		virtual char const* what() const;
 	};
 
+	/// @brief	Invalid hexadecimal character.
 	class InvalidHexCharacter : public std::exception 
 	{
 		virtual char const* what() const;
@@ -38,6 +62,17 @@ namespace Instalog
 		throw InvalidHexCharacter();
 	}
 
+	/// @brief	Unescapes a given string
+	///
+	/// @exception	MalformedEscapedSequence	Thrown when a malformed escaped sequence is passed in
+	///
+	/// @param	begin		   	An iterator at the beginning of the string to escape
+	/// @param	end			   	An iterator one past the end of the string to escape
+	/// @param	target		   	Target iterator to write to.  Should not be overlapping with the escaped string or the behavior is undefined
+	/// @param	escapeCharacter	(optional) the escape character.
+	/// @param	endDelimiter   	(optional) the end delimiter.
+	///
+	/// @return	An iterator to where unescaping stopped (end of the string or endDelimiter)
 	template<typename InIter, typename OutIter>
 	inline InIter Unescape(InIter begin, InIter end, OutIter target, wchar_t escapeCharacter = L'#', wchar_t endDelimiter = L'\0')
 	{
@@ -93,6 +128,15 @@ namespace Instalog
 		return begin;
 	}
 
+	/// @brief	Unescapes a command line argv escaped string
+	///
+	/// @exception	MalformedEscapedSequence	Thrown when a malformed escaped sequence is supplied
+	///
+	/// @param	begin		   	An iterator at the beginning of the string to escape
+	/// @param	end			   	An iterator one past the end of the string to escape
+	/// @param	target		   	Target iterator to write to.  Should not be overlapping with the escaped string or the behavior is undefined
+	///
+	/// @return	An iterator to where unescaping stopped (end of the string or endDelimiter)
 	template<typename InIter, typename OutIter>
 	inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
 	{

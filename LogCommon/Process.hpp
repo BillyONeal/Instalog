@@ -4,14 +4,33 @@
 #include <boost/iterator/iterator_facade.hpp>
 
 namespace Instalog { namespace SystemFacades {
+
+	/// @brief	Wrapper around a Win32 process
 	class Process
 	{
 		std::size_t id_;
 	public:
+		/// @brief	Constructor.
+		///
+		/// @param	pid	The pid of the process of interest
 		explicit Process(std::size_t pid);
+
+		/// @brief	Gets the process identifier.
+		///
+		/// @return	The process identifier.
 		std::size_t GetProcessId() const;
+
+		/// @brief	Gets the command line of the process.
+		///
+		/// @return	The command line.
 		std::wstring GetCmdLine() const;
+
+		/// @brief	Gets the executable path of the process.
+		///
+		/// @return	The executable path.
 		std::wstring GetExecutablePath() const;
+
+		/// @brief	Terminates the process
 		void Terminate();
 	};
 

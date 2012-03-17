@@ -84,9 +84,9 @@ namespace Instalog
 		EscapeHelper(target, escapeCharacter, rightDelimiter, false);
 	}
 
-	void UrlEscape( std::wstring &target, wchar_t escapeCharacter /*= L'#'*/, wchar_t rightCharacter /*= L'\0'*/ )
+	void UrlEscape( std::wstring &target, wchar_t escapeCharacter /*= L'#'*/, wchar_t rightDelimiter /*= L'\0'*/ )
 	{
-		EscapeHelper(target, escapeCharacter, rightCharacter, true);
+		EscapeHelper(target, escapeCharacter, rightDelimiter, true);
 	}
 
 	std::string ConvertUnicode(const std::wstring &uni)

@@ -4,6 +4,7 @@
 
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	A simple wrapper around Services for the Services/Driver scanning section
 	class Service
 	{
 		SC_HANDLE serviceHandle;
@@ -15,16 +16,21 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring filepath;
 		std::wstring svchostGroup;
 		std::wstring svchostDll;
+
+// 		Service(Service const&);
+// 		Service& operator=(Service const&);
 	public:
 
-		/// Constructor.
+		/// Constructor.  Opens a handle to the Service and populates the various member variables
 		///
-		/// @param serviceName Name of the service.
-		/// @param displayName Name of the display.
-		/// @param status	   The status.
-		/// @param scmHandle   Handle of the scm.
+		/// @param serviceName Service name of the service.
+		/// @param displayName Display name of the display.
+		/// @param status	   The status returned from the ServiceControlManager.
+		/// @param scmHandle   Handle to the ServiceControlManager.
+		/// 
+		/// @throw	Win32Exception on error
 		Service(std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle);
-		/// Destructor.
+		/// Destructor.  Frees the handle to the Service
 		~Service();
 
 		/// Gets the service name.
@@ -42,9 +48,9 @@ namespace Instalog { namespace SystemFacades {
 		/// @return The state.
 		std::wstring const& getState() const { return state; }
 
-		/// Gets the start.
+		/// Gets the start status.
 		///
-		/// @return The start.
+		/// @return The start status.
 		DWORD const& getStart() const { return start; }
 
 		/// Gets the filepath.
@@ -57,9 +63,9 @@ namespace Instalog { namespace SystemFacades {
 		/// @return The svchost group.
 		std::wstring const& getSvchostGroup() const { return svchostGroup; }
 
-		/// Gets the svchost dll.
+		/// Gets the svchost dll path.
 		///
-		/// @return The svchost dll.
+		/// @return The svchost dll path.
 		std::wstring const& getSvchostDll() const { return svchostDll; }
 
 		/// Query if this object is svchost service.
@@ -68,6 +74,7 @@ namespace Instalog { namespace SystemFacades {
 		bool isSvchostService() const { return !svchostGroup.empty() || !svchostDll.empty(); }
 	};
 
+	/// @brief	Wrapper around the Windows Service Control Manager
 	class ServiceControlManager
 	{
 		SC_HANDLE scmHandle;
@@ -75,8 +82,21 @@ namespace Instalog { namespace SystemFacades {
 		ServiceControlManager(ServiceControlManager const&);
 		ServiceControlManager& operator=(ServiceControlManager const&);
 	public:
+		/// @brief	Constructor.  Opens a handle to the service control manager
+		///
+		/// @param	desiredAccess	(optional) the desired access.  Defaults are enough to support normal operations
+		///
+		/// @throw	Win32Exception on error
 		ServiceControlManager(DWORD desiredAccess = SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE);
+		
+		/// @brief	Destructor.  Closes the handle
 		~ServiceControlManager();
+
+		/// @brief	Enumerates all of the services running on the machine.
+		///
+		/// @return	A vector of Service objects
+		///
+		/// @throw	Win32Exception on error
 		std::vector<Service> GetServices() const;
 	};
 

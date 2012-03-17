@@ -6,6 +6,7 @@
 #include "LogCommon/Scripting.hpp"
 #include "LogCommon/ScanningSections.hpp"
 
+/// @brief	Console "user interface"
 struct ConsoleInterface : public Instalog::IUserInterface
 {
 	virtual void ReportProgressPercent(std::size_t progress)
@@ -24,6 +25,7 @@ struct ConsoleInterface : public Instalog::IUserInterface
 
 using namespace Instalog;
 
+/// @brief	Main entry-point for this application.
 int main()
 {
 	_setmode(_fileno(stdout), _O_WTEXT);
