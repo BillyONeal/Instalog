@@ -158,7 +158,11 @@ namespace Instalog { namespace Path {
 		if (TryExtensions(path, spacelocation))
 			return true;
 
-		// Second, try to prepend it with each path in %PATH% and try each extension
+		// Second, don't bother trying path prefixes if we start with a drive
+		if (path.size() >= 2 && iswalpha(path[0]) && path[1] == L':')
+			return false;
+
+		// Third, try to prepend it with each path in %PATH% and try each extension
 		static std::vector<std::wstring> splitPath = getSplitPath();
 		for (std::vector<std::wstring>::iterator splitPathIt = splitPath.begin(); splitPathIt != splitPath.end(); ++splitPathIt)
 		{
@@ -176,20 +180,16 @@ namespace Instalog { namespace Path {
 	
 	static bool StripArgumentsFromPath(std::wstring &path)
 	{
+		auto subpath = path.begin();
 		// For each spot where there's a space, try all available extensions
-		for (std::wstring::iterator subpath = std::find(path.begin(), path.end(), L' '); subpath != path.end(); subpath = std::find(subpath + 1, path.end(), L' '))
+		do
 		{
+			subpath = std::find(subpath + 1, path.end(), L' ');
 			if (TryExtensionsAndPaths(path, subpath))
 			{
 				return true;
 			}
-		}	
-
-		// Try all available extensions for the whole path
-		if (TryExtensionsAndPaths(path, path.end()))
-		{
-			return true;
-		}
+		} while (subpath != path.end());
 
 		return false;
 	}
