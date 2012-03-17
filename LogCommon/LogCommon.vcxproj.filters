@@ -129,5 +129,9 @@
     <None Include="Running Processes.txt">
       <Filter>Whitelists</Filter>
     </None>
+    <None Include="Services Drivers.txt">
+      <Filter>Whitelists</Filter>
+    </None>
+    <None Include="whitelis.bin" />
   </ItemGroup>
 </Project>

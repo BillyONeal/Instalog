@@ -67,8 +67,28 @@ namespace Instalog
 		ServiceControlManager scm;
 		std::vector<Service> services = scm.GetServices();
 
+		Whitelist whitelist(IDR_SERVICESDRIVERSWHITELIST);
+
 		for (auto service = services.begin(); service != services.end(); ++service)
 		{
+			std::wstring whitelistcheck;
+			if (service->isSvchostService())
+			{
+				whitelistcheck.append(service->getSvchostGroup());
+			}
+			else
+			{
+				whitelistcheck.append(service->getFilepath());			
+			}
+			whitelistcheck.append(L";");
+			whitelistcheck.append(service->getServiceName());
+			whitelistcheck.append(L";");
+			whitelistcheck.append(service->getDisplayName());
+			if (whitelist.IsOnWhitelist(whitelistcheck))
+			{
+				continue;
+			}
+
 			logOutput << service->getState() << service->getStart() << L' ' << service->getServiceName() << L';' << service->getDisplayName() << L';';
 			if (service->isSvchostService())
 			{
