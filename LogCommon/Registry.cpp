@@ -189,6 +189,12 @@ namespace Instalog { namespace SystemFacades {
 		return std::move(subkeys);
 	}
 
+	RegistryKey& RegistryKey::operator=( RegistryKey other )
+	{
+		std::swap(hKey_, other.hKey_);
+		return *this;
+	}
+
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))

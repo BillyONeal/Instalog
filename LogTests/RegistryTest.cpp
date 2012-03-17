@@ -91,7 +91,7 @@ TEST(Registry, GetsRightSizeInformation)
 		nullptr,
 		&lastTime
 	);
-	unsigned __int64 convertedTime = FiletimeToInteger(lastTime);
+	unsigned __int64 convertedTime = Instalog::FiletimeToInteger(lastTime);
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
 	auto sizeInfo = systemKey->GetSizeInformation();
 	ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());

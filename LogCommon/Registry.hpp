@@ -36,6 +36,7 @@ namespace Instalog { namespace SystemFacades {
 		typedef std::unique_ptr<RegistryKey> Ptr;
 		explicit RegistryKey(HANDLE hKey);
 		RegistryKey(RegistryKey && other);
+		RegistryKey& operator=(RegistryKey other);
 		~RegistryKey();
 		HANDLE GetHkey() const;
 		RegistryValue GetValue(std::wstring name);
