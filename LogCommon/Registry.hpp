@@ -43,12 +43,15 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue operator[](std::wstring name);
 		void Delete();
 
+		std::wstring GetName() const;
 		RegistryKeySizeInformation GetSizeInformation() const;
 		std::vector<std::wstring> EnumerateSubKeyNames() const;
+		std::vector<std::unique_ptr<RegistryKey> > EnumerateSubKeys(REGSAM samDesired = KEY_ALL_ACCESS) const;
 
 		static Ptr Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
 		static Ptr Open(Ptr const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
-		static Ptr Open(RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired);
+		static Ptr Open(RegistryKey const* parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static Ptr Open(RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired = KEY_ALL_ACCESS);
 		static Ptr Create(
 			std::wstring const& key,
 			REGSAM samDesired = KEY_ALL_ACCESS,

@@ -99,28 +99,58 @@ TEST(Registry, GetsRightSizeInformation)
 	ASSERT_EQ(values, sizeInfo.GetNumberOfValues());
 }
 
-TEST(Registry, CanEnumerateSubKeyNames)
+static std::vector<std::wstring> GetDefaultSystemKeySubkeys()
 {
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
-	ASSERT_TRUE(systemKey);
-	auto col = systemKey->EnumerateSubKeyNames();
 	std::vector<std::wstring> defaultItems;
 	defaultItems.push_back(L"ControlSet001");
-	defaultItems.push_back(L"CurrentControlSet");
 	defaultItems.push_back(L"MountedDevices");
 	defaultItems.push_back(L"Select");
 	defaultItems.push_back(L"Setup");
 	defaultItems.push_back(L"WPA");
 	std::sort(defaultItems.begin(), defaultItems.end());
-	ASSERT_TRUE(std::includes(col.begin(), col.end(), defaultItems.begin(), defaultItems.end()));
+	return std::move(defaultItems);
+}
+
+static void CheckVectorContainsSubkeys(std::vector<std::wstring> const& vec)
+{
+	auto defaultItems = GetDefaultSystemKeySubkeys();
+	ASSERT_TRUE(std::includes(vec.begin(), vec.end(), defaultItems.begin(), defaultItems.end()));
+}
+
+TEST(Registry, CanEnumerateSubKeyNames)
+{
+	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	ASSERT_TRUE(systemKey != 0);
+	CheckVectorContainsSubkeys(systemKey->EnumerateSubKeyNames());
 }
 
 TEST(Registry, SubKeyNamesAreSorted)
 {
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
-	ASSERT_TRUE(systemKey);
+	ASSERT_TRUE(systemKey != 0);
 	std::vector<std::wstring> col(systemKey->EnumerateSubKeyNames());
 	std::vector<std::wstring> copied(col);
 	std::sort(copied.begin(), copied.end());
 	EXPECT_EQ(col, copied);
+}
+
+TEST(Registry, CanGetName)
+{
+	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
+	ASSERT_TRUE(systemKey != 0);
+	ASSERT_EQ(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", systemKey->GetName());
+}
+
+TEST(Registry, CanGetSubKeysOpened)
+{
+	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	std::vector<RegistryKey::Ptr> subkeys(systemKey->EnumerateSubKeys(KEY_QUERY_VALUE));
+	std::vector<std::wstring> names(subkeys.size());
+	std::transform(subkeys.cbegin(), subkeys.cend(), names.begin(),
+		[] (RegistryKey::Ptr const& p) -> std::wstring {
+		std::wstring name(p->GetName());
+		name.erase(name.begin(), std::find(name.rbegin(), name.rend(), L'\\').base());
+		return std::move(name);
+	});
+	CheckVectorContainsSubkeys(names);
 }

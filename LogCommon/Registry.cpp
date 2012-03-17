@@ -91,6 +91,11 @@ namespace Instalog { namespace SystemFacades {
 		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
 	}
 
+	RegistryKey::Ptr RegistryKey::Open( RegistryKey const* parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	{
+		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
+	}
+
 	static std::unique_ptr<RegistryKey> RegistryKeyCreate( HANDLE hRoot, std::wstring const& key, REGSAM samDesired, DWORD options )
 	{
 		HANDLE hOpened;
@@ -152,6 +157,21 @@ namespace Instalog { namespace SystemFacades {
 			);
 	}
 
+	std::wstring RegistryKey::GetName() const
+	{
+		auto const buffSize = 32768ul;
+		unsigned char buffer[buffSize];
+		auto keyBasicInformation = reinterpret_cast<KEY_NAME_INFORMATION const*>(&buffer[0]);
+		auto bufferPtr = reinterpret_cast<void *>(&buffer[0]);
+		ULONG resultLength = 0;
+		NTSTATUS errorCheck = PNtQueryKey(GetHkey(), KeyNameInformation, bufferPtr, buffSize, &resultLength);
+		if (NT_ERROR(errorCheck))
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		return std::wstring(keyBasicInformation->Name, keyBasicInformation->NameLength / sizeof(wchar_t));
+	}
+
 	std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
 	{
 		const auto bufferLength = 32768;
@@ -193,6 +213,17 @@ namespace Instalog { namespace SystemFacades {
 	{
 		std::swap(hKey_, other.hKey_);
 		return *this;
+	}
+
+	std::vector<std::unique_ptr<RegistryKey> > RegistryKey::EnumerateSubKeys(REGSAM samDesired /* = KEY_ALL_ACCESS */) const
+	{
+		std::vector<std::wstring> names(EnumerateSubKeyNames());
+		std::vector<std::unique_ptr<RegistryKey> > result(names.size());
+		std::transform(names.cbegin(), names.cend(), result.begin(), 
+			[this, samDesired] (std::wstring const& name) -> std::unique_ptr<RegistryKey> {
+			return Open(this, name, samDesired);
+		});
+		return std::move(result);
 	}
 
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
