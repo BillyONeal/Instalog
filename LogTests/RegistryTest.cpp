@@ -107,8 +107,6 @@ TEST(Registry, CanEnumerateSubKeyNames)
 	std::vector<std::wstring> defaultItems;
 	defaultItems.push_back(L"ControlSet001");
 	defaultItems.push_back(L"CurrentControlSet");
-	defaultItems.push_back(L"DriverDatabase");
-	defaultItems.push_back(L"HardwareConfig");
 	defaultItems.push_back(L"MountedDevices");
 	defaultItems.push_back(L"Select");
 	defaultItems.push_back(L"Setup");
