@@ -605,6 +605,56 @@ typedef NTSTATUS (NTAPI *NtQueryKeyFunc)(
 	__out      PULONG ResultLength
 	);
 
+typedef enum _KEY_VALUE_INFORMATION_CLASS {
+	KeyValueBasicInformation            = 0,
+	KeyValueFullInformation             = 1,
+	KeyValuePartialInformation          = 2,
+	KeyValueFullInformationAlign64      = 3,
+	KeyValuePartialInformationAlign64   = 4,
+	MaxKeyValueInfoClass                = 5 
+} KEY_VALUE_INFORMATION_CLASS;
+
+typedef struct _KEY_VALUE_BASIC_INFORMATION {
+	ULONG TitleIndex;
+	ULONG Type;
+	ULONG NameLength;
+	WCHAR Name[1];
+} KEY_VALUE_BASIC_INFORMATION, *PKEY_VALUE_BASIC_INFORMATION;
+
+typedef struct _KEY_VALUE_PARTIAL_INFORMATION {
+	ULONG TitleIndex;
+	ULONG Type;
+	ULONG DataLength;
+	UCHAR Data[1];
+} KEY_VALUE_PARTIAL_INFORMATION, *PKEY_VALUE_PARTIAL_INFORMATION;
+
+typedef struct _KEY_VALUE_FULL_INFORMATION {
+	ULONG TitleIndex;
+	ULONG Type;
+	ULONG DataOffset;
+	ULONG DataLength;
+	ULONG NameLength;
+	WCHAR Name[1];
+} KEY_VALUE_FULL_INFORMATION, *PKEY_VALUE_FULL_INFORMATION;
+
+typedef NTSTATUS (NTAPI *NtEnumerateValueKeyFunc)(
+	__in       HANDLE KeyHandle,
+	__in       ULONG Index,
+	__in       KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+	__out_opt  PVOID KeyValueInformation,
+	__in       ULONG Length,
+	__out      PULONG ResultLength
+	);
+
+typedef NTSTATUS (NTAPI *NtQueryValueKeyFunc)(
+	__in       HANDLE KeyHandle,
+	__in       PUNICODE_STRING ValueName,
+	__in       KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+	__out_opt  PVOID KeyValueInformation,
+	__in       ULONG Length,
+	__out      PULONG ResultLength
+	);
+
 }
 
 inline UNICODE_STRING WstringToUnicodeString(std::wstring const& target)

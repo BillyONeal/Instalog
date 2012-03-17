@@ -13,6 +13,8 @@ namespace Instalog { namespace SystemFacades {
 	static NtDeleteKeyFunc PNtDeleteKey = GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
 	static NtQueryKeyFunc PNtQueryKey = GetNtDll().GetProcAddress<NtQueryKeyFunc>("NtQueryKey");
 	static NtEnumerateKeyFunc PNtEnumerateKey = GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
+	static NtEnumerateValueKeyFunc PNtEnumerateValueKeyFunc = GetNtDll().GetProcAddress<NtEnumerateValueKeyFunc>("NtEnumerateValueKey");
+	static NtQueryValueKeyFunc PNtQueryValueKeyFunc = GetNtDll().GetProcAddress<NtQueryValueKeyFunc>("NtQueryValueKey");
 
 	RegistryKey::~RegistryKey()
 	{
@@ -132,7 +134,7 @@ namespace Instalog { namespace SystemFacades {
 	void RegistryKey::Delete()
 	{
 		NTSTATUS errorCheck = PNtDeleteKey(GetHkey());
-		if (NT_ERROR(errorCheck))
+		if (!NT_SUCCESS(errorCheck))
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);
 		}
@@ -146,7 +148,7 @@ namespace Instalog { namespace SystemFacades {
 		auto bufferPtr = reinterpret_cast<void *>(&buffer[0]);
 		ULONG resultLength = 0;
 		NTSTATUS errorCheck = PNtQueryKey(GetHkey(), KeyFullInformation, bufferPtr, buffSize, &resultLength);
-		if (NT_ERROR(errorCheck))
+		if (!NT_SUCCESS(errorCheck))
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);
 		}
@@ -165,7 +167,7 @@ namespace Instalog { namespace SystemFacades {
 		auto bufferPtr = reinterpret_cast<void *>(&buffer[0]);
 		ULONG resultLength = 0;
 		NTSTATUS errorCheck = PNtQueryKey(GetHkey(), KeyNameInformation, bufferPtr, buffSize, &resultLength);
-		if (NT_ERROR(errorCheck))
+		if (!NT_SUCCESS(errorCheck))
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);
 		}
@@ -236,6 +238,43 @@ namespace Instalog { namespace SystemFacades {
 		, name_(std::move(other.name_))
 	{ }
 
+	std::wstring const& RegistryValue::GetName() const
+	{
+		return name_;
+	}
+
+	RegistryData RegistryValue::GetData() const
+	{
+		UNICODE_STRING valueName(WstringToUnicodeString(GetName()));
+		std::vector<unsigned char> buff(MAX_PATH);
+		NTSTATUS errorCheck;
+		do 
+		{
+			ULONG resultLength = 0;
+			errorCheck = PNtQueryValueKeyFunc(
+				hKey_,
+				&valueName,
+				KeyValuePartialInformation,
+				buff.data(),
+				static_cast<ULONG>(buff.size()),
+				&resultLength
+			);
+			if ((errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW) && resultLength != 0)
+			{
+				buff.resize(resultLength);
+			}
+		} while (errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW);
+		if (!NT_SUCCESS(errorCheck))
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		auto partialInfo = reinterpret_cast<KEY_VALUE_PARTIAL_INFORMATION const*>(buff.data());
+		DWORD type = partialInfo->Type;
+		ULONG len = partialInfo->DataLength;
+		buff.erase(buff.begin(), buff.begin() + 3*sizeof(ULONG));
+		buff.resize(len);
+		return RegistryData(type, std::move(buff));
+	}
 
 	RegistryKeySizeInformation::RegistryKeySizeInformation( unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues ) : lastWriteTime_(lastWriteTime)
 		, numberOfSubkeys_(numberOfSubkeys)
@@ -257,4 +296,47 @@ namespace Instalog { namespace SystemFacades {
 		return lastWriteTime_;
 	}
 
+
+	RegistryValueAndData::RegistryValueAndData( std::wstring && name, RegistryData && data )
+		: name_(name)
+		, data_(data)
+	{ }
+
+	RegistryValueAndData::RegistryValueAndData( RegistryValueAndData && other )
+		: name_(other.name_)
+		, data_(other.data_)
+	{ }
+
+	std::wstring const& RegistryValueAndData::GetName() const
+	{
+		return name_;
+	}
+
+	RegistryData const& RegistryValueAndData::GetData() const
+	{
+		return data_;
+	}
+
+
+	RegistryData::RegistryData( DWORD type, std::vector<unsigned char> && data )
+		: type_(type)
+		, data_(data)
+	{ }
+
+	RegistryData::RegistryData( RegistryData && other )
+		: type_(other.type_)
+		, data_(std::move(other.data_))
+	{ }
+
+	DWORD RegistryData::GetType() const
+	{
+		return type_;
+	}
+
+	std::vector<unsigned char> const& RegistryData::GetData() const
+	{
+		return data_;
+	}
+
 }}
+

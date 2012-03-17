@@ -91,6 +91,7 @@ TEST(Registry, GetsRightSizeInformation)
 		nullptr,
 		&lastTime
 	);
+	RegCloseKey(hKey);
 	unsigned __int64 convertedTime = Instalog::FiletimeToInteger(lastTime);
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
 	auto sizeInfo = systemKey->GetSizeInformation();
@@ -136,9 +137,9 @@ TEST(Registry, SubKeyNamesAreSorted)
 
 TEST(Registry, CanGetName)
 {
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
-	ASSERT_TRUE(systemKey != 0);
-	ASSERT_EQ(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", systemKey->GetName());
+	RegistryKey::Ptr servicesKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
+	ASSERT_TRUE(servicesKey != 0);
+	ASSERT_EQ(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey->GetName());
 }
 
 TEST(Registry, CanGetSubKeysOpened)
@@ -153,4 +154,57 @@ TEST(Registry, CanGetSubKeysOpened)
 		return std::move(name);
 	});
 	CheckVectorContainsSubkeys(names);
+}
+
+static unsigned char exampleData[] = "example example example test test example \0 embedded";
+static unsigned char exampleLongData[] = 
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded"
+	"example example example test test example \0 embedded";
+
+struct RegistryValueTest : public testing::Test
+{
+	RegistryKey::Ptr keyUnderTest;
+	void SetUp()
+	{
+		HKEY hKey;
+		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0);
+		ASSERT_EQ(0, errorCheck);
+		::RegSetValueExW(hKey, L"ExampleData", 0, 0, exampleData, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleLongData", 0, 0, exampleLongData, sizeof(exampleLongData));
+		::RegCloseKey(hKey);
+		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
+		ASSERT_TRUE(keyUnderTest != 0);
+	}
+	void TearDown()
+	{
+		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE)->Delete();
+	}
+};
+
+TEST_F(RegistryValueTest, ValuesHaveName)
+{
+	ASSERT_EQ(L"ExampleData", keyUnderTest->GetValue(L"ExampleData").GetName());
+}
+
+TEST_F(RegistryValueTest, CanGetValueData)
+{
+	auto data = keyUnderTest->GetValue(L"ExampleData").GetData();
+	ASSERT_EQ(sizeof(exampleData), data.GetData().size());
+	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleData));
+}
+
+TEST_F(RegistryValueTest, CanGetLongValueData)
+{
+	auto data = keyUnderTest->GetValue(L"ExampleLongData").GetData();
+	ASSERT_EQ(sizeof(exampleLongData), data.GetData().size());
+	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleLongData));
 }

@@ -8,13 +8,45 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	class RegistryValue
+	class IRegistryValue
+	{
+	protected:
+		~IRegistryValue() {}
+	public:
+		virtual std::wstring const& GetName() const = 0;
+	};
+
+	class RegistryData
+	{
+		DWORD type_;
+		std::vector<unsigned char> data_;
+	public:
+		RegistryData(DWORD type, std::vector<unsigned char> && data);
+		RegistryData(RegistryData && other);
+		DWORD GetType() const;
+		std::vector<unsigned char> const& GetData() const;
+	};
+
+	class RegistryValue : public IRegistryValue
 	{
 		HANDLE hKey_;
 		std::wstring name_;
 	public:
 		RegistryValue(HANDLE hKey, std::wstring && name);
 		RegistryValue(RegistryValue && other);
+		virtual std::wstring const& GetName() const;
+		RegistryData GetData() const;
+	};
+
+	class RegistryValueAndData : public IRegistryValue
+	{
+		std::wstring name_;
+		RegistryData data_;
+	public:
+		RegistryValueAndData(std::wstring && name, RegistryData && data);
+		RegistryValueAndData(RegistryValueAndData && other);
+		virtual std::wstring const& GetName() const;
+		RegistryData const& GetData() const;
 	};
 
 	class RegistryKeySizeInformation
