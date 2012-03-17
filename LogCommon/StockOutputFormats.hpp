@@ -28,6 +28,11 @@ namespace Instalog {
 	/// @param [out]	str	The string stream to write the attributes to
 	/// @param	attributes	   	The attributes.  Note that this is a DWORD (though it expects a plain __int32 to avoid including windows.h)
 	void WriteFileAttributes(std::wostream &str, unsigned __int32 attributes);
+
+	/// @brief	Writes the default representation of a file 
+	///
+	/// @param [out]	str			The string stream to write the attributes to
+	/// @param	targetFile			Target file.
 	void WriteDefaultFileOutput(std::wostream &str, std::wstring targetFile);
 	void WriteFileListingFile(std::wostream &str, std::wstring const& targetFile);
 
