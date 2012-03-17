@@ -16,7 +16,9 @@
 #define NOMINMAX
 #define NTDDI_VERSION 0x05010200
 #define _WIN32_WINNT 0x0501
+#define WIN32_NO_STATUS
 #include <windows.h>
+#undef WIN32_NO_STATUS
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/algorithm/string.hpp>

@@ -118,6 +118,9 @@
     <ClInclude Include="Win32Glue.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ntstatus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />

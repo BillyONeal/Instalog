@@ -22,8 +22,23 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
+	File::File( File && other )
+	{
+		hFile = other.hFile;
+		other.hFile = INVALID_HANDLE_VALUE;
+	}
+
+	File::File()
+		: hFile(INVALID_HANDLE_VALUE)
+	{
+	}
+
 	File::~File()
 	{
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			return;
+		}
 		::CloseHandle(hFile);
 	}
 
@@ -169,6 +184,13 @@ namespace Instalog { namespace SystemFacades {
 			Win32Exception::ThrowFromLastError();
 		}
 		return fad;
+	}
+
+	File& File::operator=( File other )
+	{
+		File copied(std::move(other));
+		std::swap(this->hFile, copied.hFile);
+		return *this;
 	}
 
 }}

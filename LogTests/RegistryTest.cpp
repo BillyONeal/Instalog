@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "gtest/gtest.h"
+#include "LogCommon/Win32Glue.hpp"
 #include "LogCommon/Registry.hpp"
 #include "LogCommon/Win32Exception.hpp"
 
@@ -68,11 +69,60 @@ TEST(Registry, CanOpenSubkey)
 	EXPECT_TRUE(subKey.get() != nullptr);
 }
 
+TEST(Registry, GetsRightSizeInformation)
+{
+	HKEY hKey;
+	LSTATUS errorCheck = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM", 0, KEY_READ, &hKey);
+	ASSERT_EQ(0, errorCheck);
+	DWORD subKeys;
+	DWORD values;
+	FILETIME lastTime;
+	errorCheck = ::RegQueryInfoKeyW(
+		hKey,
+		nullptr,
+		nullptr, 
+		nullptr,
+		&subKeys,
+		nullptr,
+		nullptr,
+		&values,
+		nullptr,
+		nullptr,
+		nullptr,
+		&lastTime
+	);
+	unsigned __int64 convertedTime = FiletimeToInteger(lastTime);
+	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
+	auto sizeInfo = systemKey->GetSizeInformation();
+	ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());
+	ASSERT_EQ(subKeys, sizeInfo.GetNumberOfSubkeys());
+	ASSERT_EQ(values, sizeInfo.GetNumberOfValues());
+}
+
 TEST(Registry, CanEnumerateSubKeyNames)
 {
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey);
-	std::vector<std::wstring> subKeyNames(systemKey->SubKeyNameBegin(), systemKey->SubKeyNameEnd());
+	auto col = systemKey->EnumerateSubKeyNames();
 	std::vector<std::wstring> defaultItems;
-	defaultItems.push_back(L"");
+	defaultItems.push_back(L"ControlSet001");
+	defaultItems.push_back(L"CurrentControlSet");
+	defaultItems.push_back(L"DriverDatabase");
+	defaultItems.push_back(L"HardwareConfig");
+	defaultItems.push_back(L"MountedDevices");
+	defaultItems.push_back(L"Select");
+	defaultItems.push_back(L"Setup");
+	defaultItems.push_back(L"WPA");
+	std::sort(defaultItems.begin(), defaultItems.end());
+	ASSERT_TRUE(std::includes(col.begin(), col.end(), defaultItems.begin(), defaultItems.end()));
+}
+
+TEST(Registry, SubKeyNamesAreSorted)
+{
+	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	ASSERT_TRUE(systemKey);
+	std::vector<std::wstring> col(systemKey->EnumerateSubKeyNames());
+	std::vector<std::wstring> copied(col);
+	std::sort(copied.begin(), copied.end());
+	EXPECT_EQ(col, copied);
 }

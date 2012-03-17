@@ -15,15 +15,12 @@
     <Filter Include="Precompiled">
       <UniqueIdentifier>{b19a3daf-7da9-424f-973e-fb3d47997dc7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GTest">
+      <UniqueIdentifier>{eac43fa9-582d-4b79-b2ef-531838237bc7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gtest_main.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gtest-all.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ProcessTest.cpp">
@@ -67,6 +64,12 @@
     </ClCompile>
     <ClCompile Include="ServiceControlManagerTest.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gtest_main.cc">
+      <Filter>GTest</Filter>
+    </ClCompile>
+    <ClCompile Include="gtest-all.cc">
+      <Filter>GTest</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

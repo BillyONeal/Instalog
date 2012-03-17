@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "LogCommon/ntstatus.h"
 // Copyright 2008, Google Inc.
 // All rights reserved.
 //

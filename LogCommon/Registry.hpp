@@ -17,21 +17,16 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue(RegistryValue && other);
 	};
 
-	class RegistrySubkeyNameIterator
-		: public boost::iterator_facade<RegistrySubkeyNameIterator, std::wstring,  boost::bidirectional_traversal_tag, std::wstring const&>
+	class RegistryKeySizeInformation
 	{
-		friend class boost::iterator_core_access;
-		HANDLE hKey_;
-		DWORD currentIndex;
-		std::wstring const& dereference() const;
-		void increment();
-		void decrement();
-		bool equal(RegistrySubkeyNameIterator const& other) const;
+		unsigned __int64 lastWriteTime_;
+		unsigned __int32 numberOfSubkeys_;
+		unsigned __int32 numberOfValues_;
 	public:
-		RegistrySubkeyNameIterator() {}
-		RegistrySubkeyNameIterator(HANDLE hKey, DWORD index)
-			: hKey_(hKey), currentIndex(index)
-		{ }
+		RegistryKeySizeInformation(unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues);
+		unsigned __int32 GetNumberOfSubkeys() const;
+		unsigned __int32 GetNumberOfValues() const;
+		unsigned __int64 GetLastWriteTime() const;
 	};
 
 	class RegistryKey : boost::noncopyable
@@ -47,8 +42,8 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue operator[](std::wstring name);
 		void Delete();
 
-		RegistrySubkeyNameIterator SubKeyNameBegin() const;
-		RegistrySubkeyNameIterator SubKeyNameEnd() const;
+		RegistryKeySizeInformation GetSizeInformation() const;
+		std::vector<std::wstring> EnumerateSubKeyNames() const;
 
 		static Ptr Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
 		static Ptr Open(Ptr const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);

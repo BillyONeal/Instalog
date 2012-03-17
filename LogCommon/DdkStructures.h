@@ -80,6 +80,8 @@ extern "C" {
 #define ERROR_SEVERITY_ERROR         0xC0000000
 	// end_winnt
 
+#include "ntstatus.h"
+
 
 #define MAX_UNICODE_PATH	32767L
 
@@ -528,8 +530,6 @@ typedef NTSTATUS (NTAPI *NtTerminateProcessFunc)(
 	IN NTSTATUS
 	);
 
-#define STATUS_INFO_LENGTH_MISMATCH	((NTSTATUS)0xC0000004L)
-
 typedef NTSTATUS (NTAPI *NtCreateKeyFunc)(
 	__out HANDLE*, //Key handle
 	__in ACCESS_MASK, //Desired Access
@@ -562,9 +562,38 @@ typedef enum _KEY_INFORMATION_CLASS {
 	MaxKeyInfoClass                = 8 
 } KEY_INFORMATION_CLASS;
 
+typedef struct _KEY_BASIC_INFORMATION {
+	LARGE_INTEGER LastWriteTime;
+	ULONG         TitleIndex;
+	ULONG         NameLength;
+	WCHAR         Name[1];
+} KEY_BASIC_INFORMATION, *PKEY_BASIC_INFORMATION;
+
+typedef struct _KEY_FULL_INFORMATION {
+	LARGE_INTEGER LastWriteTime;
+	ULONG         TitleIndex;
+	ULONG         ClassOffset;
+	ULONG         ClassLength;
+	ULONG         SubKeys;
+	ULONG         MaxNameLen;
+	ULONG         MaxClassLen;
+	ULONG         Values;
+	ULONG         MaxValueNameLen;
+	ULONG         MaxValueDataLen;
+	WCHAR         Class[1];
+} KEY_FULL_INFORMATION, *PKEY_FULL_INFORMATION;
+
 typedef NTSTATUS (NTAPI *NtEnumerateKeyFunc) (
 	__in       HANDLE KeyHandle,
 	__in       ULONG Index,
+	__in       KEY_INFORMATION_CLASS KeyInformationClass,
+	__out_opt  PVOID KeyInformation,
+	__in       ULONG Length,
+	__out      PULONG ResultLength
+	);
+
+typedef NTSTATUS (NTAPI *NtQueryKeyFunc)(
+	__in       HANDLE KeyHandle,
 	__in       KEY_INFORMATION_CLASS KeyInformationClass,
 	__out_opt  PVOID KeyInformation,
 	__in       ULONG Length,

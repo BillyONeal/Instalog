@@ -1,15 +1,17 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <boost/noncopyable.hpp>
 #include <windows.h>
 
 namespace Instalog { namespace SystemFacades {
 
 	// Represents a plain Win32 file handle.
-	class File
+	class File : boost::noncopyable
 	{
 		HANDLE hFile;
 	public:
+		File();
 		File(
 			std::wstring const&,
 			DWORD = GENERIC_READ,
@@ -18,6 +20,8 @@ namespace Instalog { namespace SystemFacades {
 			DWORD = OPEN_EXISTING,
 			DWORD = FILE_ATTRIBUTE_NORMAL
 		);
+		File(File && other);
+		File& operator=(File other);
 		~File();
 		unsigned __int64 GetSize() const;
 		DWORD GetAttributes() const;

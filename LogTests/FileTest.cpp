@@ -231,3 +231,21 @@ TEST(File, GetSizeStaticFailsNonexistent)
 {
 	EXPECT_THROW(File::GetSize(L"C:\\Nonexistent\\Nonexistent"), ErrorPathNotFoundException);
 }
+
+TEST(File, FileIsDefaultConstructable)
+{
+	File f;
+}
+
+TEST(File, FileIsMoveConstructable)
+{
+	File f;
+	File fTest(std::move(f));
+}
+
+TEST(File, FileIsMoveAssignable)
+{
+	File f;
+	File fTest;
+	fTest = std::move(f);
+}

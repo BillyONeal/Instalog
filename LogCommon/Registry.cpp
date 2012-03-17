@@ -11,6 +11,7 @@ namespace Instalog { namespace SystemFacades {
 	static NtCreateKeyFunc PNtCreateKey = GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
 	static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
 	static NtDeleteKeyFunc PNtDeleteKey = GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
+	static NtQueryKeyFunc PNtQueryKey = GetNtDll().GetProcAddress<NtQueryKeyFunc>("NtQueryKey");
 	static NtEnumerateKeyFunc PNtEnumerateKey = GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
 
 	RegistryKey::~RegistryKey()
@@ -132,14 +133,60 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameBegin() const
+	RegistryKeySizeInformation RegistryKey::GetSizeInformation() const
 	{
-		return RegistrySubkeyNameIterator(hKey_, 0);
+		auto const buffSize = 32768ul;
+		unsigned char buffer[buffSize];
+		auto keyFullInformation = reinterpret_cast<KEY_FULL_INFORMATION const*>(&buffer[0]);
+		auto bufferPtr = reinterpret_cast<void *>(&buffer[0]);
+		ULONG resultLength = 0;
+		NTSTATUS errorCheck = PNtQueryKey(GetHkey(), KeyFullInformation, bufferPtr, buffSize, &resultLength);
+		if (NT_ERROR(errorCheck))
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		return RegistryKeySizeInformation(
+			keyFullInformation->LastWriteTime.QuadPart,
+			keyFullInformation->SubKeys,
+			keyFullInformation->Values
+			);
 	}
 
-	Instalog::SystemFacades::RegistrySubkeyNameIterator RegistryKey::SubKeyNameEnd() const
+	std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
 	{
-		return RegistrySubkeyNameIterator(hKey_, 999);
+		const auto bufferLength = 32768;
+		std::vector<std::wstring> subkeys;
+		NTSTATUS errorCheck;
+		ULONG index = 0;
+		ULONG resultLength = 0;
+		unsigned char buff[bufferLength];
+		auto basicInformation = reinterpret_cast<KEY_BASIC_INFORMATION const*>(buff);
+		for(;;)
+		{
+			errorCheck = PNtEnumerateKey(
+				GetHkey(),
+				index++,
+				KeyBasicInformation,
+				buff,
+				bufferLength,
+				&resultLength
+			);
+			if (!NT_SUCCESS(errorCheck))
+			{
+				break;
+			}
+			subkeys.emplace_back(
+				std::wstring(basicInformation->Name,
+				             basicInformation->NameLength / sizeof(wchar_t)
+							)
+			);
+		}
+		if (errorCheck != STATUS_NO_MORE_ENTRIES)
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		std::sort(subkeys.begin(), subkeys.end());
+		return std::move(subkeys);
 	}
 
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
@@ -152,25 +199,25 @@ namespace Instalog { namespace SystemFacades {
 		, name_(std::move(other.name_))
 	{ }
 
-	std::wstring const& RegistrySubkeyNameIterator::dereference() const
+
+	RegistryKeySizeInformation::RegistryKeySizeInformation( unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues ) : lastWriteTime_(lastWriteTime)
+		, numberOfSubkeys_(numberOfSubkeys)
+		, numberOfValues_(numberOfValues)
+	{ }
+
+	unsigned __int32 RegistryKeySizeInformation::GetNumberOfSubkeys() const
 	{
-		static std::wstring empty(L"");
-		return empty;
+		return numberOfSubkeys_;
 	}
 
-	void RegistrySubkeyNameIterator::increment()
+	unsigned __int32 RegistryKeySizeInformation::GetNumberOfValues() const
 	{
-		currentIndex++;
+		return numberOfValues_;
 	}
 
-	void RegistrySubkeyNameIterator::decrement()
+	unsigned __int64 RegistryKeySizeInformation::GetLastWriteTime() const
 	{
-		currentIndex--;
-	}
-
-	bool RegistrySubkeyNameIterator::equal( RegistrySubkeyNameIterator const& other ) const
-	{
-		return currentIndex == other.currentIndex;
+		return lastWriteTime_;
 	}
 
 }}
