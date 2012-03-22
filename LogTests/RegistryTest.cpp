@@ -210,13 +210,21 @@ TEST_F(RegistryValueTest, ValuesHaveName)
 TEST_F(RegistryValueTest, CanGetValueData)
 {
 	auto data = keyUnderTest.GetValue(L"ExampleData").GetData();
-	ASSERT_EQ(sizeof(exampleData), data.GetData().size());
-	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleData));
+	ASSERT_EQ(sizeof(exampleData), data.GetContents().size());
+	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleData));
 }
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
 	auto data = keyUnderTest.GetValue(L"ExampleLongData").GetData();
-	ASSERT_EQ(sizeof(exampleLongData), data.GetData().size());
-	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleLongData));
+	ASSERT_EQ(sizeof(exampleLongData), data.GetContents().size());
+	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleLongData));
+}
+
+TEST_F(RegistryValueTest, CanEnumerateValueNames)
+{
+	auto names = keyUnderTest.EnumerateValueNames();
+	std::sort(names.begin(), names.end());
+	ASSERT_EQ(L"ExampleData" , names[0]);
+	ASSERT_EQ(L"ExampleLongData", names[1]);
 }

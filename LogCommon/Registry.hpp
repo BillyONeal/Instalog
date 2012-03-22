@@ -8,14 +8,6 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	class IRegistryValue
-	{
-	protected:
-		~IRegistryValue() {}
-	public:
-		virtual std::wstring const& GetName() const = 0;
-	};
-
 	class RegistryData
 	{
 		DWORD type_;
@@ -24,7 +16,15 @@ namespace Instalog { namespace SystemFacades {
 		RegistryData(DWORD type, std::vector<unsigned char> && data);
 		RegistryData(RegistryData && other);
 		DWORD GetType() const;
-		std::vector<unsigned char> const& GetData() const;
+		std::vector<unsigned char> const& GetContents() const;
+	};
+
+	class IRegistryValue
+	{
+	protected:
+		~IRegistryValue() {}
+	public:
+		virtual std::wstring const& GetName() const = 0;
 	};
 
 	class RegistryValue : public IRegistryValue
@@ -76,6 +76,9 @@ namespace Instalog { namespace SystemFacades {
 		void Delete();
 		bool Valid() const;
 		bool Invalid() const;
+
+		std::vector<std::wstring> EnumerateValueNames() const;
+		std::vector<RegistryValueAndData> EnumerateValues() const;
 
 		std::wstring GetName() const;
 		RegistryKeySizeInformation GetSizeInformation() const;

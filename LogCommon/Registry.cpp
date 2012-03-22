@@ -231,6 +231,42 @@ namespace Instalog { namespace SystemFacades {
 		return !Valid();
 	}
 
+	std::vector<std::wstring> RegistryKey::EnumerateValueNames() const
+	{
+		std::vector<std::wstring> result;
+		ULONG index = 0;
+		const ULONG valueNameStructSize = 16384 * sizeof(wchar_t) +
+			sizeof(KEY_VALUE_BASIC_INFORMATION);
+		std::aligned_storage<valueNameStructSize,
+			std::alignment_of<KEY_VALUE_BASIC_INFORMATION>::value>::type buff;
+		auto basicValueInformation = reinterpret_cast<KEY_VALUE_BASIC_INFORMATION*>(&buff);
+		for(;;)
+		{
+			ULONG resultLength;
+			NTSTATUS errorCheck = PNtEnumerateValueKeyFunc(
+				hKey_,
+				index++,
+				KeyValueBasicInformation,
+				basicValueInformation,
+				valueNameStructSize,
+				&resultLength);
+			if (NT_SUCCESS(errorCheck))
+			{
+				result.emplace_back(std::wstring(basicValueInformation->Name,
+					basicValueInformation->NameLength / sizeof(wchar_t)));
+			}
+			else if (errorCheck == STATUS_NO_MORE_ENTRIES)
+			{
+				break;
+			}
+			else
+			{
+				Win32Exception::ThrowFromNtError(errorCheck);
+			}
+		}
+		return result;
+	}
+
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
 		: hKey_(hKey)
 		, name_(std::move(name))
@@ -336,7 +372,7 @@ namespace Instalog { namespace SystemFacades {
 		return type_;
 	}
 
-	std::vector<unsigned char> const& RegistryData::GetData() const
+	std::vector<unsigned char> const& RegistryData::GetContents() const
 	{
 		return data_;
 	}
