@@ -73,8 +73,13 @@ namespace Instalog { namespace SystemFacades {
 
 	Service& Service::operator=( Service s )
 	{
-		Service copied = Service(std::move(s));
-		std::swap(*this, copied);
+		serviceName = std::move(s.serviceName);
+		displayName = std::move(s.displayName);
+		state = std::move(s.state);
+		start = s.start;
+		filepath = std::move(s.filepath);
+		svchostGroup = std::move(s.svchostGroup);
+		svchostDll = std::move(s.svchostDll);
 		return *this;
 	}
 
