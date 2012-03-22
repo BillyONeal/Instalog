@@ -65,7 +65,7 @@ namespace Instalog { namespace SystemFacades {
 	{
 		HANDLE hKey_;
 	public:
-		typedef std::unique_ptr<RegistryKey> Ptr;
+		RegistryKey();
 		explicit RegistryKey(HANDLE hKey);
 		RegistryKey(RegistryKey && other);
 		RegistryKey& operator=(RegistryKey other);
@@ -74,23 +74,24 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue GetValue(std::wstring name);
 		RegistryValue operator[](std::wstring name);
 		void Delete();
+		bool Valid() const;
+		bool Invalid() const;
 
 		std::wstring GetName() const;
 		RegistryKeySizeInformation GetSizeInformation() const;
 		std::vector<std::wstring> EnumerateSubKeyNames() const;
-		std::vector<std::unique_ptr<RegistryKey> > EnumerateSubKeys(REGSAM samDesired = KEY_ALL_ACCESS) const;
+		std::vector<RegistryKey> EnumerateSubKeys(REGSAM samDesired = KEY_ALL_ACCESS) const;
 
-		static Ptr Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
-		static Ptr Open(Ptr const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
-		static Ptr Open(RegistryKey const* parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
-		static Ptr Open(RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired = KEY_ALL_ACCESS);
-		static Ptr Create(
+		static RegistryKey Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static RegistryKey Open(RegistryKey const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static RegistryKey Open(RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired = KEY_ALL_ACCESS);
+		static RegistryKey Create(
 			std::wstring const& key,
 			REGSAM samDesired = KEY_ALL_ACCESS,
 			DWORD options = REG_OPTION_NON_VOLATILE
 		);
-		static Ptr Create(
-			Ptr const& parent,
+		static RegistryKey Create(
+			RegistryKey const& parent,
 			std::wstring const& key,
 			REGSAM samDesired = KEY_ALL_ACCESS,
 			DWORD options = REG_OPTION_NON_VOLATILE

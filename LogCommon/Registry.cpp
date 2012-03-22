@@ -35,10 +35,14 @@ namespace Instalog { namespace SystemFacades {
 	}
 
 	RegistryKey::RegistryKey( RegistryKey && other )
+		: hKey_(other.hKey_)
 	{
-		hKey_ = other.hKey_;
 		other.hKey_ = INVALID_HANDLE_VALUE;
 	}
+
+	RegistryKey::RegistryKey()
+		: hKey_(INVALID_HANDLE_VALUE)
+	{ }
 
 	RegistryValue RegistryKey::operator[]( std::wstring name )
 	{
@@ -50,7 +54,7 @@ namespace Instalog { namespace SystemFacades {
 		return RegistryValue(hKey_, std::move(name));
 	}
 
-	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
+	static RegistryKey RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
 	{
 		HANDLE hOpened;
 		OBJECT_ATTRIBUTES attribs;
@@ -61,44 +65,36 @@ namespace Instalog { namespace SystemFacades {
 		attribs.SecurityDescriptor = NULL;
 		attribs.SecurityQualityOfService = NULL;
 		NTSTATUS errorCheck = PNtOpenKey(&hOpened, samDesired, &attribs);
-		if (NT_SUCCESS(errorCheck))
-		{
-			return std::unique_ptr<RegistryKey>(new RegistryKey(hOpened));
-		}
-		else
+		if (!NT_SUCCESS(errorCheck))
 		{
 			::SetLastError(errorCheck);
-			return std::unique_ptr<RegistryKey>(nullptr);
+			hOpened = INVALID_HANDLE_VALUE;
 		}
+		return RegistryKey(hOpened);
 	}
 
-	static std::unique_ptr<RegistryKey> RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
+	static RegistryKey RegistryKeyOpen( HANDLE hRoot, std::wstring const& key, REGSAM samDesired )
 	{
 		UNICODE_STRING ustrKey = WstringToUnicodeString(key);
 		return RegistryKeyOpen(hRoot, ustrKey, samDesired);
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	RegistryKey RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
 	{
 		return RegistryKeyOpen(0, key, samDesired);
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Open( RegistryKey::Ptr const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	RegistryKey RegistryKey::Open( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
 	{
-		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
+		return RegistryKeyOpen(parent.GetHkey(), key, samDesired);
 	}
 
-	RegistryKey::Ptr RegistryKey::Open( RegistryKey const* parent, UNICODE_STRING& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+	RegistryKey RegistryKey::Open( RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
 	{
-		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
+		return RegistryKeyOpen(parent.GetHkey(), key, samDesired);
 	}
 
-	RegistryKey::Ptr RegistryKey::Open( RegistryKey const* parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
-	{
-		return RegistryKeyOpen(parent->GetHkey(), key, samDesired);
-	}
-
-	static std::unique_ptr<RegistryKey> RegistryKeyCreate( HANDLE hRoot, std::wstring const& key, REGSAM samDesired, DWORD options )
+	static RegistryKey RegistryKeyCreate( HANDLE hRoot, std::wstring const& key, REGSAM samDesired, DWORD options )
 	{
 		HANDLE hOpened;
 		OBJECT_ATTRIBUTES attribs;
@@ -110,25 +106,22 @@ namespace Instalog { namespace SystemFacades {
 		attribs.SecurityDescriptor = NULL;
 		attribs.SecurityQualityOfService = NULL;
 		NTSTATUS errorCheck = PNtCreateKey(&hOpened, samDesired, &attribs, NULL, NULL, options, NULL);
-		if (NT_SUCCESS(errorCheck))
-		{
-			return std::unique_ptr<RegistryKey>(new RegistryKey(hOpened));
-		}
-		else
+		if (!NT_SUCCESS(errorCheck))
 		{
 			::SetLastError(errorCheck);
-			return std::unique_ptr<RegistryKey>(nullptr);
+			hOpened = INVALID_HANDLE_VALUE;
 		}
+		return RegistryKey(hOpened);
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	RegistryKey RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
 	{
 		return RegistryKeyCreate(0, key, samDesired, options);
 	}
 
-	std::unique_ptr<RegistryKey> RegistryKey::Create( RegistryKey::Ptr const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+	RegistryKey RegistryKey::Create( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
 	{
-		return RegistryKeyCreate(parent->GetHkey(), key, samDesired, options);
+		return RegistryKeyCreate(parent.GetHkey(), key, samDesired, options);
 	}
 
 	void RegistryKey::Delete()
@@ -217,15 +210,25 @@ namespace Instalog { namespace SystemFacades {
 		return *this;
 	}
 
-	std::vector<std::unique_ptr<RegistryKey> > RegistryKey::EnumerateSubKeys(REGSAM samDesired /* = KEY_ALL_ACCESS */) const
+	std::vector<RegistryKey> RegistryKey::EnumerateSubKeys(REGSAM samDesired /* = KEY_ALL_ACCESS */) const
 	{
 		std::vector<std::wstring> names(EnumerateSubKeyNames());
-		std::vector<std::unique_ptr<RegistryKey> > result(names.size());
+		std::vector<RegistryKey> result(names.size());
 		std::transform(names.cbegin(), names.cend(), result.begin(), 
-			[this, samDesired] (std::wstring const& name) -> std::unique_ptr<RegistryKey> {
-			return Open(this, name, samDesired);
+			[this, samDesired] (std::wstring const& name) -> RegistryKey {
+			return Open(*this, name, samDesired);
 		});
 		return std::move(result);
+	}
+
+	bool RegistryKey::Valid() const
+	{
+		return hKey_ != INVALID_HANDLE_VALUE;
+	}
+
+	bool RegistryKey::Invalid() const
+	{
+		return !Valid();
 	}
 
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )

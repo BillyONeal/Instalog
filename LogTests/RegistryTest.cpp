@@ -6,10 +6,16 @@
 
 using namespace Instalog::SystemFacades;
 
+TEST(Registry, IsDefaultConstructable)
+{
+	RegistryKey key;
+	EXPECT_FALSE(key.Valid());
+}
+
 TEST(Registry, CanCreateKey)
 {
-	RegistryKey::Ptr keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
-	if (keyUnderTest.get() == nullptr)
+	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
+	if (keyUnderTest.Invalid())
 	{
 		DWORD last = ::GetLastError();
 		Win32Exception::ThrowFromNtError(last);
@@ -18,55 +24,55 @@ TEST(Registry, CanCreateKey)
 	LSTATUS ls = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\NonexistentTestKeyHere", 0, KEY_ALL_ACCESS, &hTest);
 	EXPECT_EQ(ERROR_SUCCESS, ls);
 	::RegCloseKey(hTest);
-	keyUnderTest->Delete();
+	keyUnderTest.Delete();
 }
 
 TEST(Registry, CanOpenKey)
 {
-	RegistryKey::Ptr keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
-	if (keyUnderTest.get() == nullptr)
+	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
+	if (keyUnderTest.Invalid())
 	{
 		DWORD last = ::GetLastError();
 		Win32Exception::ThrowFromNtError(last);
 	}
-	RegistryKey::Ptr keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
-	EXPECT_TRUE(keyOpenedAgain.get() != nullptr);
-	keyUnderTest->Delete();
+	RegistryKey keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
+	EXPECT_TRUE(keyOpenedAgain.Valid());
+	keyUnderTest.Delete();
 }
 
 TEST(Registry, CantOpenNonexistentKey)
 {
-	RegistryKey::Ptr keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
-	ASSERT_TRUE(keyOpenedAgain.get() == nullptr);
+	RegistryKey keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
+	ASSERT_TRUE(keyUnderTest.Invalid());
 }
 
 TEST(Registry, CanCreateSubkey)
 {
-	RegistryKey::Ptr rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
-	ASSERT_NE(nullptr, rootKey.get());
-	RegistryKey::Ptr subKey = RegistryKey::Create(rootKey, L"Example", KEY_ALL_ACCESS);
-	if (subKey.get() == nullptr)
+	RegistryKey rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
+	ASSERT_TRUE(rootKey.Valid());
+	RegistryKey subKey = RegistryKey::Create(rootKey, L"Example", KEY_ALL_ACCESS);
+	if (subKey.Invalid())
 	{
 		DWORD last = ::GetLastError();
 		Win32Exception::ThrowFromNtError(last);
 	}
-	subKey->Delete();
+	subKey.Delete();
 }
 
 TEST(Registry, CanDelete)
 {
-	RegistryKey::Ptr keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", DELETE);
-	keyUnderTest->Delete();
+	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", DELETE);
+	keyUnderTest.Delete();
 	keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere");
-	ASSERT_TRUE(keyUnderTest.get() == nullptr);
+	ASSERT_TRUE(keyUnderTest.Invalid());
 }
 
 TEST(Registry, CanOpenSubkey)
 {
-	RegistryKey::Ptr rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
-	ASSERT_TRUE(rootKey.get() != nullptr);
-	RegistryKey::Ptr subKey = RegistryKey::Open(rootKey, L"Windows", KEY_ALL_ACCESS);
-	EXPECT_TRUE(subKey.get() != nullptr);
+	RegistryKey rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
+	ASSERT_TRUE(rootKey.Valid());
+	RegistryKey subKey = RegistryKey::Open(rootKey, L"Windows", KEY_ALL_ACCESS);
+	EXPECT_TRUE(subKey.Valid());
 }
 
 TEST(Registry, GetsRightSizeInformation)
@@ -93,8 +99,8 @@ TEST(Registry, GetsRightSizeInformation)
 	);
 	RegCloseKey(hKey);
 	unsigned __int64 convertedTime = Instalog::FiletimeToInteger(lastTime);
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
-	auto sizeInfo = systemKey->GetSizeInformation();
+	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
+	auto sizeInfo = systemKey.GetSizeInformation();
 	ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());
 	ASSERT_EQ(subKeys, sizeInfo.GetNumberOfSubkeys());
 	ASSERT_EQ(values, sizeInfo.GetNumberOfValues());
@@ -120,18 +126,18 @@ static void CheckVectorContainsSubkeys(std::vector<std::wstring> const& vec)
 
 TEST(Registry, CanEnumerateSubKeyNames)
 {
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
-	ASSERT_TRUE(systemKey != 0);
-	auto subkeyNames = systemKey->EnumerateSubKeyNames();
+	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	ASSERT_TRUE(systemKey.Valid());
+	auto subkeyNames = systemKey.EnumerateSubKeyNames();
 	std::sort(subkeyNames.begin(), subkeyNames.end());
 	CheckVectorContainsSubkeys(subkeyNames);
 }
 
 TEST(Registry, SubKeyNamesAreSorted)
 {
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
-	ASSERT_TRUE(systemKey != 0);
-	std::vector<std::wstring> col(systemKey->EnumerateSubKeyNames());
+	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	ASSERT_TRUE(systemKey.Valid());
+	std::vector<std::wstring> col(systemKey.EnumerateSubKeyNames());
 	std::vector<std::wstring> copied(col);
 	std::sort(copied.begin(), copied.end());
 	EXPECT_EQ(col, copied);
@@ -139,22 +145,22 @@ TEST(Registry, SubKeyNamesAreSorted)
 
 TEST(Registry, CanGetName)
 {
-	RegistryKey::Ptr servicesKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
-	ASSERT_TRUE(servicesKey != 0);
-	if (!boost::iequals(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey->GetName()))
+	RegistryKey servicesKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
+	ASSERT_TRUE(servicesKey.Valid());
+	if (!boost::iequals(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey.GetName()))
 	{
-		GTEST_FAIL() << L"Expected \\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services , got "<< servicesKey->GetName() << L" instead";
+		GTEST_FAIL() << L"Expected \\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services , got "<< servicesKey.GetName() << L" instead";
 	}
 }
 
 TEST(Registry, CanGetSubKeysOpened)
 {
-	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
-	std::vector<RegistryKey::Ptr> subkeys(systemKey->EnumerateSubKeys(KEY_QUERY_VALUE));
+	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	std::vector<RegistryKey> subkeys(systemKey.EnumerateSubKeys(KEY_QUERY_VALUE));
 	std::vector<std::wstring> names(subkeys.size());
 	std::transform(subkeys.cbegin(), subkeys.cend(), names.begin(),
-		[] (RegistryKey::Ptr const& p) -> std::wstring {
-		std::wstring name(p->GetName());
+		[] (RegistryKey const& p) -> std::wstring {
+		std::wstring name(p.GetName());
 		name.erase(name.begin(), std::find(name.rbegin(), name.rend(), L'\\').base());
 		return std::move(name);
 	});
@@ -178,7 +184,7 @@ static unsigned char exampleLongData[] =
 
 struct RegistryValueTest : public testing::Test
 {
-	RegistryKey::Ptr keyUnderTest;
+	RegistryKey keyUnderTest;
 	void SetUp()
 	{
 		HKEY hKey;
@@ -188,29 +194,29 @@ struct RegistryValueTest : public testing::Test
 		::RegSetValueExW(hKey, L"ExampleLongData", 0, 0, exampleLongData, sizeof(exampleLongData));
 		::RegCloseKey(hKey);
 		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
-		ASSERT_TRUE(keyUnderTest != 0);
+		ASSERT_TRUE(keyUnderTest.Valid());
 	}
 	void TearDown()
 	{
-		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE)->Delete();
+		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE).Delete();
 	}
 };
 
 TEST_F(RegistryValueTest, ValuesHaveName)
 {
-	ASSERT_EQ(L"ExampleData", keyUnderTest->GetValue(L"ExampleData").GetName());
+	ASSERT_EQ(L"ExampleData", keyUnderTest.GetValue(L"ExampleData").GetName());
 }
 
 TEST_F(RegistryValueTest, CanGetValueData)
 {
-	auto data = keyUnderTest->GetValue(L"ExampleData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleData").GetData();
 	ASSERT_EQ(sizeof(exampleData), data.GetData().size());
 	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleData));
 }
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
-	auto data = keyUnderTest->GetValue(L"ExampleLongData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleLongData").GetData();
 	ASSERT_EQ(sizeof(exampleLongData), data.GetData().size());
 	ASSERT_TRUE(std::equal(data.GetData().begin(), data.GetData().end(), exampleLongData));
 }
