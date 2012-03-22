@@ -23,3 +23,5 @@ syntax: glob
 Instalog.sln.docstates.suo
 LogCommon/CommonWhitelists.aps
 Docs/Doxygen/html/
+Docs/Instalog Testing and Validation/tmp/*
+Docs/Instalog Testing and Validation/*.pdf
