@@ -200,7 +200,6 @@
   <ItemGroup>
     <None Include="Running Processes.txt" />
     <None Include="Services Drivers.txt" />
-    <None Include="whitelis.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
