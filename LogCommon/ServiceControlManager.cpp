@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include <type_traits>
 #include <algorithm>
 #include "Win32Exception.hpp"
 #include "ServiceControlManager.hpp"
@@ -28,13 +29,13 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		char queryServiceConfigBuffer[8192 /* (8K bytes maximum size) */];
+		std::aligned_storage<8192 /* (8K bytes maximum size) */, std::alignment_of<QUERY_SERVICE_CONFIGW>::value>::type queryServiceConfigBuffer;
 		DWORD bytesNeeded = 0; // not needed
-		if (QueryServiceConfig(serviceHandle, reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(queryServiceConfigBuffer), 8192, &bytesNeeded) == false)
+		if (QueryServiceConfig(serviceHandle, reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(&queryServiceConfigBuffer), 8192, &bytesNeeded) == false)
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		QUERY_SERVICE_CONFIGW *queryServiceConfig = reinterpret_cast<QUERY_SERVICE_CONFIGW*>(queryServiceConfigBuffer);
+		QUERY_SERVICE_CONFIGW *queryServiceConfig = reinterpret_cast<QUERY_SERVICE_CONFIGW*>(&queryServiceConfigBuffer);
 
 		// Set the start type
 		this->start = queryServiceConfig->dwStartType;
@@ -96,7 +97,9 @@ namespace Instalog { namespace SystemFacades {
 	{
 		std::vector<Service> services;
 
-		char servicesBuffer[65536 /* (64K bytes max size) */];
+		std::aligned_storage<65536 /* (64K bytes max size) */, std::alignment_of<ENUM_SERVICE_STATUSW>::value>::type
+			servicesBufferBacking;
+		auto servicesBuffer = reinterpret_cast<unsigned char*>(&servicesBufferBacking);
 		DWORD bytesNeeded = 0; // not needed
 		DWORD servicesReturned = 0;
 		DWORD resumeHandle = 0;
@@ -112,7 +115,7 @@ namespace Instalog { namespace SystemFacades {
 				Win32Exception::Throw(error);
 			}
 
-			for (char* servicesBufferLocation = servicesBuffer; servicesReturned > 0; --servicesReturned, servicesBufferLocation += sizeof(ENUM_SERVICE_STATUSW))
+			for (unsigned char* servicesBufferLocation = servicesBuffer; servicesReturned > 0; --servicesReturned, servicesBufferLocation += sizeof(ENUM_SERVICE_STATUSW))
 			{
 				ENUM_SERVICE_STATUS *enumServiceStatus = reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBufferLocation);
 				services.push_back(Service(enumServiceStatus->lpServiceName, enumServiceStatus->lpDisplayName, enumServiceStatus->ServiceStatus, scmHandle));

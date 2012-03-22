@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include <cassert>
+#include <type_traits>
 #include <limits>
 #include "Win32Exception.hpp"
 #include "RuntimeDynamicLinker.hpp"
