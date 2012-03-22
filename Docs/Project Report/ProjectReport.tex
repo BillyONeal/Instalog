@@ -9,7 +9,7 @@
 \usepackage[numbib]{tocbibind}
 
 \title{Instalog Project Report \\
-Interim Report 1}
+Interim Report 2}
 \author{
 Billy R. O'Neal III (bro4@case.edu) \\
 Jacob Snyder (jrs213@case.edu) \\ \\
@@ -132,18 +132,23 @@ not up to par.  Not only is it written in Visual Basic, the licensing agreement
 on it is unknown at this time.  
 
 \subsection{Progress}
-As of this writing, most of the work done so far has been in the direction of
-getting the entire project planned out with requirements and specifications.
-More details on the project's progress are available in
-section~\ref{project_progress}.
+At the time of the last report, we had finished the requirements and
+specifications documents and had just started the design and code implementation
+phase.  By working long hours over spring break, we have finished the design for
+the scanning portion of the project and have moved into the implementation
+phase.  So far, we have finished most of the background scaffolding needed to do
+scanning (registry enumeration, filesystem enumeration, string manipulation,
+etc.) and have moved into the actual implementation of the scanning section. 
+With the exception of whitelisting, the running processes and scanners/drivers
+sections are complete.  At the time of this writing, progress into Pseudo HJT
+and Restore Point enumeration has begun.  
 
-Since the requirements and specifications wound up being so much more than
-initially anticipated when starting this product, at the suggestion of the
-professor, we have put a scope limit on the product.  Essentially, the most
-basic of the scanning functionality will be delivered by the end of the Senior
-Project course.  The remaining functionality will be implemented in the authors'
-remaining free time before summer internships and employment begins.  For more
-details on the scope limit, please refer to section~\ref{scope_limit}.
+%TODO: Bill, please check this
+At this time, support for Windows 2000 and Windows XP RTM have been tentatively
+dropped.  This is because the authors decided to use C++11 features that have
+been implemented into the Visual Studio 2010 compiler.  
+
+Please refer to section~\ref{project_progress} for more details.  
 
 \subsection{Report Structure}
 This report is structured using a modified version of the structure proposed in
@@ -269,21 +274,24 @@ slightly at the suggestions of a few individuals.
 
 \subsection{Software Design}
 \label{software_design}
-The Software Design document \cite{Design} is the document that describes how
-each feature will be implemented.  This document is not complete as of yet, as
-it will evolve as development on the tool continues.  
+The Design document \cite{Design} is the document that describes how the
+requirements will be implemented.  This document is currently a work in progress
+and explains the progress made and current plan for remaining items.  Please
+note that it does \textit{not} attempt to document the features that are not
+part of the scope limit.  This being said, however, it does have some plans made
+for things such as scripting and user interfaces.  
 
 \subsection{Testing and Validation}
 \label{testing_and_evaluation}
 The Testing and Validation document \cite{Testing} is the document that
-describes how the tool will be tested and checked to ensure it is implemented
-properly.  As mentioned previously, testing the tool is going to be a big hurdle
-and one of the main focuses of the authors of this tool.  
-
-Since the requirements and specifications phase has just been completed and the
-design phase has just begun, the testing document is not complete either. 
-Rather, like the Software Design Document \cite{Design}, it will grow as the
-development of this tool progresses.  
+describes how the tool will be evaluated.  Since the Requirements
+Document \cite{Requirements} and Software Requirements Specification
+\cite{Specification} document describe each facet of the tool in extreme
+detail, the expected behavior of the tool must just match the requirements.  The
+Testing and Validation document is a brief document that describes the approach
+in the project to testing, specifically unit testing.  It will be updated as the
+project progresses to reflect the integration and system testing that will be
+done once more of the project is completed.
 
 \newpage
 
@@ -291,17 +299,16 @@ development of this tool progresses.
 
 \section{Scope Limit} \label{scope_limit}
 The scope of this project is much larger than can be reasonably finished in the
-time-frame for the course.  As is mentioned in sections 
-\ref{project_management} and \ref{project_progress}, it has taken five weeks
-just to write the requirements and specifications for the project.  Therefore,
-due to the sheer amount of features this tool will have as well as the amount of
-testing on varying environments that will be required, at the suggestion of the
-professor of the Senior Project course, the authors have instituted a scope
-limit for the completion of the project.  Since the scanning functionality is
-the most valuable part of the tool, this functionality will be completed in time
-for the project deadline of the course.  If this functionality is completed and
-verified quickly and there is time to spare, the following features will be
-added in the specified order:
+time-frame for the course.  It has taken five weeks just to write the
+requirements and specifications for the project.  Therefore, due to the sheer
+amount of features this tool will have as well as the amount of testing on
+varying environments that will be required, at the suggestion of the professor
+of the Senior Project course, the authors have instituted a scope limit for the
+completion of the project.  Since the scanning functionality is the most
+valuable part of the tool, this functionality will be completed in time for the
+project deadline of the course.  If this functionality is completed and verified
+quickly and there is time to spare, the following features will be added in the
+specified order:
 
 \begin{enumerate}
     \item Scripting 
@@ -360,96 +367,115 @@ timeline, this is the best realistic timeline that is possible at the moment.
   	\label{gantt}
 \end{figure}
 
-The Gantt Chart for the project is included in Figure~\ref{gantt}.  Currently,
-roughly 40\% of the semester has elapsed, and the specification document has
-just been finished.  Until spring break, the scanning feature will be designed
-and have a testing plan established.  Then, over spring break, the first
-prototypes of the scanning features will be started.  The hope is that a
-reasonably complete proof of concept will be ready and demo-able by the Interim
-Report \#2 milestone.  Then, for a little more than two weeks, the product will
-be tested according to the established plan on all target operating systems.  A
-beta version of the project will also be released in a few closed circles of the
-security community for evaluation and usability testing.  Lastly, the product
-will be finalized and shipped in the last few days before the final report is
-due.  The intent is that at this point, the tool will be ready to start taking
-over for existing scanning tools.  
+The project is on track according to the revised plan.  In the last report, it
+was stated that the goal was to have a reasonable prototype in place by this
+report.  This goal has been met, with two scanning sections entirely
+implemented with more on the way.  At this point, since all of the scaffolding
+is in place, there shouldn't be many more roadblocks in the way to finishing the
+project on time.  Additionally, the project has been tested as development has
+progressed, so the actual testing time shouldn't take nearly as long as stated
+in the Gantt chart, so the implementation phase can get shifted back into the
+testing phase if needed.  
 
-The authors of the tool plan on using pair programming at the very beginning of
-the project to establish a good common codebase.  Then, once a fairly
-standardized way of implementing scanning features is established, the design
-and test documents will be updated and finalized for the scanning features. 
-Then, the authors will use test driven development and alternate between writing
-scanning features and testing each other's features.  Ideally, this will ease
-the burden of testing when it comes to validating the product on each target
-operating system.  To test the product on the various target operating systems,
-the authors will use virtual machines.  Since both authors have MSDN licenses,
-getting the required installation media and licenses is not an issue.  In fact,
-the majority of the virtual machines are already installed, updated, and ready
-to be tested.  
+The authors of this tool began by using pair programming at the beginning of the
+project.  Once a good common ground had been established, the authors split off
+work and began implementing separate scanning sections in a test driven
+development method.  
 
 \newpage
 
 
 
 \section{Project Progress} \label{project_progress}
-In the above sections, it was mentioned that the original timeline for the
-product was unrealistically aggressive.  In the timeline, the specification
-documents would have been completed in a weekend and the scanning features would
-have been implemented by now.  It is now obvious that this is unrealistic and
-potentially dangerous for future users of this tool.  Therefore, the Scope Limit
-(section~\ref{scope_limit}) was put into place to keep the project realistic.  
+The authors have been making good progress on the project.  By spending almost
+every waking hour for five days over spring break working on the project, a
+substantial amount of code has been designed, implemented, and tested.  A large
+amount of background ``scaffolding'' has been developed and added to the
+project.  In this context, ``scaffolding'' refers to the common code that
+practically all scan sections will need.  This includes, but is not limited to:
 
-As of this writing, the majority of the work has been planning and documentation
-(primarily in writing the specifications).  Since the first use of this tool is
-for information gathering, several weeks of time had to be spent in carefully
-identifying where the information would be gathered from, how it would be
-displayed, and how it would be whitelisted.  Since the second use of this tool
-is for fixing machines, the fix script specification had to be designed
-incredibly carefully, which took about a week.  The work done in this respect is
-found in the documents referenced in section~\ref{software_requirements} and
-section~\ref{software_specifications}.  
+\begin{itemize}
+  \item An easy runtime dynamic linker
+  \item A wrapper around Win32 and NT error messages to convert them to C++
+  exceptions
+  \item A wrapper around Win32 Processes Handles
+  \item A wrapper around Win32 File Handles
+  \item A privilege granting wrapper
+  \item Path manipulation functions
+  \item String functions including escaping and unescaping
+  \item Pre-defined output formats from the specification
+  \item Whitelisting support
+  \item A wrapper around the registry
+  \item Rudimentary scripting, reordering, and execution
+  \item Framework for developing and reporting progress back to user interfaces
+  \item A wrapper around Win32 Service Control Manager 
+\end{itemize}
 
-While it may seem strange that very little code has been written yet, it is
-important to keep things in perspective.  The aforementioned documents are over
-one hundred pages in length.  Going through the commit history in the source
-control indicates that about eighty hours of time were spent on this
-documentation alone.  The reasoning for this is that the documentation has to be
-incredibly precise and detailed so that the behavior is well defined before
-starting the project.  This is important because this product will be scanning
-and modifying integral parts of the Windows operating system.  Therefore, no
-room could be left for error in the original design of the product.  This will
-also hopefully make the actual implementation of the project more
-straightforward because a majority of the thinking and design has been done in
-advance.  Lastly, it is important to remember that the scope of this project
-reaches beyond the timeline for this class.  Even though the documentation for
-the total project took this long to write, the intent is that only the first
-major component of the project will be implemented.  The fact that the semester
-is almost half over is not a concern because the remaining features will be
-implemented outside of the course and the features that will be delivered by the
-end of the semester will result in a shippable and complete product.  
+This ``scaffolding'' is actually quite a large portion of the specifications
+document \cite{Specification}.  In fact, these sections alone account for
+sections two and three of the specification.
+
+In addition to finishing these background scaffolding components, two scanning
+sections have been completely implemented: running processes and installed
+services and drivers.  It is important to note that while this is the only
+user-facing progress that has been made, like at the last report, a significant
+amount of background work is done and completed so that the features of the tool
+can be implemented.  The authors expect scanning sections to be implemented more
+quickly with the scaffolding largely out of the way.
+
+The authors have also been testing and documenting the written code extensively.
+At the time of this writing, there are at least two hundred unit tests written,
+each making sure the above scaffolding components and scanning sections are
+running properly.  There are also doxygen comments for all of the code so that
+other developers can understand the source and contribute if they so desire.
+
+%TODO: Bill, please check this
+Lastly, support for Windows 2000 and Windows XP RTM have been tentatively
+dropped.  This is because the authors decided to use C++11 features that have
+been implemented into the Visual Studio 2010 compiler.  Unfortunately, this
+compiler does not compile binaries that run on these operating systems.  This is
+because this compiler links against DLLs that are only available in later
+versions of Windows.  This is stated as a ``tentative'' restriction because it
+is, in theory, possible to mess with the build system enough to build binaries
+for these operating systems.  However, at this point in time, it was decided
+that it is not worth the authors' time.  This is for a number of reasons, namely
+that Microsoft is dropping support for these operating systems anyway and not
+releasing security fixes anymore, so it doesn't make sense to attempt to clean
+malware from these systems.  Secondly, the only way to compile code for these
+operating systems in the authors' knowledge is to include code released under
+the GPL, which would require re-licensing the entire codebase under the GPL,
+which doesn't sit well with the authors.  This is because the intent of this
+project is that it should be used by as many people (and companies) as possible,
+but restricting the project under the GPL license would prevent most companies
+from using and modifying the code.  
 
 \newpage
 
 
 
 \section{Discussion and Conclusions} \label{discussion}
-Previously, this report discussed the fact that the original timeline for the
-project was nowhere near realistic.  This was an oversight on the part of the
-authors who originally thought that each deliverable would take only a small
-fraction of the time it actually took to complete.  This is the biggest learning
-point so far in the project.  
+At this point, we are both very proud of the project's progress.  We've
+continued the momentum of ``doing it the right way'' since the last progress
+report.  At the last report, we had written extensive documents explaining
+exactly how the tool would work.  At this report, as mentioned in previous
+sections, we have written a large amount of background code and tested it pretty
+thoroughly on our machines.  While progress seems to be slow to people on the
+outside of the project, we both know that we made considerable progress over
+break and are very proud of the code we've written so far.
 
-In retrospect, the dangers of feature creep are very real as well.  After adding
-each small feature, it seemed that there were a handful of other supplemental
-features that would be great to add.  Despite ignoring most of these features,
-there are still more features in the project that can realistically be finished
-during the course.  
+At this point, the benefits of good engineering practices are very evident.  The
+detailed documents we wrote helped make the first steps towards creating an
+implementation much less daunting because we knew exactly how the code would
+work and has helped minimize confusion by keeping implementation separate from
+project definition.  Test driven development has allowed us to modify, refactor,
+and optimize the code and still make sure we didn't break anything.  
 
-Despite all of this, the importance of good software engineering practices are
-very evident in this project.  Going forward, a lot of time will be saved by
-putting the initial investment into the detailed requirements and specifications
-documents.  Additionally, the product will be easier to validate because these
-documents precisely explain how the product is supposed to behave. 
+Overall, we have both enjoyed the time we've spent on this project.  This is one
+of the first class projects we've worked on where the partner is helpful and
+willing to put as much time in as the other.  The only thing that we dislike is
+having to write formal design documents, but we realize that this is another
+good engineering practice and will likely be helpful at some point in the
+project's lifecycle.  
 
 \newpage
 
@@ -459,7 +485,7 @@ documents precisely explain how the product is supposed to behave.
 As of this writing, there are not currently any additional external documents
 beyond the documents listed in section~\ref{design}.  By the final release of
 the product, however, there will be a user's manual and programmer's manual that
-will be included as external projects.  A list of third-party software use and
+will be included as external documents.  A list of third-party software use and
 incorporation in the project will be included in the Design Document
 \cite{Design}.
 
