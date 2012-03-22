@@ -122,7 +122,9 @@ TEST(Registry, CanEnumerateSubKeyNames)
 {
 	RegistryKey::Ptr systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey != 0);
-	CheckVectorContainsSubkeys(systemKey->EnumerateSubKeyNames());
+	auto subkeyNames = systemKey->EnumerateSubKeyNames();
+	std::sort(subkeyNames.begin(), subkeyNames.end());
+	CheckVectorContainsSubkeys(subkeyNames);
 }
 
 TEST(Registry, SubKeyNamesAreSorted)
@@ -139,7 +141,10 @@ TEST(Registry, CanGetName)
 {
 	RegistryKey::Ptr servicesKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
 	ASSERT_TRUE(servicesKey != 0);
-	ASSERT_EQ(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey->GetName());
+	if (!boost::iequals(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey->GetName()))
+	{
+		GTEST_FAIL() << L"Expected \\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services , got "<< servicesKey->GetName() << L" instead";
+	}
 }
 
 TEST(Registry, CanGetSubKeysOpened)
@@ -153,6 +158,7 @@ TEST(Registry, CanGetSubKeysOpened)
 		name.erase(name.begin(), std::find(name.rbegin(), name.rend(), L'\\').base());
 		return std::move(name);
 	});
+	std::sort(names.begin(), names.end());
 	CheckVectorContainsSubkeys(names);
 }
 
