@@ -203,6 +203,7 @@ namespace Instalog { namespace Path {
 			if (path[0] == L'\"')
 			{
 				std::wstring unescaped;
+				unescaped.reserve(path.size());
 				std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
 				Prettify(unescaped.begin(), unescaped.end());
 				if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
