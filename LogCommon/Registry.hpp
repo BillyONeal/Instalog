@@ -19,15 +19,7 @@ namespace Instalog { namespace SystemFacades {
 		std::vector<unsigned char> const& GetContents() const;
 	};
 
-	class IRegistryValue
-	{
-	protected:
-		~IRegistryValue() {}
-	public:
-		virtual std::wstring const& GetName() const = 0;
-	};
-
-	class RegistryValue : public IRegistryValue
+	class RegistryValue
 	{
 		HANDLE hKey_;
 		std::wstring name_;
@@ -38,15 +30,19 @@ namespace Instalog { namespace SystemFacades {
 		RegistryData GetData() const;
 	};
 
-	class RegistryValueAndData : public IRegistryValue
+	class RegistryValueAndData
 	{
-		std::wstring name_;
-		RegistryData data_;
+		std::vector<unsigned char> innerBuffer_;
+		typedef KEY_VALUE_FULL_INFORMATION valueType;
+		KEY_VALUE_FULL_INFORMATION const* Cast() const;
 	public:
-		RegistryValueAndData(std::wstring && name, RegistryData && data);
+		RegistryValueAndData(std::vector<unsigned char> && buff);
 		RegistryValueAndData(RegistryValueAndData && other);
-		virtual std::wstring const& GetName() const;
-		RegistryData const& GetData() const;
+		std::wstring GetName() const;
+		std::vector<unsigned char>::const_iterator begin() const;
+		std::vector<unsigned char>::const_iterator end() const;
+		DWORD GetType() const;
+		bool operator<(RegistryValueAndData const& rhs) const;
 	};
 
 	class RegistryKeySizeInformation

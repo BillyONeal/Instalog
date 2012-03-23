@@ -188,10 +188,13 @@ struct RegistryValueTest : public testing::Test
 	void SetUp()
 	{
 		HKEY hKey;
+		DWORD exampleDword = 0xDEADBEEF;
 		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0);
 		ASSERT_EQ(0, errorCheck);
-		::RegSetValueExW(hKey, L"ExampleData", 0, 0, exampleData, sizeof(exampleData));
-		::RegSetValueExW(hKey, L"ExampleLongData", 0, 0, exampleLongData, sizeof(exampleLongData));
+		::RegSetValueExW(hKey, L"ExampleData", 0, REG_SZ, exampleData, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleLongData", 0, REG_SZ, exampleLongData, sizeof(exampleLongData));
+		::RegSetValueExW(hKey, L"ExampleDword", 0, REG_DWORD, reinterpret_cast<BYTE const*>(&exampleDword),
+			sizeof(DWORD));
 		::RegCloseKey(hKey);
 		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
 		ASSERT_TRUE(keyUnderTest.Valid());
@@ -210,13 +213,29 @@ TEST_F(RegistryValueTest, ValuesHaveName)
 TEST_F(RegistryValueTest, CanGetValueData)
 {
 	auto data = keyUnderTest.GetValue(L"ExampleData").GetData();
+	ASSERT_EQ(REG_SZ, data.GetType());
 	ASSERT_EQ(sizeof(exampleData), data.GetContents().size());
 	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleData));
+}
+
+TEST_F(RegistryValueTest, CanGetDwordData)
+{
+	auto data = keyUnderTest.GetValue(L"ExampleDword").GetData();
+	ASSERT_EQ(REG_DWORD, data.GetType());
+	ASSERT_EQ(sizeof(DWORD), data.GetContents().size());
+	union
+	{
+		DWORD dwordData;
+		unsigned char charData[4];
+	} buff;
+	std::copy(data.GetContents().begin(), data.GetContents().begin() + 4, buff.charData);
+	ASSERT_EQ(0xDEADBEEF, buff.dwordData);
 }
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
 	auto data = keyUnderTest.GetValue(L"ExampleLongData").GetData();
+	ASSERT_EQ(REG_SZ, data.GetType());
 	ASSERT_EQ(sizeof(exampleLongData), data.GetContents().size());
 	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleLongData));
 }
@@ -224,7 +243,26 @@ TEST_F(RegistryValueTest, CanGetLongValueData)
 TEST_F(RegistryValueTest, CanEnumerateValueNames)
 {
 	auto names = keyUnderTest.EnumerateValueNames();
+	ASSERT_EQ(3, names.size());
 	std::sort(names.begin(), names.end());
 	ASSERT_EQ(L"ExampleData" , names[0]);
-	ASSERT_EQ(L"ExampleLongData", names[1]);
+	ASSERT_EQ(L"ExampleDword", names[1]);
+	ASSERT_EQ(L"ExampleLongData", names[2]);
+}
+
+TEST_F(RegistryValueTest, CanEnumerateValuesAndData)
+{
+	auto namesData = keyUnderTest.EnumerateValues();
+	ASSERT_EQ(3, namesData.size());
+	std::sort(namesData.begin(), namesData.end());
+	ASSERT_EQ(L"ExampleData" , namesData[0].GetName());
+	ASSERT_EQ(REG_SZ, namesData[0].GetType());
+	ASSERT_EQ(L"ExampleDword", namesData[1].GetName());
+	ASSERT_EQ(REG_DWORD, namesData[1].GetType());
+	ASSERT_EQ(L"ExampleLongData", namesData[2].GetName());
+	ASSERT_EQ(REG_SZ, namesData[2].GetType());
+	ASSERT_TRUE(std::equal(namesData[0].begin(), namesData[0].end(), exampleData));
+	DWORD const* dwordData = reinterpret_cast<DWORD const*>(&*namesData[1].begin());
+	ASSERT_EQ(0xDEADBEEF, *dwordData);
+	ASSERT_TRUE(std::equal(namesData[2].begin(), namesData[2].end(), exampleLongData));
 }

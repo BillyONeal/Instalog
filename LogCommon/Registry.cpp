@@ -265,7 +265,38 @@ namespace Instalog { namespace SystemFacades {
 				Win32Exception::ThrowFromNtError(errorCheck);
 			}
 		}
-		return result;
+		return std::move(result);
+	}
+
+	std::vector<RegistryValueAndData> RegistryKey::EnumerateValues() const
+	{
+		std::vector<RegistryValueAndData> result;
+		std::vector<unsigned char> buff;
+		NTSTATUS errorCheck = 0;
+		for (ULONG index = 0; NT_SUCCESS(errorCheck); ++index)
+		{
+			ULONG elementSize = 260; // MAX_PATH
+			do
+			{
+				buff.resize(elementSize);
+				errorCheck = PNtEnumerateValueKeyFunc(
+					hKey_,
+					index,
+					KeyValueFullInformation,
+					buff.data(),
+					static_cast<ULONG>(buff.size()),
+					&elementSize);
+			} while (errorCheck == STATUS_BUFFER_OVERFLOW || errorCheck == STATUS_BUFFER_TOO_SMALL);
+			if (NT_SUCCESS(errorCheck))
+			{
+				result.emplace_back(RegistryValueAndData(std::move(buff)));
+			}
+		}
+		if (errorCheck != STATUS_NO_MORE_ENTRIES)
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		return std::move(result);
 	}
 
 	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
@@ -336,28 +367,6 @@ namespace Instalog { namespace SystemFacades {
 		return lastWriteTime_;
 	}
 
-
-	RegistryValueAndData::RegistryValueAndData( std::wstring && name, RegistryData && data )
-		: name_(name)
-		, data_(data)
-	{ }
-
-	RegistryValueAndData::RegistryValueAndData( RegistryValueAndData && other )
-		: name_(other.name_)
-		, data_(other.data_)
-	{ }
-
-	std::wstring const& RegistryValueAndData::GetName() const
-	{
-		return name_;
-	}
-
-	RegistryData const& RegistryValueAndData::GetData() const
-	{
-		return data_;
-	}
-
-
 	RegistryData::RegistryData( DWORD type, std::vector<unsigned char> && data )
 		: type_(type)
 		, data_(data)
@@ -378,5 +387,48 @@ namespace Instalog { namespace SystemFacades {
 		return data_;
 	}
 
-}}
 
+	RegistryValueAndData::RegistryValueAndData( std::vector<unsigned char> && buff )
+		: innerBuffer_(buff)
+	{ }
+
+	RegistryValueAndData::RegistryValueAndData( RegistryValueAndData && other )
+		: innerBuffer_(other.innerBuffer_)
+	{ }
+
+	std::wstring RegistryValueAndData::GetName() const
+	{
+		auto casted = Cast();
+		return std::wstring(casted->Name, casted->NameLength / sizeof(wchar_t));
+	}
+
+	KEY_VALUE_FULL_INFORMATION const* RegistryValueAndData::Cast() const
+	{
+		return reinterpret_cast<KEY_VALUE_FULL_INFORMATION const*>(innerBuffer_.data());
+	}
+
+	std::vector<unsigned char>::const_iterator RegistryValueAndData::begin() const
+	{
+		return innerBuffer_.cbegin() + Cast()->DataOffset;
+	}
+
+	std::vector<unsigned char>::const_iterator RegistryValueAndData::end() const
+	{
+		auto casted = Cast();
+		return innerBuffer_.cbegin() + casted->DataOffset + casted->DataLength;
+	}
+
+	bool RegistryValueAndData::operator<( RegistryValueAndData const& rhs ) const
+	{
+		auto casted = Cast();
+		auto rhsCasted = rhs.Cast();
+		return std::lexicographical_compare(casted->Name, casted->Name + casted->NameLength,
+			                                rhsCasted->Name, rhsCasted->Name + rhsCasted->NameLength);
+	}
+
+	DWORD RegistryValueAndData::GetType() const
+	{
+		return Cast()->Type;
+	}
+
+}}
