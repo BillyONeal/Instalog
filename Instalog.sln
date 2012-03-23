@@ -7,6 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogCommon", "LogCommon\LogC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogTests", "LogTests\LogTests.vcxproj", "{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{94F6F16B-7A3F-476A-8EF3-0595FF66264D}"
+	ProjectSection(SolutionItems) = preProject
+		TestsPerf.psess = TestsPerf.psess
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

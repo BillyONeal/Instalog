@@ -193,4 +193,17 @@ namespace Instalog { namespace SystemFacades {
 		return *this;
 	}
 
+	bool File::IsExclusiveFile( std::wstring const& fileName )
+	{
+		DWORD attribs = ::GetFileAttributesW(fileName.c_str());
+		if (attribs == INVALID_FILE_ATTRIBUTES)
+		{
+			return false;
+		}
+		else
+		{
+			return (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0;
+		}
+	}
+
 }}

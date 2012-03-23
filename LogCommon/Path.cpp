@@ -132,21 +132,23 @@ namespace Instalog { namespace Path {
 
 		// Search with no path extension
 		std::wstring pathNoPathExtension = std::wstring(searchpath.begin(), extensionat);
-		if (SystemFacades::File::Exists(pathNoPathExtension) && !SystemFacades::File::IsDirectory(pathNoPathExtension)) 
+		if (SystemFacades::File::IsExclusiveFile(pathNoPathExtension)) 
 		{
 			searchpath = pathNoPathExtension;
 			return true;
 		}
+		auto pathNoExtensionSize = pathNoPathExtension.size();
 
 		// Try the available path extensions
-		for (std::vector<std::wstring>::iterator splitPathExtIt = splitPathExt.begin(); splitPathExtIt != splitPathExt.end(); ++splitPathExtIt)
+		for (auto splitPathExtIt = splitPathExt.cbegin(); splitPathExtIt != splitPathExt.cend(); ++splitPathExtIt)
 		{
-			std::wstring pathPathExtension = std::wstring(searchpath.begin(), extensionat).append(*splitPathExtIt);
-			if (SystemFacades::File::Exists(pathPathExtension) && !SystemFacades::File::IsDirectory(pathPathExtension)) 
+			pathNoPathExtension.append(*splitPathExtIt);
+			if (SystemFacades::File::IsExclusiveFile(pathNoPathExtension)) 
 			{
-				searchpath = pathPathExtension;
+				searchpath.assign(pathNoPathExtension);
 				return true;
 			}
+			pathNoPathExtension.resize(pathNoExtensionSize);
 		}
 
 		return false;
@@ -215,7 +217,7 @@ namespace Instalog { namespace Path {
 				}
 
 				path = unescaped;
-				return SystemFacades::File::Exists(unescaped) && !SystemFacades::File::IsDirectory(unescaped);
+				return SystemFacades::File::IsExclusiveFile(unescaped);
 			}
 			else
 			{
