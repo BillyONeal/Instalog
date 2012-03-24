@@ -40,8 +40,6 @@ interfaces, these are also discussed in this document.
 
 \newpage
 
-
-
 \section{General Structure}
 The general structure to the design of this tool is that there are three
 ``layers'': Utilities, then Scripting, and lastly User Interfaces.  These are
@@ -56,8 +54,51 @@ most components of the tool will use, such as string escaping formats and other
 parts of the Specification that are referred to frequently.  
 
 \subsection{Scripting}
+Scripting is the core of the code for the tool.  Since all the various
+operations of the tool can be thought of as scripts, this is the complex design.
+However, since script sections don't interact, it's still fairly
+straightforward.  
+
+\subsubsection{Sections}
+Each part of scripts are split into different ``sections'' which correspond to
+the different scanning and fix capabilities described in the specifications
+document.  
+
+A section definition is defined as follows (with a sample implementing section
+class):
+\begin{center}\includegraphics{figures/ISectionDefinition.png}\end{center}
+
+\verb|GetScriptCommand| returns the name that the section is called in scripts. 
+\verb|GetName| returns the friendly human readable name of the section. 
+\verb|GetPriority| returns the priority of each script section.  The return
+value is an enum \verb|LogSectionPriorities| which correspond to the different
+priorities in the specifications document.  Lastly, \verb|Execute| takes a
+stream to print to, a \verb|ScriptSection|, and option lines. 
+\verb|ScriptSection| is defined as follows, and essentially pairs arguments to
+section calls in the script.
+\begin{center}\includegraphics{figures/ScriptSection.png}\end{center}
+
+\subsubsection{Script}
+\verb|Script| is defined as follows:
+\begin{center}\includegraphics{figures/Script.png}\end{center}
+
+All of the methods here are self explanatory.  In \verb|Run|, the \verb|ui|
+argument is the user interface for the script to report to.  This is the only
+dependency in this layer to the UI layer.
+
+Scripts are built with the \verb|ScriptDispatcher|:
+\begin{center}\includegraphics{figures/ScriptDispatcher.png}\end{center}
+The dispatcher will essentially parse a script, reorder the sections, and merge
+applicable intermediate sections.  It will then return a script that can be
+executed.
 
 \subsection{User Interfaces}
+All User Interfaces will be defined as follows:
+\begin{center}\includegraphics{figures/IUserInterface.png}\end{center}
+A User Interface is essentially an object that exposes various callbacks for the
+script to call as a script progresses.  User Interfaces can be more complicated,
+but in this case, a sample Console User Interface is shown to implement the
+interface.  
 
 \newpage
 
