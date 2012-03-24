@@ -43,6 +43,21 @@ interfaces, these are also discussed in this document.
 
 
 \section{General Structure}
+The general structure to the design of this tool is that there are three
+``layers'': Utilities, then Scripting, and lastly User Interfaces.  These are
+built in an expanding fashion, meaning that Utilities are independent, then
+Scripting is built on top of the Utilities (but the Utilities are not dependent
+on Scripting), and the User Interfaces are built upon Scripting and Utilities
+(but the Utilities and Scripting are not dependent on the User Interfaces).
+
+\subsection{Utilities}
+There isn't much to design here.  The Utilities are common helper functions that
+most components of the tool will use, such as string escaping formats and other
+parts of the Specification that are referred to frequently.  
+
+\subsection{Scripting}
+
+\subsection{User Interfaces}
 
 \newpage
 
