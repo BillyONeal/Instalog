@@ -1,0 +1,98 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{xltxtra}
+\setmainfont[Mapping=tex-text]{Liberation Serif}
+\setmonofont[Scale=0.8]{Liberation Mono}
+\newcommand{\var}[1]{\texttt{\$\{#1\}}}
+\usepackage[colorlinks=false,pdfborder=0 0 0]{hyperref}
+\usepackage{graphicx}
+
+\title{Instalog Design Document \\ Document Version 1.0}
+\author{
+Billy R. O'Neal III (bro4@case.edu) \\
+Jacob Snyder (jrs213@case.edu) \\ \\
+Case Western Reserve University
+}
+
+\begin{document}
+
+\maketitle
+\vspace{1in}
+\begin{center}
+\includegraphics[width=2in, height=2in]{figures/InstalogLogo.png}
+\end{center}
+\newpage
+
+
+
+\tableofcontents
+\newpage
+
+
+
+\section{Introduction}
+This document explains how the Instalog tool will be implemented.  This document
+is a work in progress and will be updated as features of the tool are
+approached.  Since the scanning features are being developed currently, they are
+the only features currently designed in this document.  However, since the
+scanning features depend on things like scripting and rudimentary user
+interfaces, these are also discussed in this document.
+
+\newpage
+
+
+
+\section{General Structure}
+
+\newpage
+
+
+\appendix
+\section{License} \label{license}
+Instalog itself is to be released under the two clause form of the BSD license,
+which is reprinted below:
+
+\begin{verbatim}
+Copyright © 2012, Jacob Snyder, Billy O'Neal III, and "sUBs"
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met: 
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\end{verbatim}
+
+This document, along with all other documentation related to Instalog,  is to be
+released under the Creative Commons Attribution 3.0 Unported license. Human
+readable and lawyer readable versions of this license can be found at
+\url{http://creativecommons.org/licenses/by/3.0/}.
+
+\newpage
+
+\section{Revision History} \label{revision_history}
+\begin{tabular}{| l | l | l |}
+\hline
+\textbf{Version} & \textbf{Date} & \textbf{Description} \\
+\hline
+1.0 & March 22, 2012 & Initial document \\
+\hline
+\end{tabular}
+
+
+
+\end{document}

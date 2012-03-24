@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Sun Feb 05 21:33:16 EST 2012
+markTmpDer=true
+builderNum=7
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=InstalogDesign.tex
+outputFile=InstalogDesign.pdf
+langSpell=en
+markDer=true
+srcDir=
