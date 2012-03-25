@@ -205,39 +205,34 @@ struct RegistryValueTest : public testing::Test
 	}
 };
 
-TEST_F(RegistryValueTest, ValuesHaveName)
-{
-	ASSERT_EQ(L"ExampleData", keyUnderTest.GetValue(L"ExampleData").GetName());
-}
-
 TEST_F(RegistryValueTest, CanGetValueData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleData");
 	ASSERT_EQ(REG_SZ, data.GetType());
-	ASSERT_EQ(sizeof(exampleData), data.GetContents().size());
-	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleData));
+	ASSERT_EQ(sizeof(exampleData), data.size());
+	ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleData));
 }
 
 TEST_F(RegistryValueTest, CanGetDwordData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleDword").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleDword");
 	ASSERT_EQ(REG_DWORD, data.GetType());
-	ASSERT_EQ(sizeof(DWORD), data.GetContents().size());
+	ASSERT_EQ(sizeof(DWORD), data.size());
 	union
 	{
 		DWORD dwordData;
 		unsigned char charData[4];
 	} buff;
-	std::copy(data.GetContents().begin(), data.GetContents().begin() + 4, buff.charData);
+	std::copy(data.cbegin(), data.cbegin() + 4, buff.charData);
 	ASSERT_EQ(0xDEADBEEF, buff.dwordData);
 }
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleLongData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleLongData");
 	ASSERT_EQ(REG_SZ, data.GetType());
-	ASSERT_EQ(sizeof(exampleLongData), data.GetContents().size());
-	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleLongData));
+	ASSERT_EQ(sizeof(exampleLongData), data.size());
+	ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleLongData));
 }
 
 TEST_F(RegistryValueTest, CanEnumerateValueNames)
@@ -261,8 +256,8 @@ TEST_F(RegistryValueTest, CanEnumerateValuesAndData)
 	ASSERT_EQ(REG_DWORD, namesData[1].GetType());
 	ASSERT_EQ(L"ExampleLongData", namesData[2].GetName());
 	ASSERT_EQ(REG_SZ, namesData[2].GetType());
-	ASSERT_TRUE(std::equal(namesData[0].begin(), namesData[0].end(), exampleData));
-	DWORD const* dwordData = reinterpret_cast<DWORD const*>(&*namesData[1].begin());
+	ASSERT_TRUE(std::equal(namesData[0].cbegin(), namesData[0].cend(), exampleData));
+	DWORD const* dwordData = reinterpret_cast<DWORD const*>(&*namesData[1].cbegin());
 	ASSERT_EQ(0xDEADBEEF, *dwordData);
-	ASSERT_TRUE(std::equal(namesData[2].begin(), namesData[2].end(), exampleLongData));
+	ASSERT_TRUE(std::equal(namesData[2].cbegin(), namesData[2].cend(), exampleLongData));
 }

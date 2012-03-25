@@ -249,3 +249,18 @@ TEST(File, FileIsMoveAssignable)
 	File fTest;
 	fTest = std::move(f);
 }
+
+TEST(File, ExclusiveMatch)
+{
+	ASSERT_PRED1(File::IsExclusiveFile, L"C:\\Windows\\Explorer.exe");
+}
+
+TEST(File, ExclusiveNoMatch)
+{
+	ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Nonexistent\\Nonexistent\\Nonexistent"));
+}
+
+TEST(File, ExclusiveNoMatchDir)
+{
+	ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
+}

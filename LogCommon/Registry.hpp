@@ -8,26 +8,36 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	class RegistryData
+	class BasicRegistryValue
 	{
-		DWORD type_;
-		std::vector<unsigned char> data_;
+	protected:
+		BasicRegistryValue() {} // Not intended for client construction.
+		~BasicRegistryValue() {}
 	public:
-		RegistryData(DWORD type, std::vector<unsigned char> && data);
-		RegistryData(RegistryData && other);
-		DWORD GetType() const;
-		std::vector<unsigned char> const& GetContents() const;
+		virtual std::vector<unsigned char>::const_iterator cbegin() const = 0;
+		virtual std::vector<unsigned char>::const_iterator cend() const = 0;
+		virtual std::size_t size() const = 0;
+		virtual DWORD GetType() const = 0;
+		DWORD GetDword() const;
+		DWORD GetDwordStrict() const;
+		__int64 GetQWord() const;
+		__int64 GetQWordStrict() const;
+		std::wstring GetString() const;
+		std::wstring GetStringStrict() const;
+		std::vector<std::wstring> GetMultiStringArray() const;
 	};
 
 	class RegistryValue
 	{
-		HANDLE hKey_;
-		std::wstring name_;
+		DWORD type_;
+		std::vector<unsigned char> data_;
 	public:
-		RegistryValue(HANDLE hKey, std::wstring && name);
+		RegistryValue(DWORD type, std::vector<unsigned char> && data);
 		RegistryValue(RegistryValue && other);
-		virtual std::wstring const& GetName() const;
-		RegistryData GetData() const;
+		virtual DWORD GetType() const;
+		virtual std::size_t size() const;
+		virtual std::vector<unsigned char>::const_iterator cbegin() const;
+		virtual std::vector<unsigned char>::const_iterator cend() const;
 	};
 
 	class RegistryValueAndData
@@ -39,9 +49,10 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValueAndData(std::vector<unsigned char> && buff);
 		RegistryValueAndData(RegistryValueAndData && other);
 		std::wstring GetName() const;
-		std::vector<unsigned char>::const_iterator begin() const;
-		std::vector<unsigned char>::const_iterator end() const;
-		DWORD GetType() const;
+		virtual DWORD GetType() const;
+		virtual std::size_t size() const;
+		virtual std::vector<unsigned char>::const_iterator cbegin() const;
+		virtual std::vector<unsigned char>::const_iterator cend() const;
 		bool operator<(RegistryValueAndData const& rhs) const;
 	};
 
@@ -67,8 +78,8 @@ namespace Instalog { namespace SystemFacades {
 		RegistryKey& operator=(RegistryKey other);
 		~RegistryKey();
 		HANDLE GetHkey() const;
-		RegistryValue GetValue(std::wstring name);
-		RegistryValue operator[](std::wstring name);
+		RegistryValue const GetValue(std::wstring name) const;
+		RegistryValue const operator[](std::wstring name) const;
 		void Delete();
 		bool Valid() const;
 		bool Invalid() const;
