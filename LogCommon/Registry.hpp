@@ -25,6 +25,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring GetString() const;
 		std::wstring GetStringStrict() const;
 		std::vector<std::wstring> GetMultiStringArray() const;
+		std::vector<std::wstring> GetCommaStringArray() const;
 	};
 
 	class RegistryValue

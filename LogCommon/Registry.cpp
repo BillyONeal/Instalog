@@ -232,7 +232,6 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);
 		}
-		std::sort(subkeys.begin(), subkeys.end());
 		return std::move(subkeys);
 	}
 
@@ -415,8 +414,8 @@ namespace Instalog { namespace SystemFacades {
 	{
 		auto casted = Cast();
 		auto rhsCasted = rhs.Cast();
-		return std::lexicographical_compare(casted->Name, casted->Name + casted->NameLength,
-			                                rhsCasted->Name, rhsCasted->Name + rhsCasted->NameLength);
+		return std::lexicographical_compare(casted->Name, casted->Name + (casted->NameLength/sizeof(wchar_t)),
+			                                rhsCasted->Name, rhsCasted->Name + (rhsCasted->NameLength/sizeof(wchar_t)));
 	}
 
 	DWORD RegistryValueAndData::GetType() const
