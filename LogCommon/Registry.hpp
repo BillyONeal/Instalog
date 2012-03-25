@@ -3,10 +3,19 @@
 #include <memory>
 #include <windows.h>
 #include <boost/noncopyable.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include "DdkStructures.h"
 
 namespace Instalog { namespace SystemFacades {
+
+	struct InvalidRegistryDataTypeException : public std::exception
+	{
+		virtual char const* what() const
+		{
+			return "Invalid Registry Value Type";
+		}
+	};
 
 	class BasicRegistryValue
 	{
@@ -16,6 +25,8 @@ namespace Instalog { namespace SystemFacades {
 	public:
 		virtual std::vector<unsigned char>::const_iterator cbegin() const = 0;
 		virtual std::vector<unsigned char>::const_iterator cend() const = 0;
+		wchar_t const* wcbegin() const;
+		wchar_t const* wcend() const;
 		virtual std::size_t size() const = 0;
 		virtual DWORD GetType() const = 0;
 		DWORD GetDword() const;

@@ -1,11 +1,13 @@
 #include "pch.hpp"
+#include <strsafe.h>
 #include <cassert>
 #include <type_traits>
 #include <limits>
 #include <iterator>
 #include <iomanip>
-#include <boost/io/ios_state.hpp>
+#include <array>
 #include "Win32Exception.hpp"
+#include "StringUtilities.hpp"
 #include "RuntimeDynamicLinker.hpp"
 #include "Registry.hpp"
 
@@ -428,7 +430,7 @@ namespace Instalog { namespace SystemFacades {
 		return Cast()->DataLength;
 	}
 
-	__int32 BytestreamToDword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	static __int32 BytestreamToDword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
 	{
 		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
 		union
@@ -444,7 +446,24 @@ namespace Instalog { namespace SystemFacades {
 		return converted;
 	}
 
-	__int64 BytestreamToQword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	static __int32 BytestreamToDwordBe( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	{
+		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+		union
+		{
+			__int32 converted;
+			unsigned char toConvert[4];
+		};
+		if (std::distance(first, last) < 4)
+		{
+			throw ErrorInvalidParameterException();
+		}
+		std::copy(first, first + 4, toConvert);
+		std::reverse(toConvert, toConvert + 4);
+		return converted;
+	}
+
+	static __int64 BytestreamToQword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
 	{
 		static_assert(sizeof(__int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
 		union
@@ -458,6 +477,217 @@ namespace Instalog { namespace SystemFacades {
 		}
 		std::copy(first, first + 8, toConvert);
 		return converted;
+	}
+
+
+	DWORD BasicRegistryValue::GetDword() const
+	{
+		if (GetType() == REG_DWORD)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD_BIG_ENDIAN)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDwordBe(cbegin(), cend());
+		}
+		else if (GetType() == REG_QWORD)
+		{
+			if (size() != 8)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			__int64 tmp = BytestreamToQword(cbegin(), cend());
+			if ((tmp & 0x00000000FFFFFFFFull) != 0)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return static_cast<DWORD>(tmp);
+		}
+		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
+		{
+			std::wistringstream ss(GetStringStrict());
+			DWORD ans;
+			if (ss >> ans)
+			{
+				return ans;
+			}
+		}
+		throw InvalidRegistryDataTypeException();
+	}
+
+	std::wstring BasicRegistryValue::GetStringStrict() const
+	{
+		auto type = GetType();
+		if (type != REG_SZ && type != REG_EXPAND_SZ)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetString();
+	}
+
+	DWORD BasicRegistryValue::GetDwordStrict() const
+	{
+		if (GetType() != REG_DWORD)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetDword();
+	}
+
+	__int64 BasicRegistryValue::GetQWord() const
+	{
+		if (GetType() == REG_QWORD)
+		{
+			if (size() != 8)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToQword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD_BIG_ENDIAN)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDwordBe(cbegin(), cend());
+		}
+		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
+		{
+			std::wistringstream ss(GetStringStrict());
+			__int64 ans;
+			if (ss >> ans)
+			{
+				return ans;
+			}
+		}
+		throw InvalidRegistryDataTypeException();
+	}
+
+	__int64 BasicRegistryValue::GetQWordStrict() const
+	{
+		if (GetType() != REG_QWORD)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetQWord();
+	}
+
+	std::wstring BasicRegistryValue::GetString( ) const
+	{
+		std::wstring result;
+		switch (GetType())
+		{
+		case REG_SZ:
+		case REG_MULTI_SZ:
+			result.assign(wcbegin(), wcend());
+			break;
+		case REG_DWORD:
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			result.reserve(16);
+			result.assign(L"DWORD:0x");
+			for (auto it = cbegin(), itEnd = cend(); it != itEnd; ++it)
+			{
+				HexCharacter(*it, result);
+			}
+			break;
+		case REG_DWORD_BIG_ENDIAN:
+			result.reserve(19);
+			result.assign(L"DWORD-BE:0x");
+			{
+				auto it = cbegin() + 8;
+				auto itEnd = cbegin();
+				for (; it != itEnd; --it)
+				{
+					HexCharacter(*it, result);
+				}
+			}
+			break;
+		default:
+			result.reserve(4*size() + 7);
+			if (GetType() == REG_BINARY)
+			{
+				result.assign(L"hex(b):");
+			}
+			else
+			{
+				wchar_t buff[8];
+				swprintf_s(buff, L"hex(%d):", GetType());
+				result.assign(buff);
+			}
+			if (size() == 0)
+			{
+				break;
+			}
+			HexCharacter(*cbegin(), result);
+			{
+				auto it = cbegin() + 1;
+				auto end = cend();
+				for (; it != end; ++it)
+				{
+					result.push_back(L',');
+					result.push_back(L' ');
+					HexCharacter(*it, result);
+				}
+			}
+		}
+		return std::move(result);
+	}
+
+	std::vector<std::wstring> BasicRegistryValue::GetMultiStringArray() const
+	{
+		if (GetType() != REG_MULTI_SZ)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		std::vector<std::wstring> answers;
+		auto first = wcbegin();
+		auto middle = first;
+		auto last = wcend();
+		while (middle = std::find(first, last, L'\0'), first != last && middle != last)
+		{
+			answers.emplace_back(std::wstring(first, middle));
+			first = middle + 1;
+		}
+		return std::move(answers);
+	}
+
+	wchar_t const* BasicRegistryValue::wcbegin() const
+	{
+		return reinterpret_cast<wchar_t const*>(&*cbegin());
+	}
+
+	wchar_t const* BasicRegistryValue::wcend() const
+	{
+		return reinterpret_cast<wchar_t const*>(&*cend());
+	}
+
+	std::vector<std::wstring> BasicRegistryValue::GetCommaStringArray() const
+	{
+		std::vector<std::wstring> answer;
+		std::wstring contents(GetStringStrict());
+		boost::algorithm::split(answer, contents, 
+			std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L','));
+		return std::move(answer);
 	}
 
 }}

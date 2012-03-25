@@ -290,7 +290,6 @@ TEST_F(RegistryValueTest, CanEnumerateValuesAndData)
 	ASSERT_TRUE(std::equal(namesData[6].cbegin(), namesData[6].cend(), exampleLongDataCasted));
 }
 
-
 TEST_F(RegistryValueTest, CanSortValuesAndData)
 {
 	auto namesData = keyUnderTest.EnumerateValues();
