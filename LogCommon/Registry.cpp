@@ -6,6 +6,7 @@
 #include <iterator>
 #include <iomanip>
 #include <array>
+#include <functional>
 #include "Win32Exception.hpp"
 #include "StringUtilities.hpp"
 #include "RuntimeDynamicLinker.hpp"
@@ -687,6 +688,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring contents(GetStringStrict());
 		boost::algorithm::split(answer, contents, 
 			std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L','));
+		std::for_each(answer.begin(), answer.end(), [] (std::wstring & a) { boost::algorithm::trim_left(a, std::locale()); });
 		return std::move(answer);
 	}
 
