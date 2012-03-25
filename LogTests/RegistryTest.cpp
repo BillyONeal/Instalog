@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include <array>
 #include "gtest/gtest.h"
 #include "LogCommon/Win32Glue.hpp"
 #include "LogCommon/Registry.hpp"
@@ -133,14 +134,13 @@ TEST(Registry, CanEnumerateSubKeyNames)
 	CheckVectorContainsSubkeys(subkeyNames);
 }
 
-TEST(Registry, SubKeyNamesAreSorted)
+TEST(Registry, SubKeyNamesCanBeSorted)
 {
 	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey.Valid());
 	std::vector<std::wstring> col(systemKey.EnumerateSubKeyNames());
-	std::vector<std::wstring> copied(col);
-	std::sort(copied.begin(), copied.end());
-	EXPECT_EQ(col, copied);
+	std::sort(col.begin(), col.end());
+	ASSERT_TRUE(std::is_sorted(col.begin(), col.end()));
 }
 
 TEST(Registry, CanGetName)
@@ -168,19 +168,24 @@ TEST(Registry, CanGetSubKeysOpened)
 	CheckVectorContainsSubkeys(names);
 }
 
-static unsigned char exampleData[] = "example example example test test example \0 embedded";
-static unsigned char exampleLongData[] = 
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded"
-	"example example example test test example \0 embedded";
+static wchar_t exampleData[] = L"example example example test test example \0 embedded";
+static auto exampleDataCasted = reinterpret_cast<BYTE const*>(exampleData);
+static wchar_t exampleLongData[] = 
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded"
+	L"example example example test test example \0 embedded";
+static auto exampleLongDataCasted = reinterpret_cast<BYTE const*>(exampleLongData);
+static wchar_t exampleMultiSz[] =
+	L"Foo\0bar\0baz\0\0";
+static auto exampleMultiSzCasted = reinterpret_cast<BYTE const*>(exampleMultiSz);
 
 struct RegistryValueTest : public testing::Test
 {
@@ -189,12 +194,23 @@ struct RegistryValueTest : public testing::Test
 	{
 		HKEY hKey;
 		DWORD exampleDword = 0xDEADBEEF;
+		__int64 exampleQWord = 0xBADC0FFEEBADBAD1ll;
 		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0);
 		ASSERT_EQ(0, errorCheck);
-		::RegSetValueExW(hKey, L"ExampleData", 0, REG_SZ, exampleData, sizeof(exampleData));
-		::RegSetValueExW(hKey, L"ExampleLongData", 0, REG_SZ, exampleLongData, sizeof(exampleLongData));
-		::RegSetValueExW(hKey, L"ExampleDword", 0, REG_DWORD, reinterpret_cast<BYTE const*>(&exampleDword),
-			sizeof(DWORD));
+		::RegSetValueExW(hKey, L"ExampleDataNone", 0, REG_NONE, exampleDataCasted, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleDataBinary", 0, REG_BINARY, exampleDataCasted, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleData", 0, REG_SZ, exampleDataCasted, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleLongData", 0, REG_SZ, exampleLongDataCasted, sizeof(exampleLongData));
+		::RegSetValueExW(hKey, L"ExampleDataExpand", 0, REG_EXPAND_SZ, exampleDataCasted, sizeof(exampleData));
+		::RegSetValueExW(hKey, L"ExampleLongDataExpand", 0, REG_EXPAND_SZ, exampleLongDataCasted, sizeof(exampleLongData));
+		::RegSetValueExW(hKey, L"ExampleMultiSz", 0, REG_MULTI_SZ, exampleMultiSzCasted, sizeof(exampleMultiSz));
+		auto dwordPtr = reinterpret_cast<unsigned char const*>(&exampleDword);
+		std::array<unsigned char, 4> dwordArray;
+		std::copy(dwordPtr, dwordPtr + 4, dwordArray.begin());
+		::RegSetValueExW(hKey, L"ExampleDword", 0, REG_DWORD, &dwordArray[0], sizeof(DWORD));
+		std::reverse(dwordArray.begin(), dwordArray.end());
+		::RegSetValueExW(hKey, L"ExampleFDword", 0, REG_DWORD_BIG_ENDIAN, &dwordArray[0], sizeof(DWORD));
+		::RegSetValueExW(hKey, L"ExampleQWord", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleQWord), sizeof(__int64));
 		::RegCloseKey(hKey);
 		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
 		ASSERT_TRUE(keyUnderTest.Valid());
@@ -205,64 +221,85 @@ struct RegistryValueTest : public testing::Test
 	}
 };
 
-TEST_F(RegistryValueTest, ValuesHaveName)
-{
-	ASSERT_EQ(L"ExampleData", keyUnderTest.GetValue(L"ExampleData").GetName());
-}
-
 TEST_F(RegistryValueTest, CanGetValueData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleData");
 	ASSERT_EQ(REG_SZ, data.GetType());
-	ASSERT_EQ(sizeof(exampleData), data.GetContents().size());
-	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleData));
+	ASSERT_EQ(sizeof(exampleData), data.size());
+	ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleDataCasted));
 }
 
-TEST_F(RegistryValueTest, CanGetDwordData)
+TEST_F(RegistryValueTest, CanGetDwordRawData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleDword").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleDword");
 	ASSERT_EQ(REG_DWORD, data.GetType());
-	ASSERT_EQ(sizeof(DWORD), data.GetContents().size());
+	ASSERT_EQ(sizeof(DWORD), data.size());
 	union
 	{
 		DWORD dwordData;
 		unsigned char charData[4];
 	} buff;
-	std::copy(data.GetContents().begin(), data.GetContents().begin() + 4, buff.charData);
+	std::copy(data.cbegin(), data.cbegin() + 4, buff.charData);
 	ASSERT_EQ(0xDEADBEEF, buff.dwordData);
 }
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
-	auto data = keyUnderTest.GetValue(L"ExampleLongData").GetData();
+	auto data = keyUnderTest.GetValue(L"ExampleLongData");
 	ASSERT_EQ(REG_SZ, data.GetType());
-	ASSERT_EQ(sizeof(exampleLongData), data.GetContents().size());
-	ASSERT_TRUE(std::equal(data.GetContents().begin(), data.GetContents().end(), exampleLongData));
+	ASSERT_EQ(sizeof(exampleLongData), data.size());
+	ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleLongDataCasted));
 }
 
 TEST_F(RegistryValueTest, CanEnumerateValueNames)
 {
 	auto names = keyUnderTest.EnumerateValueNames();
-	ASSERT_EQ(3, names.size());
+	ASSERT_EQ(10, names.size());
 	std::sort(names.begin(), names.end());
-	ASSERT_EQ(L"ExampleData" , names[0]);
-	ASSERT_EQ(L"ExampleDword", names[1]);
-	ASSERT_EQ(L"ExampleLongData", names[2]);
+	std::array<std::wstring, 10> answers;
+	answers[0] = L"ExampleData";
+	answers[1] = L"ExampleDataBinary";
+	answers[2] = L"ExampleDataExpand";
+	answers[3] = L"ExampleDataNone";
+	answers[4] = L"ExampleDword";
+	answers[5] = L"ExampleFDword";
+	answers[6] = L"ExampleLongData";
+	answers[7] = L"ExampleLongDataExpand";
+	answers[8] = L"ExampleMultiSz";
+	answers[9] = L"ExampleQWord";
+	for (auto idx = 0ul; idx < names.size(); ++idx)
+	{
+		EXPECT_EQ(answers[idx], names[idx]);
+	}
 }
 
 TEST_F(RegistryValueTest, CanEnumerateValuesAndData)
 {
 	auto namesData = keyUnderTest.EnumerateValues();
-	ASSERT_EQ(3, namesData.size());
+	ASSERT_EQ(10, namesData.size());
 	std::sort(namesData.begin(), namesData.end());
 	ASSERT_EQ(L"ExampleData" , namesData[0].GetName());
 	ASSERT_EQ(REG_SZ, namesData[0].GetType());
-	ASSERT_EQ(L"ExampleDword", namesData[1].GetName());
-	ASSERT_EQ(REG_DWORD, namesData[1].GetType());
-	ASSERT_EQ(L"ExampleLongData", namesData[2].GetName());
-	ASSERT_EQ(REG_SZ, namesData[2].GetType());
-	ASSERT_TRUE(std::equal(namesData[0].begin(), namesData[0].end(), exampleData));
-	DWORD const* dwordData = reinterpret_cast<DWORD const*>(&*namesData[1].begin());
+	ASSERT_EQ(L"ExampleDword", namesData[4].GetName());
+	ASSERT_EQ(REG_DWORD, namesData[4].GetType());
+	ASSERT_EQ(L"ExampleLongData", namesData[6].GetName());
+	ASSERT_EQ(REG_SZ, namesData[6].GetType());
+	ASSERT_TRUE(std::equal(namesData[0].cbegin(), namesData[0].cend(), exampleDataCasted));
+	DWORD const* dwordData = reinterpret_cast<DWORD const*>(&*namesData[4].cbegin());
 	ASSERT_EQ(0xDEADBEEF, *dwordData);
-	ASSERT_TRUE(std::equal(namesData[2].begin(), namesData[2].end(), exampleLongData));
+	ASSERT_TRUE(std::equal(namesData[6].cbegin(), namesData[6].cend(), exampleLongDataCasted));
+}
+
+TEST_F(RegistryValueTest, CanSortValuesAndData)
+{
+	auto namesData = keyUnderTest.EnumerateValues();
+	ASSERT_EQ(10, namesData.size());
+	std::random_shuffle(namesData.begin(), namesData.end());
+	std::sort(namesData.begin(), namesData.end());
+	std::vector<std::wstring> out;
+	out.resize(10);
+	std::transform(namesData.begin(), namesData.end(), out.begin(), std::mem_fun_ref(&RegistryValueAndData::GetName));
+	std::vector<std::wstring> outSorted(out);
+	std::sort(outSorted.begin(), outSorted.end());
+	ASSERT_EQ(outSorted, out);
 }

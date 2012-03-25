@@ -8,6 +8,7 @@
 #include <vector>
 #include <iterator>
 #include <functional>
+#include <array>
 #include <iomanip>
 #include <stdexcept>
 #include <iostream>

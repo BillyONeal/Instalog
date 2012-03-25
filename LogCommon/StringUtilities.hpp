@@ -45,6 +45,13 @@ namespace Instalog
 		virtual char const* what() const;
 	};
 
+	inline void HexCharacter(char characterToHex, std::wstring &target)
+	{
+		static const wchar_t chars[] = L"0123456789ABCDEF";
+		target.push_back(chars[characterToHex >> 4]);
+		target.push_back(chars[characterToHex & 0x0F]);
+	}
+
 	inline char UnHexCharacter(wchar_t hexCharacter)
 	{
 		if (hexCharacter >= L'0' && hexCharacter <= L'9')

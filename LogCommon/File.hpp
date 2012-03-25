@@ -114,6 +114,15 @@ namespace Instalog { namespace SystemFacades {
 		/// @return	true if the path is directory, false if not.
 		static bool IsDirectory(std::wstring const& filename);
 
+		/// @brief  Query if a path is a file. (That is, exists, and is not a directory)
+		///
+		/// @param  filename    Path of the file to check.
+		///
+		/// @remarks Equivalent to Exists() && !IsDirectory()
+		///
+		/// @return true if the path exists and is a file, false otherwise.
+		static bool IsExclusiveFile(std::wstring const& fileName);
+
 		/// @brief	Query if filename is an executable.
 		///
 		/// @param	filename	Filename of the file.

@@ -24,7 +24,7 @@ namespace Instalog { namespace SystemFacades {
 		default:						this->state = L"?"; break;
 		}
 
-		SC_HANDLE serviceHandle = OpenServiceW(scmHandle, this->serviceName.c_str(), SERVICE_QUERY_CONFIG);
+		serviceHandle = OpenServiceW(scmHandle, this->serviceName.c_str(), SERVICE_QUERY_CONFIG);
 		if (serviceHandle == NULL)
 		{
 			Win32Exception::ThrowFromLastError();
@@ -54,7 +54,7 @@ namespace Instalog { namespace SystemFacades {
 	}
 
 	Service::Service( Service && s ) 
-		: serviceHandle(std::move(s.serviceHandle))
+		: serviceHandle(s.serviceHandle)
 		, serviceName(std::move(s.serviceName))
 		, displayName(std::move(s.displayName))
 		, state(std::move(s.state))
@@ -123,7 +123,7 @@ namespace Instalog { namespace SystemFacades {
 			for (unsigned char* servicesBufferLocation = servicesBuffer; servicesReturned > 0; --servicesReturned, servicesBufferLocation += sizeof(ENUM_SERVICE_STATUSW))
 			{
 				ENUM_SERVICE_STATUS *enumServiceStatus = reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBufferLocation);
-				services.push_back(Service(enumServiceStatus->lpServiceName, enumServiceStatus->lpDisplayName, enumServiceStatus->ServiceStatus, scmHandle));
+				services.emplace_back(Service(enumServiceStatus->lpServiceName, enumServiceStatus->lpDisplayName, enumServiceStatus->ServiceStatus, scmHandle));
 			}
 		}
 

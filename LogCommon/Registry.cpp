@@ -1,8 +1,13 @@
 #include "pch.hpp"
+#include <strsafe.h>
 #include <cassert>
 #include <type_traits>
 #include <limits>
+#include <iterator>
+#include <iomanip>
+#include <array>
 #include "Win32Exception.hpp"
+#include "StringUtilities.hpp"
 #include "RuntimeDynamicLinker.hpp"
 #include "Registry.hpp"
 
@@ -45,14 +50,42 @@ namespace Instalog { namespace SystemFacades {
 		: hKey_(INVALID_HANDLE_VALUE)
 	{ }
 
-	RegistryValue RegistryKey::operator[]( std::wstring name )
+	RegistryValue const RegistryKey::operator[]( std::wstring name ) const
 	{
 		return GetValue(std::move(name));
 	}
 
-	RegistryValue RegistryKey::GetValue( std::wstring name )
+	RegistryValue const RegistryKey::GetValue( std::wstring name ) const
 	{
-		return RegistryValue(hKey_, std::move(name));
+		UNICODE_STRING valueName(WstringToUnicodeString(name));
+		std::vector<unsigned char> buff(MAX_PATH);
+		NTSTATUS errorCheck;
+		do 
+		{
+			ULONG resultLength = 0;
+			errorCheck = PNtQueryValueKeyFunc(
+				hKey_,
+				&valueName,
+				KeyValuePartialInformation,
+				buff.data(),
+				static_cast<ULONG>(buff.size()),
+				&resultLength
+				);
+			if ((errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW) && resultLength != 0)
+			{
+				buff.resize(resultLength);
+			}
+		} while (errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW);
+		if (!NT_SUCCESS(errorCheck))
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+		auto partialInfo = reinterpret_cast<KEY_VALUE_PARTIAL_INFORMATION const*>(buff.data());
+		DWORD type = partialInfo->Type;
+		ULONG len = partialInfo->DataLength;
+		buff.erase(buff.begin(), buff.begin() + 3*sizeof(ULONG));
+		buff.resize(len);
+		return RegistryValue(type, std::move(buff));
 	}
 
 	static RegistryKey RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
@@ -201,7 +234,6 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);
 		}
-		std::sort(subkeys.begin(), subkeys.end());
 		return std::move(subkeys);
 	}
 
@@ -299,54 +331,6 @@ namespace Instalog { namespace SystemFacades {
 		return std::move(result);
 	}
 
-	RegistryValue::RegistryValue( HANDLE hKey, std::wstring && name )
-		: hKey_(hKey)
-		, name_(std::move(name))
-	{ }
-
-	RegistryValue::RegistryValue( RegistryValue && other )
-		: hKey_(other.hKey_)
-		, name_(std::move(other.name_))
-	{ }
-
-	std::wstring const& RegistryValue::GetName() const
-	{
-		return name_;
-	}
-
-	RegistryData RegistryValue::GetData() const
-	{
-		UNICODE_STRING valueName(WstringToUnicodeString(GetName()));
-		std::vector<unsigned char> buff(MAX_PATH);
-		NTSTATUS errorCheck;
-		do 
-		{
-			ULONG resultLength = 0;
-			errorCheck = PNtQueryValueKeyFunc(
-				hKey_,
-				&valueName,
-				KeyValuePartialInformation,
-				buff.data(),
-				static_cast<ULONG>(buff.size()),
-				&resultLength
-			);
-			if ((errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW) && resultLength != 0)
-			{
-				buff.resize(resultLength);
-			}
-		} while (errorCheck == STATUS_BUFFER_TOO_SMALL || errorCheck == STATUS_BUFFER_OVERFLOW);
-		if (!NT_SUCCESS(errorCheck))
-		{
-			Win32Exception::ThrowFromNtError(errorCheck);
-		}
-		auto partialInfo = reinterpret_cast<KEY_VALUE_PARTIAL_INFORMATION const*>(buff.data());
-		DWORD type = partialInfo->Type;
-		ULONG len = partialInfo->DataLength;
-		buff.erase(buff.begin(), buff.begin() + 3*sizeof(ULONG));
-		buff.resize(len);
-		return RegistryData(type, std::move(buff));
-	}
-
 	RegistryKeySizeInformation::RegistryKeySizeInformation( unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues ) : lastWriteTime_(lastWriteTime)
 		, numberOfSubkeys_(numberOfSubkeys)
 		, numberOfValues_(numberOfValues)
@@ -367,24 +351,34 @@ namespace Instalog { namespace SystemFacades {
 		return lastWriteTime_;
 	}
 
-	RegistryData::RegistryData( DWORD type, std::vector<unsigned char> && data )
+	RegistryValue::RegistryValue( DWORD type, std::vector<unsigned char> && data )
 		: type_(type)
 		, data_(data)
 	{ }
 
-	RegistryData::RegistryData( RegistryData && other )
+	RegistryValue::RegistryValue( RegistryValue && other )
 		: type_(other.type_)
 		, data_(std::move(other.data_))
 	{ }
 
-	DWORD RegistryData::GetType() const
+	DWORD RegistryValue::GetType() const
 	{
 		return type_;
 	}
 
-	std::vector<unsigned char> const& RegistryData::GetContents() const
+	std::vector<unsigned char>::const_iterator RegistryValue::cbegin() const
 	{
-		return data_;
+		return data_.cbegin();
+	}
+
+	std::vector<unsigned char>::const_iterator RegistryValue::cend() const
+	{
+		return data_.cend();
+	}
+
+	std::size_t RegistryValue::size() const
+	{
+		return data_.size();
 	}
 
 
@@ -407,12 +401,12 @@ namespace Instalog { namespace SystemFacades {
 		return reinterpret_cast<KEY_VALUE_FULL_INFORMATION const*>(innerBuffer_.data());
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValueAndData::begin() const
+	std::vector<unsigned char>::const_iterator RegistryValueAndData::cbegin() const
 	{
 		return innerBuffer_.cbegin() + Cast()->DataOffset;
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValueAndData::end() const
+	std::vector<unsigned char>::const_iterator RegistryValueAndData::cend() const
 	{
 		auto casted = Cast();
 		return innerBuffer_.cbegin() + casted->DataOffset + casted->DataLength;
@@ -422,13 +416,278 @@ namespace Instalog { namespace SystemFacades {
 	{
 		auto casted = Cast();
 		auto rhsCasted = rhs.Cast();
-		return std::lexicographical_compare(casted->Name, casted->Name + casted->NameLength,
-			                                rhsCasted->Name, rhsCasted->Name + rhsCasted->NameLength);
+		return std::lexicographical_compare(casted->Name, casted->Name + (casted->NameLength/sizeof(wchar_t)),
+			                                rhsCasted->Name, rhsCasted->Name + (rhsCasted->NameLength/sizeof(wchar_t)));
 	}
 
 	DWORD RegistryValueAndData::GetType() const
 	{
 		return Cast()->Type;
+	}
+
+	std::size_t RegistryValueAndData::size() const
+	{
+		return Cast()->DataLength;
+	}
+
+	static __int32 BytestreamToDword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	{
+		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+		union
+		{
+			__int32 converted;
+			unsigned char toConvert[4];
+		};
+		if (std::distance(first, last) < 4)
+		{
+			throw ErrorInvalidParameterException();
+		}
+		std::copy(first, first + 4, toConvert);
+		return converted;
+	}
+
+	static __int32 BytestreamToDwordBe( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	{
+		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+		union
+		{
+			__int32 converted;
+			unsigned char toConvert[4];
+		};
+		if (std::distance(first, last) < 4)
+		{
+			throw ErrorInvalidParameterException();
+		}
+		std::copy(first, first + 4, toConvert);
+		std::reverse(toConvert, toConvert + 4);
+		return converted;
+	}
+
+	static __int64 BytestreamToQword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	{
+		static_assert(sizeof(__int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
+		union
+		{
+			__int64 converted;
+			unsigned char toConvert[8];
+		};
+		if (std::distance(first, last) < 8)
+		{
+			throw ErrorInvalidParameterException();
+		}
+		std::copy(first, first + 8, toConvert);
+		return converted;
+	}
+
+
+	DWORD BasicRegistryValue::GetDword() const
+	{
+		if (GetType() == REG_DWORD)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD_BIG_ENDIAN)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDwordBe(cbegin(), cend());
+		}
+		else if (GetType() == REG_QWORD)
+		{
+			if (size() != 8)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			__int64 tmp = BytestreamToQword(cbegin(), cend());
+			if ((tmp & 0x00000000FFFFFFFFull) != 0)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return static_cast<DWORD>(tmp);
+		}
+		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
+		{
+			std::wistringstream ss(GetStringStrict());
+			DWORD ans;
+			if (ss >> ans)
+			{
+				return ans;
+			}
+		}
+		throw InvalidRegistryDataTypeException();
+	}
+
+	std::wstring BasicRegistryValue::GetStringStrict() const
+	{
+		auto type = GetType();
+		if (type != REG_SZ && type != REG_EXPAND_SZ)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetString();
+	}
+
+	DWORD BasicRegistryValue::GetDwordStrict() const
+	{
+		if (GetType() != REG_DWORD)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetDword();
+	}
+
+	__int64 BasicRegistryValue::GetQWord() const
+	{
+		if (GetType() == REG_QWORD)
+		{
+			if (size() != 8)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToQword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDword(cbegin(), cend());
+		}
+		else if (GetType() == REG_DWORD_BIG_ENDIAN)
+		{
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			return BytestreamToDwordBe(cbegin(), cend());
+		}
+		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
+		{
+			std::wistringstream ss(GetStringStrict());
+			__int64 ans;
+			if (ss >> ans)
+			{
+				return ans;
+			}
+		}
+		throw InvalidRegistryDataTypeException();
+	}
+
+	__int64 BasicRegistryValue::GetQWordStrict() const
+	{
+		if (GetType() != REG_QWORD)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		return GetQWord();
+	}
+
+	std::wstring BasicRegistryValue::GetString( ) const
+	{
+		std::wstring result;
+		switch (GetType())
+		{
+		case REG_SZ:
+		case REG_MULTI_SZ:
+			result.assign(wcbegin(), wcend());
+			break;
+		case REG_DWORD:
+			if (size() != 4)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			result.reserve(16);
+			result.assign(L"DWORD:0x");
+			for (auto it = cbegin(), itEnd = cend(); it != itEnd; ++it)
+			{
+				HexCharacter(*it, result);
+			}
+			break;
+		case REG_DWORD_BIG_ENDIAN:
+			result.reserve(19);
+			result.assign(L"DWORD-BE:0x");
+			{
+				auto it = cbegin() + 8;
+				auto itEnd = cbegin();
+				for (; it != itEnd; --it)
+				{
+					HexCharacter(*it, result);
+				}
+			}
+			break;
+		default:
+			result.reserve(4*size() + 7);
+			if (GetType() == REG_BINARY)
+			{
+				result.assign(L"hex(b):");
+			}
+			else
+			{
+				wchar_t buff[8];
+				swprintf_s(buff, L"hex(%d):", GetType());
+				result.assign(buff);
+			}
+			if (size() == 0)
+			{
+				break;
+			}
+			HexCharacter(*cbegin(), result);
+			{
+				auto it = cbegin() + 1;
+				auto end = cend();
+				for (; it != end; ++it)
+				{
+					result.push_back(L',');
+					result.push_back(L' ');
+					HexCharacter(*it, result);
+				}
+			}
+		}
+		return std::move(result);
+	}
+
+	std::vector<std::wstring> BasicRegistryValue::GetMultiStringArray() const
+	{
+		if (GetType() != REG_MULTI_SZ)
+		{
+			throw InvalidRegistryDataTypeException();
+		}
+		std::vector<std::wstring> answers;
+		auto first = wcbegin();
+		auto middle = first;
+		auto last = wcend();
+		while (middle = std::find(first, last, L'\0'), first != last && middle != last)
+		{
+			answers.emplace_back(std::wstring(first, middle));
+			first = middle + 1;
+		}
+		return std::move(answers);
+	}
+
+	wchar_t const* BasicRegistryValue::wcbegin() const
+	{
+		return reinterpret_cast<wchar_t const*>(&*cbegin());
+	}
+
+	wchar_t const* BasicRegistryValue::wcend() const
+	{
+		return reinterpret_cast<wchar_t const*>(&*cend());
+	}
+
+	std::vector<std::wstring> BasicRegistryValue::GetCommaStringArray() const
+	{
+		std::vector<std::wstring> answer;
+		std::wstring contents(GetStringStrict());
+		boost::algorithm::split(answer, contents, 
+			std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L','));
+		return std::move(answer);
 	}
 
 }}
