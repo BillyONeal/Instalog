@@ -143,10 +143,11 @@ With the exception of whitelisting, the running processes and scanners/drivers
 sections are complete.  At the time of this writing, progress into Pseudo HJT
 and Restore Point enumeration has begun.  
 
-%TODO: Bill, please check this
-At this time, support for Windows 2000 and Windows XP RTM have been tentatively
-dropped.  This is because the authors decided to use C++11 features that have
-been implemented into the Visual Studio 2010 compiler.  
+At this time, support for Windows 2000, Windows XP RTM, and Windows XP Service
+Pack 1 have been tentatively dropped. This is forced upon us by changes made to
+the C runtime bundled with Visual Studio 2010 which drops support for these
+operating systems. (The application crashes on startup) We are actively
+investigating workarounds for the problem.
 
 Please refer to section~\ref{project_progress} for more details.  
 
@@ -429,25 +430,29 @@ each making sure the above scaffolding components and scanning sections are
 running properly.  There are also doxygen comments for all of the code so that
 other developers can understand the source and contribute if they so desire.
 
-%TODO: Bill, please check this
-Lastly, support for Windows 2000 and Windows XP RTM have been tentatively
-dropped.  This is because the authors decided to use C++11 features that have
-been implemented into the Visual Studio 2010 compiler.  Unfortunately, this
-compiler does not compile binaries that run on these operating systems.  This is
-because this compiler links against DLLs that are only available in later
-versions of Windows.  This is stated as a ``tentative'' restriction because it
-is, in theory, possible to mess with the build system enough to build binaries
-for these operating systems.  However, at this point in time, it was decided
-that it is not worth the authors' time.  This is for a number of reasons, namely
+Lastly, support for Windows 2000, Windows XP RTM, and Windows XP Service Pack 1
+have been tentatively dropped. This is due to the use of Visual Studio 2010's
+compiler, which cannot produce binaries for these operating systems.
+The C runtime bundled with this compiler requires functions that were added to
+Windows in Windows XP Service Pack 2.
+
+This is stated as a ``tentative'' restriction because it is, in theory,
+possible to mess with the build system enough to build binaries
+for these operating systems, by providing our own implementations of the
+missing functions.
+
+However, at this point in time, it was decided that it is not worth the authors' time.
+This is for a number of reasons, namely
 that Microsoft is dropping support for these operating systems anyway and not
 releasing security fixes anymore, so it doesn't make sense to attempt to clean
-malware from these systems.  Secondly, the only way to compile code for these
-operating systems in the authors' knowledge is to include code released under
-the GPL, which would require re-licensing the entire codebase under the GPL,
-which doesn't sit well with the authors.  This is because the intent of this
-project is that it should be used by as many people (and companies) as possible,
-but restricting the project under the GPL license would prevent most companies
-from using and modifying the code.  
+malware from these systems. 
+
+There are some published workarounds that include replacement implementations of
+these functions, but unfortuantely all such projects of which the authors are
+aware are under the GNU General Public License (GPL). The authors do not wish
+to release Instalog under the GPL, because a major goal of the project is to be
+usable by both commercial and noncommercial software, which is not possible if
+the project depends on GPL licensed code.
 
 \newpage
 
