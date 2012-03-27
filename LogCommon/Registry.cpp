@@ -367,14 +367,14 @@ namespace Instalog { namespace SystemFacades {
 		return type_;
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValue::cbegin() const
+	unsigned char const* RegistryValue::cbegin() const
 	{
-		return data_.cbegin();
+		return data_.data();
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValue::cend() const
+	unsigned char const* RegistryValue::cend() const
 	{
-		return data_.cend();
+		return data_.data() + data_.size();
 	}
 
 	std::size_t RegistryValue::size() const
@@ -402,15 +402,16 @@ namespace Instalog { namespace SystemFacades {
 		return reinterpret_cast<KEY_VALUE_FULL_INFORMATION const*>(innerBuffer_.data());
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValueAndData::cbegin() const
+	unsigned char const* RegistryValueAndData::cbegin() const
 	{
-		return innerBuffer_.cbegin() + Cast()->DataOffset;
+		return innerBuffer_.data() + Cast()->DataOffset;
 	}
 
-	std::vector<unsigned char>::const_iterator RegistryValueAndData::cend() const
+	unsigned char const* RegistryValueAndData::cend() const
 	{
 		auto casted = Cast();
-		return innerBuffer_.cbegin() + casted->DataOffset + casted->DataLength;
+		auto forwardLength = casted->DataOffset + casted->DataLength;
+		return innerBuffer_.data() + forwardLength;
 	}
 
 	bool RegistryValueAndData::operator<( RegistryValueAndData const& rhs ) const
@@ -431,7 +432,7 @@ namespace Instalog { namespace SystemFacades {
 		return Cast()->DataLength;
 	}
 
-	static __int32 BytestreamToDword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	static __int32 BytestreamToDword( unsigned char const* first, unsigned char const* last )
 	{
 		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
 		union
@@ -447,7 +448,7 @@ namespace Instalog { namespace SystemFacades {
 		return converted;
 	}
 
-	static __int32 BytestreamToDwordBe( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	static __int32 BytestreamToDwordBe( unsigned char const* first, unsigned char const* last )
 	{
 		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
 		union
@@ -464,7 +465,7 @@ namespace Instalog { namespace SystemFacades {
 		return converted;
 	}
 
-	static __int64 BytestreamToQword( std::vector<unsigned char>::const_iterator first, std::vector<unsigned char>::const_iterator last )
+	static __int64 BytestreamToQword( unsigned char const* first, unsigned char const* last )
 	{
 		static_assert(sizeof(__int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
 		union
@@ -605,17 +606,21 @@ namespace Instalog { namespace SystemFacades {
 				throw InvalidRegistryDataTypeException();
 			}
 			result.reserve(16);
-			result.assign(L"DWORD:0x");
+			result.assign(L"dword:");
 			for (auto it = cbegin(), itEnd = cend(); it != itEnd; ++it)
 			{
 				HexCharacter(*it, result);
 			}
 			break;
 		case REG_DWORD_BIG_ENDIAN:
-			result.reserve(19);
-			result.assign(L"DWORD-BE:0x");
+			if (size() != 4)
 			{
-				auto it = cbegin() + 8;
+				throw InvalidRegistryDataTypeException();
+			}
+			result.reserve(19);
+			result.assign(L"dword-be:");
+			{
+				auto it = cbegin() + 4;
 				auto itEnd = cbegin();
 				for (; it != itEnd; --it)
 				{
@@ -627,12 +632,12 @@ namespace Instalog { namespace SystemFacades {
 			result.reserve(4*size() + 7);
 			if (GetType() == REG_BINARY)
 			{
-				result.assign(L"hex(b):");
+				result.assign(L"hex(b): ");
 			}
 			else
 			{
-				wchar_t buff[8];
-				swprintf_s(buff, L"hex(%d):", GetType());
+				wchar_t buff[16];
+				swprintf_s(buff, L"hex(%d): ", GetType());
 				result.assign(buff);
 			}
 			if (size() == 0)
@@ -674,12 +679,12 @@ namespace Instalog { namespace SystemFacades {
 
 	wchar_t const* BasicRegistryValue::wcbegin() const
 	{
-		return reinterpret_cast<wchar_t const*>(&*cbegin());
+		return reinterpret_cast<wchar_t const*>(cbegin());
 	}
 
 	wchar_t const* BasicRegistryValue::wcend() const
 	{
-		return reinterpret_cast<wchar_t const*>(&*cend());
+		return reinterpret_cast<wchar_t const*>(cend());
 	}
 
 	std::vector<std::wstring> BasicRegistryValue::GetCommaStringArray() const

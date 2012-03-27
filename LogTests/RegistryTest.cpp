@@ -219,6 +219,14 @@ struct RegistryValueTest : public testing::Test
 	{
 		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE).Delete();
 	}
+
+	std::vector<RegistryValueAndData> GetAndSort()
+	{
+		std::vector<RegistryValueAndData> resultValues(keyUnderTest.EnumerateValues());
+		std::random_shuffle(resultValues.begin(), resultValues.end());
+		std::sort(resultValues.begin(), resultValues.end());
+		return std::move(resultValues);
+	}
 };
 
 TEST_F(RegistryValueTest, CanGetValueData)
@@ -302,4 +310,12 @@ TEST_F(RegistryValueTest, CanSortValuesAndData)
 	std::vector<std::wstring> outSorted(out);
 	std::sort(outSorted.begin(), outSorted.end());
 	ASSERT_EQ(outSorted, out);
+}
+
+TEST_F(RegistryValueTest, StringizeWorks)
+{
+	auto underTest = GetAndSort();
+	std::vector<std::wstring> stringized(underTest.size());
+	std::transform(underTest.begin(), underTest.end(), stringized.begin(), std::mem_fun_ref(&BasicRegistryValue::GetString));
+	ASSERT_EQ(L"FooBar", stringized[0]);
 }

@@ -23,8 +23,8 @@ namespace Instalog { namespace SystemFacades {
 		BasicRegistryValue() {} // Not intended for client construction.
 		~BasicRegistryValue() {}
 	public:
-		virtual std::vector<unsigned char>::const_iterator cbegin() const = 0;
-		virtual std::vector<unsigned char>::const_iterator cend() const = 0;
+		virtual unsigned char const* cbegin() const = 0;
+		virtual unsigned char const* cend() const = 0;
 		wchar_t const* wcbegin() const;
 		wchar_t const* wcend() const;
 		virtual std::size_t size() const = 0;
@@ -39,7 +39,7 @@ namespace Instalog { namespace SystemFacades {
 		std::vector<std::wstring> GetCommaStringArray() const;
 	};
 
-	class RegistryValue
+	class RegistryValue : public BasicRegistryValue
 	{
 		DWORD type_;
 		std::vector<unsigned char> data_;
@@ -48,11 +48,11 @@ namespace Instalog { namespace SystemFacades {
 		RegistryValue(RegistryValue && other);
 		virtual DWORD GetType() const;
 		virtual std::size_t size() const;
-		virtual std::vector<unsigned char>::const_iterator cbegin() const;
-		virtual std::vector<unsigned char>::const_iterator cend() const;
+		virtual unsigned char const* cbegin() const;
+		virtual unsigned char const* cend() const;
 	};
 
-	class RegistryValueAndData
+	class RegistryValueAndData : public BasicRegistryValue
 	{
 		std::vector<unsigned char> innerBuffer_;
 		typedef KEY_VALUE_FULL_INFORMATION valueType;
@@ -60,11 +60,16 @@ namespace Instalog { namespace SystemFacades {
 	public:
 		RegistryValueAndData(std::vector<unsigned char> && buff);
 		RegistryValueAndData(RegistryValueAndData && other);
+		RegistryValueAndData& operator=(RegistryValueAndData other)
+		{
+			innerBuffer_ = std::move(other.innerBuffer_);
+			return *this;
+		}
 		std::wstring GetName() const;
 		virtual DWORD GetType() const;
 		virtual std::size_t size() const;
-		virtual std::vector<unsigned char>::const_iterator cbegin() const;
-		virtual std::vector<unsigned char>::const_iterator cend() const;
+		virtual unsigned char const* cbegin() const;
+		virtual unsigned char const* cend() const;
 		bool operator<(RegistryValueAndData const& rhs) const;
 	};
 
