@@ -4,6 +4,7 @@
 #include "Win32Exception.hpp"
 #include "ServiceControlManager.hpp"
 #include "Path.hpp"
+#include "Registry.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -44,12 +45,19 @@ namespace Instalog { namespace SystemFacades {
 		this->filepath = queryServiceConfig->lpBinaryPathName;
 		Path::ResolveFromCommandLine(this->filepath);
 
-		// Set the svchost group and dll if applicable
+		// Set the svchost group, dll path, and damaged status if applicable
 		if (this->filepath == Path::Append(Path::GetWindowsPath(), L"System32\\Svchost.exe"))
 		{
+			// Get the svchost group
 			this->svchostGroup = queryServiceConfig->lpBinaryPathName;
 			this->svchostGroup.erase(this->svchostGroup.begin(), boost::ifind_first(this->svchostGroup, L"-k").end());			
 			boost::trim(this->svchostGroup);
+
+			// Get the dll path
+			RegistryKey serviceParameters = RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName + L"\\Parameters");
+			RegistryValue serviceDllValue = serviceParameters.GetValue(L"ServiceDll");
+			this->svchostDll = std::wstring(serviceDllValue.cbegin(), serviceDllValue.cend());
+			Path::ResolveFromCommandLine(this->svchostDll);
 		}
 	}
 

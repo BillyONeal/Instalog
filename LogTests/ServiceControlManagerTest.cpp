@@ -27,7 +27,7 @@ TEST(ServiceControlManager, GetServices)
 	EXPECT_FALSE(services.empty());
 }
 
-TEST(ServiceControlManager, DISABLED_FieldsSetCorrectly) // TODO: This fails until svchost registry stuff is implemented
+TEST(ServiceControlManager, FieldsSetCorrectly)
 {
 	std::vector<Service> const& services = GetCachedServices();
 	
@@ -67,7 +67,7 @@ TEST(ServiceControlManager, TcpipService)
 	EXPECT_FALSE(tcpip->isSvchostService());
 }
 
-TEST(ServiceControlManager, DISABLED_RpcSsSvchostService) // TODO: This fails until svchost registry stuff is implemented
+TEST(ServiceControlManager, RpcSsSvchostService)
 {
 	std::vector<Service> const& services = GetCachedServices();
 
