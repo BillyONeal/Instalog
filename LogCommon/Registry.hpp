@@ -28,6 +28,7 @@ namespace Instalog { namespace SystemFacades {
 		wchar_t const* wcbegin() const;
 		wchar_t const* wcend() const;
 		virtual std::size_t size() const = 0;
+		bool empty() const { return size() == 0; }
 		virtual DWORD GetType() const = 0;
 		DWORD GetDword() const;
 		DWORD GetDwordStrict() const;

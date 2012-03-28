@@ -598,7 +598,18 @@ namespace Instalog { namespace SystemFacades {
 		{
 		case REG_SZ:
 		case REG_EXPAND_SZ:
-			result.assign(wcbegin(), wcend());
+			if (empty())
+			{
+				break;
+			}
+			if (*(wcend() - 1) == L'\0')
+			{
+				result.assign(wcbegin(), wcend() - 1);
+			}
+			else
+			{
+				result.assign(wcbegin(), wcend());
+			}
 			break;
 		case REG_DWORD:
 			if (size() != 4)

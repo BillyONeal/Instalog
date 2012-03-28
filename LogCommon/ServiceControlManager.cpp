@@ -52,16 +52,25 @@ namespace Instalog { namespace SystemFacades {
 			this->svchostGroup = queryServiceConfig->lpBinaryPathName;
 			this->svchostGroup.erase(this->svchostGroup.begin(), boost::ifind_first(this->svchostGroup, L"-k").end());			
 			boost::trim(this->svchostGroup);
-
+			
+			std::wstring serviceKeyName = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName;
 			// Get the dll path
-			RegistryKey serviceParameters = RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName + L"\\Parameters");
-			//if (serviceParameters.Invalid()) return; // TODO: Total hack, but it's throwing exceptions				
+			RegistryKey serviceParameters = RegistryKey::Open(
+				 serviceKeyName + L"\\Parameters", KEY_QUERY_VALUE);
+			if (serviceParameters.Invalid())
+			{
+				serviceParameters = RegistryKey::Open(serviceKeyName, KEY_QUERY_VALUE);
+			}
+			if (serviceParameters.Invalid())
+			{
+				Win32Exception::ThrowFromNtError(::GetLastError());
+			}
 			RegistryValue serviceDllValue = serviceParameters.GetValue(L"ServiceDll");
 			this->svchostDll = serviceDllValue.GetStringStrict();
 			Path::ResolveFromCommandLine(this->svchostDll);
 
 			// Check to see if it's damaged
-			RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost");
+			RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost", KEY_QUERY_VALUE);
 			RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
 			std::vector<std::wstring> svchostGroupRegistrationStrings = svchostGroupRegistration.GetMultiStringArray();
 			if (std::find(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(), this->serviceName) == svchostGroupRegistrationStrings.end())
