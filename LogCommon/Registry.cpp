@@ -597,7 +597,7 @@ namespace Instalog { namespace SystemFacades {
 		switch (GetType())
 		{
 		case REG_SZ:
-		case REG_MULTI_SZ:
+		case REG_EXPAND_SZ:
 			result.assign(wcbegin(), wcend());
 			break;
 		case REG_DWORD:

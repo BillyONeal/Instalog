@@ -55,9 +55,19 @@ namespace Instalog { namespace SystemFacades {
 
 			// Get the dll path
 			RegistryKey serviceParameters = RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName + L"\\Parameters");
+			//if (serviceParameters.Invalid()) return; // TODO: Total hack, but it's throwing exceptions				
 			RegistryValue serviceDllValue = serviceParameters.GetValue(L"ServiceDll");
-			this->svchostDll = std::wstring(serviceDllValue.cbegin(), serviceDllValue.cend());
+			this->svchostDll = serviceDllValue.GetStringStrict();
 			Path::ResolveFromCommandLine(this->svchostDll);
+
+			// Check to see if it's damaged
+			RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost");
+			RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
+			std::vector<std::wstring> svchostGroupRegistrationStrings = svchostGroupRegistration.GetMultiStringArray();
+			if (std::find(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(), this->serviceName) == svchostGroupRegistrationStrings.end())
+			{
+				this->state.append(L"D");
+			}
 		}
 	}
 

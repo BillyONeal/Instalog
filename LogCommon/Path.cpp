@@ -68,6 +68,10 @@ namespace Instalog { namespace Path {
 		{
 			path.replace(0, 11, windowsDirectory);
 		}
+		else if (boost::istarts_with(path, L"%systemroot%\\")) // TODO: Move this somewhere else eventually
+		{
+			path.replace(0, 13, windowsDirectory);
+		}
 	}
 
 	static std::vector<std::wstring> getSplitEnvironmentVariable(wchar_t const* variable)
