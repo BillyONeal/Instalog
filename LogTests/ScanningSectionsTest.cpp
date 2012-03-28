@@ -83,11 +83,11 @@ TEST_F(ServicesDriversTest, ActuallyGotOutput)
 TEST_F(ServicesDriversTest, TcpipWhitelisted)
 {
 	Go();
-	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
+	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys")) << L"This will fail if Tcpip is not configured to auto-start or is not running";
 }
 
-TEST_F(ServicesDriversTest, DISABLED_RpcSsSvchost) // TODO: This fails until svchost registry stuff is implemented
+TEST_F(ServicesDriversTest, RpcSsSvchost) 
 {
 	Go();
-	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"));
+	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll")) << L"This will fail if RpcSs is not configured to auto-start or is not running";
 }
