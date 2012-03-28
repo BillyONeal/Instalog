@@ -43,6 +43,10 @@ namespace Instalog { namespace SystemFacades {
 
 		// Set the file
 		this->filepath = queryServiceConfig->lpBinaryPathName;
+		if (filepath.empty())
+		{
+			filepath = Path::Append(Path::GetWindowsPath(), L"System32\\" + serviceName + L".sys");
+		}
 		Path::ResolveFromCommandLine(this->filepath);
 
 		// Set the svchost group, dll path, and damaged status if applicable

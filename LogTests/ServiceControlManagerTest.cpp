@@ -12,12 +12,8 @@ TEST(ServiceControlManager, CreateServiceControlManager)
 
 static std::vector<Service> const& GetCachedServices()
 {
-	static std::vector<Service> services;
-	if (services.empty())
-	{
-		ServiceControlManager scm;
-		services = std::move(scm.GetServices());
-	}
+	static ServiceControlManager scm;
+	static std::vector<Service> services(scm.GetServices());
 	return services;
 }
 
@@ -84,4 +80,21 @@ TEST(ServiceControlManager, RpcSsSvchostService)
 	EXPECT_EQ(L"rpcss", rcpss->getSvchostGroup());
 	EXPECT_EQ(L"C:\\Windows\\System32\\Rpcss.dll", rcpss->getSvchostDll());
 	EXPECT_TRUE(rcpss->isSvchostService());
+}
+
+TEST(ServiceControlManager, BeepEmptyImagepathService)
+{
+	std::vector<Service> const& services = GetCachedServices();
+
+	auto beep = std::find_if(services.begin(), services.end(), [] (Service const& service) -> bool { 
+		return service.getServiceName() == L"Beep";
+	});
+
+	ASSERT_NE(beep, services.end());
+	EXPECT_EQ(L"Beep", beep->getDisplayName());
+	EXPECT_EQ(L"R", beep->getState()) << L"This will fail if beep is not running";
+	EXPECT_EQ(1, beep->getStart()) << L"This will fail if beep is not configured to auto-start";
+	EXPECT_EQ(L"C:\\Windows\\System32\\Beep.sys", beep->getFilepath());
+	EXPECT_TRUE(beep->getSvchostGroup().empty());
+	EXPECT_FALSE(beep->isSvchostService());
 }
