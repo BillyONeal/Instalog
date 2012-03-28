@@ -49,10 +49,8 @@
   </PostinstrumentEvent>
   <Binaries>
     <ProjBinary>
-      <Path>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\x64\Debug\LogTests.exe</Path>
-      <AdditionalArgruments />
-      <TargetCLRVersion>Automatic</TargetCLRVersion>
-      <ArgumentTimestamp>03/23/2012 14:24:34</ArgumentTimestamp>
+      <Path>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\x64\Release\Instalog.exe</Path>
+      <ArgumentTimestamp>01/01/0001 00:00:00</ArgumentTimestamp>
       <Instrument>true</Instrument>
       <Sample>true</Sample>
       <ExternalWebsite>false</ExternalWebsite>
@@ -61,8 +59,8 @@
       <LaunchProject>true</LaunchProject>
       <OverrideProjectSettings>false</OverrideProjectSettings>
       <LaunchMethod>Executable</LaunchMethod>
-      <ExecutablePath>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\x64\Debug\LogTests.exe</ExecutablePath>
-      <StartupDirectory>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\LogTests\</StartupDirectory>
+      <ExecutablePath>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\x64\Release\Instalog.exe</ExecutablePath>
+      <StartupDirectory>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\Instalog\</StartupDirectory>
       <Arguments />
       <NetAppHost>IIS</NetAppHost>
       <NetBrowser>InternetExplorer</NetBrowser>
@@ -74,14 +72,14 @@
       <PostinstrumentEvent>
         <InstrEventExclude>false</InstrEventExclude>
       </PostinstrumentEvent>
-      <ProjRef>{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}|LogTests\LogTests.vcxproj</ProjRef>
-      <ProjPath>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\LogTests\LogTests.vcxproj</ProjPath>
-      <ProjName>LogTests</ProjName>
+      <ProjRef>{6D775CD3-AFA0-407B-8173-E94EAB58E335}|Instalog\Instalog.vcxproj</ProjRef>
+      <ProjPath>C:\Users\Billy\Documents\Visual Studio 2010\Projects\instalog\Instalog\Instalog.vcxproj</ProjPath>
+      <ProjName>Instalog</ProjName>
     </ProjBinary>
   </Binaries>
   <Launches>
     <ProjBinary>
-      <Path>:PB:{95E0E8D4-1E78-4BBC-9BCC-8D43B37B27A7}|LogTests\LogTests.vcxproj</Path>
+      <Path>:PB:{6D775CD3-AFA0-407B-8173-E94EAB58E335}|Instalog\Instalog.vcxproj</Path>
     </ProjBinary>
   </Launches>
   <RuntimeMarks>

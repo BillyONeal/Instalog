@@ -36,15 +36,14 @@ TEST(ServiceControlManager, FieldsSetCorrectly)
 		EXPECT_FALSE(it->getServiceName().empty());
 		EXPECT_FALSE(it->getDisplayName().empty());
 		EXPECT_FALSE(it->getState().empty());
-		EXPECT_FALSE(it->getFilepath().empty());
 		EXPECT_TRUE(it->getServiceName().empty() == it->getDisplayName().empty());
-		if (it->getServiceName().empty() == false || it->getDisplayName().empty() == false)
+		if (it->getSvchostGroup().empty())
 		{
-			EXPECT_TRUE(it->isSvchostService());
+			EXPECT_FALSE(it->isSvchostService());
 		}
 		else
 		{
-			EXPECT_FALSE(it->isSvchostService());
+			EXPECT_TRUE(it->isSvchostService());
 		}
 	}
 }
