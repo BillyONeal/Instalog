@@ -45,7 +45,7 @@ namespace Instalog { namespace SystemFacades {
 		this->filepath = queryServiceConfig->lpBinaryPathName;
 		if (filepath.empty())
 		{
-			filepath = Path::Append(Path::GetWindowsPath(), L"System32\\" + serviceName + L".sys");
+			filepath = Path::Append(Path::GetWindowsPath(), L"System32\\Drivers\\" + serviceName + L".sys");
 		}
 		Path::ResolveFromCommandLine(this->filepath);
 

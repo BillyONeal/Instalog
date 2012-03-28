@@ -94,7 +94,7 @@ TEST(ServiceControlManager, BeepEmptyImagepathService)
 	EXPECT_EQ(L"Beep", beep->getDisplayName());
 	EXPECT_EQ(L"R", beep->getState()) << L"This will fail if beep is not running";
 	EXPECT_EQ(1, beep->getStart()) << L"This will fail if beep is not configured to auto-start";
-	EXPECT_EQ(L"C:\\Windows\\System32\\Beep.sys", beep->getFilepath());
+	EXPECT_EQ(L"C:\\Windows\\System32\\Drivers\\Beep.sys", beep->getFilepath());
 	EXPECT_TRUE(beep->getSvchostGroup().empty());
 	EXPECT_FALSE(beep->isSvchostService());
 }
