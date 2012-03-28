@@ -264,6 +264,7 @@ TEST(ScriptTest, CanExecute)
 	out.pop_back(); // \n
 	out.erase(std::find(out.rbegin(), out.rend(), L'\n').base(), out.end());
 	out.erase(out.begin(), std::find(out.begin(), out.end(), L'='));
+	out.pop_back();
     ASSERT_EQ(L"======================= OnE ======================\nOnE section has argument \"argArg\" and options \n{OptionOne}\n===================== Twosies ====================\nTwosies section has argument \"\" and options \n{OptionTwo}\n{OptionThree}\n",
 		out);
 }

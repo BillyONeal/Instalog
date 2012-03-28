@@ -124,6 +124,7 @@ namespace Instalog
 			logOutput << header << L"\n";
 			begin->first.targetSection->Execute(logOutput, begin->first, begin->second);
 		}
+		logOutput << std::endl;
 		WriteScriptFooter(logOutput);
 		ui->ReportFinished();
 	}
