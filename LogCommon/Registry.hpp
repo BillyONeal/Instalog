@@ -125,18 +125,4 @@ namespace Instalog { namespace SystemFacades {
 			DWORD options = REG_OPTION_NON_VOLATILE
 		);
 	};
-
-	struct IRegistryKey
-	{
-	protected:
-		~IRegistryKey() {}
-	};
-
-	struct IRegistry
-	{
-
-	protected:
-		~IRegistry() {}
-	};
-
 }}

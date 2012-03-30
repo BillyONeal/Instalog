@@ -610,6 +610,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				result.assign(wcbegin(), wcend());
 			}
+			
 			break;
 		case REG_DWORD:
 			if (size() != 4)
@@ -618,9 +619,29 @@ namespace Instalog { namespace SystemFacades {
 			}
 			result.reserve(16);
 			result.assign(L"dword:");
-			for (auto it = cbegin(), itEnd = cend(); it != itEnd; ++it)
 			{
-				HexCharacter(*it, result);
+				auto it = cbegin() + 3;
+				auto itEnd = cbegin() - 1;
+				for (; it != itEnd; --it)
+				{
+					HexCharacter(*it, result);
+				}
+			}
+			break;
+		case REG_QWORD:
+			if (size() != 8)
+			{
+				throw InvalidRegistryDataTypeException();
+			}
+			result.reserve(24);
+			result.assign(L"qword:");
+			{
+				auto it = cbegin() + 7;
+				auto itEnd = cbegin() - 1;
+				for (; it != itEnd; --it)
+				{
+					HexCharacter(*it, result);
+				}
 			}
 			break;
 		case REG_DWORD_BIG_ENDIAN:
@@ -631,9 +652,9 @@ namespace Instalog { namespace SystemFacades {
 			result.reserve(19);
 			result.assign(L"dword-be:");
 			{
-				auto it = cbegin() + 4;
-				auto itEnd = cbegin();
-				for (; it != itEnd; --it)
+				auto it = cbegin();
+				auto itEnd = cbegin() + 4;
+				for (; it != itEnd; ++it)
 				{
 					HexCharacter(*it, result);
 				}
@@ -643,12 +664,12 @@ namespace Instalog { namespace SystemFacades {
 			result.reserve(4*size() + 7);
 			if (GetType() == REG_BINARY)
 			{
-				result.assign(L"hex(b): ");
+				result.assign(L"hex:");
 			}
 			else
 			{
 				wchar_t buff[16];
-				swprintf_s(buff, L"hex(%d): ", GetType());
+				swprintf_s(buff, L"hex(%d):", GetType());
 				result.assign(buff);
 			}
 			if (size() == 0)
@@ -662,7 +683,6 @@ namespace Instalog { namespace SystemFacades {
 				for (; it != end; ++it)
 				{
 					result.push_back(L',');
-					result.push_back(L' ');
 					HexCharacter(*it, result);
 				}
 			}

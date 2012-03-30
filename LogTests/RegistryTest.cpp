@@ -317,5 +317,20 @@ TEST_F(RegistryValueTest, StringizeWorks)
 	auto underTest = GetAndSort();
 	std::vector<std::wstring> stringized(underTest.size());
 	std::transform(underTest.begin(), underTest.end(), stringized.begin(), std::mem_fun_ref(&BasicRegistryValue::GetString));
-	//ASSERT_EQ(L"FooBar", stringized[0]);
+	ASSERT_LE(stringized[0].size(), _countof(exampleData));
+	EXPECT_TRUE(std::equal(stringized[0].cbegin(), stringized[0].cend(), exampleData));
+	EXPECT_EQ(stringized[1], L"hex:65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
+	ASSERT_LE(stringized[2].size(), _countof(exampleData));
+	EXPECT_TRUE(std::equal(stringized[2].cbegin(), stringized[2].cend(), exampleData));
+	EXPECT_EQ(stringized[3], L"hex(0):65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
+	EXPECT_EQ(stringized[4], L"dword:DEADBEEF");
+	EXPECT_EQ(stringized[5], L"dword-be:DEADBEEF");
+	ASSERT_LE(stringized[6].size(), _countof(exampleLongData));
+	EXPECT_TRUE(std::equal(stringized[6].cbegin(), stringized[6].cend(), exampleLongData));
+	ASSERT_LE(stringized[7].size(), _countof(exampleLongData));
+	EXPECT_TRUE(std::equal(stringized[7].cbegin(), stringized[7].cend(), exampleLongData));
+	EXPECT_EQ(stringized[8], L"hex(7):46,00,6F,00,6F,00,00,00,62,00,61,00,72,00,00,00,62,00,61,00,7A,00,00,00,00,00,00,00");
+	EXPECT_EQ(stringized[9], L"qword:BADC0FFEEBADBAD1");
 }
+
+
