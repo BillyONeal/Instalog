@@ -17,6 +17,6 @@ namespace Instalog { namespace SystemFacades {
 
 		/// @brief	Destructor, frees the handle
 		~EventLog();
-	}
+	};
 
 }}
