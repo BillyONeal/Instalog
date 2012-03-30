@@ -341,4 +341,13 @@ TEST_F(RegistryValueTest, StringizeWorks)
 	EXPECT_EQ(stringized[9], L"qword:BADC0FFEEBADBAD1");
 }
 
-
+TEST_F(RegistryValueTest, StrictStringize)
+{
+	auto underTest = GetAndSort();
+	EXPECT_THROW(underTest[1].GetStringStrict(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(underTest[3].GetStringStrict(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(underTest[4].GetStringStrict(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(underTest[5].GetStringStrict(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(underTest[8].GetStringStrict(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(underTest[9].GetStringStrict(), InvalidRegistryDataTypeException);
+}
