@@ -84,4 +84,8 @@ namespace Instalog { namespace SystemFacades {
 	{
 		ErrorModuleNotFoundException() : Win32Exception(ERROR_MOD_NOT_FOUND) {}
 	};
+	struct ErrorProcedureNotFoundException : public Win32Exception
+	{
+		ErrorProcedureNotFoundException() : Win32Exception(ERROR_PROC_NOT_FOUND) {}
+	};
 }}

@@ -16,6 +16,7 @@ namespace Instalog { namespace SystemFacades {
 		case ERROR_ALREADY_EXISTS: throw ErrorAlreadyExistsException();
 		case ERROR_INVALID_PARAMETER: throw ErrorInvalidParameterException();
 		case ERROR_MOD_NOT_FOUND: throw ErrorModuleNotFoundException();
+		case ERROR_PROC_NOT_FOUND: throw ErrorProcedureNotFoundException();
 		default: throw Win32Exception(lastError);
 		}
 	}

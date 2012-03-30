@@ -152,7 +152,7 @@ namespace Instalog {
 			gpFunc(&totalRam);
 			totalRam *= 1024;
 		}
-		catch (SystemFacades::Win32Exception &)
+		catch (SystemFacades::ErrorProcedureNotFoundException &)
 		{
 			totalRam = memStatus.ullTotalPhys;
 		}
@@ -170,13 +170,16 @@ namespace Instalog {
 		versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 		GetVersionEx((LPOSVERSIONINFO)&versionInfo);
 
-		DWORD productType;
+		DWORD productType = 0;
 		Instalog::SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
-		auto getProductInfo = kernel32.GetProcAddress<GetProductInfoFunc>("GetProductInfo");
-		if (getProductInfo)
+
+		try
+		{
+			auto getProductInfo = kernel32.GetProcAddress<GetProductInfoFunc>("GetProductInfo");
 			getProductInfo(6, 2, 0, 0, &productType);
-		else
-			productType = 0;
+		}
+		catch (SystemFacades::ErrorProcedureNotFoundException const&)
+		{ } // Expected on earlier OSes
 
 		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);

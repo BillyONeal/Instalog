@@ -1,6 +1,8 @@
 #include "pch.hpp"
 #include <LogCommon/Win32Exception.hpp>
 
+#pragma warning(disable:4702) // Unreachable code
+
 using namespace Instalog::SystemFacades;
 
 TEST(Win32Exception, CanGetNarrowName)

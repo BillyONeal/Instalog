@@ -1,0 +1,3 @@
+Works back on XP RTM (Demo XP RTM)
+-> Win2k still dropped, but less than 0.2% of machines (Demo Logbot)
+Correctly displays x64 error message

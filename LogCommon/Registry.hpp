@@ -126,4 +126,17 @@ namespace Instalog { namespace SystemFacades {
 		);
 	};
 
+	struct IRegistryKey
+	{
+	protected:
+		~IRegistryKey() {}
+	};
+
+	struct IRegistry
+	{
+
+	protected:
+		~IRegistry() {}
+	};
+
 }}

@@ -5,6 +5,7 @@
 #include "ServiceControlManager.hpp"
 #include "Path.hpp"
 #include "Registry.hpp"
+#include "File.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -45,7 +46,14 @@ namespace Instalog { namespace SystemFacades {
 		this->filepath = queryServiceConfig->lpBinaryPathName;
 		if (filepath.empty())
 		{
-			filepath = Path::Append(Path::GetWindowsPath(), L"System32\\Drivers\\" + serviceName + L".sys");
+			if (queryServiceConfig->dwServiceType == SERVICE_KERNEL_DRIVER || queryServiceConfig->dwServiceType == SERVICE_FILE_SYSTEM_DRIVER)
+			{
+				filepath = Path::Append(Path::GetWindowsPath(), L"System32\\Drivers\\" + serviceName + L".sys");
+			}
+			else
+			{
+				filepath = Path::Append(Path::GetWindowsPath(), L"System32\\" + serviceName + L".exe");
+			}
 		}
 		Path::ResolveFromCommandLine(this->filepath);
 
