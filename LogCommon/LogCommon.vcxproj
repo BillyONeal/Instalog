@@ -144,6 +144,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="pch.cpp">
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DdkStructures.h" />
+    <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="InstalogVersion.hpp" />

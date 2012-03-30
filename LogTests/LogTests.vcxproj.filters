@@ -71,6 +71,9 @@
     <ClCompile Include="gtest-all.cc">
       <Filter>GTest</Filter>
     </ClCompile>
+    <ClCompile Include="EventLogTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h">

@@ -6,7 +6,7 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	// Represents a plain Win32 file handle.
+	/// @brief Represents a plain Win32 file handle.
 	class File : boost::noncopyable
 	{
 		HANDLE hFile;
