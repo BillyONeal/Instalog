@@ -60,34 +60,49 @@ namespace Instalog { namespace SystemFacades {
 		};
 	};
 
+	/// @brief	Exception for signaling ERROR_SUCCESS.
 	struct ErrorSuccessException : public Win32Exception
 	{
 		ErrorSuccessException() : Win32Exception(ERROR_SUCCESS) {}
 	};
+	
+	/// @brief	Exception for signaling ERROR_FILE_NOT_FOUND.
 	struct ErrorFileNotFoundException : public Win32Exception
 	{
 		ErrorFileNotFoundException() : Win32Exception(ERROR_FILE_NOT_FOUND) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_ACCESS_DENIED.
 	struct ErrorAccessDeniedException : public Win32Exception
 	{
 		ErrorAccessDeniedException() : Win32Exception(ERROR_ACCESS_DENIED) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_ALREADY_EXISTS.
 	struct ErrorAlreadyExistsException : public Win32Exception
 	{
 		ErrorAlreadyExistsException() : Win32Exception(ERROR_ALREADY_EXISTS) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_PATH_NOT_FOUND.
 	struct ErrorPathNotFoundException : public Win32Exception
 	{
 		ErrorPathNotFoundException() : Win32Exception(ERROR_PATH_NOT_FOUND) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_INVALID_PARAMETER.
 	struct ErrorInvalidParameterException : public Win32Exception
 	{
 		ErrorInvalidParameterException() : Win32Exception(ERROR_INVALID_PARAMETER) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_MOD_NOT_FOUND.
 	struct ErrorModuleNotFoundException : public Win32Exception
 	{
 		ErrorModuleNotFoundException() : Win32Exception(ERROR_MOD_NOT_FOUND) {}
 	};
+
+	/// @brief	Exception for signaling ERROR_PROC_NOT_FOUND.
 	struct ErrorProcedureNotFoundException : public Win32Exception
 	{
 		ErrorProcedureNotFoundException() : Win32Exception(ERROR_PROC_NOT_FOUND) {}

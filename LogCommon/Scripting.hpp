@@ -25,6 +25,7 @@ namespace Instalog
 	
 	struct ISectionDefinition;
 
+	/// @brief	Script section.
 	struct ScriptSection
 	{
 		ISectionDefinition const* targetSection;

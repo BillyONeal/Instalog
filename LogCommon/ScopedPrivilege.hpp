@@ -8,12 +8,17 @@
 
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	Scoped privilege. Takes a privilege for a scope, and relenquishes
+	/// 		that privilege on scope exit.
 	class ScopedPrivilege
 	{
 		HANDLE hThisProcess;
 		HANDLE hThisProcessToken;
 		TOKEN_PRIVILEGES privileges;
 	public:
+		/// @brief	Constructor. Takes the indicated privilege.
+		///
+		/// @param	privilegeName	Name of the privilege to take.
 		ScopedPrivilege(LPCWSTR privilegeName)
 			: hThisProcess(::GetCurrentProcess())
 		{
@@ -33,6 +38,7 @@ namespace Instalog { namespace SystemFacades {
 				Win32Exception::ThrowFromLastError();
 			}
 		}
+		/// @brief	Destructor. Releases the privilege taken in the constructor.
 		~ScopedPrivilege()
 		{
 			privileges.Privileges[0].Attributes = 0;

@@ -8,6 +8,9 @@
 
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	Query if the current process is running under WOW64.
+	///
+	/// @return	true if running under WOW64, false otherwise
 	inline bool IsWow64()
 	{
 		try

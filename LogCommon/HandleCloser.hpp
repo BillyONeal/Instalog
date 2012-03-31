@@ -7,6 +7,7 @@
 
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	Handle closer.
 	struct HandleCloser : public std::unary_function<void, void*>
 	{
 		void operator()(void* hClosed)
