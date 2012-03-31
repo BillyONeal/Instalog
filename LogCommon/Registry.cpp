@@ -4,9 +4,9 @@
 #include <type_traits>
 #include <limits>
 #include <iterator>
-#include <iomanip>
 #include <array>
 #include <functional>
+#include <boost/lexical_cast.hpp>
 #include "Win32Exception.hpp"
 #include "StringUtilities.hpp"
 #include "RuntimeDynamicLinker.hpp"
@@ -432,12 +432,12 @@ namespace Instalog { namespace SystemFacades {
 		return Cast()->DataLength;
 	}
 
-	static __int32 BytestreamToDword( unsigned char const* first, unsigned char const* last )
+	static unsigned __int32 BytestreamToDword( unsigned char const* first, unsigned char const* last )
 	{
-		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+		static_assert(sizeof(unsigned __int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
 		union
 		{
-			__int32 converted;
+			unsigned __int32 converted;
 			unsigned char toConvert[4];
 		};
 		if (std::distance(first, last) < 4)
@@ -448,12 +448,12 @@ namespace Instalog { namespace SystemFacades {
 		return converted;
 	}
 
-	static __int32 BytestreamToDwordBe( unsigned char const* first, unsigned char const* last )
+	static unsigned __int32 BytestreamToDwordBe( unsigned char const* first, unsigned char const* last )
 	{
-		static_assert(sizeof(__int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+		static_assert(sizeof(unsigned __int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
 		union
 		{
-			__int32 converted;
+			unsigned __int32 converted;
 			unsigned char toConvert[4];
 		};
 		if (std::distance(first, last) < 4)
@@ -465,12 +465,12 @@ namespace Instalog { namespace SystemFacades {
 		return converted;
 	}
 
-	static __int64 BytestreamToQword( unsigned char const* first, unsigned char const* last )
+	static unsigned __int64 BytestreamToQword( unsigned char const* first, unsigned char const* last )
 	{
-		static_assert(sizeof(__int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
+		static_assert(sizeof(unsigned __int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
 		union
 		{
-			__int64 converted;
+			unsigned __int64 converted;
 			unsigned char toConvert[8];
 		};
 		if (std::distance(first, last) < 8)
@@ -515,11 +515,13 @@ namespace Instalog { namespace SystemFacades {
 		}
 		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
 		{
-			std::wistringstream ss(GetStringStrict());
-			DWORD ans;
-			if (ss >> ans)
+			try
 			{
-				return ans;
+				return boost::lexical_cast<DWORD>(GetStringStrict());
+			}
+			catch (boost::bad_lexical_cast const&)
+			{
+				throw InvalidRegistryDataTypeException();
 			}
 		}
 		throw InvalidRegistryDataTypeException();
@@ -544,7 +546,7 @@ namespace Instalog { namespace SystemFacades {
 		return GetDWord();
 	}
 
-	__int64 BasicRegistryValue::GetQWord() const
+	unsigned __int64 BasicRegistryValue::GetQWord() const
 	{
 		if (GetType() == REG_QWORD)
 		{
@@ -572,17 +574,19 @@ namespace Instalog { namespace SystemFacades {
 		}
 		else if (GetType() == REG_SZ || GetType() == REG_EXPAND_SZ)
 		{
-			std::wistringstream ss(GetStringStrict());
-			__int64 ans;
-			if (ss >> ans)
+			try
 			{
-				return ans;
+				return boost::lexical_cast<unsigned __int64>(GetStringStrict());
+			}
+			catch (boost::bad_lexical_cast const&)
+			{
+				throw InvalidRegistryDataTypeException();
 			}
 		}
 		throw InvalidRegistryDataTypeException();
 	}
 
-	__int64 BasicRegistryValue::GetQWordStrict() const
+	unsigned __int64 BasicRegistryValue::GetQWordStrict() const
 	{
 		if (GetType() != REG_QWORD)
 		{
@@ -702,7 +706,8 @@ namespace Instalog { namespace SystemFacades {
 		auto last = wcend();
 		while (middle = std::find(first, last, L'\0'), first != last && middle != last)
 		{
-			answers.emplace_back(std::wstring(first, middle));
+			if (first != middle)
+				answers.emplace_back(std::wstring(first, middle));
 			first = middle + 1;
 		}
 		return std::move(answers);

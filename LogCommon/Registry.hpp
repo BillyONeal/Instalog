@@ -32,8 +32,8 @@ namespace Instalog { namespace SystemFacades {
 		virtual DWORD GetType() const = 0;
 		DWORD GetDWord() const;
 		DWORD GetDWordStrict() const;
-		__int64 GetQWord() const;
-		__int64 GetQWordStrict() const;
+		unsigned __int64 GetQWord() const;
+		unsigned __int64 GetQWordStrict() const;
 		std::wstring GetString() const;
 		std::wstring GetStringStrict() const;
 		std::vector<std::wstring> GetMultiStringArray() const;
