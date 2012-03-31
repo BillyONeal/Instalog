@@ -200,6 +200,8 @@ static wchar_t wordHexDataTooLong[] = L"0xFFFFFFFFF";
 static wchar_t wordDataTooLongQ[] = L"18446744073709551616";
 static wchar_t wordHexDataTooLongQ[] = L"0x42424242424242424242aaaa";
 
+static wchar_t commaTest[] = L"Foo, bar, baz";
+
 struct RegistryValueTest : public testing::Test
 {
 	RegistryKey keyUnderTest;
@@ -238,6 +240,8 @@ struct RegistryValueTest : public testing::Test
 		::RegSetValueExW(hConversions, L"WordHexDataTooLong", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexDataTooLong), sizeof(wordHexDataTooLong));
 		::RegSetValueExW(hConversions, L"WordDataTooLongQ", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordDataTooLongQ), sizeof(wordDataTooLongQ));
 		::RegSetValueExW(hConversions, L"WordHexDataTooLongQ", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexDataTooLongQ), sizeof(wordHexDataTooLongQ));
+		::RegSetValueExW(hConversions, L"CommaTest", 0, REG_SZ, reinterpret_cast<BYTE const*>(commaTest), sizeof(commaTest));
+		::RegSetValueExW(hConversions, L"CommaTestExpand", 0, REG_EXPAND_SZ, reinterpret_cast<BYTE const*>(commaTest), sizeof(commaTest));
 
 		::RegCloseKey(hConversions);
 		::RegCloseKey(hKey);
@@ -496,4 +500,49 @@ TEST_F(RegistryValueTest, QwordGetFailsForInvalidStringConversions)
 	EXPECT_THROW(conversionsKey[L"WordHexDataAppended"].GetQWord(), InvalidRegistryDataTypeException);
 	EXPECT_THROW(conversionsKey[L"WordDataTooLongQ"].GetQWord(), InvalidRegistryDataTypeException);
 	EXPECT_THROW(conversionsKey[L"WordHexDataTooLongQ"].GetQWord(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, CanGetMultiStringArray)
+{
+	std::vector<std::wstring> expected;
+	expected.emplace_back(L"Foo");
+	expected.emplace_back(L"bar");
+	expected.emplace_back(L"baz");
+	std::vector<std::wstring> enumerated(keyUnderTest[L"ExampleMultiSz"].GetMultiStringArray());
+	EXPECT_EQ(expected, enumerated);
+}
+
+TEST_F(RegistryValueTest, MultiStringGetFailsForInvalidInputs)
+{
+	EXPECT_THROW(keyUnderTest[L"ExampleDword"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleFDword"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleData"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetMultiStringArray(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, CommaStringGetFailsForInvalidInputs)
+{
+	EXPECT_THROW(keyUnderTest[L"ExampleDword"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleFDword"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetCommaStringArray(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, CanGetCommaString)
+{
+	std::vector<std::wstring> expected;
+	expected.emplace_back(L"Foo");
+	expected.emplace_back(L"bar");
+	expected.emplace_back(L"baz");
+	std::vector<std::wstring> enumerated(conversionsKey[L"CommaTest"].GetCommaStringArray());
+	EXPECT_EQ(expected, enumerated);
+	std::vector<std::wstring> enumeratedExpand(conversionsKey[L"CommaTestExpand"].GetCommaStringArray());
+	EXPECT_EQ(expected, enumeratedExpand);
 }
