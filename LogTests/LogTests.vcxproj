@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EventLogTest.cpp" />
     <ClCompile Include="FileTest.cpp" />
     <ClCompile Include="gtest-all.cc" />
     <ClCompile Include="gtest_main.cc" />
