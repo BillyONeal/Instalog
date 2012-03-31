@@ -17,18 +17,19 @@ namespace Instalog { namespace SystemFacades {
 		WORD eventCategory;
 		std::wstring sourceName;
 		std::wstring computerName;
-		std::vector<std::wstring> strings; // TODO
+		std::wstring strings; // TODO
 		std::wstring dataString;
 
 		EventLogEntry(PEVENTLOGRECORD pRecord)
 			: timeGenerated(pRecord->TimeGenerated)
 			, timeWritten(pRecord->TimeWritten)
-			, eventId(pRecord->EventID)
+			, eventId(pRecord->EventID & 0x0000FFFF)
 			, eventType(eventType)
 			, eventCategory(eventCategory)
 			, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
 			, computerName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord) + sourceName.size() * sizeof(wchar_t) + sizeof(wchar_t)))
-			, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset)) // TODO probably
+			, strings(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->StringOffset))
+			, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset)) 
 		{
 		
 		}
