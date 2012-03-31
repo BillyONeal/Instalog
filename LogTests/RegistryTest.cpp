@@ -187,15 +187,30 @@ static wchar_t exampleMultiSz[] =
 	L"Foo\0bar\0baz\0\0";
 static auto exampleMultiSzCasted = reinterpret_cast<BYTE const*>(exampleMultiSz);
 
+//These conversions should succeed.
+static wchar_t wordData[] = L"42";
+static wchar_t wordHexData[] = L"0x42";
+static wchar_t wordHexDataAppended[] = L"0x42  appended"; //Should fail
+
+//These are too long for a DWORD, but conversion to qword should be okay.
+static wchar_t wordDataTooLong[] = L"2147483648";
+static wchar_t wordHexDataTooLong[] = L"0xFFFFFFFFF";
+
+//These are too long to fit in a QWord, so conversions against them should fail.
+static wchar_t wordDataTooLongQ[] = L"18446744073709551616";
+static wchar_t wordHexDataTooLongQ[] = L"0x42424242424242424242aaaa";
+
 struct RegistryValueTest : public testing::Test
 {
 	RegistryKey keyUnderTest;
+	RegistryKey conversionsKey;
 	void SetUp()
 	{
 		HKEY hKey;
 		DWORD exampleDword = 0xDEADBEEF;
 		__int64 exampleQWord = 0xBADC0FFEEBADBAD1ll;
-		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0);
+		__int64 exampleSmallQword = exampleDword;
+		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE | KEY_CREATE_SUB_KEY, 0, &hKey, 0);
 		ASSERT_EQ(0, errorCheck);
 		::RegSetValueExW(hKey, L"ExampleDataNone", 0, REG_NONE, exampleDataCasted, sizeof(exampleData));
 		::RegSetValueExW(hKey, L"ExampleDataBinary", 0, REG_BINARY, exampleDataCasted, sizeof(exampleData));
@@ -211,12 +226,29 @@ struct RegistryValueTest : public testing::Test
 		std::reverse(dwordArray.begin(), dwordArray.end());
 		::RegSetValueExW(hKey, L"ExampleFDword", 0, REG_DWORD_BIG_ENDIAN, &dwordArray[0], sizeof(DWORD));
 		::RegSetValueExW(hKey, L"ExampleQWord", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleQWord), sizeof(__int64));
+
+		HKEY hConversions;
+		errorCheck = ::RegCreateKeyExW(hKey, L"Conversions", 0, 0, 0, KEY_SET_VALUE, 0, &hConversions, 0);
+		ASSERT_EQ(errorCheck, 0);
+		::RegSetValueExW(hConversions, L"SmallQword", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleSmallQword), sizeof(__int64));
+		::RegSetValueExW(hConversions, L"WordData", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordData), sizeof(wordData));
+		::RegSetValueExW(hConversions, L"WordHexData", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexData), sizeof(wordHexData));
+		::RegSetValueExW(hConversions, L"WordHexDataAppended", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexDataAppended), sizeof(wordHexDataAppended));
+		::RegSetValueExW(hConversions, L"WordDataTooLong", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordDataTooLong), sizeof(wordDataTooLong));
+		::RegSetValueExW(hConversions, L"WordHexDataTooLong", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexDataTooLong), sizeof(wordHexDataTooLong));
+		::RegSetValueExW(hConversions, L"WordDataTooLongQ", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordDataTooLongQ), sizeof(wordDataTooLongQ));
+		::RegSetValueExW(hConversions, L"WordHexDataTooLongQ", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordHexDataTooLongQ), sizeof(wordHexDataTooLongQ));
+
+		::RegCloseKey(hConversions);
 		::RegCloseKey(hKey);
 		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
+		conversionsKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal\\Conversions", KEY_QUERY_VALUE);
 		ASSERT_TRUE(keyUnderTest.Valid());
+		ASSERT_TRUE(conversionsKey.Valid());
 	}
 	void TearDown()
 	{
+		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal\\Conversions", DELETE).Delete();
 		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE).Delete();
 	}
 
@@ -237,7 +269,7 @@ TEST_F(RegistryValueTest, CanGetValueData)
 	ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleDataCasted));
 }
 
-TEST_F(RegistryValueTest, CanGetDwordRawData)
+TEST_F(RegistryValueTest, CanGetDWordRawData)
 {
 	auto data = keyUnderTest.GetValue(L"ExampleDword");
 	ASSERT_EQ(REG_DWORD, data.GetType());
@@ -350,4 +382,118 @@ TEST_F(RegistryValueTest, StrictStringize)
 	EXPECT_THROW(underTest[5].GetStringStrict(), InvalidRegistryDataTypeException);
 	EXPECT_THROW(underTest[8].GetStringStrict(), InvalidRegistryDataTypeException);
 	EXPECT_THROW(underTest[9].GetStringStrict(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, DwordGet)
+{
+	auto underTest = GetAndSort();
+	EXPECT_EQ(0xDEADBEEF, underTest[4].GetDWord());
+}
+
+TEST_F(RegistryValueTest, DwordGetBe)
+{
+	auto underTest = GetAndSort();
+	EXPECT_EQ(0xDEADBEEF, underTest[5].GetDWord());
+}
+
+TEST_F(RegistryValueTest, DwordGetStrictRejectsBe)
+{
+	auto underTest = GetAndSort();
+	EXPECT_THROW(underTest[5].GetDWordStrict(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, DwordGetSmallQword)
+{
+	EXPECT_EQ(0xDEADBEEF, conversionsKey[L"SmallQWord"].GetDWord());
+}
+
+TEST_F(RegistryValueTest, DwordGetSmallQwordStrict)
+{
+	EXPECT_THROW(conversionsKey[L"SmallQWord"].GetDWordStrict(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, DwordGetLargeQword)
+{
+	EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetDWord(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, DwordGetFailsForInvalidInputs)
+{
+	EXPECT_THROW(keyUnderTest[L"ExampleData"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetDWord(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, DwordGetTriesStringConversions)
+{
+	EXPECT_EQ(42, conversionsKey[L"WordData"].GetDWord());
+	EXPECT_EQ(0x42, conversionsKey[L"WordHexData"].GetDWord());
+}
+
+TEST_F(RegistryValueTest, DwordGetFailsForInvalidStringConversions)
+{
+	EXPECT_THROW(conversionsKey[L"WordHexDataAppended"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordDataTooLong"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordHexDataTooLong"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordDataTooLongQ"].GetDWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordHexDataTooLongQ"].GetDWord(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, QwordGet)
+{
+	auto underTest = GetAndSort();
+	EXPECT_EQ(0xBADC0FFEEBADBAD1ll, underTest[9].GetQWord());
+}
+
+TEST_F(RegistryValueTest, QwordGetDwordBe)
+{
+	auto underTest = GetAndSort();
+	EXPECT_EQ(0xDEADBEEFll, underTest[5].GetQWord());
+}
+
+TEST_F(RegistryValueTest, QwordGetStrictRejectsBe)
+{
+	auto underTest = GetAndSort();
+	EXPECT_THROW(underTest[5].GetQWordStrict(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, QwordGetStrictRejectsDword)
+{
+	auto underTest = GetAndSort();
+	EXPECT_THROW(underTest[4].GetQWordStrict(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, QwordGetDword)
+{
+	EXPECT_EQ(0xDEADBEEFll, keyUnderTest[L"ExampleDword"].GetQWord());
+}
+
+TEST_F(RegistryValueTest, QwordGetFailsForInvalidInputs)
+{
+	EXPECT_THROW(keyUnderTest[L"ExampleData"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetQWord(), InvalidRegistryDataTypeException);
+}
+
+TEST_F(RegistryValueTest, QwordGetTriesStringConversions)
+{
+	EXPECT_EQ(42, conversionsKey[L"WordData"].GetQWord());
+	EXPECT_EQ(0x42, conversionsKey[L"WordHexData"].GetQWord());
+	EXPECT_EQ(2147483648ll, conversionsKey[L"WordDataTooLong"].GetQWord());
+	EXPECT_EQ(0xFFFFFFFFFll, conversionsKey[L"WordHexDataTooLong"].GetQWord());
+}
+
+TEST_F(RegistryValueTest, QwordGetFailsForInvalidStringConversions)
+{
+	EXPECT_THROW(conversionsKey[L"WordHexDataAppended"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordDataTooLongQ"].GetQWord(), InvalidRegistryDataTypeException);
+	EXPECT_THROW(conversionsKey[L"WordHexDataTooLongQ"].GetQWord(), InvalidRegistryDataTypeException);
 }

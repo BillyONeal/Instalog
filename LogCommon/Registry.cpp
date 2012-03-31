@@ -482,7 +482,7 @@ namespace Instalog { namespace SystemFacades {
 	}
 
 
-	DWORD BasicRegistryValue::GetDword() const
+	DWORD BasicRegistryValue::GetDWord() const
 	{
 		if (GetType() == REG_DWORD)
 		{
@@ -507,7 +507,7 @@ namespace Instalog { namespace SystemFacades {
 				throw InvalidRegistryDataTypeException();
 			}
 			__int64 tmp = BytestreamToQword(cbegin(), cend());
-			if ((tmp & 0x00000000FFFFFFFFull) != 0)
+			if (tmp > std::numeric_limits<DWORD>::max() || tmp < std::numeric_limits<DWORD>::min())
 			{
 				throw InvalidRegistryDataTypeException();
 			}
@@ -535,13 +535,13 @@ namespace Instalog { namespace SystemFacades {
 		return GetString();
 	}
 
-	DWORD BasicRegistryValue::GetDwordStrict() const
+	DWORD BasicRegistryValue::GetDWordStrict() const
 	{
 		if (GetType() != REG_DWORD)
 		{
 			throw InvalidRegistryDataTypeException();
 		}
-		return GetDword();
+		return GetDWord();
 	}
 
 	__int64 BasicRegistryValue::GetQWord() const
@@ -617,7 +617,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				throw InvalidRegistryDataTypeException();
 			}
-			result.reserve(16);
+			result.reserve(14);
 			result.assign(L"dword:");
 			{
 				auto it = cbegin() + 3;
@@ -633,7 +633,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				throw InvalidRegistryDataTypeException();
 			}
-			result.reserve(24);
+			result.reserve(22);
 			result.assign(L"qword:");
 			{
 				auto it = cbegin() + 7;
@@ -649,7 +649,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				throw InvalidRegistryDataTypeException();
 			}
-			result.reserve(19);
+			result.reserve(17);
 			result.assign(L"dword-be:");
 			{
 				auto it = cbegin();
@@ -724,7 +724,8 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring contents(GetStringStrict());
 		boost::algorithm::split(answer, contents, 
 			std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L','));
-		std::for_each(answer.begin(), answer.end(), [] (std::wstring & a) { boost::algorithm::trim_left(a, std::locale()); });
+		std::for_each(answer.begin(), answer.end(), [] (std::wstring & a) {
+			boost::algorithm::trim_left(a, std::locale()); });
 		return std::move(answer);
 	}
 

@@ -30,8 +30,8 @@ namespace Instalog { namespace SystemFacades {
 		virtual std::size_t size() const = 0;
 		bool empty() const { return size() == 0; }
 		virtual DWORD GetType() const = 0;
-		DWORD GetDword() const;
-		DWORD GetDwordStrict() const;
+		DWORD GetDWord() const;
+		DWORD GetDWordStrict() const;
 		__int64 GetQWord() const;
 		__int64 GetQWordStrict() const;
 		std::wstring GetString() const;
