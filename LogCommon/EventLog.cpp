@@ -15,7 +15,7 @@ namespace Instalog { namespace SystemFacades {
 
 	EventLog::~EventLog()
 	{
-		::CloseHandle(handle);
+		::CloseEventLog(handle);
 	}
 
 }}
