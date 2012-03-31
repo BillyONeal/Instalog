@@ -24,12 +24,28 @@ namespace Instalog { namespace SystemFacades {
 			: timeGenerated(pRecord->TimeGenerated)
 			, timeWritten(pRecord->TimeWritten)
 			, eventId(pRecord->EventID & 0x0000FFFF)
-			, eventType(eventType)
+			, eventType(pRecord->EventType)
 			, eventCategory(eventCategory)
 			, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
 			, computerName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord) + sourceName.size() * sizeof(wchar_t) + sizeof(wchar_t)))
 			, strings(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->StringOffset))
 			, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset)) 
+		{
+		
+		}
+
+		/// @brief	Move constructor.
+		///
+		/// @param [in,out]	e	The EventLogEntry &amp;&amp; to process.
+		EventLogEntry(EventLogEntry && e)
+			: timeGenerated(e.timeGenerated)
+			, timeWritten(e.timeWritten)
+			, eventId(e.eventId)
+			, eventType(e.eventType)
+			, eventCategory(eventCategory)
+			, sourceName(std::move(e.sourceName))
+			, computerName(std::move(e.computerName))
+			, dataString(std::move(e.dataString))
 		{
 		
 		}
@@ -51,17 +67,17 @@ namespace Instalog { namespace SystemFacades {
 		std::vector<EventLogEntry> ReadEvents()
 		{
 			std::vector<EventLogEntry> eventLogEntries;
+			eventLogEntries.reserve(16 * 1024 /* approximate based on dev machine */);
 
 			DWORD lastError = ERROR_SUCCESS;
-			std::vector<char> buffer;
-			buffer.resize(1024);
+			std::vector<char> buffer(0x7ffff /* (max size of buffer) */); // http://msdn.microsoft.com/en-us/library/aa363674.aspx
 			DWORD bytesRead;
 			DWORD minNumberOfBytesNeeded;
 
 			while (lastError == ERROR_SUCCESS)
 			{
 				BOOL status = ::ReadEventLogW(handle, 
-					EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 
+					EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 
 					0,
 					buffer.data(),
 					static_cast<DWORD>(buffer.size()),
@@ -89,7 +105,7 @@ namespace Instalog { namespace SystemFacades {
 
 					while (reinterpret_cast<char*>(pRecord) < buffer.data() + bytesRead)
 					{
-						eventLogEntries.push_back(EventLogEntry(pRecord));
+						eventLogEntries.emplace_back(EventLogEntry(pRecord));
 
 						pRecord = reinterpret_cast<PEVENTLOGRECORD>(reinterpret_cast<char*>(pRecord) + pRecord->Length);
 					}

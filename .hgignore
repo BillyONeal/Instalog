@@ -27,3 +27,5 @@ Docs/Instalog Testing and Validation/tmp/*
 Docs/Instalog Testing and Validation/*.pdf
 Docs/Instalog Design/tmp/*
 Docs/Instalog Design/*.pdf
+*.vsp
+*.psess
