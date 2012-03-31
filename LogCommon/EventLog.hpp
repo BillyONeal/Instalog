@@ -17,7 +17,7 @@ namespace Instalog { namespace SystemFacades {
 		WORD eventCategory;
 		std::wstring sourceName;
 		std::wstring computerName;
-		std::wstring strings; // TODO
+		std::vector<std::wstring> strings;
 		std::wstring dataString;
 
 		EventLogEntry(PEVENTLOGRECORD pRecord);

@@ -11,10 +11,14 @@ namespace Instalog { namespace SystemFacades {
 		, eventCategory(eventCategory)
 		, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
 		, computerName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord) + sourceName.size() * sizeof(wchar_t) + sizeof(wchar_t)))
-		, strings(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->StringOffset))
 		, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset))
 	{
+		strings.reserve(pRecord->NumStrings);
 
+		for (wchar_t* stringPtr = reinterpret_cast<wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->StringOffset); strings.size() < pRecord->NumStrings; stringPtr += strings.back().length() + 1)
+		{
+			strings.push_back(std::wstring(stringPtr));
+		}
 	}
 
 	EventLogEntry::EventLogEntry( EventLogEntry && e ) : timeGenerated(e.timeGenerated)
@@ -24,6 +28,7 @@ namespace Instalog { namespace SystemFacades {
 		, eventCategory(eventCategory)
 		, sourceName(std::move(e.sourceName))
 		, computerName(std::move(e.computerName))
+		, strings(std::move(e.strings))
 		, dataString(std::move(e.dataString))
 	{
 
@@ -80,13 +85,9 @@ namespace Instalog { namespace SystemFacades {
 			}
 			else
 			{
-				PEVENTLOGRECORD pRecord = reinterpret_cast<PEVENTLOGRECORD>(buffer.data());
-
-				while (reinterpret_cast<char*>(pRecord) < buffer.data() + bytesRead)
+				for (PEVENTLOGRECORD pRecord = reinterpret_cast<PEVENTLOGRECORD>(buffer.data()); reinterpret_cast<char*>(pRecord) < buffer.data() + bytesRead; pRecord = reinterpret_cast<PEVENTLOGRECORD>(reinterpret_cast<char*>(pRecord) + pRecord->Length))
 				{
 					eventLogEntries.emplace_back(EventLogEntry(pRecord));
-
-					pRecord = reinterpret_cast<PEVENTLOGRECORD>(reinterpret_cast<char*>(pRecord) + pRecord->Length);
 				}
 			}
 		}
