@@ -9,7 +9,7 @@
 #include <functional>
 #include "Win32Exception.hpp"
 #include "StringUtilities.hpp"
-#include "RuntimeDynamicLinker.hpp"
+#include "Library.hpp"
 #include "Registry.hpp"
 
 namespace Instalog { namespace SystemFacades {

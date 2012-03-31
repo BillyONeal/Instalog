@@ -1,24 +1,35 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <Windows.h>
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
-	/// @brief	An easy runtime dynamic linker
-	/// 
-	/// @details	Opens and closes libraries
-	class RuntimeDynamicLinker 
+	class Library
 	{
+	protected:
+		/// @summary	The module handle.
 		HMODULE hModule;
+
+		/// @brief	Constructor, opens a handle to the library with the given flags
+		///
+		/// @param	filename	Path of the library.
+		/// @param	flags   	The flags.
+		Library(std::wstring const& filename, DWORD flags);
+
+		/// @brief	Destructor, frees the library.
+		~Library();
+	};
+
+	/// @brief	An easy runtime dynamic linker
+	class RuntimeDynamicLinker : public Library
+	{
 	public:
 		/// @brief	Constructor.
 		///
 		/// @param	filename	Filename of the library.
 		RuntimeDynamicLinker(std::wstring const& filename);
-
-		/// @brief	Destructor.  Frees the library
-		~RuntimeDynamicLinker();
 
 		/// @brief	Gets a function pointer to the specified function
 		///
@@ -41,4 +52,15 @@ namespace Instalog { namespace SystemFacades {
 	///
 	/// @return	The Windows NT dll
 	RuntimeDynamicLinker& GetNtDll();
+
+	class FormattedMessageLoader : public Library
+	{
+	public:
+		/// @brief	Constructor.
+		///
+		/// @param	filename	Filename of the library containing the messages.
+		FormattedMessageLoader(std::wstring const& filename);
+
+		std::wstring GetFormattedMessage(DWORD const& messageId, std::vector<std::wstring> const& arguments = std::vector<std::wstring>() );
+	};
 }}

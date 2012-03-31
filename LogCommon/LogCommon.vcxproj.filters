@@ -23,9 +23,6 @@
     <ClCompile Include="Process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RuntimeDynamicLinker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Win32Exception.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -59,6 +56,9 @@
     <ClCompile Include="EventLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Library.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -68,9 +68,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Process.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RuntimeDynamicLinker.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Win32Exception.hpp">
@@ -128,6 +125,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EventLog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Library.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

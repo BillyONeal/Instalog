@@ -159,7 +159,7 @@
     </ClCompile>
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="Registry.cpp" />
-    <ClCompile Include="RuntimeDynamicLinker.cpp" />
+    <ClCompile Include="Library.cpp" />
     <ClCompile Include="ScanningSections.cpp" />
     <ClCompile Include="ServiceControlManager.cpp" />
     <ClCompile Include="StockOutputFormats.cpp" />
@@ -181,7 +181,7 @@
     <ClInclude Include="ScanningSections.hpp" />
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
-    <ClInclude Include="RuntimeDynamicLinker.hpp" />
+    <ClInclude Include="Library.hpp" />
     <ClInclude Include="Scripting.hpp" />
     <ClInclude Include="ServiceControlManager.hpp" />
     <ClInclude Include="StockOutputFormats.hpp" />

@@ -1,12 +1,15 @@
 #include "pch.hpp"
 #include "EventLog.hpp"
 #include "Win32Exception.hpp"
+#include "Registry.hpp"
+#include "Path.hpp"
+#include "Library.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
 	EventLogEntry::EventLogEntry( PEVENTLOGRECORD pRecord ) : timeGenerated(pRecord->TimeGenerated)
 		, timeWritten(pRecord->TimeWritten)
-		, eventId(pRecord->EventID & 0x0000FFFF)
+		, eventId(pRecord->EventID/* & 0x0000FFFF*/)
 		, eventType(pRecord->EventType)
 		, eventCategory(eventCategory)
 		, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
@@ -19,6 +22,18 @@ namespace Instalog { namespace SystemFacades {
 		{
 			strings.push_back(std::wstring(stringPtr));
 		}
+
+		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
+		if (eventKey.Invalid())
+		{
+			Win32Exception::ThrowFromNtError(::GetLastError());
+		}
+
+// 		RegistryValue eventMessageFileValue = eventKey.GetValue(L"EventMessageFile");
+// 		std::wstring eventMessageFilePath = eventMessageFileValue.GetStringStrict();
+// 		Path::ResolveFromCommandLine(eventMessageFilePath);
+// 
+// 		RuntimeDynamicLinker eventMessageFile(eventMessageFilePath);
 	}
 
 	EventLogEntry::EventLogEntry( EventLogEntry && e ) : timeGenerated(e.timeGenerated)

@@ -26,9 +26,6 @@
     <ClCompile Include="ProcessTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RuntimeDynamicLinkerTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Precompiled</Filter>
     </ClCompile>
@@ -72,6 +69,9 @@
       <Filter>GTest</Filter>
     </ClCompile>
     <ClCompile Include="EventLogTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LibraryTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

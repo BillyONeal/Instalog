@@ -3,7 +3,7 @@
 #include <functional>
 #include <windows.h>
 #include "Win32Exception.hpp"
-#include "RuntimeDynamicLinker.hpp"
+#include "Library.hpp"
 #include "HandleCloser.hpp"
 #include "ScopedPrivilege.hpp"
 #include "Process.hpp"

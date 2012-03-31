@@ -3,7 +3,7 @@
 #include <boost/io/ios_state.hpp>
 #include <windows.h>
 #include "Win32Exception.hpp"
-#include "RuntimeDynamicLinker.hpp"
+#include "Library.hpp"
 #include "Path.hpp"
 #include "File.hpp"
 #include "StockOutputFormats.hpp"

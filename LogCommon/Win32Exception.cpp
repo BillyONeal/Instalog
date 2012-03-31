@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include <memory>
-#include "RuntimeDynamicLinker.hpp"
+#include "Library.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
@@ -9,15 +9,15 @@ namespace Instalog { namespace SystemFacades {
 	{
 		switch(lastError)
 		{
-		case ERROR_SUCCESS: throw ErrorSuccessException();
-		case ERROR_FILE_NOT_FOUND: throw ErrorFileNotFoundException();
-		case ERROR_PATH_NOT_FOUND: throw ErrorPathNotFoundException();
-		case ERROR_ACCESS_DENIED: throw ErrorAccessDeniedException();
-		case ERROR_ALREADY_EXISTS: throw ErrorAlreadyExistsException();
-		case ERROR_INVALID_PARAMETER: throw ErrorInvalidParameterException();
-		case ERROR_MOD_NOT_FOUND: throw ErrorModuleNotFoundException();
-		case ERROR_PROC_NOT_FOUND: throw ErrorProcedureNotFoundException();
-		default: throw Win32Exception(lastError);
+		case ERROR_SUCCESS: throw ErrorSuccessException(); break;
+		case ERROR_FILE_NOT_FOUND: throw ErrorFileNotFoundException(); break;
+		case ERROR_PATH_NOT_FOUND: throw ErrorPathNotFoundException(); break;
+		case ERROR_ACCESS_DENIED: throw ErrorAccessDeniedException(); break;
+		case ERROR_ALREADY_EXISTS: throw ErrorAlreadyExistsException(); break;
+		case ERROR_INVALID_PARAMETER: throw ErrorInvalidParameterException(); break;
+		case ERROR_MOD_NOT_FOUND: throw ErrorModuleNotFoundException(); break;
+		case ERROR_PROC_NOT_FOUND: throw ErrorProcedureNotFoundException(); break;
+		default: throw Win32Exception(lastError); break;
 		}
 	}
 
