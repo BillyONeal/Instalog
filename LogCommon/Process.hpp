@@ -1,3 +1,7 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
+
 #pragma once
 #include <vector>
 #include <string>
@@ -34,6 +38,7 @@ namespace Instalog { namespace SystemFacades {
 		void Terminate();
 	};
 
+	/// @brief	Process iterator. An iterator which loops over processes in memory.
 	class ProcessIterator
 		: public boost::iterator_facade<ProcessIterator, Process, boost::forward_traversal_tag, Process>
 	{
@@ -50,6 +55,7 @@ namespace Instalog { namespace SystemFacades {
 			);
 	};
 
+	/// @brief	Process enumerator. Serves as a collection of processes in memory.
 	class ProcessEnumerator
 	{
 		std::vector<unsigned char> informationBlock;

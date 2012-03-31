@@ -1,3 +1,7 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
+
 #define _VARIADIC_MAX 10
 #define _SCL_SECURE_NO_WARNINGS
 #include <cstdlib>
@@ -23,3 +27,4 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>

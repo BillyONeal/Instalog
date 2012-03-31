@@ -1,7 +1,12 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
+
 #include "pch.hpp"
 #include <iomanip>
 #include <boost/io/ios_state.hpp>
 #include <windows.h>
+#include "Registry.hpp"
 #include "Win32Exception.hpp"
 #include "Library.hpp"
 #include "Path.hpp"
@@ -446,6 +451,22 @@ namespace Instalog {
 		log << versionInfo.dwMajorVersion << L'.' << versionInfo.dwMinorVersion << L'.' << versionInfo.dwBuildNumber << L'.' << versionInfo.wServicePackMajor;
 	}
 
+	static std::wstring GetAdobeReaderVersion()
+	{
+		using SystemFacades::RegistryKey;
+#ifdef _M_X64
+		RegistryKey adobeKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Adobe\\Installer", KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
+#else
+		RegistryKey adobeKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Adobe\\Installer", KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
+#endif
+		auto subkeys = adobeKey.EnumerateSubKeys(KEY_QUERY_VALUE);
+		if (!subkeys.size())
+		{
+			throw std::exception("Broken Adobe Reader Install");
+		}
+		return subkeys[0][L"ProductVersion"].GetStringStrict();
+	}
+
 	void WriteScriptHeader( std::wostream &log )
 	{
 		log << L"Instalog " INSTALOG_VERSION;
@@ -475,11 +496,43 @@ namespace Instalog {
 			<< std::noshowpos << std::setw(2) << std::setfill(L'0')
 			<< (-tzInfo.Bias % 60) << L"]\n";
 
-		//HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\\Version
-		//HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Runtime Environment\\BrowserJavaVersion
-		//HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Macromedia\FlashPlayer\\CurrentVersion (Replace , with .)
-		//HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Adobe\Installer\???\\ProductVersion
+		using SystemFacades::RegistryKey;
+		RegistryKey ieKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE);
+		if (ieKey.Valid())
+		{
+			log << L"IE: " << ieKey[L"Version"].GetStringStrict();
+		}
+		else
+		{
+			log << L"IE ERROR!";
+		}
 
+		RegistryKey javaKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment", KEY_QUERY_VALUE);
+		if (javaKey.Valid())
+		{
+			log << L" Java: " << javaKey[L"BrowserJavaVersion"].GetStringStrict();
+		}
+
+#ifdef _M_X64
+		RegistryKey flashKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+#else
+		RegistryKey flashKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+#endif
+		if (flashKey.Valid())
+		{
+			std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
+			boost::algorithm::replace_all(flashVer, L",", L".");
+			log << L" Flash: " << flashVer;
+		}
+
+		try
+		{
+			std::wstring adobeVersion(GetAdobeReaderVersion());
+			log << L" Adobe: " << adobeVersion;
+		}
+		catch (std::exception const&) {} //No log output on failure.
+
+		log << L"\n";
 		WriteOsVersion(log);
 		log << L' ';
 		WriteMemoryInformation(log);

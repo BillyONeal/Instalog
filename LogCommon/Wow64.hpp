@@ -1,9 +1,16 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
+
 #include "Library.hpp"
 
 #pragma once
 
 namespace Instalog { namespace SystemFacades {
 
+	/// @brief	Query if the current process is running under WOW64.
+	///
+	/// @return	true if running under WOW64, false otherwise
 	inline bool IsWow64()
 	{
 		try

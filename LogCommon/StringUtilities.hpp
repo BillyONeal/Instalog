@@ -1,3 +1,7 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
+
 #pragma once
 #include <string>
 #include <exception>
@@ -45,6 +49,11 @@ namespace Instalog
 		virtual char const* what() const;
 	};
 
+	/// @brief	Appends the given character in a hexadecimal representation to
+	/// 		the target string.
+	///
+	/// @param	characterToHex	The character to print in hexadecimal form.
+	/// @param [in,out]	target	Target where the character should be written.
 	inline void HexCharacter(unsigned char characterToHex, std::wstring &target)
 	{
 		static const wchar_t chars[] = L"0123456789ABCDEF";
@@ -52,6 +61,14 @@ namespace Instalog
 		target.push_back(chars[characterToHex & 0x0F]);
 	}
 
+	/// @brief	Extracts a numeric character from a hexadecimal representation.
+	///
+	/// @exception	InvalidHexCharacter	Thrown when an invalid hexadecimal character
+	/// 								appears in the source text.
+	///
+	/// @param	hexCharacter	The hexadecimal character to interpret as an integer.
+	///
+	/// @return	The character un-hexed.
 	inline char UnHexCharacter(wchar_t hexCharacter)
 	{
 		if (hexCharacter >= L'0' && hexCharacter <= L'9')
@@ -184,5 +201,10 @@ namespace Instalog
 		}
 		throw MalformedEscapedSequence();
 	}
+
+	/// @brief	Prints a header.
+	///
+	/// @param [in,out]	headerText	The header text.
+	/// @param	headerWidth		  	(optional) The width of the header.
 	void Header(std::wstring &headerText, std::size_t headerWidth = 50);
 }
