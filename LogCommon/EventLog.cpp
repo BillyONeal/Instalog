@@ -27,12 +27,12 @@ namespace Instalog { namespace SystemFacades {
 			strings.push_back(std::wstring(stringPtr));
 		}
 
-		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
-		if (eventKey.Invalid())
-		{
-			Win32Exception::ThrowFromNtError(::GetLastError());
-		}
-
+// 		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
+// 		if (eventKey.Invalid())
+// 		{
+// 			Win32Exception::ThrowFromNtError(::GetLastError());
+// 		}
+// 
 // 		RegistryValue eventMessageFileValue = eventKey.GetValue(L"EventMessageFile");
 // 		std::wstring eventMessageFilePath = eventMessageFileValue.GetStringStrict();
 // 		Path::ResolveFromCommandLine(eventMessageFilePath);

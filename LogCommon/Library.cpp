@@ -64,7 +64,7 @@ namespace Instalog { namespace SystemFacades {
 				Win32Exception::ThrowFromLastError();
 			}
 
-			return std::wstring(messagePtr);
+			return std::wstring(messagePtr); // TODO: Bill, is this a memory leak?
 		}
 		else
 		{
@@ -80,7 +80,7 @@ namespace Instalog { namespace SystemFacades {
 				Win32Exception::ThrowFromLastError();
 			}
 
-			return std::wstring(messagePtr);		
+			return std::wstring(messagePtr); // TODO: Bill, is this a memory leak?	
 		}
 	}
 

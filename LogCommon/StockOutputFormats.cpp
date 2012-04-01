@@ -510,7 +510,14 @@ namespace Instalog {
 		RegistryKey javaKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment", KEY_QUERY_VALUE);
 		if (javaKey.Valid())
 		{
-			log << L" Java: " << javaKey[L"BrowserJavaVersion"].GetStringStrict();
+			try
+			{
+				log << L" Java: " << javaKey[L"BrowserJavaVersion"].GetStringStrict();
+			}
+			catch (SystemFacades::ErrorFileNotFoundException const&)
+			{
+				log << L" Java: Not Installed";
+			}
 		}
 
 #ifdef _M_X64

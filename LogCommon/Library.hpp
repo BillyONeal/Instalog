@@ -6,11 +6,12 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
+#include <boost/noncopyable.hpp>
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
-	class Library
+	class Library : boost::noncopyable
 	{
 	protected:
 		/// @summary	The module handle.

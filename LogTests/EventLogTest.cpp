@@ -7,10 +7,13 @@
 #include "LogCommon/EventLog.hpp"
 
 using Instalog::SystemFacades::EventLog;
+using Instalog::SystemFacades::EventLogEntry;;
 
-TEST(EventLog, Test)
+TEST(EventLog, ReceivedEventLogEntries)
 {
 	EventLog eventLog;
 
-	eventLog.ReadEvents();
+	std::vector<EventLogEntry> eventLogEntries = eventLog.ReadEvents();
+
+	ASSERT_TRUE(eventLogEntries.size() > 0);
 }
