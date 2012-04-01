@@ -14,6 +14,7 @@
 #include "Win32Exception.hpp"
 #include "StockOutputFormats.hpp"
 #include "EventLog.hpp"
+#include "Win32Glue.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -108,16 +109,32 @@ namespace Instalog
 		}
 	}
 
-	void EventViewer::Execute( std::wostream& /*logOutput*/, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
 		using Instalog::SystemFacades::EventLog;
 		using Instalog::SystemFacades::EventLogEntry;
 
-		EventLog eventLog;
+		SYSTEMTIME currentTime;
+		GetSystemTime(&currentTime);
+		DWORD oneWeekAgo = SecondsSince1970(currentTime) - 604800;
 
+		EventLog eventLog;
 		std::vector<EventLogEntry> eventLogEntries = eventLog.ReadEvents();
 
+		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
+		{
+			// Whitelist all events that are older than this week
+			if (eventLogEntry->timeGenerated < oneWeekAgo) continue;
 
+			// Whitelist everything but "Critical" and "Error" messages ("Critical") doesn't exist with this API
+			if (eventLogEntry->eventType != EVENTLOG_ERROR_TYPE) continue;
+
+			// Whitelist EventIDs 1000, 8023, 10010
+			DWORD eventIdCode = eventLogEntry->GetEventIdCode();
+			if (eventIdCode == 1000 || eventIdCode == 8023 || eventIdCode == 10010) continue;
+
+			eventLogEntry->OutputToLog(logOutput);
+		}
 	}
 
 }

@@ -35,4 +35,18 @@ namespace Instalog {
 	/// @return	Seconds since 1970
 	DWORD SecondsSince1970(SYSTEMTIME const& time);
 
+	/// @brief	Creates a FILETIME struct from seconds since 1970.
+	///
+	/// @param	seconds	The seconds since 1970.
+	///
+	/// @return	The time as a FILETIME struct
+	FILETIME FiletimeFromSecondsSince1970(DWORD seconds);
+
+	/// @brief	Creates a SYSTEMTIME struct from seconds since 1970.
+	///
+	/// @param	seconds	The seconds since 1970.
+	///
+	/// @return	The time as a SYSTEMTIME struct
+	SYSTEMTIME SystemtimeFromSecondsSince1970(DWORD seconds);
+
 }

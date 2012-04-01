@@ -118,8 +118,10 @@ TEST_F(EventViewerTest, NameIsCorrect)
 	ASSERT_EQ(L"Event Viewer", ev.GetName());
 }
 
-TEST_F(EventViewerTest, DISABLED_ActuallyGotOutput)
+#include <iostream>
+TEST_F(EventViewerTest, ActuallyGotOutput)
 {
 	Go();
+	std::wcout << ss.str();
 	ASSERT_FALSE(ss.str().empty());
 }

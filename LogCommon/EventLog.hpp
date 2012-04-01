@@ -15,14 +15,13 @@ namespace Instalog { namespace SystemFacades {
 	struct EventLogEntry
 	{
 		DWORD timeGenerated;
-		DWORD timeWritten;
 		DWORD eventId;
 		WORD eventType;
 		WORD eventCategory;
 		std::wstring sourceName;
 		std::wstring computerName;
 		std::vector<std::wstring> strings;
-		std::wstring dataString;
+		std::wstring dataString; 
 
 		EventLogEntry(PEVENTLOGRECORD pRecord);
 
@@ -30,6 +29,21 @@ namespace Instalog { namespace SystemFacades {
 		///
 		/// @param [in,out]	e	The EventLogEntry &amp;&amp; to process.
 		EventLogEntry(EventLogEntry && e);
+
+		/// @brief	Gets the event identifier code (strips out severity and other details)
+		///
+		/// @return	The event identifier code.
+		DWORD GetEventIdCode();
+
+		/// @brief	Output to log stream
+		///
+		/// @param [out]	logOutput	The log stream to output to.
+		void OutputToLog(std::wostream& logOutput);
+	private:
+		/// @brief	Gets the human-readable event description.
+		///
+		/// @return	The description.
+		std::wstring EventLogEntry::GetDescription();
 	};
 
 	/// @brief	Wrapper around Win32 event log

@@ -5,15 +5,17 @@
 #include "pch.hpp"
 #include "EventLog.hpp"
 #include "Win32Exception.hpp"
+#include "Win32Glue.hpp"
+#include "StockOutputFormats.hpp"
 #include "Registry.hpp"
 #include "Path.hpp"
 #include "Library.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
-	EventLogEntry::EventLogEntry( PEVENTLOGRECORD pRecord ) : timeGenerated(pRecord->TimeGenerated)
-		, timeWritten(pRecord->TimeWritten)
-		, eventId(pRecord->EventID/* & 0x0000FFFF*/)
+	EventLogEntry::EventLogEntry( PEVENTLOGRECORD pRecord ) 
+		: timeGenerated(pRecord->TimeGenerated)
+		, eventId(pRecord->EventID)
 		, eventType(pRecord->EventType)
 		, eventCategory(eventCategory)
 		, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
@@ -26,22 +28,10 @@ namespace Instalog { namespace SystemFacades {
 		{
 			strings.push_back(std::wstring(stringPtr));
 		}
-
-// 		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
-// 		if (eventKey.Invalid())
-// 		{
-// 			Win32Exception::ThrowFromNtError(::GetLastError());
-// 		}
-// 
-// 		RegistryValue eventMessageFileValue = eventKey.GetValue(L"EventMessageFile");
-// 		std::wstring eventMessageFilePath = eventMessageFileValue.GetStringStrict();
-// 		Path::ResolveFromCommandLine(eventMessageFilePath);
-// 
-// 		RuntimeDynamicLinker eventMessageFile(eventMessageFilePath);
 	}
 
-	EventLogEntry::EventLogEntry( EventLogEntry && e ) : timeGenerated(e.timeGenerated)
-		, timeWritten(e.timeWritten)
+	EventLogEntry::EventLogEntry( EventLogEntry && e ) 
+		: timeGenerated(e.timeGenerated)
 		, eventId(e.eventId)
 		, eventType(e.eventType)
 		, eventCategory(eventCategory)
@@ -51,6 +41,64 @@ namespace Instalog { namespace SystemFacades {
 		, dataString(std::move(e.dataString))
 	{
 
+	}
+
+	DWORD EventLogEntry::GetEventIdCode()
+	{
+		return eventId & 0x0000FFFF;
+	}
+
+	std::wstring EventLogEntry::GetDescription() 
+	{
+		if (sourceName == L"EventLog")
+		{
+			return L"SKIPPED\r\n"; // TODO, for some reason the dates in eventlog break everything
+		}
+
+		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
+		if (eventKey.Invalid())
+		{
+			Win32Exception::ThrowFromNtError(::GetLastError());
+		}
+
+		try
+		{
+			RegistryValue eventMessageFileValue = eventKey.GetValue(L"EventMessageFile");
+			std::wstring eventMessageFilePath = eventMessageFileValue.GetStringStrict();
+			Path::ResolveFromCommandLine(eventMessageFilePath);
+
+			FormattedMessageLoader eventMessageFile(eventMessageFilePath);
+			return eventMessageFile.GetFormattedMessage(eventId, strings);
+		}
+		catch (ErrorFileNotFoundException const&)
+		{
+			// We don't know what library to use so just return the short data string
+			return dataString;
+		}
+	}
+
+	void EventLogEntry::OutputToLog( std::wostream& logOutput )
+	{
+		// Print the Date
+		FILETIME filetime = FiletimeFromSecondsSince1970(timeGenerated);
+		WriteDefaultDateFormat(logOutput, FiletimeToInteger(filetime));
+
+		// Print the Type
+		switch (eventType)
+		{
+		case EVENTLOG_ERROR_TYPE: logOutput << L", Error: "; break;
+		case EVENTLOG_WARNING_TYPE: logOutput << L", Warning: "; break;
+		case EVENTLOG_INFORMATION_TYPE: logOutput << L", Information: "; break;
+		default: logOutput << L", Unknown: "; break;
+		}
+
+		// Print the Source
+		logOutput << sourceName << L" [";
+
+		// Print the EventID
+		logOutput << GetEventIdCode() << L"] ";
+
+		logOutput << GetDescription();
 	}
 
 	EventLog::EventLog( std::wstring sourceName /*= L"System"*/ )
