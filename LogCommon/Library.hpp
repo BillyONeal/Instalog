@@ -66,6 +66,12 @@ namespace Instalog { namespace SystemFacades {
 		/// @param	filename	Filename of the library containing the messages.
 		FormattedMessageLoader(std::wstring const& filename);
 
+		/// @brief	Gets a formatted message with the given id and arguments to replace
+		///
+		/// @param	messageId	Identifier for the message.
+		/// @param	arguments	(optional) the arguments.
+		///
+		/// @return	The formatted message.
 		std::wstring GetFormattedMessage(DWORD const& messageId, std::vector<std::wstring> const& arguments = std::vector<std::wstring>() );
 	};
 }}

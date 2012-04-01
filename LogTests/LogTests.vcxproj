@@ -188,6 +188,7 @@
     <ClCompile Include="StringUtilitiesTest.cpp" />
     <ClCompile Include="WhitelistTest.cpp" />
     <ClCompile Include="Win32ExceptionTest.cpp" />
+    <ClCompile Include="Win32GlueTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h" />

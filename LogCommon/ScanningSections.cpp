@@ -13,6 +13,7 @@
 #include "ScopedPrivilege.hpp"
 #include "Win32Exception.hpp"
 #include "StockOutputFormats.hpp"
+#include "EventLog.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -105,6 +106,18 @@ namespace Instalog
 			}
 			logOutput << L'\n';
 		}
+	}
+
+	void EventViewer::Execute( std::wostream& /*logOutput*/, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		using Instalog::SystemFacades::EventLog;
+		using Instalog::SystemFacades::EventLogEntry;
+
+		EventLog eventLog;
+
+		std::vector<EventLogEntry> eventLogEntries = eventLog.ReadEvents();
+
+
 	}
 
 }

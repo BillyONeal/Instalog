@@ -7,7 +7,7 @@
 #include "LogCommon/EventLog.hpp"
 
 using Instalog::SystemFacades::EventLog;
-using Instalog::SystemFacades::EventLogEntry;;
+using Instalog::SystemFacades::EventLogEntry;
 
 TEST(EventLog, ReceivedEventLogEntries)
 {

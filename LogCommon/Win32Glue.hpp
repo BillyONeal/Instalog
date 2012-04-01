@@ -4,6 +4,7 @@
 
 #pragma once
 #include <windows.h>
+#include "Win32Exception.hpp"
 
 namespace Instalog {
 
@@ -19,5 +20,19 @@ namespace Instalog {
 		result |= ft.dwLowDateTime;
 		return result;
 	}
+
+	/// @brief	Seconds since 1970 from FILETIME struct
+	///
+	/// @param	time	The time as a FILETIME
+	///
+	/// @return	Seconds since 1970
+	DWORD SecondsSince1970(FILETIME const& time);
+
+	/// @brief	Seconds since 1970 from SYSTEMTIME struct
+	///
+	/// @param	time	The time as a SYSTEMTIME
+	///
+	/// @return	Seconds since 1970
+	DWORD SecondsSince1970(SYSTEMTIME const& time);
 
 }

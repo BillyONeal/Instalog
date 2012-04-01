@@ -42,4 +42,22 @@ namespace Instalog
 		}
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
 	};
+
+	/// @brief	Event viewer scanning section
+	struct EventViewer : public ISectionDefinition
+	{
+		virtual std::wstring GetScriptCommand() const
+		{
+			return L"eventviewer";
+		}
+		virtual std::wstring GetName() const
+		{
+			return L"Event Viewer";
+		}
+		virtual LogSectionPriorities GetPriority() const
+		{
+			return SCANNING;
+		}
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+	};
 }

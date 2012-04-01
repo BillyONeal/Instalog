@@ -95,3 +95,31 @@ TEST_F(ServicesDriversTest, RpcSsSvchost)
 	Go();
 	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll")) << L"This will fail if RpcSs is not configured to auto-start or is not running";
 }
+
+struct EventViewerTest : public testing::Test
+{
+	EventViewer ev;
+	std::wostringstream ss;
+	ScriptSection section;
+	std::vector<std::wstring> options;
+	void Go()
+	{
+		ev.Execute(ss, section, options);
+	}
+};
+
+TEST_F(EventViewerTest, ScriptCommandIsCorrect)
+{
+	ASSERT_EQ(L"eventviewer", ev.GetScriptCommand());
+}
+
+TEST_F(EventViewerTest, NameIsCorrect)
+{
+	ASSERT_EQ(L"Event Viewer", ev.GetName());
+}
+
+TEST_F(EventViewerTest, DISABLED_ActuallyGotOutput)
+{
+	Go();
+	ASSERT_FALSE(ss.str().empty());
+}

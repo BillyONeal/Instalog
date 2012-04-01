@@ -166,6 +166,7 @@
     <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="Whitelist.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
+    <ClCompile Include="Win32Glue.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DdkStructures.h" />
