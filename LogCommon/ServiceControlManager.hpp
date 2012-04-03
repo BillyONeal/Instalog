@@ -21,6 +21,7 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring filepath;
 		std::wstring svchostGroup;
 		std::wstring svchostDll;
+		bool svchostDamaged;
 	public:
 		/// Constructor.  Opens a handle to the Service and populates the various member variables
 		///
@@ -50,42 +51,44 @@ namespace Instalog { namespace SystemFacades {
 		/// Gets the service name.
 		///
 		/// @return The service name.
-		std::wstring const& getServiceName() const { return serviceName; }
+		std::wstring const& GetServiceName() const { return serviceName; }
 
 		/// Gets the display name.
 		///
 		/// @return The display name.
-		std::wstring const& getDisplayName() const { return displayName; }
+		std::wstring const& GetDisplayName() const { return displayName; }
 
 		/// Gets the state.
 		///
 		/// @return The state.
-		std::wstring const& getState() const { return state; }
+		std::wstring const& GetState() const { return state; }
 
 		/// Gets the start status.
 		///
 		/// @return The start status.
-		DWORD const& getStart() const { return start; }
+		DWORD const& GetStart() const { return start; }
+
+		bool IsDamagedSvchost() const { return svchostDamaged; }
 
 		/// Gets the filepath.
 		///
 		/// @return The filepath.
-		std::wstring const& getFilepath() const { return filepath; }
+		std::wstring const& GetFilepath() const { return filepath; }
 
 		/// Gets the svchost group.
 		///
 		/// @return The svchost group.
-		std::wstring const& getSvchostGroup() const { return svchostGroup; }
+		std::wstring const& GetSvchostGroup() const { return svchostGroup; }
 
 		/// Gets the svchost dll path.
 		///
 		/// @return The svchost dll path.
-		std::wstring const& getSvchostDll() const { return svchostDll; }
+		std::wstring const& GetSvchostDll() const { return svchostDll; }
 
 		/// Query if this object is svchost service.
 		///
 		/// @return true if svchost service, false if not.
-		bool isSvchostService() const { return !svchostGroup.empty() || !svchostDll.empty(); }
+		bool IsSvchostService() const { return !svchostGroup.empty() || !svchostDll.empty(); }
 	};
 
 	/// @brief	Wrapper around the Windows Service Control Manager

@@ -64,6 +64,27 @@ namespace Instalog
 		}
 	}
 
+	static bool IsOnServicesWhitelist(Instalog::SystemFacades::Service const& svc)
+	{
+		static Whitelist wht(IDR_SERVICESDRIVERSWHITELIST);
+		if (svc.IsDamagedSvchost())
+		{
+			return false;
+		}
+		std::wstring whitelistcheck;
+		whitelistcheck.reserve(3 + svc.GetSvchostGroup().size() +
+			svc.GetFilepath().size() +
+			svc.GetServiceName().size() +
+			svc.GetDisplayName().size());
+		whitelistcheck.append(svc.GetSvchostGroup());
+		whitelistcheck.push_back(L';');
+		whitelistcheck.append(svc.GetFilepath());
+		whitelistcheck.push_back(L';');
+		whitelistcheck.append(svc.GetServiceName());
+		whitelistcheck.push_back(L';');
+		whitelistcheck.append(svc.GetDisplayName());
+		return wht.IsOnWhitelist(whitelistcheck);
+	}
 
 	void ServicesDrivers::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
@@ -73,37 +94,27 @@ namespace Instalog
 		ServiceControlManager scm;
 		std::vector<Service> services = scm.GetServices();
 
-		Whitelist whitelist(IDR_SERVICESDRIVERSWHITELIST);
-
 		for (auto service = services.begin(); service != services.end(); ++service)
 		{
-			std::wstring whitelistcheck;
-			if (service->isSvchostService())
-			{
-				whitelistcheck.append(service->getSvchostGroup());
-			}
-			else
-			{
-				whitelistcheck.append(service->getFilepath());			
-			}
-			whitelistcheck.append(L";");
-			whitelistcheck.append(service->getServiceName());
-			whitelistcheck.append(L";");
-			whitelistcheck.append(service->getDisplayName());
-			if (whitelist.IsOnWhitelist(whitelistcheck))
+			if (IsOnServicesWhitelist(*service))
 			{
 				continue;
 			}
 
-			logOutput << service->getState() << service->getStart() << L' ' << service->getServiceName() << L';' << service->getDisplayName() << L';';
-			if (service->isSvchostService())
+			logOutput << service->GetState() << service->GetStart();
+			if (service->IsDamagedSvchost())
 			{
-				logOutput << service->getSvchostGroup() << L"->";
-				WriteDefaultFileOutput(logOutput, service->getSvchostDll());
+				logOutput << L'D';
+			}
+			logOutput << L' ' << service->GetServiceName() << L';' << service->GetDisplayName() << L';';
+			if (service->IsSvchostService())
+			{
+				logOutput << service->GetSvchostGroup() << L"->";
+				WriteDefaultFileOutput(logOutput, service->GetSvchostDll());
 			}
 			else
 			{
-				WriteDefaultFileOutput(logOutput, service->getFilepath());
+				WriteDefaultFileOutput(logOutput, service->GetFilepath());
 			}
 			logOutput << L'\n';
 		}

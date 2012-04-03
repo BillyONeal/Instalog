@@ -16,6 +16,7 @@ namespace Instalog { namespace SystemFacades {
 	Service::Service( std::wstring const& serviceName, std::wstring const& displayName, SERVICE_STATUS const& status, SC_HANDLE scmHandle ) 
 		: serviceName(serviceName)
 		, displayName(displayName)
+		, svchostDamaged(false)
 	{
 		// Set the state
 		switch (status.dwCurrentState)
@@ -35,7 +36,8 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		std::aligned_storage<8192 /* (8K bytes maximum size) */, std::alignment_of<QUERY_SERVICE_CONFIGW>::value>::type queryServiceConfigBuffer;
+		std::aligned_storage<8192 /* (8K bytes maximum size) */, std::alignment_of<QUERY_SERVICE_CONFIGW>::value>::type
+			queryServiceConfigBuffer;
 		DWORD bytesNeeded = 0; // not needed
 		if (QueryServiceConfig(serviceHandle, reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(&queryServiceConfigBuffer), 8192, &bytesNeeded) == false)
 		{
@@ -89,10 +91,9 @@ namespace Instalog { namespace SystemFacades {
 			RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost", KEY_QUERY_VALUE);
 			RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
 			std::vector<std::wstring> svchostGroupRegistrationStrings = svchostGroupRegistration.GetMultiStringArray();
-			if (std::find(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(), this->serviceName) == svchostGroupRegistrationStrings.end())
-			{
-				this->state.append(L"D");
-			}
+			auto groupRef = std::find_if(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(),
+				[&] (std::wstring const& a) -> bool { return boost::iequals(a, serviceName, std::locale()); } );
+			svchostDamaged = groupRef == svchostGroupRegistrationStrings.end();
 		}
 	}
 
@@ -105,6 +106,7 @@ namespace Instalog { namespace SystemFacades {
 		, filepath(std::move(s.filepath))
 		, svchostGroup(std::move(s.svchostGroup))
 		, svchostDll(std::move(s.svchostDll))
+		, svchostDamaged(s.svchostDamaged)
 	{
 		s.serviceHandle = NULL;
 	}
@@ -123,6 +125,7 @@ namespace Instalog { namespace SystemFacades {
 		filepath = std::move(s.filepath);
 		svchostGroup = std::move(s.svchostGroup);
 		svchostDll = std::move(s.svchostDll);
+		svchostDamaged = s.svchostDamaged;
 		return *this;
 	}
 

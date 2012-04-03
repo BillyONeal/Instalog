@@ -87,7 +87,8 @@ TEST_F(ServicesDriversTest, ActuallyGotOutput)
 TEST_F(ServicesDriversTest, TcpipWhitelisted)
 {
 	Go();
-	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys")) << L"This will fail if Tcpip is not configured to auto-start or is not running";
+	ASSERT_FALSE(boost::algorithm::contains(ss.str(),
+		L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
 }
 
 TEST_F(ServicesDriversTest, RpcSsSvchost) 

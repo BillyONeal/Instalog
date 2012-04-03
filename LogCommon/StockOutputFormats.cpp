@@ -543,7 +543,7 @@ namespace Instalog {
 		WriteOsVersion(log);
 		log << L' ';
 		WriteMemoryInformation(log);
-		log << L"\n\n";
+		log << L"\n";
 	}
 
 	void WriteScriptFooter( std::wostream &log )

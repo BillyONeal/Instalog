@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #include <iostream>
+#include <fstream>
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
@@ -11,6 +12,7 @@
 #include "LogCommon/UserInterface.hpp"
 #include "LogCommon/Scripting.hpp"
 #include "LogCommon/ScanningSections.hpp"
+#include "LogCommon/PseudoHjt.hpp"
 
 /// @brief	Console "user interface"
 struct ConsoleInterface : public Instalog::IUserInterface
@@ -41,15 +43,17 @@ int main()
 			std::cerr << "This program is not designed to be run under WOW64 mode. Please download the x64 copy of Instalog instead.";
 			return -1;
 		}
+		std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
 		_setmode(_fileno(stdout), _O_WTEXT);
 		ScriptDispatcher sd;
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
+		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
 		wchar_t const defaultScript[] =
-			L":RunningProcesses\n:ServicesDrivers";
+			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n";
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
-		s.Run(std::wcout, ui.get());
+		s.Run(outFile, ui.get());
 	}
 	catch (Instalog::SystemFacades::Win32Exception const& ex)
 	{

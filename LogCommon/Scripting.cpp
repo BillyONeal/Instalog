@@ -125,7 +125,7 @@ namespace Instalog
 			std::wstring message(L"Executing " + header);
 			ui->LogMessage(message);
 			Instalog::Header(header);
-			logOutput << header << L"\n";
+			logOutput << L"\n" << header << L"\n\n";
 			begin->first.targetSection->Execute(logOutput, begin->first, begin->second);
 		}
 		logOutput << std::endl;
