@@ -7,6 +7,7 @@
 #include "Win32Exception.hpp"
 #include "Win32Glue.hpp"
 #include "StockOutputFormats.hpp"
+#include "StringUtilities.hpp"
 #include "Registry.hpp"
 #include "Path.hpp"
 #include "Library.hpp"
@@ -50,11 +51,6 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring EventLogEntry::GetDescription() 
 	{
-		if (sourceName == L"EventLog")
-		{
-			return L"SKIPPED\r\n"; // TODO, for some reason the dates in eventlog break everything
-		}
-
 		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
 		if (eventKey.Invalid())
 		{
@@ -98,7 +94,16 @@ namespace Instalog { namespace SystemFacades {
 		// Print the EventID
 		logOutput << GetEventIdCode() << L"] ";
 
-		logOutput << GetDescription();
+		std::wstring description = GetDescription();
+		GeneralEscape(description);
+		if (boost::algorithm::ends_with(description, "#r#n"))
+		{
+			logOutput << description.substr(0, description.size() - 4) << std::endl;
+		}
+		else
+		{
+			logOutput << description << std::endl;		
+		}
 	}
 
 	EventLog::EventLog( std::wstring sourceName /*= L"System"*/ )

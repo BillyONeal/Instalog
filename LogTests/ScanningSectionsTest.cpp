@@ -123,6 +123,5 @@ TEST_F(EventViewerTest, NameIsCorrect)
 TEST_F(EventViewerTest, ActuallyGotOutput)
 {
 	Go();
-	std::wcout << ss.str();
 	ASSERT_FALSE(ss.str().empty());
 }
