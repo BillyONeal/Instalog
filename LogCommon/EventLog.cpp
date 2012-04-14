@@ -14,7 +14,7 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	EventLogEntry::EventLogEntry( PEVENTLOGRECORD pRecord ) 
+	OldEventLogEntry::OldEventLogEntry( PEVENTLOGRECORD pRecord ) 
 		: timeGenerated(pRecord->TimeGenerated)
 		, eventId(pRecord->EventID)
 		, eventType(pRecord->EventType)
@@ -31,7 +31,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	EventLogEntry::EventLogEntry( EventLogEntry && e ) 
+	OldEventLogEntry::OldEventLogEntry( OldEventLogEntry && e ) 
 		: timeGenerated(e.timeGenerated)
 		, eventId(e.eventId)
 		, eventType(e.eventType)
@@ -44,12 +44,12 @@ namespace Instalog { namespace SystemFacades {
 
 	}
 
-	DWORD EventLogEntry::GetEventIdCode()
+	DWORD OldEventLogEntry::GetEventIdCode()
 	{
 		return eventId & 0x0000FFFF;
 	}
 
-	std::wstring EventLogEntry::GetDescription() 
+	std::wstring OldEventLogEntry::GetDescription() 
 	{
 		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
 		if (eventKey.Invalid())
@@ -73,7 +73,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	void EventLogEntry::OutputToLog( std::wostream& logOutput )
+	void OldEventLogEntry::OutputToLog( std::wostream& logOutput )
 	{
 		// Print the Date
 		FILETIME filetime = FiletimeFromSecondsSince1970(timeGenerated);
@@ -106,7 +106,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	EventLog::EventLog( std::wstring sourceName /*= L"System"*/ )
+	OldEventLog::OldEventLog( std::wstring sourceName /*= L"System"*/ )
 		: handle(::OpenEventLogW(NULL, sourceName.c_str()))
 	{
 		if (handle == NULL)
@@ -115,14 +115,14 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	EventLog::~EventLog()
+	OldEventLog::~OldEventLog()
 	{
 		::CloseEventLog(handle);
 	}
 
-	std::vector<EventLogEntry> EventLog::ReadEvents()
+	std::vector<OldEventLogEntry> OldEventLog::ReadEvents()
 	{
-		std::vector<EventLogEntry> eventLogEntries;
+		std::vector<OldEventLogEntry> eventLogEntries;
 		eventLogEntries.reserve(16 * 1024 /* approximate based on dev machine */);
 
 		DWORD lastError = ERROR_SUCCESS;
@@ -159,13 +159,74 @@ namespace Instalog { namespace SystemFacades {
 			{
 				for (PEVENTLOGRECORD pRecord = reinterpret_cast<PEVENTLOGRECORD>(buffer.data()); reinterpret_cast<char*>(pRecord) < buffer.data() + bytesRead; pRecord = reinterpret_cast<PEVENTLOGRECORD>(reinterpret_cast<char*>(pRecord) + pRecord->Length))
 				{
-					eventLogEntries.emplace_back(EventLogEntry(pRecord));
+					eventLogEntries.emplace_back(OldEventLogEntry(pRecord));
 				}
 			}
 		}
 
 		return eventLogEntries;
+	}	
+
+	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"%SYSTEMROOT%\\System32\\winevt\\Logs\\System.evtx"*/, wchar_t* query /*= L"Event/System"*/ )
+		: wevtapi(L"wevtapi.dll")
+		, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
+		, EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
+		, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
+		, handle(EvtQuery(NULL, logPath, query, 0x2 | 0x200 /*EvtQueryFilePath | EvtQueryReverseDirection*/))
+	{
+		if (handle == NULL)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
 	}
 
+	XmlEventLog::~XmlEventLog()
+	{
+		EvtClose(handle);
+	}
+
+	std::vector<XmlEventLogEntry> XmlEventLog::ReadEvents()
+	{
+		DWORD status = ERROR_SUCCESS;
+		DWORD dwBufferSize = 0;
+		DWORD dwBufferUsed = 0;
+		DWORD dwPropertyCount = 0;
+		LPWSTR pRenderedContent = NULL;
+
+		// The EvtRenderEventXml flag tells EvtRender to render the event as an XML string.
+		if (!EvtRender(NULL, handle, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount))
+		{
+			if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError()))
+			{
+				dwBufferSize = dwBufferUsed;
+				pRenderedContent = (LPWSTR)malloc(dwBufferSize);
+				if (pRenderedContent)
+				{
+					EvtRender(NULL, handle, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount);
+				}
+				else
+				{
+					wprintf(L"malloc failed\n");
+					status = ERROR_OUTOFMEMORY;
+					goto cleanup;
+				}
+			}
+
+			if (ERROR_SUCCESS != (status = GetLastError()))
+			{
+				wprintf(L"EvtRender failed with %d\n", GetLastError());
+				goto cleanup;
+			}
+		}
+
+		wprintf(L"\n\n%s", pRenderedContent);
+
+cleanup:
+
+		if (pRenderedContent)
+			free(pRenderedContent);
+
+		return std::vector<XmlEventLogEntry>();
+	}
 
 }}

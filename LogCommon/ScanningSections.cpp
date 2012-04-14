@@ -122,15 +122,15 @@ namespace Instalog
 
 	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
-		using Instalog::SystemFacades::EventLog;
-		using Instalog::SystemFacades::EventLogEntry;
+		using Instalog::SystemFacades::OldEventLog;
+		using Instalog::SystemFacades::OldEventLogEntry;
 
 		SYSTEMTIME currentTime;
 		GetSystemTime(&currentTime);
 		DWORD oneWeekAgo = SecondsSince1970(currentTime) - 604800;
 
-		EventLog eventLog;
-		std::vector<EventLogEntry> eventLogEntries = eventLog.ReadEvents();
+		OldEventLog eventLog;
+		std::vector<OldEventLogEntry> eventLogEntries = eventLog.ReadEvents();
 
 		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
 		{

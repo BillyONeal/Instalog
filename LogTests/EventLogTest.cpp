@@ -6,14 +6,21 @@
 #include "gtest/gtest.h"
 #include "LogCommon/EventLog.hpp"
 
-using Instalog::SystemFacades::EventLog;
-using Instalog::SystemFacades::EventLogEntry;
+using Instalog::SystemFacades::OldEventLog;
+using Instalog::SystemFacades::OldEventLogEntry;
+using Instalog::SystemFacades::XmlEventLog;
 
-TEST(EventLog, ReceivedEventLogEntries)
+TEST(OldEventLog, ReceivedEventLogEntries)
 {
-	EventLog eventLog;
+	OldEventLog eventLog;
 
-	std::vector<EventLogEntry> eventLogEntries = eventLog.ReadEvents();
+	std::vector<OldEventLogEntry> eventLogEntries = eventLog.ReadEvents();
 
 	ASSERT_TRUE(eventLogEntries.size() > 0);
+}
+
+TEST(XmlEventLog, ReceivedEventLogEntries)
+{
+	XmlEventLog eventLog;
+	eventLog.ReadEvents();
 }
