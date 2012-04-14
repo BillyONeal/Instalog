@@ -167,12 +167,13 @@ namespace Instalog { namespace SystemFacades {
 		return eventLogEntries;
 	}	
 
-	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"%SYSTEMROOT%\\System32\\winevt\\Logs\\System.evtx"*/, wchar_t* query /*= L"Event/System"*/ )
+	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"System"*/, wchar_t* query /*= L"Event/System"*/ )
 		: wevtapi(L"wevtapi.dll")
 		, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
 		, EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
+		, EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
 		, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
-		, handle(EvtQuery(NULL, logPath, query, 0x2 | 0x200 /*EvtQueryFilePath | EvtQueryReverseDirection*/))
+		, handle(EvtQuery(NULL, logPath, query, 0x1 | 0x200 /*EvtQueryChannelPath | EvtQueryReverseDirection*/))
 	{
 		if (handle == NULL)
 		{
@@ -185,7 +186,7 @@ namespace Instalog { namespace SystemFacades {
 		EvtClose(handle);
 	}
 
-	std::vector<XmlEventLogEntry> XmlEventLog::ReadEvents()
+	DWORD XmlEventLog::PrintEvent(HANDLE hEvent)
 	{
 		DWORD status = ERROR_SUCCESS;
 		DWORD dwBufferSize = 0;
@@ -194,7 +195,7 @@ namespace Instalog { namespace SystemFacades {
 		LPWSTR pRenderedContent = NULL;
 
 		// The EvtRenderEventXml flag tells EvtRender to render the event as an XML string.
-		if (!EvtRender(NULL, handle, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount))
+		if (!EvtRender(NULL, hEvent, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount))
 		{
 			if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError()))
 			{
@@ -202,7 +203,7 @@ namespace Instalog { namespace SystemFacades {
 				pRenderedContent = (LPWSTR)malloc(dwBufferSize);
 				if (pRenderedContent)
 				{
-					EvtRender(NULL, handle, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount);
+					EvtRender(NULL, hEvent, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount);
 				}
 				else
 				{
@@ -225,6 +226,54 @@ cleanup:
 
 		if (pRenderedContent)
 			free(pRenderedContent);
+
+		return status;
+	}
+
+	std::vector<XmlEventLogEntry> XmlEventLog::ReadEvents()
+	{
+		DWORD status = ERROR_SUCCESS;
+		HANDLE hEvents[10];
+		DWORD dwReturned = 0;
+
+		int x = 1;
+
+		while (x > 0)
+		{
+			// Get a block of events from the result set.
+			if (!EvtNext(handle, 10, hEvents, INFINITE, 0, &dwReturned))
+			{
+				if (ERROR_NO_MORE_ITEMS != (status = GetLastError()))
+				{
+					wprintf(L"EvtNext failed with %lu\n", status);
+				}
+
+				goto cleanup;
+			}
+
+			// For each event, call the PrintEvent function which renders the
+			// event for display. PrintEvent is shown in RenderingEvents.
+			for (DWORD i = 0; i < dwReturned; i++)
+			{
+				if (ERROR_SUCCESS == (status = PrintEvent(hEvents[i])))
+				{
+					EvtClose(hEvents[i]);
+					hEvents[i] = NULL;
+				}
+				else
+				{
+					goto cleanup;
+				}
+			}
+		}
+
+cleanup:
+
+		for (DWORD i = 0; i < dwReturned; i++)
+		{
+			if (NULL != hEvents[i])
+				EvtClose(hEvents[i]);
+		}
 
 		return std::vector<XmlEventLogEntry>();
 	}

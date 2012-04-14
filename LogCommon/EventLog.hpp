@@ -79,6 +79,9 @@ namespace Instalog { namespace SystemFacades {
 		typedef BOOL (WINAPI *EvtClose_t)(HANDLE);
 		EvtClose_t EvtClose;
 
+		typedef BOOL (WINAPI *EvtNext_t)(HANDLE, DWORD, HANDLE*, DWORD, DWORD, PDWORD);
+		EvtNext_t EvtNext;
+
 		typedef BOOL (WINAPI *EvtRender_t)(HANDLE, HANDLE, DWORD, DWORD, PVOID, PDWORD, PDWORD);
 		EvtRender_t EvtRender;
 
@@ -90,11 +93,12 @@ namespace Instalog { namespace SystemFacades {
 		/// @param	query  	(optional) the query.
 		/// 
 		/// @throws FileNotFoundException on incompatible machines
-		XmlEventLog(wchar_t* logPath = L"C:\\Windows\\System32\\winevt\\Logs\\System.evtx", wchar_t* query = L"Event/System");
+		XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"*");
 
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();
 
+		DWORD PrintEvent(HANDLE hEvent);
 		std::vector<XmlEventLogEntry> ReadEvents();
 	};
 
