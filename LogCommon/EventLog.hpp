@@ -82,8 +82,17 @@ namespace Instalog { namespace SystemFacades {
 		typedef BOOL (WINAPI *EvtNext_t)(HANDLE, DWORD, HANDLE*, DWORD, DWORD, PDWORD);
 		EvtNext_t EvtNext;
 
+		typedef HANDLE (WINAPI *EvtCreateRenderContext_t)(DWORD, LPCWSTR*, DWORD);
+		EvtCreateRenderContext_t EvtCreateRenderContext;
+
 		typedef BOOL (WINAPI *EvtRender_t)(HANDLE, HANDLE, DWORD, DWORD, PVOID, PDWORD, PDWORD);
 		EvtRender_t EvtRender;
+
+		typedef HANDLE (WINAPI *EvtOpenPublisherEnum_t)(HANDLE, DWORD);
+		EvtOpenPublisherEnum_t EvtOpenPublisherEnum;
+
+		typedef BOOL (WINAPI *EvtNextPublisherId_t)(HANDLE, DWORD, LPWSTR, PDWORD);
+		EvtNextPublisherId_t EvtNextPublisherId;
 
 		HANDLE handle;
 	public:
@@ -93,7 +102,7 @@ namespace Instalog { namespace SystemFacades {
 		/// @param	query  	(optional) the query.
 		/// 
 		/// @throws FileNotFoundException on incompatible machines
-		XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"*");
+		XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"Event/System[Level=1]");
 
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();

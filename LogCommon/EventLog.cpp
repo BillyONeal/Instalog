@@ -172,13 +172,83 @@ namespace Instalog { namespace SystemFacades {
 		, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
 		, EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
 		, EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
+		, EvtCreateRenderContext(wevtapi.GetProcAddress<EvtCreateRenderContext_t>("EvtCreateRenderContext"))
 		, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
+		, EvtOpenPublisherEnum(wevtapi.GetProcAddress<EvtOpenPublisherEnum_t>("EvtOpenPublisherEnum"))
+		, EvtNextPublisherId(wevtapi.GetProcAddress<EvtNextPublisherId_t>("EvtNextPublisherId"))
 		, handle(EvtQuery(NULL, logPath, query, 0x1 | 0x200 /*EvtQueryChannelPath | EvtQueryReverseDirection*/))
 	{
 		if (handle == NULL)
 		{
 			Win32Exception::ThrowFromLastError();
 		}
+
+		HANDLE hProviders = NULL;
+		LPWSTR pwcsProviderName = NULL;
+		LPWSTR pTemp = NULL;
+		DWORD dwBufferSize = 0;
+		DWORD dwBufferUsed = 0;
+		DWORD status = ERROR_SUCCESS;
+
+		// Get a handle to the list of providers.
+		hProviders = EvtOpenPublisherEnum(NULL, 0);
+		if (NULL == hProviders)
+		{
+			wprintf(L"EvtOpenPublisherEnum failed with %lu\n", GetLastError());
+			goto cleanup;
+		}
+
+		wprintf(L"List of registered providers:\n\n");
+
+		// Enumerate the providers in the list.
+		int x = 1;
+		while (x > 0)
+		{
+			// Get a provider from the list. If the buffer is not big enough
+			// to contain the provider's name, reallocate the buffer to the required size.
+			if  (!EvtNextPublisherId(hProviders, dwBufferSize, pwcsProviderName, &dwBufferUsed))
+			{
+				status = GetLastError();
+				if (ERROR_NO_MORE_ITEMS == status)
+				{
+					break;
+				}
+				else if (ERROR_INSUFFICIENT_BUFFER == status)
+				{
+					dwBufferSize = dwBufferUsed;
+					pTemp = (LPWSTR)realloc(pwcsProviderName, dwBufferSize * sizeof(WCHAR));
+					if (pTemp)
+					{
+						pwcsProviderName = pTemp;
+						pTemp = NULL;
+						EvtNextPublisherId(hProviders, dwBufferSize, pwcsProviderName, &dwBufferUsed);
+					}
+					else
+					{
+						wprintf(L"realloc failed\n");
+						goto cleanup;
+					}
+				}
+
+				if (ERROR_SUCCESS != (status = GetLastError()))
+				{
+					wprintf(L"EvtNextPublisherId failed with %d\n", status);
+					goto cleanup;
+				}
+			}
+
+			wprintf(L"%s\n", pwcsProviderName);
+
+			RtlZeroMemory(pwcsProviderName, dwBufferUsed * sizeof(WCHAR));
+		}
+
+cleanup:
+
+		if (pwcsProviderName)
+			free(pwcsProviderName);
+
+		if (hProviders)
+			EvtClose(hProviders);
 	}
 
 	XmlEventLog::~XmlEventLog()
@@ -186,24 +256,150 @@ namespace Instalog { namespace SystemFacades {
 		EvtClose(handle);
 	}
 
+	typedef struct _EVT_VARIANT
+	{
+		union
+		{
+			BOOL        BooleanVal;
+			INT8        SByteVal;
+			INT16       Int16Val;
+			INT32       Int32Val;
+			INT64       Int64Val;
+			UINT8       ByteVal;
+			UINT16      UInt16Val;
+			UINT32      UInt32Val;
+			UINT64      UInt64Val;
+			float       SingleVal;
+			double      DoubleVal;
+			ULONGLONG   FileTimeVal;
+			SYSTEMTIME* SysTimeVal;
+			GUID*       GuidVal;
+			LPCWSTR     StringVal;
+			LPCSTR      AnsiStringVal;
+			PBYTE       BinaryVal;
+			PSID        SidVal;
+			size_t      SizeTVal;
+
+			// array fields
+			BOOL*       BooleanArr;
+			INT8*       SByteArr;
+			INT16*      Int16Arr;
+			INT32*      Int32Arr;
+			INT64*      Int64Arr;
+			UINT8*      ByteArr;
+			UINT16*     UInt16Arr;
+			UINT32*     UInt32Arr;
+			UINT64*     UInt64Arr;
+			float*      SingleArr;
+			double*     DoubleArr;
+			FILETIME*   FileTimeArr;
+			SYSTEMTIME* SysTimeArr;
+			GUID*       GuidArr;
+			LPWSTR*     StringArr;
+			LPSTR*      AnsiStringArr;
+			PSID*       SidArr;
+			size_t*     SizeTArr;
+
+			// internal fields
+			HANDLE  EvtHandleVal;
+			LPCWSTR     XmlVal;
+			LPCWSTR*    XmlValArr;
+		};
+
+		DWORD Count;   // number of elements (not length) in bytes.
+		DWORD Type;
+
+	} EVT_VARIANT, *PEVT_VARIANT;
+
+	typedef enum  {
+		EvtSystemProviderName        = 0,
+		EvtSystemProviderGuid,
+		EvtSystemEventID,
+		EvtSystemQualifiers,
+		EvtSystemLevel,
+		EvtSystemTask,
+		EvtSystemOpcode,
+		EvtSystemKeywords,
+		EvtSystemTimeCreated,
+		EvtSystemEventRecordId,
+		EvtSystemActivityID,
+		EvtSystemRelatedActivityID,
+		EvtSystemProcessID,
+		EvtSystemThreadID,
+		EvtSystemChannel,
+		EvtSystemComputer,
+		EvtSystemUserID,
+		EvtSystemVersion,
+		EvtSystemPropertyIdEND 
+	} EVT_SYSTEM_PROPERTY_ID;
+
+	typedef enum _EVT_VARIANT_TYPE {
+		EvtVarTypeNull         = 0,
+		EvtVarTypeString       = 1,
+		EvtVarTypeAnsiString   = 2,
+		EvtVarTypeSByte        = 3,
+		EvtVarTypeByte         = 4,
+		EvtVarTypeInt16        = 5,
+		EvtVarTypeUInt16       = 6,
+		EvtVarTypeInt32        = 7,
+		EvtVarTypeUInt32       = 8,
+		EvtVarTypeInt64        = 9,
+		EvtVarTypeUInt64       = 10,
+		EvtVarTypeSingle       = 11,
+		EvtVarTypeDouble       = 12,
+		EvtVarTypeBoolean      = 13,
+		EvtVarTypeBinary       = 14,
+		EvtVarTypeGuid         = 15,
+		EvtVarTypeSizeT        = 16,
+		EvtVarTypeFileTime     = 17,
+		EvtVarTypeSysTime      = 18,
+		EvtVarTypeSid          = 19,
+		EvtVarTypeHexInt32     = 20,
+		EvtVarTypeHexInt64     = 21,
+		EvtVarTypeEvtHandle    = 32,
+		EvtVarTypeEvtXml       = 35 
+	} EVT_VARIANT_TYPE;
+
+#include <Sddl.h>
 	DWORD XmlEventLog::PrintEvent(HANDLE hEvent)
 	{
 		DWORD status = ERROR_SUCCESS;
+		HANDLE hContext = NULL;
 		DWORD dwBufferSize = 0;
 		DWORD dwBufferUsed = 0;
 		DWORD dwPropertyCount = 0;
-		LPWSTR pRenderedContent = NULL;
+		PEVT_VARIANT pRenderedValues = NULL;
+		WCHAR wsGuid[50];
+		LPWSTR pwsSid = NULL;
+		ULONGLONG ullTimeStamp = 0;
+		ULONGLONG ullNanoseconds = 0;
+		SYSTEMTIME st;
+		FILETIME ft;
 
-		// The EvtRenderEventXml flag tells EvtRender to render the event as an XML string.
-		if (!EvtRender(NULL, hEvent, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount))
+		// Identify the components of the event that you want to render. In this case,
+		// render the system section of the event.
+		hContext = EvtCreateRenderContext(0, NULL, 1 /*EvtRenderContextSystem*/);
+		if (NULL == hContext)
+		{
+			wprintf(L"EvtCreateRenderContext failed with %lu\n", status = GetLastError());
+			goto cleanup;
+		}
+
+		// When you render the user data or system section of the event, you must specify
+		// the EvtRenderEventValues flag. The function returns an array of variant values 
+		// for each element in the user data or system section of the event. For user data
+		// or event data, the values are returned in the same order as the elements are 
+		// defined in the event. For system data, the values are returned in the order defined
+		// in the EVT_SYSTEM_PROPERTY_ID enumeration.
+		if (!EvtRender(hContext, hEvent, 0 /*EvtRenderEventValues*/, dwBufferSize, pRenderedValues, &dwBufferUsed, &dwPropertyCount))
 		{
 			if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError()))
 			{
 				dwBufferSize = dwBufferUsed;
-				pRenderedContent = (LPWSTR)malloc(dwBufferSize);
-				if (pRenderedContent)
+				pRenderedValues = (PEVT_VARIANT)malloc(dwBufferSize);
+				if (pRenderedValues)
 				{
-					EvtRender(NULL, hEvent, 1 /*EvtRenderEventXml*/, dwBufferSize, pRenderedContent, &dwBufferUsed, &dwPropertyCount);
+					EvtRender(hContext, hEvent, 0 /*EvtRenderEventValues*/, dwBufferSize, pRenderedValues, &dwBufferUsed, &dwPropertyCount);
 				}
 				else
 				{
@@ -220,12 +416,76 @@ namespace Instalog { namespace SystemFacades {
 			}
 		}
 
-		wprintf(L"\n\n%s", pRenderedContent);
+		// Print the values from the System section of the element.
+		wprintf(L"Provider Name: %s\n", pRenderedValues[EvtSystemProviderName].StringVal);
+		if (NULL != pRenderedValues[EvtSystemProviderGuid].GuidVal)
+		{
+			StringFromGUID2(*(pRenderedValues[EvtSystemProviderGuid].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
+			wprintf(L"Provider Guid: %s\n", wsGuid);
+		}
+		else 
+		{
+			wprintf(L"Provider Guid: NULL");
+		}
+
+
+		DWORD EventID = pRenderedValues[EvtSystemEventID].UInt16Val;
+		if (EvtVarTypeNull != pRenderedValues[EvtSystemQualifiers].Type)
+		{
+			EventID = MAKELONG(pRenderedValues[EvtSystemEventID].UInt16Val, pRenderedValues[EvtSystemQualifiers].UInt16Val);
+		}
+		wprintf(L"EventID: %lu\n", EventID);
+
+		wprintf(L"Version: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemVersion].Type) ? 0 : pRenderedValues[EvtSystemVersion].ByteVal);
+		wprintf(L"Level: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemLevel].Type) ? 0 : pRenderedValues[EvtSystemLevel].ByteVal);
+		wprintf(L"Task: %hu\n", (EvtVarTypeNull == pRenderedValues[EvtSystemTask].Type) ? 0 : pRenderedValues[EvtSystemTask].UInt16Val);
+		wprintf(L"Opcode: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemOpcode].Type) ? 0 : pRenderedValues[EvtSystemOpcode].ByteVal);
+		wprintf(L"Keywords: 0x%I64x\n", pRenderedValues[EvtSystemKeywords].UInt64Val);
+
+		ullTimeStamp = pRenderedValues[EvtSystemTimeCreated].FileTimeVal;
+		ft.dwHighDateTime = (DWORD)((ullTimeStamp >> 32) & 0xFFFFFFFF);
+		ft.dwLowDateTime = (DWORD)(ullTimeStamp & 0xFFFFFFFF);
+
+		FileTimeToSystemTime(&ft, &st);
+		ullNanoseconds = (ullTimeStamp % 10000000) * 100; // Display nanoseconds instead of milliseconds for higher resolution
+		wprintf(L"TimeCreated SystemTime: %02d/%02d/%02d %02d:%02d:%02d.%I64u)\n", 
+			st.wMonth, st.wDay, st.wYear, st.wHour, st.wMinute, st.wSecond, ullNanoseconds);
+
+		wprintf(L"EventRecordID: %I64u\n", pRenderedValues[EvtSystemEventRecordId].UInt64Val);
+
+		if (EvtVarTypeNull != pRenderedValues[EvtSystemActivityID].Type)
+		{
+			StringFromGUID2(*(pRenderedValues[EvtSystemActivityID].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
+			wprintf(L"Correlation ActivityID: %s\n", wsGuid);
+		}
+
+		if (EvtVarTypeNull != pRenderedValues[EvtSystemRelatedActivityID].Type)
+		{
+			StringFromGUID2(*(pRenderedValues[EvtSystemRelatedActivityID].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
+			wprintf(L"Correlation RelatedActivityID: %s\n", wsGuid);
+		}
+
+		wprintf(L"Execution ProcessID: %lu\n", pRenderedValues[EvtSystemProcessID].UInt32Val);
+		wprintf(L"Execution ThreadID: %lu\n", pRenderedValues[EvtSystemThreadID].UInt32Val);
+		wprintf(L"Channel: %s\n", (EvtVarTypeNull == pRenderedValues[EvtSystemChannel].Type) ? L"" : pRenderedValues[EvtSystemChannel].StringVal);
+		wprintf(L"Computer: %s\n", pRenderedValues[EvtSystemComputer].StringVal);
+
+		if (EvtVarTypeNull != pRenderedValues[EvtSystemUserID].Type)
+		{
+			if (ConvertSidToStringSid(pRenderedValues[EvtSystemUserID].SidVal, &pwsSid))
+			{
+				wprintf(L"Security UserID: %s\n", pwsSid);
+				LocalFree(pwsSid);
+			}
+		}
 
 cleanup:
 
-		if (pRenderedContent)
-			free(pRenderedContent);
+		if (hContext)
+			EvtClose(hContext);
+
+		if (pRenderedValues)
+			free(pRenderedValues);
 
 		return status;
 	}
