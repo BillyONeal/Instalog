@@ -4,7 +4,7 @@
 
 #include "pch.hpp"
 #include <vector>
-#include <Sddl.h>
+#include <sstream>
 #include "EventLog.hpp"
 #include "Win32Exception.hpp"
 #include "Win32Glue.hpp"
@@ -391,7 +391,7 @@ namespace Instalog { namespace SystemFacades {
 		}		
 		PEVT_VARIANT renderedValues = reinterpret_cast<PEVT_VARIANT>(buffer.data());
 
-		providerName = std::wstring(renderedValues[EvtSystemProviderName].StringVal);
+		source = std::wstring(renderedValues[EvtSystemProviderName].StringVal);
 		
 		eventId = renderedValues[EvtSystemEventID].UInt16Val;
 		if (renderedValues[EvtSystemQualifiers].Type != EvtVarTypeNull)
@@ -399,15 +399,13 @@ namespace Instalog { namespace SystemFacades {
 			eventId = MAKELONG(renderedValues[EvtSystemEventID].UInt16Val, renderedValues[EvtSystemQualifiers].UInt16Val);
 		}
 
-		level = renderedValues[EvtSystemLevel].ByteVal;
+		type = renderedValues[EvtSystemLevel].ByteVal;
 
 		ULONGLONG timeStamp = renderedValues[EvtSystemTimeCreated].FileTimeVal;
-		timeCreated.dwHighDateTime = static_cast<DWORD>((timeStamp >> 32) & 0xFFFFFFFF);
-		timeCreated.dwLowDateTime  = static_cast<DWORD>(timeStamp & 0xFFFFFFFF);
+		date.dwHighDateTime = static_cast<DWORD>((timeStamp >> 32) & 0xFFFFFFFF);
+		date.dwLowDateTime  = static_cast<DWORD>(timeStamp & 0xFFFFFFFF);
 				
 		EvtFunctions().EvtClose(contextHandle);
-
-		GetDescription();
 	}
 
 	XmlEventLogEntry::XmlEventLogEntry( XmlEventLogEntry && x )
@@ -427,7 +425,7 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring XmlEventLogEntry::GetDescription()
 	{
-		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, providerName.c_str(), NULL, 0, 0);
+		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, source.c_str(), NULL, 0, 0);
 		if (publisherHandle == NULL)
 		{
 			Win32Exception::ThrowFromLastError();

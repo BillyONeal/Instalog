@@ -63,14 +63,20 @@ namespace Instalog { namespace SystemFacades {
 		std::vector<OldEventLogEntry> ReadEvents();
 	};
 
-	class XmlEventLogEntry : boost::noncopyable
+	class EventLogEntry
+	{
+	public:
+		FILETIME date;
+		WORD type;
+		std::wstring source;
+		DWORD eventId;
+
+		virtual std::wstring GetDescription() = 0;
+	};
+
+	class XmlEventLogEntry : boost::noncopyable, EventLogEntry
 	{
 		HANDLE eventHandle;
-
-		std::wstring providerName;
-		DWORD eventId;
-		UINT8 level;
-		FILETIME timeCreated;
 
 	public:
 		XmlEventLogEntry(HANDLE handle);
@@ -78,10 +84,6 @@ namespace Instalog { namespace SystemFacades {
 		XmlEventLogEntry& operator=(XmlEventLogEntry && x);
 		~XmlEventLogEntry();
 
-		std::wstring GetDate();
-		std::wstring GetType();
-		std::wstring GetSource();
-		std::wstring GetEventId();
 		std::wstring GetDescription();
 	};
 	
@@ -101,7 +103,6 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();
 
-		DWORD PrintEvent(HANDLE hEvent);
 		std::vector<XmlEventLogEntry> ReadEvents();
 	};
 
