@@ -120,31 +120,43 @@ namespace Instalog
 		}
 	}
 
-	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	void EventViewer::Execute( std::wostream& /*logOutput*/, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
 		using Instalog::SystemFacades::OldEventLog;
-		using Instalog::SystemFacades::OldEventLogEntry;
+		using Instalog::SystemFacades::XmlEventLog;
+		using Instalog::SystemFacades::EventLogEntry;
 
-		SYSTEMTIME currentTime;
-		GetSystemTime(&currentTime);
-		DWORD oneWeekAgo = SecondsSince1970(currentTime) - 604800;
+		SYSTEMTIME currentSystemTime;
+		GetSystemTime(&currentSystemTime);
+		FILETIME currentFileTime;
+		if (SystemTimeToFileTime(&currentSystemTime, &currentFileTime) == false)
+		{
+			SystemFacades::Win32Exception::ThrowFromLastError();
+		}
+		ULARGE_INTEGER currentTime;
+		currentTime.LowPart = currentFileTime.dwLowDateTime;
+		currentTime.HighPart = currentFileTime.dwHighDateTime;
+		ULARGE_INTEGER oneWeekAgo;
+		oneWeekAgo.QuadPart = currentTime.QuadPart - 6048000000000;
 
 		OldEventLog eventLog;
-		std::vector<OldEventLogEntry> eventLogEntries = eventLog.ReadEvents();
+		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries = eventLog.ReadEvents();
 
 		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
 		{
-			// Whitelist all events that are older than this week
-			if (eventLogEntry->timeGenerated < oneWeekAgo) continue;
+			// Whitelist everything but "Critical" and "Error" messages
+			if ((*eventLogEntry)->level != EVENTLOG_ERROR_TYPE) continue;
 
-			// Whitelist everything but "Critical" and "Error" messages ("Critical") doesn't exist with this API
-			if (eventLogEntry->eventType != EVENTLOG_ERROR_TYPE) continue;
+			// Whitelist all events that are older than this week
+			ULARGE_INTEGER date;
+			date.LowPart = (*eventLogEntry)->date.dwLowDateTime;
+			date.HighPart = (*eventLogEntry)->date.dwHighDateTime;
+			if (date.QuadPart < oneWeekAgo.QuadPart) continue;
 
 			// Whitelist EventIDs 1000, 8023, 10010
-			DWORD eventIdCode = eventLogEntry->GetEventIdCode();
-			if (eventIdCode == 1000 || eventIdCode == 8023 || eventIdCode == 10010) continue;
+			if ((*eventLogEntry)->eventId == 1000 || (*eventLogEntry)->eventId == 8023 || (*eventLogEntry)->eventId == 10010) continue;
 
-			eventLogEntry->OutputToLog(logOutput);
+			// TODO output to log
 		}
 	}
 

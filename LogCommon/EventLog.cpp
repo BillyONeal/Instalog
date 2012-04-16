@@ -17,43 +17,34 @@
 namespace Instalog { namespace SystemFacades {
 
 	OldEventLogEntry::OldEventLogEntry( PEVENTLOGRECORD pRecord ) 
-		: timeGenerated(pRecord->TimeGenerated)
-		, eventId(pRecord->EventID)
-		, eventType(pRecord->EventType)
-		, eventCategory(eventCategory)
-		, sourceName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord)))
-		, computerName(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord) + sourceName.size() * sizeof(wchar_t) + sizeof(wchar_t)))
+		: eventIdWithExtras(pRecord->EventID)
 		, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset))
 	{
-		strings.reserve(pRecord->NumStrings);
+		date = FiletimeFromSecondsSince1970(pRecord->TimeGenerated);
+		level = pRecord->EventType;
+		source = reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord));
+		eventId = eventIdWithExtras & 0x0000FFFF;
 
+		strings.reserve(pRecord->NumStrings);
 		for (wchar_t* stringPtr = reinterpret_cast<wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->StringOffset); strings.size() < pRecord->NumStrings; stringPtr += strings.back().length() + 1)
 		{
 			strings.push_back(std::wstring(stringPtr));
 		}
 	}
 
-	OldEventLogEntry::OldEventLogEntry( OldEventLogEntry && e ) 
-		: timeGenerated(e.timeGenerated)
-		, eventId(e.eventId)
-		, eventType(e.eventType)
-		, eventCategory(eventCategory)
-		, sourceName(std::move(e.sourceName))
-		, computerName(std::move(e.computerName))
+	OldEventLogEntry::OldEventLogEntry( OldEventLogEntry && e )
+		: eventIdWithExtras(e.eventIdWithExtras)
+		, source(e.source)
 		, strings(std::move(e.strings))
 		, dataString(std::move(e.dataString))
 	{
-
-	}
-
-	DWORD OldEventLogEntry::GetEventIdCode()
-	{
-		return eventId & 0x0000FFFF;
+		e.eventIdWithExtras = 0;
+		e.source = L"";
 	}
 
 	std::wstring OldEventLogEntry::GetDescription() 
 	{
-		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + sourceName), KEY_QUERY_VALUE);
+		RegistryKey eventKey = RegistryKey::Open(std::wstring(L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" + source), KEY_QUERY_VALUE);
 		if (eventKey.Invalid())
 		{
 			Win32Exception::ThrowFromNtError(::GetLastError());
@@ -66,7 +57,7 @@ namespace Instalog { namespace SystemFacades {
 			Path::ResolveFromCommandLine(eventMessageFilePath);
 
 			FormattedMessageLoader eventMessageFile(eventMessageFilePath);
-			return eventMessageFile.GetFormattedMessage(eventId, strings);
+			return eventMessageFile.GetFormattedMessage(eventIdWithExtras, strings);
 		}
 		catch (ErrorFileNotFoundException const&)
 		{
@@ -75,38 +66,43 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	void OldEventLogEntry::OutputToLog( std::wostream& logOutput )
+	std::wstring OldEventLogEntry::GetSource()
 	{
-		// Print the Date
-		FILETIME filetime = FiletimeFromSecondsSince1970(timeGenerated);
-		WriteDefaultDateFormat(logOutput, FiletimeToInteger(filetime));
-
-		// Print the Type
-		switch (eventType)
-		{
-		case EVENTLOG_ERROR_TYPE: logOutput << L", Error: "; break;
-		case EVENTLOG_WARNING_TYPE: logOutput << L", Warning: "; break;
-		case EVENTLOG_INFORMATION_TYPE: logOutput << L", Information: "; break;
-		default: logOutput << L", Unknown: "; break;
-		}
-
-		// Print the Source
-		logOutput << sourceName << L" [";
-
-		// Print the EventID
-		logOutput << GetEventIdCode() << L"] ";
-
-		std::wstring description = GetDescription();
-		GeneralEscape(description);
-		if (boost::algorithm::ends_with(description, "#r#n"))
-		{
-			logOutput << description.substr(0, description.size() - 4) << std::endl;
-		}
-		else
-		{
-			logOutput << description << std::endl;		
-		}
+		return source;
 	}
+
+// 	void OldEventLogEntry::OutputToLog( std::wostream& logOutput )
+// 	{
+// 		// Print the Date
+// 		FILETIME filetime = FiletimeFromSecondsSince1970(timeGenerated);
+// 		WriteDefaultDateFormat(logOutput, FiletimeToInteger(filetime));
+// 
+// 		// Print the Type
+// 		switch (eventType)
+// 		{
+// 		case EVENTLOG_ERROR_TYPE: logOutput << L", Error: "; break;
+// 		case EVENTLOG_WARNING_TYPE: logOutput << L", Warning: "; break;
+// 		case EVENTLOG_INFORMATION_TYPE: logOutput << L", Information: "; break;
+// 		default: logOutput << L", Unknown: "; break;
+// 		}
+// 
+// 		// Print the Source
+// 		logOutput << sourceName << L" [";
+// 
+// 		// Print the EventID
+// 		logOutput << GetEventIdCode() << L"] ";
+// 
+// 		std::wstring description = GetDescription();
+// 		GeneralEscape(description);
+// 		if (boost::algorithm::ends_with(description, "#r#n"))
+// 		{
+// 			logOutput << description.substr(0, description.size() - 4) << std::endl;
+// 		}
+// 		else
+// 		{
+// 			logOutput << description << std::endl;		
+// 		}
+// 	}
 
 	OldEventLog::OldEventLog( std::wstring sourceName /*= L"System"*/ )
 		: handle(::OpenEventLogW(NULL, sourceName.c_str()))
@@ -122,9 +118,9 @@ namespace Instalog { namespace SystemFacades {
 		::CloseEventLog(handle);
 	}
 
-	std::vector<OldEventLogEntry> OldEventLog::ReadEvents()
+	std::vector<std::unique_ptr<EventLogEntry>> OldEventLog::ReadEvents()
 	{
-		std::vector<OldEventLogEntry> eventLogEntries;
+		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries;
 		eventLogEntries.reserve(16 * 1024 /* approximate based on dev machine */);
 
 		DWORD lastError = ERROR_SUCCESS;
@@ -161,12 +157,13 @@ namespace Instalog { namespace SystemFacades {
 			{
 				for (PEVENTLOGRECORD pRecord = reinterpret_cast<PEVENTLOGRECORD>(buffer.data()); reinterpret_cast<char*>(pRecord) < buffer.data() + bytesRead; pRecord = reinterpret_cast<PEVENTLOGRECORD>(reinterpret_cast<char*>(pRecord) + pRecord->Length))
 				{
-					eventLogEntries.emplace_back(OldEventLogEntry(pRecord));
+					eventLogEntries.emplace_back(std::unique_ptr<EventLogEntry>(new OldEventLogEntry(pRecord)));
 				}
 			}
 		}
 
 		return eventLogEntries;
+
 	}	
 
 	typedef enum _EVT_QUERY_FLAGS {
@@ -365,6 +362,38 @@ namespace Instalog { namespace SystemFacades {
 		return evtFunctionHandles;
 	}
 
+	std::wstring XmlEventLogEntry::FormatMessage( DWORD messageFlag )
+	{
+		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, providerName.c_str(), NULL, 0, 0);
+		if (publisherHandle == NULL)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+
+		std::vector<wchar_t> buffer;
+		DWORD bufferUsed = 0;
+		while (EvtFunctions().EvtFormatMessage(publisherHandle, eventHandle, 0, 0, NULL, messageFlag, static_cast<DWORD>(buffer.capacity()), static_cast<LPWSTR>(buffer.data()), &bufferUsed) == false)
+		{
+			DWORD status = GetLastError();
+			switch(status)
+			{
+			case ERROR_INSUFFICIENT_BUFFER: 
+				buffer.reserve(bufferUsed);
+				break;
+			case ERROR_EVT_MESSAGE_NOT_FOUND:
+			case ERROR_EVT_MESSAGE_ID_NOT_FOUND:
+				return L"";
+				break;
+			default:
+				Win32Exception::Throw(status);
+			}			
+		}
+
+		EvtFunctions().EvtClose(publisherHandle);
+
+		return buffer.data();
+	}
+
 	XmlEventLogEntry::XmlEventLogEntry( HANDLE handle )
 		: eventHandle(handle)
 	{
@@ -391,7 +420,7 @@ namespace Instalog { namespace SystemFacades {
 		}		
 		PEVT_VARIANT renderedValues = reinterpret_cast<PEVT_VARIANT>(buffer.data());
 
-		source = std::wstring(renderedValues[EvtSystemProviderName].StringVal);
+		providerName = std::wstring(renderedValues[EvtSystemProviderName].StringVal);
 		
 		eventId = renderedValues[EvtSystemEventID].UInt16Val;
 		if (renderedValues[EvtSystemQualifiers].Type != EvtVarTypeNull)
@@ -399,7 +428,7 @@ namespace Instalog { namespace SystemFacades {
 			eventId = MAKELONG(renderedValues[EvtSystemEventID].UInt16Val, renderedValues[EvtSystemQualifiers].UInt16Val);
 		}
 
-		type = renderedValues[EvtSystemLevel].ByteVal;
+		level = renderedValues[EvtSystemLevel].ByteVal;
 
 		ULONGLONG timeStamp = renderedValues[EvtSystemTimeCreated].FileTimeVal;
 		date.dwHighDateTime = static_cast<DWORD>((timeStamp >> 32) & 0xFFFFFFFF);
@@ -423,37 +452,31 @@ namespace Instalog { namespace SystemFacades {
 		return *this;
 	}
 
-	std::wstring XmlEventLogEntry::GetDescription()
-	{
-		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, source.c_str(), NULL, 0, 0);
-		if (publisherHandle == NULL)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-
-		std::vector<wchar_t> buffer;
-		DWORD bufferUsed = 0;
-		while (EvtFunctions().EvtFormatMessage(publisherHandle, eventHandle, 0, 0, NULL, EvtFormatMessageEvent, static_cast<DWORD>(buffer.capacity()), static_cast<LPWSTR>(buffer.data()), &bufferUsed) == false)
-		{
-			DWORD status = GetLastError();
-			if (status == ERROR_INSUFFICIENT_BUFFER)
-			{
-				buffer.reserve(bufferUsed);
-			}
-			else
-			{
-				Win32Exception::Throw(status);
-			}			
-		}
-
-		EvtFunctions().EvtClose(publisherHandle);
-
-		return buffer.data();
-	}
-
 	XmlEventLogEntry::~XmlEventLogEntry()
 	{
 		EvtFunctions().EvtClose(eventHandle);
+	}
+
+	std::wstring XmlEventLogEntry::GetDescription()
+	{
+		return FormatMessage(EvtFormatMessageEvent);
+	}
+
+	std::wstring XmlEventLogEntry::GetSource()
+	{
+		std::wstring response = FormatMessage(EvtFormatMessageProvider);
+		if (response.size() == 0)
+		{
+			return providerName;
+		}
+		else
+		{
+ 			if (boost::starts_with(response, L"Microsoft-Windows-")) 
+			{ 
+				response.erase(response.begin(), response.begin() + 18);
+			}
+			return response;
+		}
 	}
 
 	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"System"*/, wchar_t* query /*= L"Event/System"*/ )
@@ -470,9 +493,9 @@ namespace Instalog { namespace SystemFacades {
 		EvtFunctions().EvtClose(queryHandle);
 	}
 
-	std::vector<XmlEventLogEntry> XmlEventLog::ReadEvents()
+	std::vector<std::unique_ptr<EventLogEntry>> XmlEventLog::ReadEvents()
 	{
-		std::vector<XmlEventLogEntry> eventLogEntries;
+		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries;
 		HANDLE eventHandles[10];
 		DWORD numReturned = 0;
 
@@ -480,7 +503,7 @@ namespace Instalog { namespace SystemFacades {
 		{
 			for (DWORD i = 0; i < numReturned; ++i)
 			{
-				eventLogEntries.emplace_back(XmlEventLogEntry(eventHandles[i]));
+				eventLogEntries.emplace_back(std::unique_ptr<EventLogEntry>(new XmlEventLogEntry(eventHandles[i])));
 			}
 		}
 
@@ -491,6 +514,33 @@ namespace Instalog { namespace SystemFacades {
 		}
 
 		return eventLogEntries;
+	}
+	
+	EventLogEntry::EventLogEntry( EventLogEntry && e )
+		: date(e.date)
+		, level(e.level)
+		, eventId(e.eventId)
+	{
+		e.date.dwLowDateTime = 0;
+		e.date.dwHighDateTime = 0;
+		e.level = 0;
+		e.eventId = 0;
+	}
+
+	EventLogEntry::EventLogEntry()
+	{
+
+	}
+
+	EventLogEntry::~EventLogEntry()
+	{
+
+	}
+
+
+	EventLog::~EventLog()
+	{
+
 	}
 
 }}

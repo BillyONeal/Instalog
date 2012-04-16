@@ -5,50 +5,69 @@
 #pragma once
 #include <boost/noncopyable.hpp>
 #include <string>
+#include <memory>
 #include <vector>
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "Library.hpp"
 
 namespace Instalog { namespace SystemFacades {
-
-	/// @brief	Event log entry.
-	struct OldEventLogEntry
+	
+	struct EventLogEntry
 	{
-		DWORD timeGenerated;
+		FILETIME date;
+		WORD level;
 		DWORD eventId;
-		WORD eventType;
-		WORD eventCategory;
-		std::wstring sourceName;
-		std::wstring computerName;
+
+		EventLogEntry();
+		EventLogEntry(EventLogEntry && e);
+		virtual ~EventLogEntry();
+
+		virtual std::wstring GetSource() = 0;
+		virtual std::wstring GetDescription() = 0;
+	};
+
+	class OldEventLogEntry : public EventLogEntry
+	{
+		DWORD eventIdWithExtras;
+		std::wstring source;
 		std::vector<std::wstring> strings;
 		std::wstring dataString; 
 
+	public:
 		OldEventLogEntry(PEVENTLOGRECORD pRecord);
-
-		/// @brief	Move constructor.
-		///
-		/// @param [in,out]	e	The EventLogEntry &amp;&amp; to process.
 		OldEventLogEntry(OldEventLogEntry && e);
 
-		/// @brief	Gets the event identifier code (strips out severity and other details)
-		///
-		/// @return	The event identifier code.
-		DWORD GetEventIdCode();
+		virtual std::wstring GetSource();
+		virtual std::wstring GetDescription();
+	};
 
-		/// @brief	Gets the human-readable event description.
-		///
-		/// @return	The description.
-		std::wstring GetDescription();
+	class XmlEventLogEntry : boost::noncopyable, public EventLogEntry
+	{
+		HANDLE eventHandle;
+		std::wstring providerName;
 
-		/// @brief	Output to log stream
-		///
-		/// @param [out]	logOutput	The log stream to output to.
-		void OutputToLog(std::wostream& logOutput);
+		std::wstring FormatMessage(DWORD messageFlag);
+
+	public:
+		XmlEventLogEntry(HANDLE handle);
+		XmlEventLogEntry(XmlEventLogEntry && x);
+		XmlEventLogEntry& operator=(XmlEventLogEntry && x);
+		~XmlEventLogEntry();
+
+		virtual std::wstring GetSource();
+		virtual std::wstring GetDescription();
+	};
+
+	struct EventLog : boost::noncopyable
+	{
+		virtual ~EventLog();
+
+		virtual std::vector<std::unique_ptr<EventLogEntry>> ReadEvents() = 0;
 	};
 
 	/// @brief	Wrapper around the old Win32 event log
-	class OldEventLog : boost::noncopyable
+	class OldEventLog : public EventLog
 	{
 		HANDLE handle;
 	public:
@@ -60,35 +79,11 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Destructor, frees the handle
 		~OldEventLog();
 
-		std::vector<OldEventLogEntry> ReadEvents();
-	};
-
-	class EventLogEntry
-	{
-	public:
-		FILETIME date;
-		WORD type;
-		std::wstring source;
-		DWORD eventId;
-
-		virtual std::wstring GetDescription() = 0;
-	};
-
-	class XmlEventLogEntry : boost::noncopyable, EventLogEntry
-	{
-		HANDLE eventHandle;
-
-	public:
-		XmlEventLogEntry(HANDLE handle);
-		XmlEventLogEntry(XmlEventLogEntry && x);
-		XmlEventLogEntry& operator=(XmlEventLogEntry && x);
-		~XmlEventLogEntry();
-
-		std::wstring GetDescription();
+		std::vector<std::unique_ptr<EventLogEntry>> ReadEvents();
 	};
 	
 	/// @brief	Wrapper around the new (Vista and later) XML Win32 event log
-	class XmlEventLog : boost::noncopyable
+	class XmlEventLog : public EventLog
 	{
 		HANDLE queryHandle;
 	public:
@@ -103,7 +98,7 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();
 
-		std::vector<XmlEventLogEntry> ReadEvents();
+		std::vector<std::unique_ptr<EventLogEntry>> ReadEvents();
 	};
 
 }}
