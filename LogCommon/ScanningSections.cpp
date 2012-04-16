@@ -122,7 +122,6 @@ namespace Instalog
 
 	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
-		using Instalog::SystemFacades::EventLog;
 		using Instalog::SystemFacades::OldEventLog;
 		using Instalog::SystemFacades::XmlEventLog;
 		using Instalog::SystemFacades::EventLogEntry;
@@ -158,7 +157,7 @@ namespace Instalog
 		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
 		{
 			// Whitelist everything but "Critical" and "Error" messages
-			if ((*eventLogEntry)->level != EventLog::EvtLevelCritical && (*eventLogEntry)->level != EventLog::EvtLevelError) continue;
+			if ((*eventLogEntry)->level != EventLogEntry::EvtLevelCritical && (*eventLogEntry)->level != EventLogEntry::EvtLevelError) continue;
 
 			// Whitelist all events that are older than this week
 			ULARGE_INTEGER date;
@@ -175,8 +174,8 @@ namespace Instalog
 			// Print the Type
 			switch ((*eventLogEntry)->level)
 			{
-			case EventLog::EvtLevelCritical: logOutput << L", Critical: "; break;
-			case EventLog::EvtLevelError: logOutput << L", Error: "; break;
+			case EventLogEntry::EvtLevelCritical: logOutput << L", Critical: "; break;
+			case EventLogEntry::EvtLevelError: logOutput << L", Error: "; break;
 			}
 			 
 			// Print the Source

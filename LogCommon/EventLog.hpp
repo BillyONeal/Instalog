@@ -13,17 +13,45 @@
 
 namespace Instalog { namespace SystemFacades {
 	
+	/// @brief	Event log entry interface
 	struct EventLogEntry
 	{
+		/// @summary	The date and time that the event was logged
 		FILETIME date;
+
+		/// @brief	Different log event severities
+		typedef enum _EVT_LEVEL {
+			EvtLevelCritical	= 1,
+			EvtLevelError		= 2,
+			EvtLevelWarning		= 3,
+			EvtLevelInformation = 4
+		} EVT_LEVELS;
+
+		/// @summary	The severity according to EVT_LEVELS
 		WORD level;
+
+		/// @summary	The event id
 		DWORD eventId;
 
+		/// @brief	Default constructor.
 		EventLogEntry();
+
+		/// @brief	Move constructor.
+		///
+		/// @param [in,out]	e	The EventLogEntry to process.
 		EventLogEntry(EventLogEntry && e);
+
+		/// @brief	Destructor.
 		virtual ~EventLogEntry();
 
+		/// @brief	Gets the source name of the creator of the log entry
+		///
+		/// @return	The source.
 		virtual std::wstring GetSource() = 0;
+
+		/// @brief	Gets the description of the event
+		///
+		/// @return	The description.
 		virtual std::wstring GetDescription() = 0;
 	};
 
@@ -35,10 +63,23 @@ namespace Instalog { namespace SystemFacades {
 		std::wstring dataString; 
 
 	public:
+		/// @brief	Constructor from an event record structure
+		///
+		/// @param	pRecord	The record.
 		OldEventLogEntry(PEVENTLOGRECORD pRecord);
+
+		/// @brief	Move constructor.
+		///
+		/// @param [in,out]	e	The OldEventLogEntry to process.
 		OldEventLogEntry(OldEventLogEntry && e);
 
+		/// @brief	Gets the source name of the creator of the log entry
+		///
+		/// @return	The source. 		
 		virtual std::wstring GetSource();
+		/// @brief	Gets the description of the event
+		///
+		/// @return	The description.
 		virtual std::wstring GetDescription();
 	};
 
@@ -47,29 +88,54 @@ namespace Instalog { namespace SystemFacades {
 		HANDLE eventHandle;
 		std::wstring providerName;
 
+		/// @brief	Formats messages according to the provided flag
+		///
+		/// @param	messageFlag	The message flag.
+		///
+		/// @return	The formatted message or "" if the message didn't exist
 		std::wstring FormatMessage(DWORD messageFlag);
 
 	public:
+		/// @brief	Constructor for an event from a handle to the event
+		///
+		/// @param	handle	Handle to the event
 		XmlEventLogEntry(HANDLE handle);
+
+		/// @brief	Move constructor.
+		///
+		/// @param [in,out]	x	The XmlEventLogEntry to process.
 		XmlEventLogEntry(XmlEventLogEntry && x);
+
+		/// @brief	Move assignment operator.
+		///
+		/// @param [in,out]	x	The XmlEventLogEntry to process.
+		///
+		/// @return	A shallow copy of this instance.
 		XmlEventLogEntry& operator=(XmlEventLogEntry && x);
+
+		/// @brief	Destructor, frees the handle
 		~XmlEventLogEntry();
 
+		/// @brief	Gets the source name of the creator of the log entry
+		///
+		/// @return	The source. 
 		virtual std::wstring GetSource();
+
+		/// @brief	Gets the description of the event
+		///
+		/// @return	The description.
 		virtual std::wstring GetDescription();
 	};
 
+	/// @brief	Event log interface
 	struct EventLog : boost::noncopyable
 	{
-		typedef enum _EVT_LEVEL {
-			EvtLevelCritical	= 1,
-			EvtLevelError		= 2,
-			EvtLevelWarning		= 3,
-			EvtLevelInformation = 4
-		} EVT_LEVELS;
-
+		/// @brief	Destructor.
 		virtual ~EventLog();
 
+		/// @brief	Reads the applicable events
+		///
+		/// @return	The events.
 		virtual std::vector<std::unique_ptr<EventLogEntry>> ReadEvents() = 0;
 	};
 
@@ -86,6 +152,9 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Destructor, frees the handle
 		~OldEventLog();
 
+		/// @brief	Reads the applicable events
+		///
+		/// @return	The events.
 		std::vector<std::unique_ptr<EventLogEntry>> ReadEvents();
 	};
 	
@@ -105,6 +174,9 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();
 
+		/// @brief	Reads the applicable events
+		///
+		/// @return	The events.
 		std::vector<std::unique_ptr<EventLogEntry>> ReadEvents();
 	};
 

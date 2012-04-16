@@ -23,10 +23,10 @@ namespace Instalog { namespace SystemFacades {
 		date = FiletimeFromSecondsSince1970(pRecord->TimeGenerated);
 		switch (pRecord->EventType)
 		{
-		case EVENTLOG_ERROR_TYPE: level = EventLog::EvtLevelError; break;
-		case EVENTLOG_WARNING_TYPE: level = EventLog::EvtLevelWarning; break;
-		case EVENTLOG_INFORMATION_TYPE: level = EventLog::EvtLevelInformation; break;
-		default: level = EventLog::EvtLevelInformation + 1; break;
+		case EVENTLOG_ERROR_TYPE: level = EventLogEntry::EvtLevelError; break;
+		case EVENTLOG_WARNING_TYPE: level = EventLogEntry::EvtLevelWarning; break;
+		case EVENTLOG_INFORMATION_TYPE: level = EventLogEntry::EvtLevelInformation; break;
+		default: level = EventLogEntry::EvtLevelInformation + 1; break;
 		}
 		source = reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord));
 		eventId = eventIdWithExtras & 0x0000FFFF;
@@ -76,39 +76,6 @@ namespace Instalog { namespace SystemFacades {
 	{
 		return source;
 	}
-
-// 	void OldEventLogEntry::OutputToLog( std::wostream& logOutput )
-// 	{
-// 		// Print the Date
-// 		FILETIME filetime = FiletimeFromSecondsSince1970(timeGenerated);
-// 		WriteDefaultDateFormat(logOutput, FiletimeToInteger(filetime));
-// 
-// 		// Print the Type
-// 		switch (eventType)
-// 		{
-// 		case EVENTLOG_ERROR_TYPE: logOutput << L", Error: "; break;
-// 		case EVENTLOG_WARNING_TYPE: logOutput << L", Warning: "; break;
-// 		case EVENTLOG_INFORMATION_TYPE: logOutput << L", Information: "; break;
-// 		default: logOutput << L", Unknown: "; break;
-// 		}
-// 
-// 		// Print the Source
-// 		logOutput << sourceName << L" [";
-// 
-// 		// Print the EventID
-// 		logOutput << GetEventIdCode() << L"] ";
-// 
-// 		std::wstring description = GetDescription();
-// 		GeneralEscape(description);
-// 		if (boost::algorithm::ends_with(description, "#r#n"))
-// 		{
-// 			logOutput << description.substr(0, description.size() - 4) << std::endl;
-// 		}
-// 		else
-// 		{
-// 			logOutput << description << std::endl;		
-// 		}
-// 	}
 
 	OldEventLog::OldEventLog( std::wstring sourceName /*= L"System"*/ )
 		: handle(::OpenEventLogW(NULL, sourceName.c_str()))
@@ -335,12 +302,6 @@ namespace Instalog { namespace SystemFacades {
 		typedef HANDLE (WINAPI *EvtFormatMessage_t)(HANDLE, HANDLE, DWORD, DWORD, PEVT_VARIANT, DWORD, DWORD, LPWSTR, PDWORD);
 		EvtFormatMessage_t EvtFormatMessage;
 
-		typedef HANDLE (WINAPI *EvtOpenPublisherEnum_t)(HANDLE, DWORD); // TODO: Don't think I need this
-		EvtOpenPublisherEnum_t EvtOpenPublisherEnum;
-
-		typedef BOOL (WINAPI *EvtNextPublisherId_t)(HANDLE, DWORD, LPWSTR, PDWORD); // TODO: Don't think I need this
-		EvtNextPublisherId_t EvtNextPublisherId;
-
 		EvtFunctionHandles()
 			: wevtapi(L"wevtapi.dll")
 			, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
@@ -350,8 +311,6 @@ namespace Instalog { namespace SystemFacades {
 			, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
 			, EvtOpenPublisherMetadata(wevtapi.GetProcAddress<EvtOpenPublisherMetadata_t>("EvtOpenPublisherMetadata"))
 			, EvtFormatMessage(wevtapi.GetProcAddress<EvtFormatMessage_t>("EvtFormatMessage"))
-			, EvtOpenPublisherEnum(wevtapi.GetProcAddress<EvtOpenPublisherEnum_t>("EvtOpenPublisherEnum"))
-			, EvtNextPublisherId(wevtapi.GetProcAddress<EvtNextPublisherId_t>("EvtNextPublisherId"))
 		{
 		}
 	};
