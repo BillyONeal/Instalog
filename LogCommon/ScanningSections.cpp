@@ -120,12 +120,27 @@ namespace Instalog
 		}
 	}
 
-	void EventViewer::Execute( std::wostream& /*logOutput*/, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
+		using Instalog::SystemFacades::EventLog;
 		using Instalog::SystemFacades::OldEventLog;
 		using Instalog::SystemFacades::XmlEventLog;
 		using Instalog::SystemFacades::EventLogEntry;
 
+		// Query the entries
+		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries;
+		try
+		{
+			XmlEventLog xmlEventLog(L"System", L"Event/System[Level=1 or Level=2]");
+			eventLogEntries = xmlEventLog.ReadEvents();
+		}
+		catch (Instalog::SystemFacades::Win32Exception const&)
+		{
+			OldEventLog eventLog;
+			eventLogEntries = eventLog.ReadEvents();
+		}
+
+		// Calculate the time a week ago
 		SYSTEMTIME currentSystemTime;
 		GetSystemTime(&currentSystemTime);
 		FILETIME currentFileTime;
@@ -139,13 +154,11 @@ namespace Instalog
 		ULARGE_INTEGER oneWeekAgo;
 		oneWeekAgo.QuadPart = currentTime.QuadPart - 6048000000000;
 
-		OldEventLog eventLog;
-		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries = eventLog.ReadEvents();
-
+		// Log applicable events
 		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
 		{
 			// Whitelist everything but "Critical" and "Error" messages
-			if ((*eventLogEntry)->level != EVENTLOG_ERROR_TYPE) continue;
+			if ((*eventLogEntry)->level != EventLog::EvtLevelCritical && (*eventLogEntry)->level != EventLog::EvtLevelError) continue;
 
 			// Whitelist all events that are older than this week
 			ULARGE_INTEGER date;
@@ -156,7 +169,30 @@ namespace Instalog
 			// Whitelist EventIDs 1000, 8023, 10010
 			if ((*eventLogEntry)->eventId == 1000 || (*eventLogEntry)->eventId == 8023 || (*eventLogEntry)->eventId == 10010) continue;
 
-			// TODO output to log
+			// Print the Date
+			WriteDefaultDateFormat(logOutput, FiletimeToInteger((*eventLogEntry)->date));
+
+			// Print the Type
+			switch ((*eventLogEntry)->level)
+			{
+			case EventLog::EvtLevelCritical: logOutput << L", Critical: "; break;
+			case EventLog::EvtLevelError: logOutput << L", Error: "; break;
+			}
+			 
+			// Print the Source
+			logOutput << (*eventLogEntry)->GetSource() << L" [";
+			 
+			// Print the EventID
+			logOutput << (*eventLogEntry)->eventId << L"] ";
+
+			// Print the description
+			std::wstring description = (*eventLogEntry)->GetDescription();
+			GeneralEscape(description);
+			if (boost::algorithm::ends_with(description, "#r#n"))
+			{
+				description.erase(description.end() - 4, description.end());
+			}
+			logOutput << description << std::endl;	
 		}
 	}
 

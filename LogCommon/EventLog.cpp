@@ -21,7 +21,13 @@ namespace Instalog { namespace SystemFacades {
 		, dataString(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + pRecord->DataOffset))
 	{
 		date = FiletimeFromSecondsSince1970(pRecord->TimeGenerated);
-		level = pRecord->EventType;
+		switch (pRecord->EventType)
+		{
+		case EVENTLOG_ERROR_TYPE: level = EventLog::EvtLevelError; break;
+		case EVENTLOG_WARNING_TYPE: level = EventLog::EvtLevelWarning; break;
+		case EVENTLOG_INFORMATION_TYPE: level = EventLog::EvtLevelInformation; break;
+		default: level = EventLog::EvtLevelInformation + 1; break;
+		}
 		source = reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) + sizeof(*pRecord));
 		eventId = eventIdWithExtras & 0x0000FFFF;
 

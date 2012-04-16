@@ -61,6 +61,13 @@ namespace Instalog { namespace SystemFacades {
 
 	struct EventLog : boost::noncopyable
 	{
+		typedef enum _EVT_LEVEL {
+			EvtLevelCritical	= 1,
+			EvtLevelError		= 2,
+			EvtLevelWarning		= 3,
+			EvtLevelInformation = 4
+		} EVT_LEVELS;
+
 		virtual ~EventLog();
 
 		virtual std::vector<std::unique_ptr<EventLogEntry>> ReadEvents() = 0;
