@@ -39,7 +39,7 @@ namespace Instalog { namespace SystemFacades {
 		/// @brief	Gets the human-readable event description.
 		///
 		/// @return	The description.
-		std::wstring OldEventLogEntry::GetDescription();
+		std::wstring GetDescription();
 
 		/// @brief	Output to log stream
 		///
@@ -63,38 +63,32 @@ namespace Instalog { namespace SystemFacades {
 		std::vector<OldEventLogEntry> ReadEvents();
 	};
 
-	struct XmlEventLogEntry
+	class XmlEventLogEntry : boost::noncopyable
 	{
+		HANDLE eventHandle;
 
+		std::wstring providerName;
+		DWORD eventId;
+		UINT8 level;
+		FILETIME timeCreated;
+
+	public:
+		XmlEventLogEntry(HANDLE handle);
+		XmlEventLogEntry(XmlEventLogEntry && x);
+		XmlEventLogEntry& operator=(XmlEventLogEntry && x);
+		~XmlEventLogEntry();
+
+		std::wstring GetDate();
+		std::wstring GetType();
+		std::wstring GetSource();
+		std::wstring GetEventId();
+		std::wstring GetDescription();
 	};
 	
 	/// @brief	Wrapper around the new (Vista and later) XML Win32 event log
 	class XmlEventLog : boost::noncopyable
 	{
-		RuntimeDynamicLinker wevtapi;
-		
-		typedef HANDLE (WINAPI *EvtQuery_t)(HANDLE, LPCWSTR, LPCWSTR, DWORD);
-		EvtQuery_t EvtQuery;
-
-		typedef BOOL (WINAPI *EvtClose_t)(HANDLE);
-		EvtClose_t EvtClose;
-
-		typedef BOOL (WINAPI *EvtNext_t)(HANDLE, DWORD, HANDLE*, DWORD, DWORD, PDWORD);
-		EvtNext_t EvtNext;
-
-		typedef HANDLE (WINAPI *EvtCreateRenderContext_t)(DWORD, LPCWSTR*, DWORD);
-		EvtCreateRenderContext_t EvtCreateRenderContext;
-
-		typedef BOOL (WINAPI *EvtRender_t)(HANDLE, HANDLE, DWORD, DWORD, PVOID, PDWORD, PDWORD);
-		EvtRender_t EvtRender;
-
-		typedef HANDLE (WINAPI *EvtOpenPublisherEnum_t)(HANDLE, DWORD);
-		EvtOpenPublisherEnum_t EvtOpenPublisherEnum;
-
-		typedef BOOL (WINAPI *EvtNextPublisherId_t)(HANDLE, DWORD, LPWSTR, PDWORD);
-		EvtNextPublisherId_t EvtNextPublisherId;
-
-		HANDLE handle;
+		HANDLE queryHandle;
 	public:
 		/// @brief	Constructor.
 		///
@@ -102,7 +96,7 @@ namespace Instalog { namespace SystemFacades {
 		/// @param	query  	(optional) the query.
 		/// 
 		/// @throws FileNotFoundException on incompatible machines
-		XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"Event/System[Level=1]");
+		XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"Event/System");
 
 		/// @brief	Destructor, frees the handle
 		~XmlEventLog();

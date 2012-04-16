@@ -3,6 +3,8 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
+#include <vector>
+#include <Sddl.h>
 #include "EventLog.hpp"
 #include "Win32Exception.hpp"
 #include "Win32Glue.hpp"
@@ -167,94 +169,13 @@ namespace Instalog { namespace SystemFacades {
 		return eventLogEntries;
 	}	
 
-	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"System"*/, wchar_t* query /*= L"Event/System"*/ )
-		: wevtapi(L"wevtapi.dll")
-		, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
-		, EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
-		, EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
-		, EvtCreateRenderContext(wevtapi.GetProcAddress<EvtCreateRenderContext_t>("EvtCreateRenderContext"))
-		, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
-		, EvtOpenPublisherEnum(wevtapi.GetProcAddress<EvtOpenPublisherEnum_t>("EvtOpenPublisherEnum"))
-		, EvtNextPublisherId(wevtapi.GetProcAddress<EvtNextPublisherId_t>("EvtNextPublisherId"))
-		, handle(EvtQuery(NULL, logPath, query, 0x1 | 0x200 /*EvtQueryChannelPath | EvtQueryReverseDirection*/))
-	{
-		if (handle == NULL)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-
-		HANDLE hProviders = NULL;
-		LPWSTR pwcsProviderName = NULL;
-		LPWSTR pTemp = NULL;
-		DWORD dwBufferSize = 0;
-		DWORD dwBufferUsed = 0;
-		DWORD status = ERROR_SUCCESS;
-
-		// Get a handle to the list of providers.
-		hProviders = EvtOpenPublisherEnum(NULL, 0);
-		if (NULL == hProviders)
-		{
-			wprintf(L"EvtOpenPublisherEnum failed with %lu\n", GetLastError());
-			goto cleanup;
-		}
-
-		wprintf(L"List of registered providers:\n\n");
-
-		// Enumerate the providers in the list.
-		int x = 1;
-		while (x > 0)
-		{
-			// Get a provider from the list. If the buffer is not big enough
-			// to contain the provider's name, reallocate the buffer to the required size.
-			if  (!EvtNextPublisherId(hProviders, dwBufferSize, pwcsProviderName, &dwBufferUsed))
-			{
-				status = GetLastError();
-				if (ERROR_NO_MORE_ITEMS == status)
-				{
-					break;
-				}
-				else if (ERROR_INSUFFICIENT_BUFFER == status)
-				{
-					dwBufferSize = dwBufferUsed;
-					pTemp = (LPWSTR)realloc(pwcsProviderName, dwBufferSize * sizeof(WCHAR));
-					if (pTemp)
-					{
-						pwcsProviderName = pTemp;
-						pTemp = NULL;
-						EvtNextPublisherId(hProviders, dwBufferSize, pwcsProviderName, &dwBufferUsed);
-					}
-					else
-					{
-						wprintf(L"realloc failed\n");
-						goto cleanup;
-					}
-				}
-
-				if (ERROR_SUCCESS != (status = GetLastError()))
-				{
-					wprintf(L"EvtNextPublisherId failed with %d\n", status);
-					goto cleanup;
-				}
-			}
-
-			wprintf(L"%s\n", pwcsProviderName);
-
-			RtlZeroMemory(pwcsProviderName, dwBufferUsed * sizeof(WCHAR));
-		}
-
-cleanup:
-
-		if (pwcsProviderName)
-			free(pwcsProviderName);
-
-		if (hProviders)
-			EvtClose(hProviders);
-	}
-
-	XmlEventLog::~XmlEventLog()
-	{
-		EvtClose(handle);
-	}
+	typedef enum _EVT_QUERY_FLAGS {
+		EvtQueryChannelPath           = 0x1,
+		EvtQueryFilePath              = 0x2,
+		EvtQueryForwardDirection      = 0x100,
+		EvtQueryReverseDirection      = 0x200,
+		EvtQueryTolerateQueryErrors   = 0x1000 
+	} EVT_QUERY_FLAGS;
 
 	typedef struct _EVT_VARIANT
 	{
@@ -360,182 +281,218 @@ cleanup:
 		EvtVarTypeEvtXml       = 35 
 	} EVT_VARIANT_TYPE;
 
-#include <Sddl.h>
-	DWORD XmlEventLog::PrintEvent(HANDLE hEvent)
+	typedef enum _EVT_RENDER_CONTEXT_FLAGS {
+		EvtRenderContextValues   = 0,
+		EvtRenderContextSystem   = 1,
+		EvtRenderContextUser     = 2  
+	} EVT_RENDER_CONTEXT_FLAGS;
+
+	typedef enum _EVT_RENDER_FLAGS {
+		EvtRenderEventValues   = 0,
+		EvtRenderEventXml      = 1,
+		EvtRenderBookmark      = 2 
+	} EVT_RENDER_FLAGS;
+
+	typedef enum _EVT_FORMAT_MESSAGE_FLAGS {
+		EvtFormatMessageEvent      = 1,
+		EvtFormatMessageLevel      = 2,
+		EvtFormatMessageTask       = 3,
+		EvtFormatMessageOpcode     = 4,
+		EvtFormatMessageKeyword    = 5,
+		EvtFormatMessageChannel    = 6,
+		EvtFormatMessageProvider   = 7,
+		EvtFormatMessageId         = 8,
+		EvtFormatMessageXml        = 9 
+	} EVT_FORMAT_MESSAGE_FLAGS;
+
+	/// @brief	Function handles for the new XML API
+	class EvtFunctionHandles : boost::noncopyable
 	{
-		DWORD status = ERROR_SUCCESS;
-		HANDLE hContext = NULL;
-		DWORD dwBufferSize = 0;
-		DWORD dwBufferUsed = 0;
-		DWORD dwPropertyCount = 0;
-		PEVT_VARIANT pRenderedValues = NULL;
-		WCHAR wsGuid[50];
-		LPWSTR pwsSid = NULL;
-		ULONGLONG ullTimeStamp = 0;
-		ULONGLONG ullNanoseconds = 0;
-		SYSTEMTIME st;
-		FILETIME ft;
+		RuntimeDynamicLinker wevtapi;
 
-		// Identify the components of the event that you want to render. In this case,
-		// render the system section of the event.
-		hContext = EvtCreateRenderContext(0, NULL, 1 /*EvtRenderContextSystem*/);
-		if (NULL == hContext)
+	public:
+		typedef HANDLE (WINAPI *EvtQuery_t)(HANDLE, LPCWSTR, LPCWSTR, DWORD);
+		EvtQuery_t EvtQuery;
+
+		typedef BOOL (WINAPI *EvtClose_t)(HANDLE);
+		EvtClose_t EvtClose;
+
+		typedef BOOL (WINAPI *EvtNext_t)(HANDLE, DWORD, HANDLE*, DWORD, DWORD, PDWORD);
+		EvtNext_t EvtNext;
+
+		typedef HANDLE (WINAPI *EvtCreateRenderContext_t)(DWORD, LPCWSTR*, DWORD);
+		EvtCreateRenderContext_t EvtCreateRenderContext;
+
+		typedef BOOL (WINAPI *EvtRender_t)(HANDLE, HANDLE, DWORD, DWORD, PVOID, PDWORD, PDWORD);
+		EvtRender_t EvtRender;
+
+		typedef HANDLE (WINAPI *EvtOpenPublisherMetadata_t)(HANDLE, LPCWSTR, LPCWSTR, LCID, DWORD);
+		EvtOpenPublisherMetadata_t EvtOpenPublisherMetadata;
+
+		typedef HANDLE (WINAPI *EvtFormatMessage_t)(HANDLE, HANDLE, DWORD, DWORD, PEVT_VARIANT, DWORD, DWORD, LPWSTR, PDWORD);
+		EvtFormatMessage_t EvtFormatMessage;
+
+		typedef HANDLE (WINAPI *EvtOpenPublisherEnum_t)(HANDLE, DWORD); // TODO: Don't think I need this
+		EvtOpenPublisherEnum_t EvtOpenPublisherEnum;
+
+		typedef BOOL (WINAPI *EvtNextPublisherId_t)(HANDLE, DWORD, LPWSTR, PDWORD); // TODO: Don't think I need this
+		EvtNextPublisherId_t EvtNextPublisherId;
+
+		EvtFunctionHandles()
+			: wevtapi(L"wevtapi.dll")
+			, EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
+			, EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
+			, EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
+			, EvtCreateRenderContext(wevtapi.GetProcAddress<EvtCreateRenderContext_t>("EvtCreateRenderContext"))
+			, EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
+			, EvtOpenPublisherMetadata(wevtapi.GetProcAddress<EvtOpenPublisherMetadata_t>("EvtOpenPublisherMetadata"))
+			, EvtFormatMessage(wevtapi.GetProcAddress<EvtFormatMessage_t>("EvtFormatMessage"))
+			, EvtOpenPublisherEnum(wevtapi.GetProcAddress<EvtOpenPublisherEnum_t>("EvtOpenPublisherEnum"))
+			, EvtNextPublisherId(wevtapi.GetProcAddress<EvtNextPublisherId_t>("EvtNextPublisherId"))
 		{
-			wprintf(L"EvtCreateRenderContext failed with %lu\n", status = GetLastError());
-			goto cleanup;
+		}
+	};
+
+	/// @brief	Returns a static copy of the event handles
+	///
+	/// @return	Event API handles
+	/// 
+	/// @throws Exception if loading any of the handles failed
+	static EvtFunctionHandles const& EvtFunctions()
+	{
+		static EvtFunctionHandles evtFunctionHandles;
+
+		return evtFunctionHandles;
+	}
+
+	XmlEventLogEntry::XmlEventLogEntry( HANDLE handle )
+		: eventHandle(handle)
+	{
+		HANDLE contextHandle = EvtFunctions().EvtCreateRenderContext(0, NULL, EvtRenderContextSystem);
+		if (contextHandle == NULL)
+		{
+			Win32Exception::ThrowFromLastError();
 		}
 
-		// When you render the user data or system section of the event, you must specify
-		// the EvtRenderEventValues flag. The function returns an array of variant values 
-		// for each element in the user data or system section of the event. For user data
-		// or event data, the values are returned in the same order as the elements are 
-		// defined in the event. For system data, the values are returned in the order defined
-		// in the EVT_SYSTEM_PROPERTY_ID enumeration.
-		if (!EvtRender(hContext, hEvent, 0 /*EvtRenderEventValues*/, dwBufferSize, pRenderedValues, &dwBufferUsed, &dwPropertyCount))
+		std::vector<char> buffer;
+		DWORD bufferUsed = 0;
+		DWORD propertyCount = 0;
+		while (EvtFunctions().EvtRender(contextHandle, eventHandle, EvtRenderEventValues, static_cast<DWORD>(buffer.capacity()), buffer.data(), &bufferUsed, &propertyCount) == false)
 		{
-			if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError()))
+			DWORD status = GetLastError();
+			if (status == ERROR_INSUFFICIENT_BUFFER)
 			{
-				dwBufferSize = dwBufferUsed;
-				pRenderedValues = (PEVT_VARIANT)malloc(dwBufferSize);
-				if (pRenderedValues)
-				{
-					EvtRender(hContext, hEvent, 0 /*EvtRenderEventValues*/, dwBufferSize, pRenderedValues, &dwBufferUsed, &dwPropertyCount);
-				}
-				else
-				{
-					wprintf(L"malloc failed\n");
-					status = ERROR_OUTOFMEMORY;
-					goto cleanup;
-				}
+				buffer.reserve(bufferUsed);
 			}
-
-			if (ERROR_SUCCESS != (status = GetLastError()))
+			else
 			{
-				wprintf(L"EvtRender failed with %d\n", GetLastError());
-				goto cleanup;
+				Win32Exception::Throw(status);
 			}
+		}		
+		PEVT_VARIANT renderedValues = reinterpret_cast<PEVT_VARIANT>(buffer.data());
+
+		providerName = std::wstring(renderedValues[EvtSystemProviderName].StringVal);
+		
+		eventId = renderedValues[EvtSystemEventID].UInt16Val;
+		if (renderedValues[EvtSystemQualifiers].Type != EvtVarTypeNull)
+		{
+			eventId = MAKELONG(renderedValues[EvtSystemEventID].UInt16Val, renderedValues[EvtSystemQualifiers].UInt16Val);
 		}
 
-		// Print the values from the System section of the element.
-		wprintf(L"Provider Name: %s\n", pRenderedValues[EvtSystemProviderName].StringVal);
-		if (NULL != pRenderedValues[EvtSystemProviderGuid].GuidVal)
+		level = renderedValues[EvtSystemLevel].ByteVal;
+
+		ULONGLONG timeStamp = renderedValues[EvtSystemTimeCreated].FileTimeVal;
+		timeCreated.dwHighDateTime = static_cast<DWORD>((timeStamp >> 32) & 0xFFFFFFFF);
+		timeCreated.dwLowDateTime  = static_cast<DWORD>(timeStamp & 0xFFFFFFFF);
+				
+		EvtFunctions().EvtClose(contextHandle);
+
+		GetDescription();
+	}
+
+	XmlEventLogEntry::XmlEventLogEntry( XmlEventLogEntry && x )
+		: eventHandle(x.eventHandle)
+	{
+		x.eventHandle = NULL;
+	}
+
+	XmlEventLogEntry& XmlEventLogEntry::operator=( XmlEventLogEntry && x )
+	{
+		eventHandle = x.eventHandle;
+
+		x.eventHandle = NULL;
+
+		return *this;
+	}
+
+	std::wstring XmlEventLogEntry::GetDescription()
+	{
+		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, providerName.c_str(), NULL, 0, 0);
+		if (publisherHandle == NULL)
 		{
-			StringFromGUID2(*(pRenderedValues[EvtSystemProviderGuid].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
-			wprintf(L"Provider Guid: %s\n", wsGuid);
-		}
-		else 
-		{
-			wprintf(L"Provider Guid: NULL");
-		}
-
-
-		DWORD EventID = pRenderedValues[EvtSystemEventID].UInt16Val;
-		if (EvtVarTypeNull != pRenderedValues[EvtSystemQualifiers].Type)
-		{
-			EventID = MAKELONG(pRenderedValues[EvtSystemEventID].UInt16Val, pRenderedValues[EvtSystemQualifiers].UInt16Val);
-		}
-		wprintf(L"EventID: %lu\n", EventID);
-
-		wprintf(L"Version: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemVersion].Type) ? 0 : pRenderedValues[EvtSystemVersion].ByteVal);
-		wprintf(L"Level: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemLevel].Type) ? 0 : pRenderedValues[EvtSystemLevel].ByteVal);
-		wprintf(L"Task: %hu\n", (EvtVarTypeNull == pRenderedValues[EvtSystemTask].Type) ? 0 : pRenderedValues[EvtSystemTask].UInt16Val);
-		wprintf(L"Opcode: %u\n", (EvtVarTypeNull == pRenderedValues[EvtSystemOpcode].Type) ? 0 : pRenderedValues[EvtSystemOpcode].ByteVal);
-		wprintf(L"Keywords: 0x%I64x\n", pRenderedValues[EvtSystemKeywords].UInt64Val);
-
-		ullTimeStamp = pRenderedValues[EvtSystemTimeCreated].FileTimeVal;
-		ft.dwHighDateTime = (DWORD)((ullTimeStamp >> 32) & 0xFFFFFFFF);
-		ft.dwLowDateTime = (DWORD)(ullTimeStamp & 0xFFFFFFFF);
-
-		FileTimeToSystemTime(&ft, &st);
-		ullNanoseconds = (ullTimeStamp % 10000000) * 100; // Display nanoseconds instead of milliseconds for higher resolution
-		wprintf(L"TimeCreated SystemTime: %02d/%02d/%02d %02d:%02d:%02d.%I64u)\n", 
-			st.wMonth, st.wDay, st.wYear, st.wHour, st.wMinute, st.wSecond, ullNanoseconds);
-
-		wprintf(L"EventRecordID: %I64u\n", pRenderedValues[EvtSystemEventRecordId].UInt64Val);
-
-		if (EvtVarTypeNull != pRenderedValues[EvtSystemActivityID].Type)
-		{
-			StringFromGUID2(*(pRenderedValues[EvtSystemActivityID].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
-			wprintf(L"Correlation ActivityID: %s\n", wsGuid);
+			Win32Exception::ThrowFromLastError();
 		}
 
-		if (EvtVarTypeNull != pRenderedValues[EvtSystemRelatedActivityID].Type)
+		std::vector<wchar_t> buffer;
+		DWORD bufferUsed = 0;
+		while (EvtFunctions().EvtFormatMessage(publisherHandle, eventHandle, 0, 0, NULL, EvtFormatMessageEvent, static_cast<DWORD>(buffer.capacity()), static_cast<LPWSTR>(buffer.data()), &bufferUsed) == false)
 		{
-			StringFromGUID2(*(pRenderedValues[EvtSystemRelatedActivityID].GuidVal), wsGuid, sizeof(wsGuid)/sizeof(WCHAR));
-			wprintf(L"Correlation RelatedActivityID: %s\n", wsGuid);
-		}
-
-		wprintf(L"Execution ProcessID: %lu\n", pRenderedValues[EvtSystemProcessID].UInt32Val);
-		wprintf(L"Execution ThreadID: %lu\n", pRenderedValues[EvtSystemThreadID].UInt32Val);
-		wprintf(L"Channel: %s\n", (EvtVarTypeNull == pRenderedValues[EvtSystemChannel].Type) ? L"" : pRenderedValues[EvtSystemChannel].StringVal);
-		wprintf(L"Computer: %s\n", pRenderedValues[EvtSystemComputer].StringVal);
-
-		if (EvtVarTypeNull != pRenderedValues[EvtSystemUserID].Type)
-		{
-			if (ConvertSidToStringSid(pRenderedValues[EvtSystemUserID].SidVal, &pwsSid))
+			DWORD status = GetLastError();
+			if (status == ERROR_INSUFFICIENT_BUFFER)
 			{
-				wprintf(L"Security UserID: %s\n", pwsSid);
-				LocalFree(pwsSid);
+				buffer.reserve(bufferUsed);
 			}
+			else
+			{
+				Win32Exception::Throw(status);
+			}			
 		}
 
-cleanup:
+		EvtFunctions().EvtClose(publisherHandle);
 
-		if (hContext)
-			EvtClose(hContext);
+		return buffer.data();
+	}
 
-		if (pRenderedValues)
-			free(pRenderedValues);
+	XmlEventLogEntry::~XmlEventLogEntry()
+	{
+		EvtFunctions().EvtClose(eventHandle);
+	}
 
-		return status;
+	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"System"*/, wchar_t* query /*= L"Event/System"*/ )
+		: queryHandle(EvtFunctions().EvtQuery(NULL, logPath, query, EvtQueryChannelPath | EvtQueryReverseDirection))
+	{
+		if (queryHandle == NULL)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+	}
+
+	XmlEventLog::~XmlEventLog()
+	{
+		EvtFunctions().EvtClose(queryHandle);
 	}
 
 	std::vector<XmlEventLogEntry> XmlEventLog::ReadEvents()
 	{
-		DWORD status = ERROR_SUCCESS;
-		HANDLE hEvents[10];
-		DWORD dwReturned = 0;
+		std::vector<XmlEventLogEntry> eventLogEntries;
+		HANDLE eventHandles[10];
+		DWORD numReturned = 0;
 
-		int x = 1;
-
-		while (x > 0)
+		while (EvtFunctions().EvtNext(queryHandle, 10, eventHandles, INFINITE, 0, &numReturned))
 		{
-			// Get a block of events from the result set.
-			if (!EvtNext(handle, 10, hEvents, INFINITE, 0, &dwReturned))
+			for (DWORD i = 0; i < numReturned; ++i)
 			{
-				if (ERROR_NO_MORE_ITEMS != (status = GetLastError()))
-				{
-					wprintf(L"EvtNext failed with %lu\n", status);
-				}
-
-				goto cleanup;
-			}
-
-			// For each event, call the PrintEvent function which renders the
-			// event for display. PrintEvent is shown in RenderingEvents.
-			for (DWORD i = 0; i < dwReturned; i++)
-			{
-				if (ERROR_SUCCESS == (status = PrintEvent(hEvents[i])))
-				{
-					EvtClose(hEvents[i]);
-					hEvents[i] = NULL;
-				}
-				else
-				{
-					goto cleanup;
-				}
+				eventLogEntries.emplace_back(XmlEventLogEntry(eventHandles[i]));
 			}
 		}
 
-cleanup:
-
-		for (DWORD i = 0; i < dwReturned; i++)
+		DWORD errorStatus = GetLastError();
+		if (errorStatus != ERROR_NO_MORE_ITEMS)
 		{
-			if (NULL != hEvents[i])
-				EvtClose(hEvents[i]);
+			Win32Exception::Throw(errorStatus);
 		}
 
-		return std::vector<XmlEventLogEntry>();
+		return eventLogEntries;
 	}
 
 }}

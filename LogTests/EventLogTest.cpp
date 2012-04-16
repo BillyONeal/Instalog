@@ -9,6 +9,7 @@
 using Instalog::SystemFacades::OldEventLog;
 using Instalog::SystemFacades::OldEventLogEntry;
 using Instalog::SystemFacades::XmlEventLog;
+using Instalog::SystemFacades::XmlEventLogEntry;
 
 TEST(OldEventLog, ReceivedEventLogEntries)
 {
@@ -22,5 +23,7 @@ TEST(OldEventLog, ReceivedEventLogEntries)
 TEST(XmlEventLog, ReceivedEventLogEntries)
 {
 	XmlEventLog eventLog;
-	eventLog.ReadEvents();
+	std::vector<XmlEventLogEntry> eventLogEntries(eventLog.ReadEvents());
+
+	ASSERT_TRUE(eventLogEntries.size() > 0);
 }
