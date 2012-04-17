@@ -169,6 +169,7 @@
     <ClCompile Include="Win32Glue.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Com.hpp" />
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="File.hpp" />

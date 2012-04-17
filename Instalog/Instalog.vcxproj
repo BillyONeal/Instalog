@@ -96,6 +96,7 @@
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
+      <SetChecksum>false</SetChecksum>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,7 +113,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
-      <SetChecksum>true</SetChecksum>
+      <SetChecksum>false</SetChecksum>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>

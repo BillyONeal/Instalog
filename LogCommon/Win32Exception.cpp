@@ -4,7 +4,9 @@
 
 #include "pch.hpp"
 #include <memory>
+#include <atlbase.h>
 #include "Library.hpp"
+#include "StringUtilities.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
@@ -72,6 +74,63 @@ namespace Instalog { namespace SystemFacades {
 			);
 		RtlNtStatusToDosErrorFunc conv = GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>("RtlNtStatusToDosError");
 		Throw(conv(errorCode));
+	}
+
+	void ThrowIfFailed( HRESULT hRes )
+	{
+		if (FAILED(hRes))
+		{
+			ThrowFromHResult(hRes);
+		}
+	}
+
+	void ThrowFromHResult( HRESULT hRes )
+	{
+		CComPtr<IErrorInfo> iei;
+		if (S_OK == ::GetErrorInfo(0, &iei) && iei)
+		{
+			// get the error description from the IErrorInfo 
+			CComBSTR bStr;
+			iei->GetDescription(&bStr);
+			std::wstring errorMessage(bStr);
+			std::string narrowMessage(Instalog::ConvertUnicode(errorMessage));
+			throw HresultException(hRes, errorMessage, narrowMessage);
+		}
+		else if (HRESULT_FACILITY(hRes) == FACILITY_ITF)
+		{
+			throw HresultException(hRes, L"", "");
+		}
+		else
+		{
+			Win32Exception::Throw(static_cast<DWORD>(hRes));
+		}
+	}
+
+
+	HresultException::HresultException( HRESULT hRes, std::wstring w, std::string n )
+		: hResult(hRes)
+		, wide(std::move(w))
+		, narrow(std::move(n))
+	{ }
+
+	HRESULT HresultException::GetErrorCode() const
+	{
+		return hResult;
+	}
+
+	std::string const& HresultException::GetErrorStringA() const
+	{
+		return narrow;
+	}
+
+	std::wstring const& HresultException::GetErrorStringW() const
+	{
+		return wide;
+	}
+
+	char const* HresultException::what()
+	{
+		return narrow.c_str();
 	}
 
 }} // namespace Instalog::SystemFacades
