@@ -47,10 +47,11 @@ int main()
 		_setmode(_fileno(stdout), _O_WTEXT);
 		ScriptDispatcher sd;
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
+		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
+		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new EventViewer));
 		wchar_t const defaultScript[] =
-			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n";
+			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n";
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
