@@ -47,7 +47,7 @@ namespace Instalog { namespace SystemFacades {
 			std::vector<DWORD_PTR> argumentPtrs;
 			argumentPtrs.reserve(arguments.size());	
 
-			for (int i = 0; i < arguments.size(); ++i)
+			for (std::vector<DWORD_PTR>::size_type i = 0; i < arguments.size(); ++i)
 			{
 				argumentPtrs.push_back(reinterpret_cast<DWORD_PTR>(arguments[i].c_str()));
 			}
