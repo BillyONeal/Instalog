@@ -17,6 +17,7 @@ namespace Instalog  {
 			ScriptSection const& sectionData,
 			std::vector<std::wstring> const& options
 		) const;
+
 	};
 
 }

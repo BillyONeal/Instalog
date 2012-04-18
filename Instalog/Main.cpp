@@ -36,6 +36,7 @@ using namespace Instalog;
 /// @brief	Main entry-point for this application.
 int main()
 {
+	::CoInitialize(nullptr);
 	try
 	{
 		if (Instalog::SystemFacades::IsWow64())
@@ -55,6 +56,10 @@ int main()
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
 	}
+	catch (Instalog::SystemFacades::HresultException const& ex)
+	{
+		std::wcerr << L"Hresult Error: 0x" << std::hex << ex.GetErrorCode() << L": " << ex.GetErrorStringW() << std::endl;
+	}
 	catch (Instalog::SystemFacades::Win32Exception const& ex)
 	{
 		std::wcerr << L"Win32 Error: 0x" << std::hex << ex.GetErrorCode() << L": " << ex.GetWideMessage() << std::endl;
@@ -63,4 +68,5 @@ int main()
 	{
 		std::cerr << "Exception: " << ex.what() << std::endl;
 	}
+	::CoUninitialize();
 }

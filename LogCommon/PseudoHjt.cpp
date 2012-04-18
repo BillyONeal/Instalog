@@ -7,6 +7,7 @@
 #include <Wbemidl.h>
 # pragma comment(lib, "wbemuuid.lib")
 #include "Com.hpp"
+#include "SecurityCenter.hpp"
 #include "PseudoHjt.hpp"
 
 namespace Instalog {
@@ -26,21 +27,43 @@ namespace Instalog {
 		return SCANNING;
 	}
 
+	static void SecurityCenterOutput( std::wostream& output )
+	{
+		using SystemFacades::SecurityProduct;
+		auto products = SystemFacades::EnumerateSecurityProducts();
+		for (auto it = products.cbegin(); it != products.cend(); ++it)
+		{
+			output << it->GetTwoLetterPrefix()
+				<< L": [" << it->GetInstanceGuid() << L"] ";
+			if (it->IsEnabled())
+			{
+				output << L'E';
+			}
+			else
+			{
+				output << L'D';
+			}
+			switch (it->GetUpdateStatus())
+			{
+			case SecurityProduct::OutOfDate:
+				output << L'O';
+				break;
+			case SecurityProduct::UpToDate:
+				output << L'U';
+				break;
+			}
+			output << L' ' << it->GetName() << L'\n';
+		}
+	}
+
 	void PseudoHjt::Execute(
-		std::wostream&,
+		std::wostream& output,
 		ScriptSection const&,
 		std::vector<std::wstring> const&
 	) const
 	{
-		//Security Center
-		SystemFacades::Com com;
-		CComPtr<IWbemLocator> wmiLocator;
-		SystemFacades::ThrowFromHResult(wmiLocator.CoCreateInstance(
-			CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER));
-		CComPtr<IWbemServices> wmiServices;
-		SystemFacades::ThrowFromHResult(wmiLocator->ConnectServer(BSTR("root"), 0, 0, 0, 0, 0, 0, 0));
-		CComPtr<IWbemServices> securityCenter, securityCenter2;
-		SystemFacades::ThrowFromHResult(wmiServices->OpenNamespace(L"SecurityCenter", 0, 0, &securityCenter, 0));
+		SecurityCenterOutput(output);
+
 	}
 
 }
