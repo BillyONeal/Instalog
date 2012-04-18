@@ -1,0 +1,9 @@
+message WhitelistEntryBlob {
+    required uint32 index = 1;
+	optional bool always_accept = 2;
+    optional string strData = 3;
+}
+
+message WhitelistEntry {
+    repeated WhitelistEntryBlob entries = 1;
+}

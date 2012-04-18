@@ -43,6 +43,10 @@ namespace Instalog
 			try
 			{
 				std::wstring executable = it->GetExecutablePath();
+				if (boost::starts_with(executable, L"\\??\\"))
+				{
+					executable.erase(executable.begin(), executable.begin() + 4);
+				}
 				if (w.IsOnWhitelist(executable))
 				{
 					continue;

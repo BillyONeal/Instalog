@@ -63,8 +63,9 @@ namespace Instalog { namespace SystemFacades {
 		}
 		Path::ResolveFromCommandLine(this->filepath);
 
+		static std::wstring svchostPath(Path::Append(Path::GetWindowsPath(), L"System32\\Svchost.exe"));
 		// Set the svchost group, dll path, and damaged status if applicable
-		if (this->filepath == Path::Append(Path::GetWindowsPath(), L"System32\\Svchost.exe"))
+		if (boost::iequals(filepath, svchostPath))
 		{
 			// Get the svchost group
 			this->svchostGroup = queryServiceConfig->lpBinaryPathName;

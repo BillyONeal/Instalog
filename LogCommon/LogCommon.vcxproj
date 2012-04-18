@@ -211,6 +211,7 @@
     <ClCompile Include="PseudoHjt.cpp" />
     <None Include="Running Processes.txt" />
     <None Include="Services Drivers.txt" />
+    <None Include="Whitelist.proto" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
