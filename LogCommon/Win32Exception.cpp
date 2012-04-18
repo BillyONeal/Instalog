@@ -98,7 +98,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 		else if (HRESULT_FACILITY(hRes) == FACILITY_ITF)
 		{
-			throw HresultException(hRes, L"", "");
+			throw HresultException(hRes, L"Interface Specific", "Interface Specific");
 		}
 		else
 		{

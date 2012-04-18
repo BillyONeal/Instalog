@@ -68,8 +68,8 @@ static void SecCenterProductCheck(
 			updateStatus = SecurityProduct::OutOfDate;
 		}
 		result.push_back(SecurityProduct(
-			name,
-			guid,
+			std::move(name),
+			std::move(guid),
 			onAccessEnabled,
 			updateStatus,
 			twoCode));
@@ -140,8 +140,8 @@ static void SecCenter2ProductCheck(
 			}
 		}
 		result.push_back(SecurityProduct(
-			name,
-			guid,
+			std::move(name),
+			std::move(guid),
 			enabledBits == 16,
 			updateStatus,
 			twoCode));
@@ -151,8 +151,15 @@ static void SecCenter2ProductCheck(
 static void CheckSecurityCenter( CComPtr<IWbemServices> wbemServices, std::vector<SecurityProduct>& result )
 {
 	CComPtr<IWbemServices> securityCenter;
-	ThrowIfFailed(wbemServices->OpenNamespace(
-		BSTR(L"SecurityCenter"),0,0,&securityCenter,0));
+	HRESULT errorCheck = wbemServices->OpenNamespace(
+		BSTR(L"SecurityCenter"),0,0,&securityCenter,0);
+	//On versions of Windows prior to XP SP2, there is no security center to query; so this would be
+	//an expected failure.
+	if (errorCheck == WBEM_E_INVALID_NAMESPACE)
+	{
+		return;
+	}
+	ThrowIfFailed(errorCheck);
 	SecCenterProductCheck(securityCenter, BSTR(L"AntiVirusProduct"), result, 
 		avCode);
 	SecCenterProductCheck(securityCenter, BSTR(L"FireWallProduct"), result,
@@ -186,7 +193,7 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
 	{
 		CheckSecurityCenter2(wbemServices, result);
 	}
-	CheckSecurityCenter(wbemServices, result);	
+	CheckSecurityCenter(wbemServices, result);
 
 	return result;
 }
