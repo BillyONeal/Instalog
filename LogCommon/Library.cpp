@@ -69,7 +69,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 		std::wstring answer (messagePtr);
 		LocalFree(messagePtr);
-		return answer;
+		return std::move(answer);
 	}
 
 }}
