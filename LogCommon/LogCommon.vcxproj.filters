@@ -15,6 +15,9 @@
     <Filter Include="Whitelists">
       <UniqueIdentifier>{960e73c8-6776-4c56-bae9-fd2115f6b151}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocol Buffers">
+      <UniqueIdentifier>{b54d4d76-1712-4a80-8a25-22198b8f2108}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -63,6 +66,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PseudoHjt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SecurityCenter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -139,6 +148,15 @@
     <ClInclude Include="PseudoHjt.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Com.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SecurityCenter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
@@ -150,5 +168,10 @@
     <None Include="Services Drivers.txt">
       <Filter>Whitelists</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Whitelist.proto">
+      <Filter>Protocol Buffers</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

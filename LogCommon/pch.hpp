@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
+#include "ntstatus.h"
 
 #define NOMINMAX
 #define NTDDI_VERSION 0x05010200

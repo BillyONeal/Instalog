@@ -1,3 +1,6 @@
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III, and "sUBs"
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
 #include "Scripting.hpp"
 
 namespace Instalog  {
@@ -9,7 +12,12 @@ namespace Instalog  {
 		virtual std::wstring GetName() const;
 		virtual LogSectionPriorities GetPriority() const;
 
-		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+		virtual void Execute(
+			std::wostream& logOutput,
+			ScriptSection const& sectionData,
+			std::vector<std::wstring> const& options
+		) const;
+
 	};
 
 }

@@ -6,6 +6,8 @@
 #include <string>
 #include <exception>
 #include <windows.h>
+#include <comdef.h>
+
 namespace Instalog { namespace SystemFacades {
 
 	/// @brief	A nice wrapper for throwing exceptions around Win32 errors
@@ -107,4 +109,35 @@ namespace Instalog { namespace SystemFacades {
 	{
 		ErrorProcedureNotFoundException() : Win32Exception(ERROR_PROC_NOT_FOUND) {}
 	};
+
+	class HresultException : public std::exception
+	{
+		std::string narrow;
+		std::wstring wide;
+		HRESULT hResult;
+	public:
+		HresultException(HRESULT hRes, std::wstring w, std::string n);
+		HRESULT GetErrorCode() const;
+		std::string const& GetErrorStringA() const;
+		std::wstring const& GetErrorStringW() const;
+		virtual char const* what();
+	};
+
+	
+	/**
+	 * @brief	Throws an exception from a HRESULT. This may be a Win32Exception if
+	 * 			the error is a system error; otherwise it is _com_error.
+	 * 			
+	 * @param   hRes    The hResult to check.
+	 */
+	void ThrowFromHResult(HRESULT hRes);
+
+	/**
+	 * @brief	Throws if the hResult indicated is a failure.
+	 *
+	 * @param   hRes    The hResult to check.
+	 */
+	void ThrowIfFailed(HRESULT hRes);
+
+
 }}
