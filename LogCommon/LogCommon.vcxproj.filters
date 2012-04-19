@@ -71,6 +71,9 @@
     <ClCompile Include="SecurityCenter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -151,6 +154,9 @@
     <ClInclude Include="SecurityCenter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
@@ -162,8 +168,10 @@
     <None Include="Services Drivers.txt">
       <Filter>Whitelists</Filter>
     </None>
-    <None Include="Whitelist.proto">
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Whitelist.proto">
       <Filter>Protocol Buffers</Filter>
-    </None>
+    </CustomBuild>
   </ItemGroup>
 </Project>

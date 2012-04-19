@@ -30,3 +30,4 @@ Docs/Instalog Design/*.pdf
 *.vsp
 *.psess
 Instalog/Instalog.txt
+LogCommon/CompiledProtocolBuffers/*

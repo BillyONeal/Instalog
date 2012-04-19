@@ -62,7 +62,18 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(SolutionDir)ThirdParty\protobuf-2.4.1\src;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(SolutionDir)ThirdParty\protobuf-2.4.1\src;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)ThirdParty\protobuf-2.4.1\src;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)ThirdParty\protobuf-2.4.1\src;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -144,6 +155,20 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Path.cpp" />
@@ -171,6 +196,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Com.hpp" />
+    <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h" />
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="File.hpp" />
@@ -211,7 +237,19 @@
     <ClCompile Include="PseudoHjt.cpp" />
     <None Include="Running Processes.txt" />
     <None Include="Services Drivers.txt" />
-    <None Include="Whitelist.proto" />
+    <CustomBuild Include="Whitelist.proto">
+      <FileType>Document</FileType>
+      <Command>rmdir /s /q "$(ProjectDir)CompiledProtocolBuffers"
+mkdir "$(ProjectDir)CompiledProtocolBuffers"
+"$(SolutionDir)ThirdParty\protobuf-2.4.1\protoc.exe"  --proto_path="$(ProjectDir)\" --cpp_out="$(ProjectDir)CompiledProtocolBuffers" "%(FullPath)"</Command>
+      <Message>Building Protocol Buffers File: %(Identity)</Message>
+      <Outputs>$(ProjectDir)CompiledProtocolBuffers;$(ProjectDir)CompiledProtocolBuffers\Whitelist.pb.h;$(ProjectDir)CompiledProtocolBuffers\Whitelist.pb.cc;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)ThirdParty\protobuf-2.4.1\vsprojects\libprotobuf-lite.vcxproj">
+      <Project>{49ea010d-706f-4be2-a397-77854b72a040}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

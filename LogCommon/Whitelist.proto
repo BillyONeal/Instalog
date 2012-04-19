@@ -1,3 +1,7 @@
+package Instalog.ProtocolBuffers;
+option optimize_for = LITE_RUNTIME;
+option cc_generic_services = false;
+
 message WhitelistEntryBlob {
     required uint32 index = 1;
 	optional bool always_accept = 2;
