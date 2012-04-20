@@ -13,6 +13,7 @@
 #include "LogCommon/Scripting.hpp"
 #include "LogCommon/ScanningSections.hpp"
 #include "LogCommon/PseudoHjt.hpp"
+#include "LogCommon/Com.hpp"
 
 /// @brief	Console "user interface"
 struct ConsoleInterface : public Instalog::IUserInterface
@@ -36,7 +37,7 @@ using namespace Instalog;
 /// @brief	Main entry-point for this application.
 int main()
 {
-	::CoInitialize(nullptr);
+	Instalog::SystemFacades::Com com;
 	try
 	{
 		if (Instalog::SystemFacades::IsWow64())
@@ -51,8 +52,9 @@ int main()
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new EventViewer));
+		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RestorePoints));
 		wchar_t const defaultScript[] =
-			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n";
+			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:RestorePoints\n";
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
@@ -69,5 +71,4 @@ int main()
 	{
 		std::cerr << "Exception: " << ex.what() << std::endl;
 	}
-	::CoUninitialize();
 }

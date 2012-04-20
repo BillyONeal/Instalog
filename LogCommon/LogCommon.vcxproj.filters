@@ -74,6 +74,12 @@
     <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Wmi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RestorePoints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -155,6 +161,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Wmi.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RestorePoints.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

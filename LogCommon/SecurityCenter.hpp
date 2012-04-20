@@ -69,7 +69,5 @@ namespace Instalog { namespace SystemFacades {
 
 	std::vector<SecurityProduct> EnumerateSecurityProducts();
 
-	CComPtr<IWbemServices> GetWbemServices();
-
 }}
 

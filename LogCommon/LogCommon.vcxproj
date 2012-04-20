@@ -185,6 +185,7 @@
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="Library.cpp" />
+    <ClCompile Include="RestorePoints.cpp" />
     <ClCompile Include="ScanningSections.cpp" />
     <ClCompile Include="SecurityCenter.cpp" />
     <ClCompile Include="ServiceControlManager.cpp" />
@@ -193,6 +194,7 @@
     <ClCompile Include="Whitelist.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
     <ClCompile Include="Win32Glue.cpp" />
+    <ClCompile Include="Wmi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Com.hpp" />
@@ -208,6 +210,7 @@
     <ClInclude Include="PseudoHjt.hpp" />
     <ClInclude Include="Registry.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="RestorePoints.hpp" />
     <ClInclude Include="ScanningSections.hpp" />
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
@@ -221,6 +224,7 @@
     <ClInclude Include="Whitelist.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
     <ClInclude Include="Win32Glue.hpp" />
+    <ClInclude Include="Wmi.hpp" />
     <ClInclude Include="Wow64.hpp" />
   </ItemGroup>
   <ItemGroup>

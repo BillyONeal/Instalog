@@ -5,6 +5,7 @@
 #include <comdef.h>
 #include <wbemidl.h>
 #include "Win32Exception.hpp"
+#include "Wmi.hpp"
 #include "SecurityCenter.hpp"
 
 namespace Instalog { namespace SystemFacades {
@@ -101,7 +102,7 @@ static void SecCenter2ProductCheck(
 		}
 		else if (FAILED(hr))
 		{
-			throw _com_error(hr);
+			ThrowFromHResult(hr);
 		}
 		else if (returnCount == 0)
 		{
@@ -224,25 +225,6 @@ std::wostream& operator<<( std::wostream& lhs, const SecurityProduct& rhs )
 	return lhs;
 }
 
-CComPtr<IWbemServices> GetWbemServices()
-{
-	CComPtr<IWbemLocator> locator;
-	ThrowIfFailed(locator.CoCreateInstance(CLSID_WbemLocator, 0, 
-		CLSCTX_INPROC_SERVER));
-	CComPtr<IWbemServices> wbemServices;
-	ThrowIfFailed(locator->ConnectServer(BSTR(L"ROOT"),0,0,0,0,0,0,&wbemServices));
-	ThrowIfFailed(CoSetProxyBlanket(
-		wbemServices,
-		RPC_C_AUTHN_WINNT,
-		RPC_C_AUTHZ_NONE,
-		0,
-		RPC_C_AUTHN_LEVEL_CALL,
-		RPC_C_IMP_LEVEL_IMPERSONATE,
-		0,
-		EOAC_NONE
-		));
-	return wbemServices;
-}
 void SecurityProduct::Delete()
 {
 	CComPtr<IWbemServices> wbemServices(GetWbemServices());
