@@ -61,6 +61,23 @@ namespace Instalog
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
 	};
 
+	struct MachineSpecifications : public ISectionDefinition
+	{
+		virtual std::wstring GetScriptCommand() const
+		{
+			return L"machinespecifications";
+		}
+		virtual std::wstring GetName() const
+		{
+			return L"Machine Specifications";
+		}
+		virtual LogSectionPriorities GetPriority() const
+		{
+			return SCANNING;
+		}
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+	};
+
 	/// @brief	Restore points scanning section
 	struct RestorePoints : public ISectionDefinition
 	{

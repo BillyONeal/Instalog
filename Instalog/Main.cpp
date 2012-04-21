@@ -52,9 +52,10 @@ int main()
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new EventViewer));
+		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
 		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RestorePoints));
 		wchar_t const defaultScript[] =
-			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:RestorePoints\n";
+			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n";
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
