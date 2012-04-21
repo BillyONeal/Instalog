@@ -201,7 +201,7 @@ namespace Instalog
 		}
 	}
 	
-	void MachineSpecifications::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	void MachineSpecifications::OperatingSystem( std::wostream &logOutput ) const
 	{
 		using namespace SystemFacades;
 
@@ -214,18 +214,6 @@ namespace Instalog
 		CComPtr<IEnumWbemClassObject> enumWin32_OperatingSystem;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
 			BSTR(L"Win32_OperatingSystem"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_OperatingSystem));
-		CComPtr<IEnumWbemClassObject> enumWin32_BaseBoard;
-		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_BaseBoard));
-		CComPtr<IEnumWbemClassObject> enumWin32_PerfFormattedData_PerfOS_System;
-		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_PerfFormattedData_PerfOS_System"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_PerfFormattedData_PerfOS_System));
-		CComPtr<IEnumWbemClassObject> enumWin32_Win32_Processor;
-		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_Win32_Processor));
-		CComPtr<IEnumWbemClassObject> enumWin32_LogicalDisk;
-		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_LogicalDisk));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
@@ -245,7 +233,7 @@ namespace Instalog
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
-		
+
 		ThrowIfFailed(variant.ChangeType(VT_BSTR));
 		ThrowIfFailed(response->Get(L"SystemDrive", 0, &variant, NULL, NULL));
 		logOutput << L"Boot Device: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
@@ -261,6 +249,26 @@ namespace Instalog
 		logOutput << L"System Uptime: ";
 		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)))));
 		variant.Clear();
+	}
+
+	void MachineSpecifications::PerfFormattedData_PerfOS_System( std::wostream &logOutput ) const
+	{
+		using namespace SystemFacades;
+
+		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+
+		CComPtr<IWbemServices> namespaceCimv2;
+		ThrowIfFailed(wbemServices->OpenNamespace(
+			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+
+		CComPtr<IEnumWbemClassObject> enumWin32_PerfFormattedData_PerfOS_System;
+		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
+			BSTR(L"Win32_PerfFormattedData_PerfOS_System"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_PerfFormattedData_PerfOS_System));
+
+		HRESULT hr;
+		ULONG returnCount = 0;
+		CComPtr<IWbemClassObject> response;
+		CComVariant variant;
 
 		hr = enumWin32_PerfFormattedData_PerfOS_System->Next(WBEM_INFINITE, 1, &response, &returnCount);
 		if (hr == WBEM_S_FALSE)
@@ -275,11 +283,47 @@ namespace Instalog
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
-		
-		ThrowIfFailed(variant.ChangeType(VT_UI8));
+
+		ThrowIfFailed(variant.ChangeType(VT_BSTR));
 		ThrowIfFailed(response->Get(L"SystemUpTime", 0, &variant, NULL, NULL));
-		logOutput << L" (" << variant.ullVal << L")" << std::endl;
+		ULONGLONG upTime = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
+		ULONGLONG numDays = upTime / 86400;
+		upTime -= 86400 * numDays;
+		UINT numHours = static_cast<UINT>(upTime / 3600);
+		upTime -= 3600 * numHours;
+		UINT numMinutes = static_cast<UINT>(upTime / 60);
+		upTime -= 60 * numMinutes;
+		logOutput << L" (" << numDays << L":" << std::setw(2) << numHours << L":" << std::setw(2) << numMinutes << L":" << std::setw(2) << upTime << L")" << std::endl;
 		variant.Clear();
+	}
+
+	void MachineSpecifications::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		OperatingSystem(logOutput);
+		PerfFormattedData_PerfOS_System(logOutput);
+		BaseBoard(logOutput);
+		Processor(logOutput);
+		LogicalDisk(logOutput);
+	}
+
+	void MachineSpecifications::BaseBoard( std::wostream &logOutput ) const
+	{
+		using namespace SystemFacades;
+
+		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+
+		CComPtr<IWbemServices> namespaceCimv2;
+		ThrowIfFailed(wbemServices->OpenNamespace(
+			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+
+		CComPtr<IEnumWbemClassObject> enumWin32_BaseBoard;
+		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
+			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_BaseBoard));
+
+		HRESULT hr;
+		ULONG returnCount = 0;
+		CComPtr<IWbemClassObject> response;
+		CComVariant variant;
 
 		hr = enumWin32_BaseBoard->Next(WBEM_INFINITE, 1, &response, &returnCount);
 		if (hr == WBEM_S_FALSE)
@@ -301,8 +345,28 @@ namespace Instalog
 		ThrowIfFailed(response->Get(L"Product", 0, &variant, NULL, NULL));
 		logOutput << L" " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
 		variant.Clear();
+	}
 
-		hr = enumWin32_Win32_Processor->Next(WBEM_INFINITE, 1, &response, &returnCount);
+	void MachineSpecifications::Processor( std::wostream &logOutput ) const
+	{
+		using namespace SystemFacades;
+
+		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+
+		CComPtr<IWbemServices> namespaceCimv2;
+		ThrowIfFailed(wbemServices->OpenNamespace(
+			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+
+		CComPtr<IEnumWbemClassObject> enumWin32_Processor;
+		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
+			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_Processor));
+
+		HRESULT hr;
+		ULONG returnCount = 0;
+		CComPtr<IWbemClassObject> response;
+		CComVariant variant;
+
+		hr = enumWin32_Processor->Next(WBEM_INFINITE, 1, &response, &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -319,6 +383,82 @@ namespace Instalog
 		ThrowIfFailed(response->Get(L"Name", 0, &variant, NULL, NULL));
 		logOutput << L"Processor: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
 		variant.Clear();
+	}
+
+	void MachineSpecifications::LogicalDisk( std::wostream &logOutput ) const
+	{
+		using namespace SystemFacades;
+
+		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+
+		CComPtr<IWbemServices> namespaceCimv2;
+		ThrowIfFailed(wbemServices->OpenNamespace(
+			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+
+		CComPtr<IEnumWbemClassObject> enumWin32_LogicalDisk;
+		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
+			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_LogicalDisk));
+
+		for (;;)
+		{
+			HRESULT hr;
+			ULONG returnCount = 0;
+			CComPtr<IWbemClassObject> response;
+			CComVariant variant;
+
+			hr = enumWin32_LogicalDisk->Next(WBEM_INFINITE, 1, &response, &returnCount);
+			if (hr == WBEM_S_FALSE)
+			{
+				break;
+			}
+			else if (FAILED(hr))
+			{
+				ThrowFromHResult(hr);
+			}
+			else if (returnCount == 0)
+			{
+				throw std::runtime_error("Unexpected number of returned classes.");
+			}
+
+			ThrowIfFailed(variant.ChangeType(VT_BSTR));
+			ThrowIfFailed(response->Get(L"DeviceID", 0, &variant, NULL, NULL));
+			logOutput << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L" is ";
+			variant.Clear();
+			
+			ThrowIfFailed(variant.ChangeType(VT_I4));
+			ThrowIfFailed(response->Get(L"DriveType", 0, &variant, NULL, NULL));
+			ULONG driveType = variant.ulVal;
+			switch (driveType)
+			{
+			case 0: logOutput << L"UNKNOWN"; break;
+			case 1: logOutput << L"NOROOT"; break;
+			case 2: logOutput << L"REMOVABLE"; break;
+			case 3: logOutput << L"LOCAL"; break;
+			case 4: logOutput << L"NETWORK"; break;
+			case 5: logOutput << L"CDROM"; break;
+			case 6: logOutput << L"RAM"; break;
+			}
+			variant.Clear();
+
+			ThrowIfFailed(variant.ChangeType(VT_BSTR));
+			ThrowIfFailed(response->Get(L"Size", 0, &variant, NULL, NULL));
+			ULONGLONG totalSize = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
+
+			if (totalSize == 0)
+			{
+				logOutput << std::endl;
+			}
+			else
+			{
+				ThrowIfFailed(response->Get(L"FreeSpace", 0, &variant, NULL, NULL));
+				ULONGLONG freeSpace = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
+
+				totalSize /= 1073741824;
+				freeSpace /= 1073741824;
+
+				logOutput << L" - " << totalSize << L" GiB total, " << freeSpace << L" GiB free" << std::endl;
+			}
+		}
 	}
 
 	void RestorePoints::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const

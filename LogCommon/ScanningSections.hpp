@@ -63,6 +63,7 @@ namespace Instalog
 
 	struct MachineSpecifications : public ISectionDefinition
 	{
+		void test();
 		virtual std::wstring GetScriptCommand() const
 		{
 			return L"machinespecifications";
@@ -76,6 +77,13 @@ namespace Instalog
 			return SCANNING;
 		}
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+
+	private:
+		void OperatingSystem(std::wostream &logOutput) const;
+		void PerfFormattedData_PerfOS_System(std::wostream &logOutput) const;
+		void BaseBoard(std::wostream &logOutput) const;
+		void Processor(std::wostream &logOutput) const;
+		void LogicalDisk(std::wostream &logOutput) const;
 	};
 
 	/// @brief	Restore points scanning section
