@@ -24,4 +24,41 @@ namespace Instalog { namespace SystemFacades {
 		return wbemServices;
 	}
 
+	FILETIME WmiDateStringToFiletime( std::wstring const& datestring )
+	{
+		SYSTEMTIME systemTime;
+		systemTime.wYear	= static_cast<WORD>(_wtoi(datestring.substr(0, 4).c_str()));
+		systemTime.wMonth	= static_cast<WORD>(_wtoi(datestring.substr(4, 2).c_str()));
+		systemTime.wDay		= static_cast<WORD>(_wtoi(datestring.substr(6, 2).c_str()));
+		systemTime.wHour	= static_cast<WORD>(_wtoi(datestring.substr(8, 2).c_str()));
+		systemTime.wMinute	= static_cast<WORD>(_wtoi(datestring.substr(10, 2).c_str()));
+		systemTime.wSecond	= static_cast<WORD>(_wtoi(datestring.substr(12, 2).c_str()));
+		systemTime.wMilliseconds = static_cast<WORD>(_wtoi(datestring.substr(15, 3).c_str()));
+
+		FILETIME fileTime;
+		if (SystemTimeToFileTime(&systemTime, &fileTime) == false)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+
+		ULARGE_INTEGER intTime;
+		intTime.LowPart = fileTime.dwLowDateTime;
+		intTime.HighPart = fileTime.dwHighDateTime;
+
+		if (datestring[21] == L'-')
+		{
+			intTime.QuadPart -= static_cast<WORD>(_wtoi(datestring.substr(22, 3).c_str()));	
+		}
+		else if (datestring[21] == L'+')
+		{
+			intTime.QuadPart += static_cast<WORD>(_wtoi(datestring.substr(22, 3).c_str()));
+		}
+
+		FILETIME utcFileTime;
+		utcFileTime.dwLowDateTime = intTime.LowPart;
+		utcFileTime.dwHighDateTime = intTime.HighPart;
+
+		return utcFileTime;
+	}
+
 }}

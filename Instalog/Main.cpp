@@ -71,4 +71,6 @@ int main()
 	{
 		std::cerr << "Exception: " << ex.what() << std::endl;
 	}
+
+	system("notepad.exe Instalog.txt");
 }

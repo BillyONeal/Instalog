@@ -67,24 +67,4 @@ namespace Instalog { namespace SystemFacades {
 		return restorePoints;
 	}
 
-	SYSTEMTIME RestorePoint::CreationTimeAsSystemTime()
-	{
-		SYSTEMTIME utcTime;
-		utcTime.wYear	= static_cast<WORD>(_wtoi(CreationTime.substr(0, 4).c_str()));
-		utcTime.wMonth	= static_cast<WORD>(_wtoi(CreationTime.substr(4, 2).c_str()));
-		utcTime.wDay	= static_cast<WORD>(_wtoi(CreationTime.substr(6, 2).c_str()));
-		utcTime.wHour	= static_cast<WORD>(_wtoi(CreationTime.substr(8, 2).c_str()));
-		utcTime.wMinute	= static_cast<WORD>(_wtoi(CreationTime.substr(10, 2).c_str()));
-		utcTime.wSecond	= static_cast<WORD>(_wtoi(CreationTime.substr(12, 2).c_str()));
-		utcTime.wMilliseconds = 0;
-
-		SYSTEMTIME localTime;
-		if (SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime) == false)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-
-		return localTime;
-	}
-
 }}

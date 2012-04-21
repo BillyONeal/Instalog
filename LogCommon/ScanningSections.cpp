@@ -16,6 +16,7 @@
 #include "EventLog.hpp"
 #include "Win32Glue.hpp"
 #include "RestorePoints.hpp"
+#include "Wmi.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -206,15 +207,8 @@ namespace Instalog
 
 		for (auto restorePoint = restorePoints.begin(); restorePoint != restorePoints.end(); ++restorePoint)
 		{
-			SYSTEMTIME creationTimeSystemTime = restorePoint->CreationTimeAsSystemTime();
-			FILETIME creationTimeFileTime;
-			if (SystemTimeToFileTime(&creationTimeSystemTime, &creationTimeFileTime) == false)
-			{
-				SystemFacades::Win32Exception::ThrowFromLastError();
-			}
-
 			logOutput << restorePoint->SequenceNumber << L" " ;
-			WriteDefaultDateFormat(logOutput, FiletimeToInteger(creationTimeFileTime));
+			WriteDefaultDateFormat(logOutput, FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(restorePoint->CreationTime)));
 			logOutput << L" " << restorePoint->Description << std::endl;
 		}
 	}
