@@ -17,6 +17,7 @@
 #include "Win32Glue.hpp"
 #include "RestorePoints.hpp"
 #include "Wmi.hpp"
+#include "Registry.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -472,6 +473,64 @@ namespace Instalog
 			logOutput << L" " << restorePoint->Description << std::endl;
 		}
 	}
+	
+	void InstalledPrograms::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		Enumerate(logOutput, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+		Enumerate(logOutput, L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+	}
 
+	void InstalledPrograms::Enumerate( std::wostream& logOutput, std::wstring const& rootKeyPath ) const
+	{
+		using namespace SystemFacades;
+
+		RegistryKey rootKey(RegistryKey::Open(rootKeyPath));
+		if (rootKey.Invalid())
+		{
+			try
+			{
+				Win32Exception::ThrowFromNtError(::GetLastError());
+			}
+			catch (ErrorFileNotFoundException const&)
+			{
+				return;
+			}
+		}
+
+		std::vector<RegistryKey> uninstallKeys(rootKey.EnumerateSubKeys());
+
+		for (auto uninstallKey = uninstallKeys.begin(); uninstallKey != uninstallKeys.end(); ++uninstallKey)
+		{
+			try
+			{
+				RegistryValue displayName(uninstallKey->GetValue(L"DisplayName"));
+				std::wstring displayNameStr = displayName.GetString();
+				GeneralEscape(displayNameStr);
+				logOutput << displayNameStr;
+			}
+			catch (ErrorFileNotFoundException const&)
+			{
+				continue;
+			}
+
+			try
+			{
+				RegistryValue versionMajor(uninstallKey->GetValue(L"VersionMajor"));
+				RegistryValue versionMinor(uninstallKey->GetValue(L"VersionMinor"));
+
+				logOutput << L" (version " << versionMajor.GetDWord() << L"." << versionMinor.GetDWord() << L")" << std::endl;
+			}
+			catch (ErrorFileNotFoundException const&)
+			{
+				logOutput << std::endl;
+				continue;
+			}
+			catch (InvalidRegistryDataTypeException const&) // TODO: Bill, I don't think I should need to do this but was getting weird errors
+			{
+				logOutput << std::endl;
+				continue;			
+			}
+		}
+	}
 
 }

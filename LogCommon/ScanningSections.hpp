@@ -61,6 +61,7 @@ namespace Instalog
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
 	};
 
+	/// @brief	Machine specifications scanning section
 	struct MachineSpecifications : public ISectionDefinition
 	{
 		void test();
@@ -102,5 +103,25 @@ namespace Instalog
 			return SCANNING;
 		}
 		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+	};
+
+	/// @brief	Installed programs scanning sections
+	struct InstalledPrograms : public ISectionDefinition
+	{
+		virtual std::wstring GetScriptCommand() const
+		{
+			return L"installedprograms";
+		}
+		virtual std::wstring GetName() const
+		{
+			return L"Installed Programs";
+		}
+		virtual LogSectionPriorities GetPriority() const
+		{
+			return SCANNING;
+		}
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+	private:
+		void Enumerate(std::wostream& logOutput, std::wstring const& rootKeyPath) const;
 	};
 }
