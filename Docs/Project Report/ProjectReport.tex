@@ -9,11 +9,12 @@
 \usepackage[numbib]{tocbibind}
 
 \title{Instalog Project Report \\
-Interim Report 2}
+Final Report}
 \author{
 Billy R. O'Neal III (bro4@case.edu) \\
 Jacob Snyder (jrs213@case.edu) \\ \\
-Case Western Reserve University
+Case Western Reserve University \\ \\ 
+\url{http://code.instalog.org/}
 }
 
 \begin{document}
@@ -129,27 +130,37 @@ TrendMicro's {\em Hijack This} was open-sourced recently.  The authors of this
 project have briefly looked through the project to see if it is worth forking
 the project to implement Instalog.  It was determined that the source code is
 not up to par.  Not only is it written in Visual Basic, the licensing agreement
-on it is unknown at this time.  
+is GPL, which means that any work done could not be used in closed-source
+settings, which is against the wishes of the authors.
 
 \subsection{Progress}
-At the time of the last report, we had finished the requirements and
-specifications documents and had just started the design and code implementation
-phase.  By working long hours over spring break, we have finished the design for
-the scanning portion of the project and have moved into the implementation
-phase.  So far, we have finished most of the background scaffolding needed to do
-scanning (registry enumeration, filesystem enumeration, string manipulation,
-etc.) and have moved into the actual implementation of the scanning section. 
-With the exception of whitelisting, the running processes and scanners/drivers
-sections are complete.  At the time of this writing, progress into Pseudo HJT
-and Restore Point enumeration has begun.  
+At the time of the last report, we had finished the scaffolding parts and had
+just began actually implementation scanning sections.  Since then, progress has
+been much slower due to heavy courseload in other classes.  Despite this,
+however, a significant amount of work has been completed.  Since the last
+report, the Registry wrapper has been finished, and the event viewer, machine
+specifications, and restore points scanning sections have been completed.  The
+event viewer section wound up being more work that expected and took almost two
+weeks due to the fact that the API for querying events is difficult to work with
+and required a wrapper as well (which was unforeseen when the other wrappers
+were written).  Additionally, Windows Vista introduced a new logging API, so two
+radically different wrappers had to be written for each implementation.  
 
-At this time, support for Windows 2000, Windows XP RTM, and Windows XP Service
-Pack 1 have been tentatively dropped. This is forced upon us by changes made to
-the C runtime bundled with Visual Studio 2010 which drops support for these
-operating systems. (The application crashes on startup) We are actively
-investigating workarounds for the problem.
+In addition to completing these scanning components, work is still continuing on
+the Psuedo Hijack This scanning section.  
 
-Please refer to section~\ref{project_progress} for more details.  
+After working on several scanning sections, it became clear that the
+whitelisting and scripting support that was originally designed was inadequate
+for features that would be implemented later.  These sections were redesigned
+and reimplemented, which took several days.
+
+Lastly, support for Windows XP RTM and Windows XP Service Pack 1 has been
+restored because a rather simple work-around was found to support compiling for
+these operating systems with Visual Studio 2010.  However, support for Windows
+2000 has been permanently dropped because this tool simply requires too many
+features that are not available on Windows 2000 and the operating system no
+longer receives security updates from Microsoft (making security on the
+operating system an impossible matter).
 
 \subsection{Report Structure}
 This report is structured using a modified version of the structure proposed in
@@ -169,12 +180,13 @@ Testing and Evaluation section has been merged into the Software Design section
 as a separate stand-alone document. This report then introduces the
 aforementioned Scope Limit (section~\ref{scope_limit}) and then moves into the
 finer points of the Project Management and Administrative Details
-(section~\ref{project_management}) and Project Progress
-(section~\ref{project_progress}) sections.  The report then references any
-additional external documents in the External Documents section
-(section~\ref{documents}) and then lists all of the references made in the
-document in the References section.  Lastly, the report mentions the legal
-details for the project in the License appendix (appendix~\ref{license}).
+(section~\ref{project_management}).  It concludes with Lessons Learned
+(section~\ref{lessons}) and Conclusions, Final Status, and Future Work
+(section~\ref{conclusions}). The report then references any additional external
+documents in the External Documents section (section~\ref{documents}) and then
+lists all of the references made in the document in the References section. 
+Lastly, the report mentions the legal details for the project in the License
+appendix (appendix~\ref{license}).
 
 \newpage
 
@@ -300,17 +312,15 @@ done once more of the project is completed.
 
 \section{Scope Limit} \label{scope_limit}
 The scope of this project is much larger than can be reasonably finished in the
-time-frame for the course.  It has taken five weeks just to write the
+time-frame for the course.  It had taken five weeks just to write the
 requirements and specifications for the project.  Therefore, due to the sheer
 amount of features this tool will have as well as the amount of testing on
 varying environments that will be required, at the suggestion of the professor
 of the Senior Project course, the authors have instituted a scope limit for the
-completion of the project.  Since the scanning functionality is the most
-valuable part of the tool, this functionality will be completed in time for the
-project deadline of the course.  If this functionality is completed and verified
-quickly and there is time to spare, the following features will be added in the
-specified order:
+completion of the project.  
 
+The initial scope limit was to work on scanning features first and then
+implement the below features in the following order:
 \begin{enumerate}
     \item Scripting 
     \item GUI 
@@ -322,11 +332,17 @@ specified order:
     \item Checkboxes and fix generation on the GUI
 \end{enumerate}
 
-In the event any of these features are added, Instalog will remain a functional,
-shippable, well-tested, production-quality tool, suitable for the final senior
-project submission.  If a feature is attempted but cannot be developed to a
-satisfactory level in time for the submission, a previously stable release of
-the tool will be reverted to and turned in.  
+At the time of the second interim report, it was suggested that the scope for
+the project by the final deadline be scaled back more.  It was decided that work
+would continue on the project at the same pace and if features that were
+originally promised were unimplemented or untested, they would be added to the
+scope limit and implemented after the semester had ended.  These features are:
+\begin{enumerate}
+  \item Psuedo Hijack This (work has been started but not completed)
+  \item Created Last 30
+  \item Find3M
+  \item Installed Programs
+\end{enumerate}
 
 The authors of this tool will complete any remaining deliverables outside of the
 Senior Project course in the free time between when classes and summer
@@ -355,11 +371,18 @@ developing a realistic view of the project.  Out of this came the Scope Limit
 that instead of letting standards slip and shipping a shoddy product that could
 potentially ruin users' machines, that instead the first component of the
 product would be implemented and tested well.  Then, after the course, work
-would continue on the remaining items.  The hope is that since the Specification
-Document was written so thoroughly, the implementation and testing will not be
-as time consuming and that the timeline can be shortened and more features can
-be implemented.  However, given the oversights that were present in the original
-timeline, this is the best realistic timeline that is possible at the moment.  
+would continue on the remaining items.  The hope was that since the
+Specification Document was written so thoroughly, the implementation and testing
+will not be as time consuming and that the timeline can be shortened and more
+features can be implemented.
+
+However, even given the conservative scope limit, everything was not completed
+as the authors had hoped.  Several roadblocks were encountered including needing
+to wrap two more clunky Windows APIs, having to redesign the scripting and
+whitelisting implementations, and having other courses (primarily EECS 391) take
+up a large portion of the authors' available time.  As such, all the features
+were not completed as originally hoped and testing did not happen on all target
+operating systems.  
 
 \begin{figure}[h]
   	\centering
@@ -368,15 +391,14 @@ timeline, this is the best realistic timeline that is possible at the moment.
   	\label{gantt}
 \end{figure}
 
-The project is on track according to the revised plan.  In the last report, it
-was stated that the goal was to have a reasonable prototype in place by this
-report.  This goal has been met, with two scanning sections entirely
-implemented with more on the way.  At this point, since all of the scaffolding
-is in place, there shouldn't be many more roadblocks in the way to finishing the
-project on time.  Additionally, the project has been tested as development has
-progressed, so the actual testing time shouldn't take nearly as long as stated
-in the Gantt chart, so the implementation phase can get shifted back into the
-testing phase if needed.  
+In the end, the authors could not keep pace with the revised timeline.  This is
+partially due to the other factors listed above, but also is an artifact of how
+the timeline is still unrealistically fast-paced for the implementation and
+testing portions.  In hindsight, it is obvious that if over fifty days were
+spent on the requirements, specifications, and design documents, then it is
+extremely unrealistic to finish the implementation and testing in just over
+forty days.  The scope limit should have more realistic from the start, but the
+schedule was a bit too optimistic.  
 
 The authors of this tool began by using pair programming at the beginning of the
 project.  Once a good common ground had been established, the authors split off
@@ -387,16 +409,51 @@ development method.
 
 
 
-\section{Project Progress} \label{project_progress}
-The authors have been making good progress on the project.  By spending almost
-every waking hour for five days over spring break working on the project, a
-substantial amount of code has been designed, implemented, and tested.  A large
-amount of background ``scaffolding'' has been developed and added to the
-project.  In this context, ``scaffolding'' refers to the common code that
-practically all scan sections will need.  This includes, but is not limited to:
+\section{Lessons Learned} \label{lessons}
+The biggest lesson we learned is that everything takes longer than we originally
+think it will.  It seems that in all of our time estimates, we were way off on
+how long we thought it would take to do things versus how long they actually
+took.  The first time this happened was when we were initially writing the
+requirements, specification, and design documents.  Initially, we thought that
+we would be able to get them done in a weekend!  This wound up taking us
+\textit{weeks} of time.  Once we had finished that, in the remaining time, we
+thought that we would be able to implement the entire project and test it on all
+supported operating systems!  Not surprisingly (thinking back on it now), this
+was also way off.  We then limited our scope drastically to something that we
+thought was reasonable.  Even still though, we were not able to finish that.  To
+be clear, this isn't because we were lazy and didn't work on things until the
+last minute.  We worked diligently over the entire semester (we even worked
+straight through spring break) and still did not finish what we set out to do. 
+So this is most certainly the biggest takeaway from this project: even the
+simplest of things take several times longer than you expect them to.
 
+Another big takeaway from this project is the benefit of doing things ``the
+right way``.  What we mean by this is following proper software engineering
+practices -- writing good documentation, using version control, unit testing,
+etc.  While each of these concepts has a high up-front cost (meaning that we
+weren't able to start coding right away), they saved us a lot of time in the
+long run.  Unfortunately, since the project is still not done, the ``long run''
+extends far past the end of this class.  So, if we had not followed these
+practices, we probably would have more code and features done at this point, but
+they would have been poorly tested and planned out, making maintenance and
+adding future features a nightmare.  By planning everything out ahead of time,
+we saved ourselves a lot of frustration of reworking everything again and again.
+ Additionally, by having a detailed specification document, ``experts'' that
+will be using this tool will know exactly how each feature works (something that
+cannot be said for most of the other tools in the field currently).
+
+\newpage
+
+
+
+\section{Conclusions, Final Status, and Future Work} \label{conclusions}
+At this point, we did not finish everything that we had hoped to finish with the
+scope limit (see section~\ref{scope_limit}).  However, what we did finish has
+been well tested and documented.  We have finished the following ``scaffolding''
+sections, which correspond to a large proportion of the specification document
+(\cite{Specification}):
 \begin{itemize}
-  \item An easy runtime dynamic linker
+  \item A runtime dynamic linker
   \item A wrapper around Win32 and NT error messages to convert them to C++
   exceptions
   \item A wrapper around Win32 Processes Handles
@@ -410,89 +467,73 @@ practically all scan sections will need.  This includes, but is not limited to:
   \item Rudimentary scripting, reordering, and execution
   \item Framework for developing and reporting progress back to user interfaces
   \item A wrapper around Win32 Service Control Manager 
+  \item A message formatter
+  \item A wrapper around the ``new'' and ``old'' event viewer
 \end{itemize}
 
-This ``scaffolding'' is actually quite a large portion of the specifications
-document \cite{Specification}.  In fact, these sections alone account for
-sections two and three of the specification.
+From these ``scaffolding'' pieces, the following scanning sections have been
+implemented:
+\begin{itemize}
+  \item Running Processes
+  \item Psuedo Hijack This (in progress, biggest part of the specification
+  \cite{Specification})
+  \item Services and Drivers
+  \item Machine Specifications
+  \item Restore Points
+\end{itemize}
 
-In addition to finishing these background scaffolding components, two scanning
-sections have been completely implemented: running processes and installed
-services and drivers.  It is important to note that while this is the only
-user-facing progress that has been made, like at the last report, a significant
-amount of background work is done and completed so that the features of the tool
-can be implemented.  The authors expect scanning sections to be implemented more
-quickly with the scaffolding largely out of the way.
+It was suggested after interim report 2 that we narrow the scope of our initial
+scope limit, so we feel that we have been successful in getting a healthy amount
+of work on the project done.  As it is, there are only a few more scanning
+sections to complete, which shouldn't take more than a week or two of solid work
+to complete (without the interference of classes and other distractions).  
 
-The authors have also been testing and documenting the written code extensively.
-At the time of this writing, there are at least two hundred unit tests written,
-each making sure the above scaffolding components and scanning sections are
-running properly.  There are also doxygen comments for all of the code so that
-other developers can understand the source and contribute if they so desire.
+After the scanning sections are complete, we would like to let moderators on
+``expert forums'' test the tool on their own systems.  Once we iron out all of
+the kinks, we will release the tool more publicly as a replacement to tools
+like DDS.  
 
-Lastly, support for Windows 2000, Windows XP RTM, and Windows XP Service Pack 1
-have been tentatively dropped. This is due to the use of Visual Studio 2010's
-compiler, which cannot produce binaries for these operating systems.
-The C runtime bundled with this compiler requires functions that were added to
-Windows in Windows XP Service Pack 2.
-
-This is stated as a ``tentative'' restriction because it is, in theory,
-possible to mess with the build system enough to build binaries
-for these operating systems, by providing our own implementations of the
-missing functions.
-
-However, at this point in time, it was decided that it is not worth the authors' time.
-This is for a number of reasons, namely
-that Microsoft is dropping support for these operating systems anyway and not
-releasing security fixes anymore, so it doesn't make sense to attempt to clean
-malware from these systems. 
-
-There are some published workarounds that include replacement implementations of
-these functions, but unfortuantely all such projects of which the authors are
-aware are under the GNU General Public License (GPL). The authors do not wish
-to release Instalog under the GPL, because a major goal of the project is to be
-usable by both commercial and noncommercial software, which is not possible if
-the project depends on GPL licensed code.
-
-\newpage
-
-
-
-\section{Discussion and Conclusions} \label{discussion}
-At this point, we are both very proud of the project's progress.  We've
-continued the momentum of ``doing it the right way'' since the last progress
-report.  At the last report, we had written extensive documents explaining
-exactly how the tool would work.  At this report, as mentioned in previous
-sections, we have written a large amount of background code and tested it pretty
-thoroughly on our machines.  While progress seems to be slow to people on the
-outside of the project, we both know that we made considerable progress over
-break and are very proud of the code we've written so far.
-
-At this point, the benefits of good engineering practices are very evident.  The
-detailed documents we wrote helped make the first steps towards creating an
-implementation much less daunting because we knew exactly how the code would
-work and has helped minimize confusion by keeping implementation separate from
-project definition.  Test driven development has allowed us to modify, refactor,
-and optimize the code and still make sure we didn't break anything.  
-
-Overall, we have both enjoyed the time we've spent on this project.  This is one
-of the first class projects we've worked on where the partner is helpful and
-willing to put as much time in as the other.  The only thing that we dislike is
-having to write formal design documents, but we realize that this is another
-good engineering practice and will likely be helpful at some point in the
-project's lifecycle.  
+After this, it is our intent to begin implementing the remaining portions of
+this tool.  We don't know when this will be finished, however, as our schedules
+over the summer are still undetermined and we aren't very good at estimating how
+long things will take us.  
 
 \newpage
 
 
 
 \section{External Documents} \label{documents}
-As of this writing, there are not currently any additional external documents
-beyond the documents listed in section~\ref{design}.  By the final release of
-the product, however, there will be a user's manual and programmer's manual that
-will be included as external documents.  A list of third-party software use and
-incorporation in the project will be included in the Design Document
-\cite{Design}.
+\subsection{User's Manual}
+The user's manual \cite{Manual} explains how to run the tool as a user.  At this
+point, it is extremely simple, but also contains information on how to report
+bugs if there's issues.  
+
+\subsection{Developer Documentation}
+All of the code documentation for this tool is written in Doxygen.  Since the
+documentation is always changing (it evolves with the code), the authors do not
+provide a pre-built version of it for download (with one exception: a build of
+the documentation as of a day before the due date is pre-built for convenience).
+The documentation can be built fairly easily according to the following steps:
+
+\begin{enumerate}
+\item Download and install the latest version of Doxygen (1.8.0 as of this
+writing)
+\item In Visual Studio, go to ``Tools->External Tools''
+\item Click ``Add''
+\item In the ``Title'' field, put something meaningful like Doxygen
+\item In the ``Command'' field, click the ... button and navigate to the Doxygen
+executable  \\ (\verb|C:\Program Files\doxygen\bin\doxygen.exe| by default)
+\item Paste \verb|$(SolutionDir)\Docs\Doxygen\Doxyfile| into the ``Arguments''
+field 
+\item Paste \verb|$(SolutionDir)| into the ``Initial directory'' field 
+\item Check ``Use Output window'' and make sure ``Prompt for arguments'' and
+``Treat output as Unicode'' are unchecked 
+\item Press ``OK'' 
+\item Go to ``Tools->External Tools->Doxygen'' and wait for the build to finish
+(check the Output window) 
+\item Navigate to wherever you cloned the Instalog repository, and go to
+\verb|Docs/Doxygen/html| and open \verb|index.html|
+\end{enumerate}
 
 \newpage
 
