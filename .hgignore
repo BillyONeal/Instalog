@@ -31,3 +31,5 @@ Docs/Instalog Design/*.pdf
 *.psess
 Instalog/Instalog.txt
 LogCommon/CompiledProtocolBuffers/*
+Docs/Instalog Manual/*.pdf
+Docs/Instalog Manual/tmp/*
