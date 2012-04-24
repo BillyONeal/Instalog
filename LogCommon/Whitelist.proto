@@ -1,6 +1,6 @@
-# Copyright © 2012 Jacob Snyder, Billy O'Neal III
-# This is under the 2 clause BSD license.
-# See the included LICENSE.TXT file for more details.
+// Copyright © 2012 Jacob Snyder, Billy O'Neal III
+// This is under the 2 clause BSD license.
+// See the included LICENSE.TXT file for more details.
 
 package Instalog.ProtocolBuffers;
 option optimize_for = LITE_RUNTIME;
