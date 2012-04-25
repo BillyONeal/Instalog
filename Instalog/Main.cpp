@@ -5,8 +5,11 @@
 #include <iostream>
 #include <fstream>
 #include <fcntl.h>
-#include <io.h>
 #include <windows.h>
+#pragma warning(push)
+#pragma warning(disable: 4512)
+#include <boost/locale.hpp>
+#pragma warning(pop)
 #include "LogCommon/Wow64.hpp"
 #include "LogCommon/Win32Exception.hpp"
 #include "LogCommon/UserInterface.hpp"
@@ -38,15 +41,17 @@ using namespace Instalog;
 int main()
 {
 	Instalog::SystemFacades::Com com;
+#ifndef NDEBUG
 	try
 	{
+#endif
 		if (Instalog::SystemFacades::IsWow64())
 		{
 			std::cerr << "This program is not designed to be run under WOW64 mode. Please download the x64 copy of Instalog instead.";
 			return -1;
 		}
 		std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
-		_setmode(_fileno(stdout), _O_WTEXT);
+        outFile.imbue(boost::locale::generator().generate(std::locale(), "en_US.UTF-8"));
 		ScriptParser sd;
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
@@ -60,6 +65,7 @@ int main()
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
+#ifndef NDEBUG
 	}
 	catch (Instalog::SystemFacades::HresultException const& ex)
 	{
@@ -73,6 +79,7 @@ int main()
 	{
 		std::cerr << "Exception: " << ex.what() << std::endl;
 	}
+#endif
 
 	system("notepad.exe Instalog.txt");
 }
