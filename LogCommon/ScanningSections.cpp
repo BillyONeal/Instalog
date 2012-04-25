@@ -198,7 +198,7 @@ namespace Instalog
 			{
 				description.erase(description.end() - 4, description.end());
 			}
-			logOutput << description << std::endl;	
+			logOutput << description << L'\n';	
 		}
 	}
 	
@@ -237,13 +237,13 @@ namespace Instalog
 
 		ThrowIfFailed(variant.ChangeType(VT_BSTR));
 		ThrowIfFailed(response->Get(L"SystemDrive", 0, &variant, NULL, NULL));
-		logOutput << L"Boot Device: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
+		logOutput << L"Boot Device: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
 		variant.Clear();
 
 		ThrowIfFailed(response->Get(L"InstallDate", 0, &variant, NULL, NULL));
 		logOutput << L"Install Date: ";
 		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)))));
-		logOutput << std::endl;
+		logOutput << L'\n';
 		variant.Clear();
 
 		ThrowIfFailed(response->Get(L"LastBootUpTime", 0, &variant, NULL, NULL));
@@ -294,7 +294,7 @@ namespace Instalog
 		upTime -= 3600 * numHours;
 		UINT numMinutes = static_cast<UINT>(upTime / 60);
 		upTime -= 60 * numMinutes;
-		logOutput << L" (" << numDays << L":" << std::setw(2) << numHours << L":" << std::setw(2) << numMinutes << L":" << std::setw(2) << upTime << L")" << std::endl;
+		logOutput << L" (" << numDays << L":" << std::setw(2) << numHours << L":" << std::setw(2) << numMinutes << L":" << std::setw(2) << upTime << L")\n";
 		variant.Clear();
 	}
 
@@ -344,7 +344,7 @@ namespace Instalog
 		ThrowIfFailed(response->Get(L"Manufacturer", 0, &variant, NULL, NULL));
 		logOutput << L"Motherboard: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal));
 		ThrowIfFailed(response->Get(L"Product", 0, &variant, NULL, NULL));
-		logOutput << L" " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
+		logOutput << L" " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
 		variant.Clear();
 	}
 
@@ -382,7 +382,7 @@ namespace Instalog
 		}
 
 		ThrowIfFailed(response->Get(L"Name", 0, &variant, NULL, NULL));
-		logOutput << L"Processor: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << std::endl;
+		logOutput << L"Processor: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
 		variant.Clear();
 	}
 
@@ -447,7 +447,7 @@ namespace Instalog
 
 			if (totalSize == 0)
 			{
-				logOutput << std::endl;
+				logOutput << L'\n';
 			}
 			else
 			{
@@ -457,7 +457,7 @@ namespace Instalog
 				totalSize /= 1073741824;
 				freeSpace /= 1073741824;
 
-				logOutput << L" - " << totalSize << L" GiB total, " << freeSpace << L" GiB free" << std::endl;
+				logOutput << L" - " << totalSize << L" GiB total, " << freeSpace << L" GiB free\n";
 			}
 		}
 	}
@@ -470,14 +470,16 @@ namespace Instalog
 		{
 			logOutput << restorePoint->SequenceNumber << L" " ;
 			WriteMillisecondDateFormat(logOutput, FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(restorePoint->CreationTime)));
-			logOutput << L" " << restorePoint->Description << std::endl;
+			logOutput << L" " << restorePoint->Description << L'\n';
 		}
 	}
 	
 	void InstalledPrograms::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
 	{
 		Enumerate(logOutput, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+#ifdef _M_X64
 		Enumerate(logOutput, L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+#endif
 	}
 
 	void InstalledPrograms::Enumerate( std::wostream& logOutput, std::wstring const& rootKeyPath ) const
@@ -487,14 +489,7 @@ namespace Instalog
 		RegistryKey rootKey(RegistryKey::Open(rootKeyPath));
 		if (rootKey.Invalid())
 		{
-			try
-			{
-				Win32Exception::ThrowFromNtError(::GetLastError());
-			}
-			catch (ErrorFileNotFoundException const&)
-			{
-				return;
-			}
+            Win32Exception::ThrowFromNtError(::GetLastError());
 		}
 
 		std::vector<RegistryKey> uninstallKeys(rootKey.EnumerateSubKeys());
@@ -518,17 +513,30 @@ namespace Instalog
 				RegistryValue versionMajor(uninstallKey->GetValue(L"VersionMajor"));
 				RegistryValue versionMinor(uninstallKey->GetValue(L"VersionMinor"));
 
-				logOutput << L" (version " << versionMajor.GetDWord() << L"." << versionMinor.GetDWord() << L")" << std::endl;
+				logOutput << L" (version ";
+                if (versionMajor.GetType() == REG_DWORD)
+                {
+                    logOutput << versionMajor.GetDWord();
+                }
+                else
+                {
+                    logOutput << versionMajor.GetString();
+                }
+                logOutput << L'.';
+                if (versionMinor.GetType() == REG_DWORD)
+                {
+                    logOutput << versionMinor.GetDWord();
+                }
+                else
+                {
+                    logOutput << versionMinor.GetString();
+                }
+                logOutput << L")\n";
 			}
 			catch (ErrorFileNotFoundException const&)
 			{
-				logOutput << std::endl;
+				logOutput << L'\n';
 				continue;
-			}
-			catch (InvalidRegistryDataTypeException const&) // TODO: Bill, I don't think I should need to do this but was getting weird errors
-			{
-				logOutput << std::endl;
-				continue;			
 			}
 		}
 	}
