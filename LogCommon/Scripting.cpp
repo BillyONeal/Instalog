@@ -19,15 +19,16 @@ using namespace boost::algorithm;
 namespace Instalog
 {
 
-	void ScriptDispatcher::AddSectionType( std::unique_ptr<ISectionDefinition> sectionTypeToAdd )
+	void ScriptParser::AddSectionDefinition( std::unique_ptr<ISectionDefinition> sectionTypeToAdd )
 	{
 		std::wstring scriptCommand(sectionTypeToAdd->GetScriptCommand());
 		to_lower(scriptCommand);
 		sectionTypes.emplace(std::make_pair(std::move(scriptCommand), std::move(sectionTypeToAdd)));
 	}
 
-	Script ScriptDispatcher::Parse( std::wstring const& script ) const
+	Script ScriptParser::Parse( std::wstring const& script ) const
 	{
+        std::size_t index = 0;
 		Script result(this);
 		std::vector<std::wstring> scriptLines;
 		split(scriptLines, script, is_any_of(L"\r\n"), token_compress_on);
@@ -70,39 +71,32 @@ namespace Instalog
 			++begin;
 			std::vector<std::wstring>::iterator endOfOptions = begin;
 			endOfOptions = std::find_if(begin, end, [](std::wstring const& a) { return starts_with(a, L":"); });
-			result.Add(def, argument, std::vector<std::wstring>(begin, endOfOptions));
+			result.Add(def, argument, std::vector<std::wstring>(begin, endOfOptions), index++);
 		}
 		return result;
 	}
 
-
 	bool ScriptSection::operator<( const ScriptSection& rhs ) const
 	{
-		if (targetSection->GetPriority() != rhs.targetSection->GetPriority())
-		{
-			return targetSection->GetPriority() < rhs.targetSection->GetPriority();
-		}
 		if (targetSection->GetName() != rhs.targetSection->GetName())
 		{
 			return targetSection->GetName() < rhs.targetSection->GetName();
 		}
-		return argument < rhs.argument;
+        return argument < rhs.argument;
 	}
 
 
-	Script::Script( ScriptDispatcher const* parent )
+	Script::Script( ScriptParser const* parent )
 		: parent_(parent)
 	{ }
 
-	void Script::Add( ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options )
+	void Script::Add( ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options, std::size_t index )
 	{
-		ScriptSection ss;
-		ss.targetSection = def;
-		ss.argument = arg;
+		ScriptSection ss(def, arg, 0);
 		auto insertPoint = sections.find(ss);
 		if (insertPoint == sections.end())
 		{
-			sections.insert(std::make_pair(ss, options));
+			sections.insert(std::make_pair(ScriptSection(def, arg, index), options));
 		}
 		else
 		{
@@ -119,14 +113,26 @@ namespace Instalog
 	{
 		ui->LogMessage(L"Starting Execution");
 		WriteScriptHeader(logOutput);
-		for (auto begin = sections.cbegin(), end = sections.cend(); begin != end; ++begin)
+        typedef std::pair<ScriptSection, std::vector<std::wstring> > contained;
+        auto cmp = [](contained const& lhs, contained const& rhs) -> bool {
+            auto const& lhsDef = lhs.first.GetDefinition();
+            auto const& rhsDef = rhs.first.GetDefinition();
+            if (lhsDef.GetPriority() != rhsDef.GetPriority())
+            {
+                return lhsDef.GetPriority() < rhsDef.GetPriority();
+            }
+            return lhs.first.GetParseIndex() < rhs.first.GetParseIndex();
+        };
+        std::vector<contained> sectionVec(sections.cbegin(), sections.cend());
+        std::stable_sort(sectionVec.begin(), sectionVec.end(), cmp);
+		for (auto begin = sectionVec.cbegin(), end = sectionVec.cend(); begin != end; ++begin)
 		{
-			auto header = begin->first.targetSection->GetName();
+			auto header = begin->first.GetDefinition().GetName();
 			std::wstring message(L"Executing " + header);
 			ui->LogMessage(message);
 			Instalog::Header(header);
 			logOutput << L"\n" << header << L"\n\n";
-			begin->first.targetSection->Execute(logOutput, begin->first, begin->second);
+			begin->first.GetDefinition().Execute(logOutput, begin->first, begin->second);
 		}
 		logOutput << std::endl;
 		WriteScriptFooter(logOutput);

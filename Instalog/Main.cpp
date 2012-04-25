@@ -47,14 +47,14 @@ int main()
 		}
 		std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
 		_setmode(_fileno(stdout), _O_WTEXT);
-		ScriptDispatcher sd;
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new EventViewer));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new RestorePoints));
-		sd.AddSectionType(std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
+		ScriptParser sd;
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new EventViewer));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RestorePoints));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
 		wchar_t const defaultScript[] =
 			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
 		Script s = sd.Parse(defaultScript);

@@ -9,16 +9,22 @@
 
 using namespace Instalog;
 
-struct RunningProcessesTest : public testing::Test
+struct BaseSectionsTest : public testing::Test
 {
-	RunningProcesses rp;
 	std::wostringstream ss;
-	ScriptSection section;
 	std::vector<std::wstring> options;
+    ISectionDefinition const* def;
+    std::wstring arg;
 	void Go()
 	{
-		rp.Execute(ss, section, options);
+		def->Execute(ss, ScriptSection(def, arg), options);
 	}
+};
+
+struct RunningProcessesTest : public BaseSectionsTest
+{
+	RunningProcesses rp;
+    RunningProcessesTest() { def = &rp; }
 };
 
 TEST_F(RunningProcessesTest, CommandIsrunningprocesses)
@@ -56,16 +62,10 @@ TEST_F(RunningProcessesTest, NtoskrnlNotPresent)
 	ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
 }
 
-struct ServicesDriversTest : public testing::Test
+struct ServicesDriversTest : public BaseSectionsTest
 {
-	ServicesDrivers sd;
-	std::wostringstream ss;
-	ScriptSection section;
-	std::vector<std::wstring> options;
-	void Go()
-	{
-		sd.Execute(ss, section, options);
-	}
+    ServicesDrivers sd;
+    ServicesDriversTest() { def = &sd; }
 };
 
 TEST_F(ServicesDriversTest, ScriptCommandIsCorrect)
@@ -97,16 +97,10 @@ TEST_F(ServicesDriversTest, RpcSsSvchost)
 	ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll")) << L"This will fail if RpcSs is not configured to auto-start or is not running";
 }
 
-struct EventViewerTest : public testing::Test
+struct EventViewerTest : public BaseSectionsTest
 {
-	EventViewer ev;
-	std::wostringstream ss;
-	ScriptSection section;
-	std::vector<std::wstring> options;
-	void Go()
-	{
-		ev.Execute(ss, section, options);
-	}
+    EventViewer ev;
+    EventViewerTest() { def = &ev; }
 };
 
 TEST_F(EventViewerTest, ScriptCommandIsCorrect)

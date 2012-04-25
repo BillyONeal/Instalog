@@ -238,9 +238,7 @@ namespace Instalog { namespace Path {
 					return status;
 				}
 			}
-
 		}
-
 		return false;
 	}
 

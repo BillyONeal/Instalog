@@ -26,16 +26,63 @@ namespace Instalog
 	struct ISectionDefinition;
 
 	/// @brief	Script section.
-	struct ScriptSection
+	class ScriptSection
 	{
 		ISectionDefinition const* targetSection;
 		std::wstring argument;
+        std::size_t parseIndex;
 
-		/// @brief	Comparison operator for priority ordering
-		///
-		/// @param	rhs	The ScriptSection to compare to
-		///
-		/// @return	true if this should be ordered before rhs
+    public:
+        /**
+         * Gets the parse index.
+         *
+         * @return The parse index.
+         */
+        std::size_t GetParseIndex() const
+        {
+            return parseIndex;
+        }
+
+        /**
+         * Gets the argument.
+         *
+         * @return The argument.
+         */
+        std::wstring const& GetArgument() const
+        {
+            return argument;
+        }
+
+        /**
+         * Gets the section definition.
+         *
+         * @return The section definition corresponding to this section.
+         */
+        ISectionDefinition const& GetDefinition() const
+        {
+            return *targetSection;
+        }
+
+        /**
+         * Constructor.
+         *
+         * @param section The section definition to associate with this section.
+         * @param arg     The argument to this section definition.
+         * @param index   Index of this script section in the source script.
+         */
+        ScriptSection(ISectionDefinition const* section, std::wstring arg = std::wstring(), std::size_t index = 0)
+            : targetSection(section)
+            , argument(std::move(arg))
+            , parseIndex(index)
+        { }
+
+        /**
+         * Comparison operator for priority ordering.
+         *
+         * @param rhs The ScriptSection to compare to.
+         *
+         * @return true if this should be ordered before rhs.
+         */
 		bool operator<(const ScriptSection& rhs) const;
 	};
 
@@ -66,14 +113,14 @@ namespace Instalog
 	class Script;
 
 	/// @brief	Handles script sections and parses scripts
-	class ScriptDispatcher
+	class ScriptParser : boost::noncopyable
 	{
 		std::map<std::wstring, std::unique_ptr<ISectionDefinition>> sectionTypes;
 	public:
 		/// @brief	Adds a section type.
 		///
 		/// @param	sectionTypeToAdd	The section type to add.
-		void AddSectionType(std::unique_ptr<ISectionDefinition> sectionTypeToAdd);
+		void AddSectionDefinition(std::unique_ptr<ISectionDefinition> sectionTypeToAdd);
 
 		/// @brief	Parses a given script
 		///
@@ -88,13 +135,13 @@ namespace Instalog
 	/// @brief	Script that can be run
 	class Script
 	{
-		ScriptDispatcher const* parent_;
+		ScriptParser const* parent_;
 		std::map<ScriptSection, std::vector<std::wstring>> sections;
 	public:
 		/// @brief	Constructor.
 		///
 		/// @param	parent	The ScriptDispatcher that constructed this Script
-		Script(ScriptDispatcher const* parent);
+		Script(ScriptParser const* parent);
 
 		/// @brief	Gets the sections.
 		///
@@ -106,7 +153,7 @@ namespace Instalog
 		/// @param	def	   	The section definition to add.
 		/// @param	arg	   	The arguments to the section.
 		/// @param	options	Options (lines) supplied to the section
-		void Add(ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options);
+		void Add(ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options, std::size_t index);
 
 		/// @brief	Runs the script
 		///
