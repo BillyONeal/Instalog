@@ -34,7 +34,7 @@ namespace Instalog {
     /**
      * Security center output for the PseudoHJT section.
      *
-     * @param [in,out] output The stream to recieve the output.
+     * @param [in,out] output The stream to receive the output.
      */
 	static void SecurityCenterOutput( std::wostream& output )
 	{
@@ -65,29 +65,68 @@ namespace Instalog {
 		}
 	}
 
+    /**
+     * A processing function which writes the target string in the default escaped function,
+     * assuming that the newline is the ending delimiter.
+     *
+     * @param [in,out] out    The output stream.
+     * @param [in,out] target Target which should be written.
+     */
     static void GeneralProcess(std::wostream& out, std::wstring& target)
     {
         GeneralEscape(target, L'#', L'\n');
         out << target;
     }
 
+    /**
+     * A processing function which writes the default file output.
+     *
+     * @param [in,out] out    The output stream.
+     * @param [in,out] target Target name of the file to print.
+     */
     static void FileProcess(std::wostream& out, std::wstring& target)
     {
         WriteDefaultFileOutput(out, target);
     }
 
+    /**
+     * A processing function which writes the target as a URL.
+     *
+     * @param [in,out] out    The output stream.
+     * @param [in,out] target Target to write as a URL.
+     */
     static void HttpProcess(std::wostream& out, std::wstring& target)
     {
         UrlEscape(target, L'#', L'\n');
         out << target;
     }
 
+    /**
+     * Executes the "do nothing" filter operation. Filters only completely empty entries.
+     *
+     * @param target Target for the filter operation.
+     *
+     * @return true if the item should be filtered, false otherwise.
+     */
     static bool DoNothingFilter(RegistryValueAndData const& target)
     {
         auto str = target.GetString();
         return target.GetName().empty() && str.empty();
     }
-    
+
+    /**
+     * Value major based enumeration; general method to enumerate a registry key, where a single
+     * log line is generated per value.
+     *
+     * @param [in,out] output The output stream.
+     * @param root            The root registry key from where the key is enumerated.
+     * @param prefix          The prefix which identifies the log line in the report.
+     * @param rightProcess    (optional) The processing function which generates the report of the
+     *                        values' data. The default writes the data as a file.
+     * @param filter          (optional) a filter function which returns true if the target should
+     *                        not be displayed in the output. The default function filters only
+     *                        empty entries.
+     */
     static void ValueMajorBasedEnumeration(
         std::wostream& output,
         std::wstring const& root,
@@ -127,6 +166,12 @@ namespace Instalog {
         });
     }
 
+    /**
+     * Executes enumeration for run keys.
+     *
+     * @param [in,out] output The output stream.
+     * @param name            The name of the run key to enumerate.
+     */
     void RunKeyOutput(std::wostream& output, std::wstring const& name)
     {
 #ifdef _M_X64
@@ -135,6 +180,46 @@ namespace Instalog {
 #else
         ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
 #endif
+    }
+
+    /**
+     * Gets the user registry hive root paths.
+     *
+     * @return A list of the registry hives.
+     */
+    static std::vector<std::wstring> EnumerateUserHives()
+    {
+        std::vector<std::wstring> wht;
+        wht.push_back(L"\\REGISTRY\\MACHINE\\HARDWARE");
+        wht.push_back(L"\\REGISTRY\\MACHINE\\SYSTEM");
+        wht.push_back(L"\\REGISTRY\\MACHINE\\BCD00000000");
+        wht.push_back(L"\\REGISTRY\\MACHINE\\SOFTWARE");
+        wht.push_back(L"\\REGISTRY\\MACHINE\\SECURITY");
+        wht.push_back(L"\\REGISTRY\\MACHINE\\SAM");
+        std::sort(wht.begin(), wht.end());
+        std::vector<std::wstring> hives;
+        {
+            RegistryKey hiveList(RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\hivelist", KEY_QUERY_VALUE));
+            if (hiveList.Invalid())
+            {
+                Win32Exception::ThrowFromNtError(::GetLastError());
+            }
+            hives = hiveList.EnumerateValueNames();
+        } //Block closes key
+        hives.erase(std::remove_if(hives.begin(), hives.end(), [&wht] (std::wstring const& str) -> bool {
+            if (boost::algorithm::ends_with(str, L"_Classes"))
+            {
+                return true;
+            }
+            return std::binary_search(wht.cbegin(), wht.cend(), str);
+        }), hives.end());
+        std::sort(hives.begin(), hives.end());
+        return std::move(hives);
+    }
+
+    static void CommonHjt(std::wostream& , std::wstring )
+    {
+
     }
 
 	void PseudoHjt::Execute(
