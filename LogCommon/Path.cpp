@@ -206,40 +206,53 @@ namespace Instalog { namespace Path {
 
 	bool ResolveFromCommandLine(std::wstring &path)
 	{
-		if (path.size() > 0)
+		if (path.empty())
 		{
-			if (path[0] == L'\"')
-			{
-				std::wstring unescaped;
-				unescaped.reserve(path.size());
-				std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
-				Prettify(unescaped.begin(), unescaped.end());
-				if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
-				{
-					std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
-					if (startOfArgument != path.end())
-					{
-						unescaped.push_back(L' ');
-						CmdLineToArgvWUnescape(startOfArgument, path.end(), std::back_inserter(unescaped)); // Unescape the argument
-						RundllCheck(unescaped);
-					}
-				}
+            return false;
+        }
+        std::vector<wchar_t> buff(path.size() * 2);
+        DWORD expectedLen = ExpandEnvironmentStringsW(path.c_str(), buff.data(), static_cast<DWORD>(buff.size())) - 1;
+        buff.resize(expectedLen);
+        if (expectedLen > buff.size())
+        {
+            expectedLen = ExpandEnvironmentStringsW(path.c_str(), buff.data(), static_cast<DWORD>(buff.size())) - 1;
+            if (expectedLen > buff.size())
+            {
+                throw std::runtime_error("Could not allocate the right buffer size for ExpandEnvironmentStrings");
+            }
+        }
+        path.assign(buff.cbegin(), buff.cend());
 
-				path = unescaped;
-				return SystemFacades::File::IsExclusiveFile(unescaped);
-			}
-			else
-			{
-				NativePathToWin32Path(path);
-				bool status = StripArgumentsFromPath(path);
-				if (status)
-				{
-					Prettify(path.begin(), path.end());
-					return status;
-				}
-			}
-		}
-		return false;
+        if (path[0] == L'\"')
+        {
+            std::wstring unescaped;
+            unescaped.reserve(path.size());
+            std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
+            Prettify(unescaped.begin(), unescaped.end());
+            if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
+            {
+                std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
+                if (startOfArgument != path.end())
+                {
+                    unescaped.push_back(L' ');
+                    CmdLineToArgvWUnescape(startOfArgument, path.end(), std::back_inserter(unescaped)); // Unescape the argument
+                    RundllCheck(unescaped);
+                }
+            }
+
+            path = unescaped;
+            return SystemFacades::File::IsExclusiveFile(unescaped);
+        }
+        else
+        {
+            NativePathToWin32Path(path);
+            bool status = StripArgumentsFromPath(path);
+            if (status)
+            {
+                Prettify(path.begin(), path.end());
+            }
+            return status;
+        }
 	}
 
 	void Prettify(std::wstring::iterator first, std::wstring::iterator last)

@@ -91,7 +91,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
     </Link>
@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
     </Link>
