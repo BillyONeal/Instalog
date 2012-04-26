@@ -478,9 +478,11 @@ namespace Instalog
 		}
 
 		std::vector<RegistryKey> uninstallKeys(rootKey.EnumerateSubKeys());
+        std::vector<std::wstring> entries;
 
 		for (auto uninstallKey = uninstallKeys.begin(); uninstallKey != uninstallKeys.end(); ++uninstallKey)
 		{
+            std::wstring currentEntry;
             try
             {
                 uninstallKey->GetValue(L"ParentKeyName");
@@ -508,9 +510,8 @@ namespace Instalog
 			try
 			{
 				RegistryValue displayName(uninstallKey->GetValue(L"DisplayName"));
-				std::wstring displayNameStr = displayName.GetString();
-				GeneralEscape(displayNameStr);
-				logOutput << displayNameStr;
+				currentEntry = displayName.GetString();
+				GeneralEscape(currentEntry);
 			}
 			catch (ErrorFileNotFoundException const&)
 			{
@@ -522,32 +523,35 @@ namespace Instalog
 				RegistryValue versionMajor(uninstallKey->GetValue(L"VersionMajor"));
 				RegistryValue versionMinor(uninstallKey->GetValue(L"VersionMinor"));
 
-				logOutput << L" (version ";
+				currentEntry += L" (version ";
                 if (versionMajor.GetType() == REG_DWORD)
                 {
-                    logOutput << versionMajor.GetDWord();
+                    currentEntry += boost::lexical_cast<std::wstring>(versionMajor.GetDWord());
                 }
                 else
                 {
-                    logOutput << versionMajor.GetString();
+                    currentEntry += versionMajor.GetString();
                 }
-                logOutput << L'.';
+                currentEntry.push_back(L'.');
                 if (versionMinor.GetType() == REG_DWORD)
                 {
-                    logOutput << versionMinor.GetDWord();
+                    currentEntry += boost::lexical_cast<std::wstring>(versionMinor.GetDWord());
                 }
                 else
                 {
-                    logOutput << versionMinor.GetString();
+                    currentEntry += versionMinor.GetString();
                 }
-                logOutput << L")\n";
+                currentEntry += L")\n";
 			}
 			catch (ErrorFileNotFoundException const&)
 			{
-				logOutput << L'\n';
-				continue;
+                currentEntry.push_back(L'\n');
 			}
+            entries.emplace_back(std::move(currentEntry));
 		}
+        using namespace std::placeholders;
+        std::sort(entries.begin(), entries.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
+        std::copy(entries.cbegin(), entries.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
 	}
 
 }
