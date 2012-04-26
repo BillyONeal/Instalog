@@ -100,6 +100,7 @@ namespace Instalog
 
 		ServiceControlManager scm;
 		std::vector<Service> services = scm.GetServices();
+        std::vector<std::wstring> serviceStrings;
 
 		for (auto service = services.begin(); service != services.end(); ++service)
 		{
@@ -108,23 +109,28 @@ namespace Instalog
 				continue;
 			}
 
-			logOutput << service->GetState() << service->GetStart();
+            std::wostringstream currentSvcStream;
+			currentSvcStream << service->GetState() << service->GetStart();
 			if (service->IsDamagedSvchost())
 			{
-				logOutput << L'D';
+				currentSvcStream << L'D';
 			}
-			logOutput << L' ' << service->GetServiceName() << L';' << service->GetDisplayName() << L';';
+			currentSvcStream << L' ' << service->GetServiceName() << L';' << service->GetDisplayName() << L';';
 			if (service->IsSvchostService())
 			{
-				logOutput << service->GetSvchostGroup() << L"->";
-				WriteDefaultFileOutput(logOutput, service->GetSvchostDll());
+				currentSvcStream << service->GetSvchostGroup() << L"->";
+				WriteDefaultFileOutput(currentSvcStream, service->GetSvchostDll());
 			}
 			else
 			{
-				WriteDefaultFileOutput(logOutput, service->GetFilepath());
+				WriteDefaultFileOutput(currentSvcStream, service->GetFilepath());
 			}
-			logOutput << L'\n';
+            serviceStrings.emplace_back(currentSvcStream.str());
 		}
+
+        using namespace std::placeholders;
+        std::sort(serviceStrings.begin(), serviceStrings.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
+        std::copy(serviceStrings.cbegin(), serviceStrings.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L"\n"));
 	}
 
 	void EventViewer::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
