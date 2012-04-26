@@ -248,40 +248,22 @@ namespace Instalog
 
 	void MachineSpecifications::PerfFormattedData_PerfOS_System( std::wostream &logOutput ) const
 	{
-        std::vector<unsigned char> informationBlock;
-        informationBlock.reserve(3*sizeof(FILETIME));
 		NtQuerySystemInformationFunc ntQuerySysInfo = 
             SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>("NtQuerySystemInformation");
 
-		NTSTATUS errorCheck = STATUS_INFO_LENGTH_MISMATCH;
-		ULONG goalLength = 0;
-		while(errorCheck == STATUS_INFO_LENGTH_MISMATCH)
-		{
-			if (goalLength == 0)
-			{
-				informationBlock.resize(informationBlock.size() + 1024);
-			}
-			else
-			{
-				informationBlock.resize(goalLength);
-			}
-			errorCheck = ntQuerySysInfo(
-				SystemTimeOfDayInformation,
-				informationBlock.data(),
-				static_cast<ULONG>(informationBlock.size()),
-				&goalLength);
-		}
+        union
+        {
+            unsigned __int64 timeArray[3];
+            unsigned char c;
+        };
+
+		NTSTATUS errorCheck = ntQuerySysInfo(SystemTimeOfDayInformation, &c, sizeof(timeArray), 0);
 		if (errorCheck != 0)
 		{
 			SystemFacades::Win32Exception::ThrowFromNtError(errorCheck);
 		}
-        if (informationBlock.size() <= 2*sizeof(unsigned __int64))
-        {
-            throw std::runtime_error("Unknown SystemTimeOfDayInformation format.");
-        }
-        auto ptr = reinterpret_cast<unsigned __int64*>(informationBlock.data());
-        unsigned __int64 bootTime = *ptr;
-        unsigned __int64 currentTime = *(ptr + 1);
+        unsigned __int64 bootTime = timeArray[0];
+        unsigned __int64 currentTime = timeArray[1];
         unsigned __int64 uptime = currentTime - bootTime;
         logOutput << L"Booted at: ";
         WriteDefaultDateFormat(logOutput, bootTime);
@@ -312,8 +294,7 @@ namespace Instalog
 	}
 
 	void MachineSpecifications::BaseBoard( std::wostream &logOutput ) const
-	{
-		using namespace SystemFacades;
+	{		using namespace SystemFacades;
 
 		CComPtr<IWbemServices> wbemServices(GetWbemServices());
 
