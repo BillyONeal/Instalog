@@ -481,6 +481,30 @@ namespace Instalog
 
 		for (auto uninstallKey = uninstallKeys.begin(); uninstallKey != uninstallKeys.end(); ++uninstallKey)
 		{
+            try
+            {
+                uninstallKey->GetValue(L"ParentKeyName");
+                continue;
+            }
+            catch (ErrorFileNotFoundException const&)
+            {
+                //Expected behavior
+            }
+            try
+            {
+                if (uninstallKey->GetValue(L"SystemComponent").GetDWord() == 1)
+                {
+                    continue;
+                }
+            }
+            catch (ErrorFileNotFoundException const&)
+            {
+                //Expected behavior
+            }
+            catch (InvalidRegistryDataTypeException const&)
+            {
+                //Expected behavior
+            }
 			try
 			{
 				RegistryValue displayName(uninstallKey->GetValue(L"DisplayName"));
