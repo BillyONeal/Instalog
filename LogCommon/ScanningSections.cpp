@@ -244,58 +244,62 @@ namespace Instalog
 		logOutput << L"Install Date: ";
 		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)))));
 		logOutput << L'\n';
-		variant.Clear();
-
-		ThrowIfFailed(response->Get(L"LastBootUpTime", 0, &variant, NULL, NULL));
-		logOutput << L"System Uptime: ";
-		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)))));
-		variant.Clear();
 	}
 
 	void MachineSpecifications::PerfFormattedData_PerfOS_System( std::wostream &logOutput ) const
 	{
-		using namespace SystemFacades;
+        std::vector<unsigned char> informationBlock;
+        informationBlock.reserve(3*sizeof(FILETIME));
+		NtQuerySystemInformationFunc ntQuerySysInfo = 
+            SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>("NtQuerySystemInformation");
 
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
-
-		CComPtr<IWbemServices> namespaceCimv2;
-		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
-
-		CComPtr<IEnumWbemClassObject> enumWin32_PerfFormattedData_PerfOS_System;
-		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_PerfFormattedData_PerfOS_System"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_PerfFormattedData_PerfOS_System));
-
-		HRESULT hr;
-		ULONG returnCount = 0;
-		CComPtr<IWbemClassObject> response;
-		CComVariant variant;
-
-		hr = enumWin32_PerfFormattedData_PerfOS_System->Next(WBEM_INFINITE, 1, &response, &returnCount);
-		if (hr == WBEM_S_FALSE)
+		NTSTATUS errorCheck = STATUS_INFO_LENGTH_MISMATCH;
+		ULONG goalLength = 0;
+		while(errorCheck == STATUS_INFO_LENGTH_MISMATCH)
 		{
-			throw std::runtime_error("Unexpected number of returned classes.");
+			if (goalLength == 0)
+			{
+				informationBlock.resize(informationBlock.size() + 1024);
+			}
+			else
+			{
+				informationBlock.resize(goalLength);
+			}
+			errorCheck = ntQuerySysInfo(
+				SystemTimeOfDayInformation,
+				informationBlock.data(),
+				static_cast<ULONG>(informationBlock.size()),
+				&goalLength);
 		}
-		else if (FAILED(hr))
+		if (errorCheck != 0)
 		{
-			ThrowFromHResult(hr);
+			SystemFacades::Win32Exception::ThrowFromNtError(errorCheck);
 		}
-		else if (returnCount == 0)
-		{
-			throw std::runtime_error("Unexpected number of returned classes.");
-		}
-
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-		ThrowIfFailed(response->Get(L"SystemUpTime", 0, &variant, NULL, NULL));
-		ULONGLONG upTime = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
-		ULONGLONG numDays = upTime / 86400;
-		upTime -= 86400 * numDays;
-		UINT numHours = static_cast<UINT>(upTime / 3600);
-		upTime -= 3600 * numHours;
-		UINT numMinutes = static_cast<UINT>(upTime / 60);
-		upTime -= 60 * numMinutes;
-		logOutput << L" (" << numDays << L":" << std::setw(2) << numHours << L":" << std::setw(2) << numMinutes << L":" << std::setw(2) << upTime << L")\n";
-		variant.Clear();
+        if (informationBlock.size() <= 2*sizeof(unsigned __int64))
+        {
+            throw std::runtime_error("Unknown SystemTimeOfDayInformation format.");
+        }
+        auto ptr = reinterpret_cast<unsigned __int64*>(informationBlock.data());
+        unsigned __int64 bootTime = *ptr;
+        unsigned __int64 currentTime = *(ptr + 1);
+        unsigned __int64 uptime = currentTime - bootTime;
+        logOutput << L"Booted at: ";
+        WriteDefaultDateFormat(logOutput, bootTime);
+        logOutput << L" (Up ";
+        const unsigned __int64 ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
+        const unsigned __int64 ticksPerHour = 10000000ull * 60ull * 60ull;
+        const unsigned __int64 ticksPerMinute = 10000000ull * 60ull;
+        if (uptime > ticksPerDay)
+        {
+            logOutput << uptime / ticksPerDay << L" Days ";
+            uptime = uptime % ticksPerDay;
+        }
+        if (uptime > ticksPerHour)
+        {
+            logOutput << uptime / ticksPerHour << L" Hours ";
+            uptime = uptime % ticksPerHour;
+        }
+        logOutput << uptime / ticksPerMinute << L" Minutes)\n";
 	}
 
 	void MachineSpecifications::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const

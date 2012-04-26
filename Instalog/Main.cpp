@@ -81,5 +81,5 @@ int main()
 	}
 #endif
 
-	system("notepad.exe Instalog.txt");
+	//system("notepad.exe Instalog.txt");
 }

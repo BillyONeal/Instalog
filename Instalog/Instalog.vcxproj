@@ -140,6 +140,7 @@
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -164,6 +165,7 @@
       </MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
       <SetChecksum>true</SetChecksum>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
