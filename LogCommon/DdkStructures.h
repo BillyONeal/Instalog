@@ -518,6 +518,7 @@ typedef enum T_PROCESS_INFORMATION_CLASS {
 	ProcessHandleCount,
 	ProcessAffinityMask,
 	ProcessPriorityBoost,
+    ProcessImageFileName = 27, //Vista and later
 	MaxProcessInfoClass
 } PROCESS_INFORMATION_CLASS, *PPROCESS_INFORMATION_CLASS;
 

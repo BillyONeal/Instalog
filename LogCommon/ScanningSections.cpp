@@ -43,34 +43,27 @@ namespace Instalog
 		ProcessEnumerator enumerator;
 		for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
 		{
-			try
-			{
-				std::wstring executable = it->GetExecutablePath();
-				if (boost::starts_with(executable, L"\\??\\"))
-				{
-					executable.erase(executable.begin(), executable.begin() + 4);
-				}
-				if (w.IsOnWhitelist(executable))
-				{
-					continue;
-				}
-				Path::Prettify(executable.begin(), executable.end());
-                std::wstring pathElement;
-				if (std::find(fullPrintList.begin(), fullPrintList.end(), executable) != fullPrintList.end())
-				{
-                    pathElement = it->GetCmdLine();
-				}
-				else
-				{
-                    pathElement = std::move(executable);
-				}
-                GeneralEscape(pathElement);
-                logOutput << std::move(pathElement) << L"\n";
-			}
-			catch (ErrorAccessDeniedException const&)
-			{
-				logOutput << L"[Access Denied (PID=" << it->GetProcessId() << L")]\n";
-			}
+            std::wstring executable = it->GetExecutablePath();
+            if (boost::starts_with(executable, L"\\??\\"))
+            {
+                executable.erase(executable.begin(), executable.begin() + 4);
+            }
+            if (w.IsOnWhitelist(executable))
+            {
+                continue;
+            }
+            Path::Prettify(executable.begin(), executable.end());
+            std::wstring pathElement;
+            if (std::find(fullPrintList.begin(), fullPrintList.end(), executable) != fullPrintList.end())
+            {
+                pathElement = it->GetCmdLine();
+            }
+            else
+            {
+                pathElement = std::move(executable);
+            }
+            GeneralEscape(pathElement);
+            logOutput << std::move(pathElement) << L"\n";
 		}
 	}
 

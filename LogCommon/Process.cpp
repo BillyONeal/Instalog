@@ -124,33 +124,65 @@ namespace Instalog { namespace SystemFacades {
 		OBJECT_ATTRIBUTES attribs;
 		std::memset(&attribs, 0, sizeof(attribs));
 		attribs.Length = sizeof(attribs);
-		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
-        ScopeExit se([hProc] () { CloseHandle(hProc); });
-		if (errorCheck != ERROR_SUCCESS)
-		{
-			Win32Exception::ThrowFromNtError(errorCheck);
-		}
-		PROCESS_BASIC_INFORMATION basicInfo;
-		errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
-		PEB *pebAddr = basicInfo.PebBaseAddress;
-		PEB peb;
-		if (::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr) == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		RTL_USER_PROCESS_PARAMETERS params;
-		if (::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		std::wstring result;
-		UNICODE_STRING &targetString = stringTargetSelector(params);
-		result.resize(targetString.Length / sizeof(wchar_t));
-		if (::ReadProcessMemory(hProc, targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		return result;
+        try
+        {
+            NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
+            ScopeExit se([hProc] () { CloseHandle(hProc); });
+            if (errorCheck != ERROR_SUCCESS)
+            {
+                Win32Exception::ThrowFromNtError(errorCheck);
+            }
+            PROCESS_BASIC_INFORMATION basicInfo;
+            errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+            PEB *pebAddr = basicInfo.PebBaseAddress;
+            PEB peb;
+            if (::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr) == 0)
+            {
+                Win32Exception::ThrowFromLastError();
+            }
+            RTL_USER_PROCESS_PARAMETERS params;
+            if (::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
+            {
+                Win32Exception::ThrowFromLastError();
+            }
+            std::wstring result;
+            UNICODE_STRING &targetString = stringTargetSelector(params);
+            result.resize(targetString.Length / sizeof(wchar_t));
+            if (::ReadProcessMemory(hProc, targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
+            {
+                Win32Exception::ThrowFromLastError();
+            }
+            return result;
+        }
+        catch (ErrorAccessDeniedException const&)
+        {
+            //This block is vista and later specific; however, this does not matter because the
+            //spurious access denied errors are being injected by Vista+'s media protection
+            //features.
+            NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_QUERY_LIMITED_INFORMATION, &attribs, &cid);
+            ScopeExit se([hProc] () { CloseHandle(hProc); });
+            if (errorCheck != ERROR_SUCCESS)
+            {
+                Win32Exception::ThrowFromNtError(errorCheck);
+            }
+            RuntimeDynamicLinker kernel32(L"Kernel32.dll");
+            typedef BOOL (WINAPI *QueryFullProcessImageNameFunc)(HANDLE, DWORD, LPWSTR, PDWORD);
+            QueryFullProcessImageNameFunc queryProcessFile = kernel32.GetProcAddress<QueryFullProcessImageNameFunc>("QueryFullProcessImageNameW");
+            BOOL boolCheck;
+            std::wstring buffer;
+            DWORD goalSize = MAX_PATH;
+            do
+            {
+                buffer.resize(goalSize);
+                boolCheck = queryProcessFile(hProc, 0, &buffer[0], &goalSize);
+            } while (boolCheck == 0 && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+            if (boolCheck == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            {
+                Win32Exception::ThrowFromLastError();
+            }
+            buffer.resize(goalSize);
+            return buffer;
+        }
 	}
 
 	std::wstring Process::GetExecutablePath() const
