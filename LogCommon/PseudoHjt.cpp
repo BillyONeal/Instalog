@@ -281,24 +281,62 @@ namespace Instalog {
     static void InternetExplorerOutput(std::wostream& output, std::wstring const& rootKey)
     {
         RegistryKey ieRoot(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
-        if (ieRoot.Invalid())
-        {
-            return;
-        }
         RegistryKey ieMain(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
-        if (ieMain.Invalid())
-        {
-            return;
-        }
+        RegistryKey ieSearch(RegistryKey::Open(ieRoot, L"Search", KEY_QUERY_VALUE));
         std::wstring suffix64;
 #ifdef _M_X64
         suffix64 = L"64";
         RegistryKey ieRoot32(RegistryKey::Open(rootKey + L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
         RegistryKey ieMain32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
+        RegistryKey ieSearch32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
 #endif
-        SingleRegistryValueOutput(output, ieRoot, L"Default_Page_Url", L"DefaultPageUrl" + suffix64, HttpProcess);
+        SingleRegistryValueOutput(output, ieMain, L"Default_Page_Url", L"DefaultPageUrl" + suffix64, HttpProcess);
 #ifdef _M_X64
-        SingleRegistryValueOutput(output, ieRoot32, L"Default_Page_Url", L"DefaultPageUrl", HttpProcess);
+        SingleRegistryValueOutput(output, ieMain32, L"Default_Page_Url", L"DefaultPageUrl", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Default_Search_Url", L"DefaultSearchUrl" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Default_Search_Url", L"DefaultSearchUrl", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Local Page", L"LocalPage" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Local Page", L"LocalPage", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Start Page", L"StartPage" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Start Page", L"StartPage", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Search Page", L"SearchPage" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Search Page", L"SearchPage", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Search Bar", L"SearchBar" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Search Bar", L"SearchBar", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"SearchMigratedDefaultUrl", L"SearchMigratedDefaultUrl" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"SearchMigratedDefaultUrl", L"SearchMigratedDefaultUrl", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Security Risk Page", L"SecurityPage" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Security Risk Page", L"SecurityPage", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"Window Title", L"WindowTitle" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"Window Title", L"WindowTitle", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieMain, L"SearchURL", L"SearchUrl" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieMain32, L"SearchURL", L"SearchUrl", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieSearch, L"SearchAssistant", L"SearchAssistant" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieSearch32, L"SearchAssistant", L"SearchAssistant", HttpProcess);
+#endif
+        SingleRegistryValueOutput(output, ieSearch, L"CustomizeSearch", L"CustomizeSearch" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieSearch32, L"CustomizeSearch", L"CustomizeSearch", HttpProcess);
 #endif
     }
 
