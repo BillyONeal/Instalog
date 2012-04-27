@@ -186,7 +186,7 @@ TEST(StringUtilities, General_NonEscaped)
 TEST(StringUtilities, Url_EscapeCharacter)
 {
 	std::wstring str = L"#";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"##", str);
 }
 
@@ -195,11 +195,11 @@ TEST(StringUtilities, Url_RightDelimiter)
 	std::wstring str;
 	
 	str = L"[]";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"[]", str);
 
 	str = L"[]";
-	UrlEscape(str, L'#', L']');
+	HttpEscape(str, L'#', L']');
 	EXPECT_EQ(L"[#]", str);
 }
 
@@ -207,7 +207,7 @@ TEST(StringUtilities, Url_NullCharacter)
 {
 	std::wstring str;
 	str.push_back(0x00);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#0", str);
 }
 
@@ -215,7 +215,7 @@ TEST(StringUtilities, Url_BackspaceCharacter)
 {
 	std::wstring str;
 	str.push_back(0x08);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#b", str);
 }
 
@@ -223,7 +223,7 @@ TEST(StringUtilities, Url_FormFeed)
 {
 	std::wstring str;
 	str.push_back(0x0c);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#f", str);
 }
 
@@ -231,7 +231,7 @@ TEST(StringUtilities, Url_Newline)
 {
 	std::wstring str;
 	str.push_back(0x0A);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#n", str);
 }
 
@@ -239,7 +239,7 @@ TEST(StringUtilities, Url_CarriageReturn)
 {
 	std::wstring str;
 	str.push_back(0x0D);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#r", str);
 }
 
@@ -247,7 +247,7 @@ TEST(StringUtilities, Url_HorizontalTab)
 {
 	std::wstring str;
 	str.push_back(0x09);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#t", str);
 }
 
@@ -255,7 +255,7 @@ TEST(StringUtilities, Url_VerticalTab)
 {
 	std::wstring str;
 	str.push_back(0x0B);
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"#v", str);
 }
 
@@ -275,7 +275,7 @@ TEST(StringUtilities, Url_OtherASCII)
 		}
 
 		std::wstring str(1, c);
-		UrlEscape(str);
+		HttpEscape(str);
 		wchar_t expected[5];
 		swprintf_s(expected, 5, L"#x%02X", c);
 		EXPECT_EQ(std::wstring(expected), str);
@@ -283,14 +283,14 @@ TEST(StringUtilities, Url_OtherASCII)
 
 	{
 		std::wstring str(1, 0x7F);
-		UrlEscape(str);
+		HttpEscape(str);
 		EXPECT_EQ(L"#x7F", str);
 	}
 	
 	{
 		std::wstring str(1, 0x7F);
 		str.append(L"end");
-		UrlEscape(str);
+		HttpEscape(str);
 		EXPECT_EQ(L"#x7Fend", str);
 	}
 }
@@ -302,7 +302,7 @@ TEST(StringUtilities, Url_Unicode)
 	for (wchar_t c = 0x0080; c < std::numeric_limits<wchar_t>::max() - 10000; c += increment)
 	{
 		std::wstring str(1, c);
-		UrlEscape(str);
+		HttpEscape(str);
 		wchar_t expected[7];
 		swprintf_s(expected, 7, L"#u%04X", c);
 		EXPECT_EQ(std::wstring(expected), str);
@@ -311,7 +311,7 @@ TEST(StringUtilities, Url_Unicode)
 
 	// Check the last 
 	std::wstring str(1, std::numeric_limits<wchar_t>::max());
-	UrlEscape(str);
+	HttpEscape(str);
 	wchar_t expected[7];
 	swprintf_s(expected, 7, L"#u%04X", std::numeric_limits<wchar_t>::max());
 	EXPECT_EQ(std::wstring(expected), str);
@@ -322,23 +322,23 @@ TEST(StringUtilities, Url_Whitespace)
 	std::wstring str;
 
 	str = L"start  end";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"start # end", str);
 
 	str = L"start   end";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"start # # end", str);
 
 	str = L" end";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"# end", str);
 
 	str = L"  end";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"# # end", str);
 
 	str = L"start  ";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"start # ", str);
 }
 
@@ -351,7 +351,7 @@ TEST(StringUtilities, Url_NonEscaped)
 			continue;
 		}
 		std::wstring str(1, c);
-		UrlEscape(str);
+		HttpEscape(str);
 		EXPECT_EQ(std::wstring(1, c), str);
 	}
 }
@@ -361,23 +361,23 @@ TEST(StringUtilities, Url_UrlEscape)
 	std::wstring str;
 
 	str = L"http";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"htt#p", str);
 
 	str = L"HTTP";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"htt#p", str);
 
 	str = L"hTtP";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"htt#p", str);
 	
 	str = L"hthttptp";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"hthtt#ptp", str);
 
 	str = L"htt#p";
-	UrlEscape(str);
+	HttpEscape(str);
 	EXPECT_EQ(L"htt##p", str);
 }
 

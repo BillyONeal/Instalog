@@ -88,7 +88,7 @@ namespace Instalog
 		EscapeHelper(target, escapeCharacter, rightDelimiter, false);
 	}
 
-	void UrlEscape( std::wstring &target, wchar_t escapeCharacter /*= L'#'*/, wchar_t rightDelimiter /*= L'\0'*/ )
+	void HttpEscape( std::wstring &target, wchar_t escapeCharacter /*= L'#'*/, wchar_t rightDelimiter /*= L'\0'*/ )
 	{
 		EscapeHelper(target, escapeCharacter, rightDelimiter, true);
 	}

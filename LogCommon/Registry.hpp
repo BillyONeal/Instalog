@@ -445,5 +445,14 @@ namespace Instalog { namespace SystemFacades {
 			REGSAM samDesired = KEY_ALL_ACCESS,
 			DWORD options = REG_OPTION_NON_VOLATILE
 		);
+
+        /**
+         * Checks this instance for validity and throws an exception if it is not.
+         *
+         * @remarks This function depends on the value of LastError set in Create or Open.
+         * 
+         * @throws Instalog::SystemFacades::Win32Exception The registry key is invalid.
+         */
+        void Check() const;
 	};
 }}

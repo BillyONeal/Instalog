@@ -99,7 +99,7 @@ namespace Instalog {
      */
     static void HttpProcess(std::wostream& out, std::wstring& target)
     {
-        UrlEscape(target, L'#', L'\n');
+        HttpEscape(target, L'#', L'\n');
         out << target;
     }
 
@@ -123,7 +123,7 @@ namespace Instalog {
      * @param [in,out] output The output stream.
      * @param root            The root registry key from where the key is enumerated.
      * @param prefix          The prefix which identifies the log line in the report.
-     * @param rightProcess    (optional) The processing function which generates the report of the
+     * @param dataProcess     (optional) The processing function which generates the report of the
      *                        values' data. The default writes the data as a file.
      * @param filter          (optional) a filter function which returns true if the target should
      *                        not be displayed in the output. The default function filters only
@@ -133,7 +133,7 @@ namespace Instalog {
         std::wostream& output,
         std::wstring const& root,
         std::wstring const& prefix,
-        std::function<void (std::wostream& out, std::wstring& source)> rightProcess = FileProcess,
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess,
         std::function<bool(RegistryValueAndData const& entry)> filter = DoNothingFilter
         )
     {
@@ -163,7 +163,7 @@ namespace Instalog {
         std::for_each(pods.begin(), pods.end(), [&](std::pair<std::wstring, std::wstring>& current) {
             GeneralEscape(current.first, L'#', L']');
             output << prefix << L": [" << current.first << L"] ";
-            rightProcess(output, current.second);
+            dataProcess(output, current.second);
             output << L'\n';
         });
     }
@@ -220,18 +220,104 @@ namespace Instalog {
         return std::move(hives);
     }
 
-    static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
+    /**
+     * Explorer run output.
+     *
+     * @param [in,out] output The output stream.
+     * @param rootKey         The root key where the ExplorerRun entries are located.
+     */
+    static void ExplorerRunOutput( std::wostream& output, std::wstring const& rootKey ) 
     {
-        RunKeyOutput(output, rootKey, L"Run");
-        RunKeyOutput(output, rootKey, L"RunOnce");
-        RunKeyOutput(output, rootKey, L"RunServices");
-        RunKeyOutput(output, rootKey, L"RunServicesOnce");
 #ifdef _M_X64
         ValueMajorBasedEnumeration(output, rootKey + L"Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
         ValueMajorBasedEnumeration(output, rootKey + L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun64");
 #else
         ValueMajorBasedEnumeration(output, rootKey + L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
 #endif
+    }
+
+    /**
+     * Single registry value output.
+     *
+     * @param [in,out] output The output stream.
+     * @param key             The key where the output is rooted.
+     * @param valueName       Name of the value.
+     * @param prefix          The prefix to use in the log output.
+     * @param dataProcess     (optional) [in,out] The process by which the line data is written.
+     *                        The default escapes using the general escaping format.
+     */
+    static void SingleRegistryValueOutput(
+        std::wostream& output,
+        RegistryKey const& key,
+        std::wstring const& valueName,
+        std::wstring const& prefix,
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = GeneralProcess
+        )
+    {
+        if (key.Invalid())
+        {
+            return;
+        }
+        try
+        {
+            auto value = key[valueName];
+            output << prefix << L": ";
+            std::wstring val(value.GetString());
+            GeneralProcess(output, val);
+            output << L'\n';
+        }
+        catch (ErrorFileNotFoundException const&)
+        {
+            //Expected error.
+        }
+    }
+
+    /**
+     * Internet explorer output.
+     *
+     * @param [in,out] output The output stream.
+     * @param rootKey         The root key where Internet Explorer is being rooted.
+     */
+    static void InternetExplorerOutput(std::wostream& output, std::wstring const& rootKey)
+    {
+        RegistryKey ieRoot(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
+        if (ieRoot.Invalid())
+        {
+            return;
+        }
+        RegistryKey ieMain(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
+        if (ieMain.Invalid())
+        {
+            return;
+        }
+        std::wstring suffix64;
+#ifdef _M_X64
+        suffix64 = L"64";
+        RegistryKey ieRoot32(RegistryKey::Open(rootKey + L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
+        RegistryKey ieMain32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
+#endif
+        SingleRegistryValueOutput(output, ieRoot, L"Default_Page_Url", L"DefaultPageUrl" + suffix64, HttpProcess);
+#ifdef _M_X64
+        SingleRegistryValueOutput(output, ieRoot32, L"Default_Page_Url", L"DefaultPageUrl", HttpProcess);
+#endif
+    }
+
+    /**
+     * Common HJT outputs. Does all the things that are repeated for the entire machine, and for
+     * each user's registry.
+     *
+     * @param [in,out] output The output stream to which the log is written.
+     * @param rootKey         The root key to check. (e.g. \\Registry\\Machine or \\Registry\\User\\
+     *                        ${Sid}
+     */
+    static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
+    {
+        InternetExplorerOutput(output, rootKey);
+        RunKeyOutput(output, rootKey, L"Run");
+        RunKeyOutput(output, rootKey, L"RunOnce");
+        RunKeyOutput(output, rootKey, L"RunServices");
+        RunKeyOutput(output, rootKey, L"RunServicesOnce");
+        ExplorerRunOutput(output, rootKey);
     }
 
     /**
