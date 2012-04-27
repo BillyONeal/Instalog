@@ -8,7 +8,7 @@
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "Library.hpp"
-#include "HandleCloser.hpp"
+#include "ScopeExit.hpp"
 #include "ScopedPrivilege.hpp"
 #include "Process.hpp"
 #include "DdkStructures.h"
@@ -32,7 +32,7 @@ namespace Instalog { namespace SystemFacades {
 			}
 			errorCheck = ntQuerySysInfo(
 				SystemProcessInformation,
-				&informationBlock[0],
+                informationBlock.data(),
 				static_cast<ULONG>(informationBlock.size()),
 				&goalLength);
 		}
@@ -125,7 +125,7 @@ namespace Instalog { namespace SystemFacades {
 		std::memset(&attribs, 0, sizeof(attribs));
 		attribs.Length = sizeof(attribs);
 		NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
-		std::unique_ptr<void, HandleCloser> handleCloser(hProc);
+        ScopeExit se([hProc] () { CloseHandle(hProc); });
 		if (errorCheck != ERROR_SUCCESS)
 		{
 			Win32Exception::ThrowFromNtError(errorCheck);

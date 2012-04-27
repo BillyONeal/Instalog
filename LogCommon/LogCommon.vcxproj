@@ -202,7 +202,6 @@
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="File.hpp" />
-    <ClInclude Include="HandleCloser.hpp" />
     <ClInclude Include="InstalogVersion.hpp" />
     <ClInclude Include="ntstatus.h" />
     <ClInclude Include="Path.hpp" />

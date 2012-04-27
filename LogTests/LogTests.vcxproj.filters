@@ -29,9 +29,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Precompiled</Filter>
     </ClCompile>
-    <ClCompile Include="HandleCloserTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ScopedPrivilegeTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -85,9 +85,6 @@
     <ClInclude Include="File.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HandleCloser.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Process.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
