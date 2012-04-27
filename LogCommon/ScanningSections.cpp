@@ -55,14 +55,17 @@ namespace Instalog
 					continue;
 				}
 				Path::Prettify(executable.begin(), executable.end());
+                std::wstring pathElement;
 				if (std::find(fullPrintList.begin(), fullPrintList.end(), executable) != fullPrintList.end())
 				{
-					logOutput << it->GetCmdLine() << L"\n";
+                    pathElement = it->GetCmdLine();
 				}
 				else
 				{
-					logOutput << executable << L"\n";
+                    pathElement = std::move(executable);
 				}
+                GeneralEscape(pathElement);
+                logOutput << std::move(pathElement) << L"\n";
 			}
 			catch (ErrorAccessDeniedException const&)
 			{
@@ -300,7 +303,8 @@ namespace Instalog
 	}
 
 	void MachineSpecifications::BaseBoard( std::wostream &logOutput ) const
-	{		using namespace SystemFacades;
+	{
+		using namespace SystemFacades;
 
 		CComPtr<IWbemServices> wbemServices(GetWbemServices());
 

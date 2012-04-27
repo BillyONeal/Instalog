@@ -189,7 +189,7 @@ namespace Instalog {
 		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);
 
-		log << L"Windows® ";
+		log << L"Windows ";
 
 		switch(versionInfo.dwMajorVersion)
 		{

@@ -6,10 +6,6 @@
 #include <fstream>
 #include <fcntl.h>
 #include <windows.h>
-#pragma warning(push)
-#pragma warning(disable: 4512)
-#include <boost/locale.hpp>
-#pragma warning(pop)
 #include "LogCommon/Wow64.hpp"
 #include "LogCommon/Win32Exception.hpp"
 #include "LogCommon/UserInterface.hpp"
@@ -51,7 +47,6 @@ int main()
 			return -1;
 		}
 		std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
-        outFile.imbue(boost::locale::generator().generate(std::locale(), "en_US.UTF-8"));
 		ScriptParser sd;
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
