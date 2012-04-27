@@ -292,7 +292,7 @@ namespace Instalog {
 		SecurityCenterOutput(output);
         CommonHjt(output, L"\\Registry\\Machine");
         std::for_each(hives.cbegin(), hives.cend(), [&output](std::wstring const& hive) {
-            std::wstring head(L"User Pseudo Hijack This");
+            std::wstring head(L"User Settings");
             Header(head);
             std::wstring sid(std::find(hive.crbegin(), hive.crend(), L'\\').base(), hive.end());
             std::wstring user(LookupAccountNameBySid(sid));
