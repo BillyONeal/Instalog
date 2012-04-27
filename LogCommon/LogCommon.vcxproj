@@ -215,6 +215,7 @@
     <ClInclude Include="ScopedPrivilege.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="Library.hpp" />
+    <ClInclude Include="ScopeExit.hpp" />
     <ClInclude Include="Scripting.hpp" />
     <ClInclude Include="SecurityCenter.hpp" />
     <ClInclude Include="ServiceControlManager.hpp" />

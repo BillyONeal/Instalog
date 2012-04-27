@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include <functional>
 #include <atlbase.h>
+#include <Sddl.h>
 #include <comdef.h>
 #include <Wbemidl.h>
 #include "Com.hpp"
@@ -12,6 +13,7 @@
 #include "StockOutputFormats.hpp"
 #include "Registry.hpp"
 #include "PseudoHjt.hpp"
+#include "ScopeExit.hpp"
 
 namespace Instalog {
     using namespace SystemFacades;
@@ -170,15 +172,16 @@ namespace Instalog {
      * Executes enumeration for run keys.
      *
      * @param [in,out] output The output stream.
+     * @param runRoot         The root of the hive where the run key is located.
      * @param name            The name of the run key to enumerate.
      */
-    void RunKeyOutput(std::wostream& output, std::wstring const& name)
+    void RunKeyOutput(std::wostream& output, std::wstring const& runRoot, std::wstring const& name)
     {
 #ifdef _M_X64
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name + L"64");
+        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
+        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name + L"64");
 #else
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
+        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
 #endif
     }
 
@@ -217,9 +220,66 @@ namespace Instalog {
         return std::move(hives);
     }
 
-    static void CommonHjt(std::wostream& , std::wstring )
+    static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
     {
+        RunKeyOutput(output, rootKey, L"Run");
+        RunKeyOutput(output, rootKey, L"RunOnce");
+        RunKeyOutput(output, rootKey, L"RunServices");
+        RunKeyOutput(output, rootKey, L"RunServicesOnce");
+#ifdef _M_X64
+        ValueMajorBasedEnumeration(output, rootKey + L"Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
+        ValueMajorBasedEnumeration(output, rootKey + L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun64");
+#else
+        ValueMajorBasedEnumeration(output, rootKey + L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
+#endif
+    }
 
+    /**
+     * Looks up a given SID to find its associated account name, and returns a DOMAIN\User form
+     * string matching that user's name.
+     *
+     * @param stringSid The SID of the user in string format.
+     *
+     * @return The user's name and domain in DOMAIN\USER format.
+     */
+    static std::wstring LookupAccountNameBySid(std::wstring const& stringSid)
+    {
+        if (stringSid == L".DEFAULT")
+        {
+            return L"Default User";
+        }
+        PSID sidPtr = nullptr;
+        ScopeExit killSidPtr([sidPtr]() { if (sidPtr != nullptr) { ::LocalFree(sidPtr); } });
+        if (::ConvertStringSidToSidW(stringSid.c_str(), &sidPtr) == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+        SID_NAME_USE use;
+        std::wstring userName, domainName;
+        userName.resize(128);
+        DWORD userNameCount = static_cast<DWORD>(userName.size());
+        domainName.resize(128);
+        DWORD domainNameCount = static_cast<DWORD>(domainName.size());
+        if (::LookupAccountSidW(nullptr, sidPtr, &userName[0], &userNameCount, &domainName[0], &domainNameCount, &use) == 0)
+        {
+            if (userName.size() != static_cast<std::size_t>(userNameCount) || domainName.size() != static_cast<std::size_t>(domainNameCount))
+            {
+                userName.resize(userNameCount);
+                domainName.resize(domainNameCount);
+                if (::LookupAccountSidW(nullptr, sidPtr, &userName[0], &userNameCount, &domainName[0], &domainNameCount, &use) == 0)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
+            }
+            else
+            {
+                Win32Exception::ThrowFromLastError();
+            }
+        }
+        userName.resize(userNameCount);
+        domainName.resize(domainNameCount);
+        domainName.push_back(L'\\');
+        return domainName + userName;
     }
 
 	void PseudoHjt::Execute(
@@ -228,17 +288,18 @@ namespace Instalog {
 		std::vector<std::wstring> const&
 	) const
 	{
+        auto hives = EnumerateUserHives();
 		SecurityCenterOutput(output);
-        RunKeyOutput(output, L"Run");
-        RunKeyOutput(output, L"RunOnce");
-        RunKeyOutput(output, L"RunServices");
-        RunKeyOutput(output, L"RunServicesOnce");
-#ifdef _M_X64
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun64");
-#else
-        ValueMajorBasedEnumeration(output, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run", L"ExplorerRun");
-#endif
+        CommonHjt(output, L"\\Registry\\Machine");
+        std::for_each(hives.cbegin(), hives.cend(), [&output](std::wstring const& hive) {
+            std::wstring head(L"User Pseudo Hijack This");
+            Header(head);
+            std::wstring sid(std::find(hive.crbegin(), hive.crend(), L'\\').base(), hive.end());
+            std::wstring user(LookupAccountNameBySid(sid));
+            GeneralEscape(user, L'#', L']');
+            output << L'\n' << head << L"\n\nIdentity: [" << user << L"] " << sid << L'\n';
+            CommonHjt(output, hive);
+        });
 	}
 
 }
