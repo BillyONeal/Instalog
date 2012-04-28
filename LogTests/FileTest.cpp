@@ -280,13 +280,13 @@ TEST(FileIt, HostsExists)
 	bool foundHosts = false;
 	FileIt files(L"C:\\Windows\\System32\\drivers\\etc");
 
-	do
+	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
 		if (boost::iequals(files.data.cFileName, L"hosts"))
 		{
 			foundHosts = true;
 		}
-	} while (foundHosts == false && files.Next());
+	}
 
 	ASSERT_TRUE(foundHosts);
 }
@@ -296,13 +296,13 @@ TEST(FileIt, HostsExistsRecursive)
 	bool foundHosts = false;
 	FileIt files(L"C:\\Windows\\System32\\drivers", true);
 
-	do
+	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
 		if (boost::iequals(files.data.cFileName, L"etc\\hosts"))
 		{
 			foundHosts = true;
 		}
-	} while (foundHosts == false && files.Next());
+	}
 
 	ASSERT_TRUE(foundHosts);
 }
@@ -312,14 +312,14 @@ TEST(FileIt, HostsExistsRecursiveTwoLevels)
 	bool foundHosts = false;
 	FileIt files(L"C:\\Windows\\System32", true);
 
-	do
+	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
 		if (boost::iequals(files.data.cFileName, L"drivers\\etc\\hosts"))
 		{
 			foundHosts = true;
 		}
 
-	} while (foundHosts == false && files.Next());
+	}
 
 	ASSERT_TRUE(foundHosts);
 }
@@ -329,14 +329,14 @@ TEST(FileIt, HostsNotExistsNotRecursive)
 	bool foundHosts = false;
 	FileIt files(L"C:\\Windows\\System32\\drivers");
 
-	do
+	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
 		if (boost::icontains(files.data.cFileName, L"hosts"))
 		{
 			foundHosts = true;
 		}
 
-	} while (foundHosts == false && files.Next());
+	}
 
 	ASSERT_FALSE(foundHosts);
 }
@@ -346,13 +346,13 @@ TEST(FileIt, HostsExistsNoSubpath)
 	bool foundHosts = false;
 	FileIt files(L"C:\\Windows\\System32\\drivers", true, false);
 
-	do
+	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
 		if (boost::iequals(files.data.cFileName, L"hosts"))
 		{
 			foundHosts = true;
 		}
-	} while (foundHosts == false && files.Next());
+	}
 
 	ASSERT_TRUE(foundHosts);
 }
@@ -361,32 +361,75 @@ TEST(FileIt, NoDots)
 {
 	FileIt files(L"C:\\Windows\\System32\\drivers\\etc");
 
-	do
+	for(; files.IsValid(); files.Next())
 	{
 		if (boost::ends_with(files.data.cFileName, L"."))
 		{
 			FAIL() << ". or .. directory mistakenly included in enumeration";
 		}
-	} while (files.Next());
+		std::wcout << files.data.cFileName << std::endl;
+	} 
 }
 
 TEST(FileIt, NoDotsRecursive)
 {
 	FileIt files(L"C:\\Windows\\System32\\drivers", true);
 
-	do
+	for(; files.IsValid(); files.Next())
 	{
 		if (boost::ends_with(files.data.cFileName, L"."))
 		{
 			FAIL() << ". or .. directory mistakenly included in enumeration";
 		}
-	} while (files.Next());
+	}
 }
 
 TEST(FileIt, Dots)
 {
 	FileIt files(L"C:\\Windows\\System32\\drivers\\etc", false, true, false);
+
 	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
 	files.Next();
 	EXPECT_EQ(L"..", std::wstring(files.data.cFileName));
+}
+
+struct FileItDirectoryFixture : public testing::Test
+{
+	virtual void SetUp()
+	{
+		if (::CreateDirectory(L"ThisDirectoryShouldBeEmpty", NULL) == false)
+		{
+			DWORD lastError = ::GetLastError();
+			if (lastError != ERROR_ALREADY_EXISTS)
+			{
+				FAIL() << "Could not create directory for FileItDirectoryFixture";
+			}
+		}
+	}
+
+	virtual void TearDown()
+	{
+		if (::RemoveDirectory(L"ThisDirectoryShouldBeEmpty") == false)
+		{
+			FAIL() << "Could not remove directory after FileItDirectoryFixture.  Remove this manually";
+		}
+	}
+};
+
+TEST_F(FileItDirectoryFixture, EmptyDirectory)
+{
+	FileIt files(L"ThisDirectoryShouldBeEmpty");
+
+	ASSERT_FALSE(files.IsValid());
+}
+
+TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
+{
+	FileIt files(L"ThisDirectoryShouldBeEmpty", false, true, false);
+
+	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
+	EXPECT_TRUE(files.IsValid());
+	files.Next();
+	EXPECT_EQ(L"..", std::wstring(files.data.cFileName));
+	EXPECT_TRUE(files.IsValid());
 }

@@ -167,6 +167,7 @@ namespace Instalog { namespace SystemFacades {
 		const bool includeRelativeSubPath;
 		std::wstring rootPath;
 		std::stack<const std::wstring> subPaths;
+		bool valid;
 
 	public:
 		WIN32_FIND_DATAW data;
@@ -175,7 +176,9 @@ namespace Instalog { namespace SystemFacades {
 
 		~FileIt();
 
-		bool Next();
+		void Next();
+
+		bool IsValid();
 	};
 
 }}

@@ -216,6 +216,7 @@ namespace Instalog { namespace SystemFacades {
 		, skipDotDirectories(skipDotDirectories)
 		, rootPath(path)
 		, includeRelativeSubPath(includeRelativeSubPath)
+		, valid(true)
 	{
 		std::wstring::iterator chop;
 		for (chop = rootPath.end() - 1; chop > rootPath.begin(); --chop)
@@ -252,7 +253,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	bool FileIt::Next()
+	void FileIt::Next()
 	{
 		bool alreadyIncludedSubPath = false;
 
@@ -271,11 +272,12 @@ namespace Instalog { namespace SystemFacades {
 					}				
 					if (handles.empty())
 					{
-						return false;
+						valid = false;
+						return;
 					}
 					else
 					{
-						return Next();
+						return;
 					}
 				}
 				else
@@ -318,8 +320,11 @@ namespace Instalog { namespace SystemFacades {
 		{
 			wcscpy_s(reinterpret_cast<wchar_t*>(&data.cFileName), MAX_PATH, std::wstring(subPaths.top()).append(data.cFileName).c_str());
 		}
+	}
 
-		return true;
+	bool FileIt::IsValid()
+	{
+		return valid;
 	}
 
 }}
