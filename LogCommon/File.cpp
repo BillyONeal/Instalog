@@ -159,7 +159,14 @@ namespace Instalog { namespace SystemFacades {
 		{
 			Win32Exception::ThrowFromLastError();
 		}
-		return std::wstring(static_cast<wchar_t *>(companyData), len-1);
+		if (len == 0)
+		{
+			return std::wstring();
+		}
+		else
+		{
+			return std::wstring(static_cast<wchar_t *>(companyData), len-1);
+		}
 	}
 
 	unsigned __int64 File::GetSize( std::wstring const& filename )
