@@ -9,7 +9,7 @@
 #include "LogCommon/Win32Exception.hpp"
 
 using Instalog::SystemFacades::File;
-using Instalog::SystemFacades::FileIt;
+using Instalog::SystemFacades::FindFiles;
 using Instalog::SystemFacades::ErrorFileNotFoundException;
 using Instalog::SystemFacades::ErrorPathNotFoundException;
 using Instalog::SystemFacades::ErrorAccessDeniedException;
@@ -271,20 +271,20 @@ TEST(File, ExclusiveNoMatchDir)
 	ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
 }
 
-TEST(FileIt, NonExistentFile)
+TEST(FindFiles, NonExistentFile)
 {
-	ASSERT_THROW(FileIt(L"C:\\Nonexistent"), ErrorFileNotFoundException);
+	ASSERT_THROW(FindFiles(L"C:\\Nonexistent"), ErrorFileNotFoundException);
 }
 
-TEST(FileIt, NonExistentDirectory)
+TEST(FindFiles, NonExistentDirectory)
 {
-	ASSERT_THROW(FileIt(L"C:\\Nonexistent\\*"), ErrorPathNotFoundException);
+	ASSERT_THROW(FindFiles(L"C:\\Nonexistent\\*"), ErrorPathNotFoundException);
 }
 
-TEST(FileIt, HostsExists)
+TEST(FindFiles, HostsExists)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*");
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -297,10 +297,10 @@ TEST(FileIt, HostsExists)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, OnlyHostsStarFollowing)
+TEST(FindFiles, OnlyHostsStarFollowing)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\hos*");
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\hos*");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -318,10 +318,10 @@ TEST(FileIt, OnlyHostsStarFollowing)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, OnlyHostsStarPreceding)
+TEST(FindFiles, OnlyHostsStarPreceding)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*ts");
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*ts");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -338,10 +338,10 @@ TEST(FileIt, OnlyHostsStarPreceding)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, HostsExistsRecursive)
+TEST(FindFiles, HostsExistsRecursive)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true);
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -354,10 +354,10 @@ TEST(FileIt, HostsExistsRecursive)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, HostsExistsRecursiveTwoLevels)
+TEST(FindFiles, HostsExistsRecursiveTwoLevels)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\*", true);
+	FindFiles files(L"C:\\Windows\\System32\\*", true);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -371,10 +371,10 @@ TEST(FileIt, HostsExistsRecursiveTwoLevels)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, HostsNotExistsNotRecursive)
+TEST(FindFiles, HostsNotExistsNotRecursive)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\*");
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\*");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -388,10 +388,10 @@ TEST(FileIt, HostsNotExistsNotRecursive)
 	ASSERT_FALSE(foundHosts);
 }
 
-TEST(FileIt, HostsExistsNoSubpath)
+TEST(FindFiles, HostsExistsNoSubpath)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true, false);
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true, false);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -404,9 +404,9 @@ TEST(FileIt, HostsExistsNoSubpath)
 	ASSERT_TRUE(foundHosts);
 }
 
-TEST(FileIt, NoDots)
+TEST(FindFiles, NoDots)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*");
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*");
 
 	for(; files.IsValid(); files.Next())
 	{
@@ -418,9 +418,9 @@ TEST(FileIt, NoDots)
 	} 
 }
 
-TEST(FileIt, NoDotsRecursive)
+TEST(FindFiles, NoDotsRecursive)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true);
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true);
 
 	for(; files.IsValid(); files.Next())
 	{
@@ -431,9 +431,9 @@ TEST(FileIt, NoDotsRecursive)
 	}
 }
 
-TEST(FileIt, Dots)
+TEST(FindFiles, Dots)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, true, false);
+	FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, true, false);
 
 	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
 	files.Next();
@@ -470,14 +470,14 @@ struct FileItDirectoryFixture : public testing::Test
 
 TEST_F(FileItDirectoryFixture, EmptyDirectory)
 {
-	FileIt files(std::wstring(tempPath).append(L"\\*"));
+	FindFiles files(std::wstring(tempPath).append(L"\\*"));
 
 	ASSERT_FALSE(files.IsValid());
 }
 
 TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
 {
-	FileIt files(std::wstring(tempPath).append(L"\\*"), false, true, false);
+	FindFiles files(std::wstring(tempPath).append(L"\\*"), false, true, false);
 
 	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
 	EXPECT_TRUE(files.IsValid());

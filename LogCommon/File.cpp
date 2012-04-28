@@ -211,7 +211,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	FileIt::FileIt( std::wstring const& pattern, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
+	FindFiles::FindFiles( std::wstring const& pattern, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
 		: recursive(recursive)
 		, skipDotDirectories(skipDotDirectories)
 		, rootPath(pattern)
@@ -240,7 +240,17 @@ namespace Instalog { namespace SystemFacades {
 
 		if (handle == INVALID_HANDLE_VALUE)
 		{
-			Win32Exception::ThrowFromLastError();
+			DWORD lastError = ::GetLastError();
+			
+			if (lastError == ERROR_FILE_NOT_FOUND || lastError == ERROR_PATH_NOT_FOUND)
+			{
+				valid = false;
+				return;
+			}
+			else
+			{
+				Win32Exception::ThrowFromLastError();
+			}
 		}
 
 		handles.push(handle);
@@ -251,7 +261,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	FileIt::~FileIt()
+	FindFiles::~FindFiles()
 	{
 		while (handles.empty() == false)
 		{
@@ -260,7 +270,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	void FileIt::Next()
+	void FindFiles::Next()
 	{
 		bool alreadyIncludedSubPath = false;
 
@@ -318,7 +328,7 @@ namespace Instalog { namespace SystemFacades {
 
 				if (skipDotDirectories)
 				{
-					FileIt::Next();
+					FindFiles::Next();
 					alreadyIncludedSubPath = true;
 				}
 			}
@@ -330,7 +340,7 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	bool FileIt::IsValid()
+	bool FindFiles::IsValid()
 	{
 		return valid;
 	}

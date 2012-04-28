@@ -124,4 +124,22 @@ namespace Instalog
 	private:
 		void Enumerate(std::wostream& logOutput, std::wstring const& rootKeyPath) const;
 	};
+
+	/// @brief	Created Last 30 and Find3M
+	struct FindStarM : public ISectionDefinition
+	{
+		virtual std::wstring GetScriptCommand() const
+		{
+			return L"findstarm";
+		}
+		virtual std::wstring GetName() const
+		{
+			return L"Find*M";
+		}
+		virtual LogSectionPriorities GetPriority() const
+		{
+			return SCANNING;
+		}
+		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const;
+	};
 }

@@ -18,6 +18,8 @@
 #include "RestorePoints.hpp"
 #include "Wmi.hpp"
 #include "Registry.hpp"
+#include "File.hpp"
+#include "Path.hpp"
 #include "ScanningSections.hpp"
 
 namespace Instalog
@@ -555,6 +557,123 @@ namespace Instalog
         using namespace std::placeholders;
         std::sort(entries.begin(), entries.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
         std::copy(entries.cbegin(), entries.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
+	}
+
+	// The output will then be sorted by creation date, then by modification date, then by size, then by
+	// attribute string, and finally by file path.
+	bool SortWin32FindDataW(const WIN32_FIND_DATAW& d1, const WIN32_FIND_DATAW& d2)
+	{
+		using SystemFacades::File;
+
+		ULARGE_INTEGER largeInt1;
+		largeInt1.LowPart  = d1.ftCreationTime.dwLowDateTime;
+		largeInt1.HighPart = d1.ftCreationTime.dwHighDateTime;
+		ULARGE_INTEGER largeInt2;
+		largeInt2.LowPart  = d2.ftCreationTime.dwLowDateTime;
+		largeInt2.HighPart = d2.ftCreationTime.dwHighDateTime;
+		if (largeInt1.QuadPart != largeInt2.QuadPart)
+		{
+			return largeInt1.QuadPart > largeInt2.QuadPart;
+		}
+
+		largeInt1.LowPart  = d1.ftLastWriteTime.dwLowDateTime;
+		largeInt1.HighPart = d1.ftLastWriteTime.dwHighDateTime;
+		largeInt2.LowPart  = d2.ftLastWriteTime.dwLowDateTime;
+		largeInt2.HighPart = d2.ftLastWriteTime.dwHighDateTime;
+		if (largeInt1.QuadPart != largeInt2.QuadPart)
+		{
+			return largeInt1.QuadPart > largeInt2.QuadPart;
+		}
+
+		largeInt1.LowPart  = d1.nFileSizeLow;
+		largeInt1.HighPart = d1.nFileSizeHigh;
+		largeInt2.LowPart  = d2.nFileSizeLow;
+		largeInt2.HighPart = d2.nFileSizeHigh;
+		if (largeInt1.QuadPart != largeInt2.QuadPart)
+		{
+			return largeInt1.QuadPart > largeInt2.QuadPart;
+		}
+
+		std::wstringstream attributes1ss, attributes2ss;
+		WriteFileAttributes(attributes1ss, File::GetAttributes(d1.cFileName));
+		WriteFileAttributes(attributes2ss, File::GetAttributes(d2.cFileName));
+		std::wstring attributes1(attributes1ss.str()),
+					 attributes2(attributes2ss.str());
+		if (attributes1 != attributes2)
+		{
+			return attributes1 > attributes2;
+		}
+
+		return std::wstring(d1.cFileName) > std::wstring(d2.cFileName);
+	}
+	
+	void FindStarM::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		using SystemFacades::FindFiles;
+		using SystemFacades::Win32Exception;
+
+		static const wchar_t *searchDirectories[] = {
+			L"%SystemRoot%\\System32\\drivers\\",
+			L"%SystemRoot%\\System32\\wbem\\",
+			L"%SystemRoot%\\System32\\",
+			L"%SystemRoot%\\system\\",
+			L"%SystemRoot%\\",
+			L"%Systemdrive%\\",
+			L"%Systemdrive%\\temp\\",
+			L"%userprofile%\\",
+			L"%commonprogramfiles%\\",
+			L"%programfiles%\\",
+			L"%AppData%\\",
+			L"%AllUsersprofile%\\",
+#ifdef _M_X64
+			L"%SystemRoot%\\SysWow64\\",
+			L"%ProgramFiles(x86)%\\",
+			L"%CommonProgramFiles(x86)%\\"
+#endif
+		};
+
+		FILETIME fileTime;
+		GetSystemTimeAsFileTime(&fileTime);
+		ULARGE_INTEGER oneMonthAgo;
+		oneMonthAgo.LowPart = fileTime.dwLowDateTime;
+		oneMonthAgo.HighPart = fileTime.dwHighDateTime;
+		oneMonthAgo.QuadPart -= 25920000000000; /* 30 days of 100-nanosecond intervals */
+
+		std::vector<WIN32_FIND_DATAW> fileData;
+
+		std::vector<std::wstring> directories(
+			searchDirectories,
+			searchDirectories + (sizeof(searchDirectories)/sizeof(const wchar_t *))
+			);
+
+		for (auto directory = directories.begin(); directory < directories.end(); ++directory)
+		{
+			std::wstring fullDirectory(*directory);
+			Path::ResolveFromCommandLine(fullDirectory);
+
+			for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+			{
+				ULARGE_INTEGER createdTime;
+				createdTime.LowPart = files.data.ftCreationTime.dwLowDateTime;
+				createdTime.HighPart = files.data.ftCreationTime.dwHighDateTime;
+
+				if (createdTime.QuadPart >= oneMonthAgo.QuadPart)
+				{
+					WIN32_FIND_DATAW findData = files.data;
+					wcscpy_s(reinterpret_cast<wchar_t*>(findData.cFileName), MAX_PATH, std::wstring(fullDirectory).append(findData.cFileName).c_str());
+
+					fileData.emplace_back(std::move(findData));
+				}
+			}
+		}
+
+		std::sort(fileData.begin(), fileData.end(), SortWin32FindDataW);
+
+		for (auto data = fileData.begin(); data < fileData.end(); ++data)
+		{
+			WriteFileListingFile(logOutput, data->cFileName);
+			logOutput << std::endl;
+		}
 	}
 
 }

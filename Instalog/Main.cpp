@@ -55,8 +55,9 @@ int main()
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RestorePoints));
 		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
+		sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new FindStarM));
 		wchar_t const defaultScript[] =
-			L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
+			L":FindStarM\n:RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());

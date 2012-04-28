@@ -159,7 +159,8 @@ namespace Instalog { namespace SystemFacades {
 		static std::wstring GetCompany(std::wstring const& target);
 	};
 
-	class FileIt : boost::noncopyable
+	/// @brief	Finds files in directories.  Wrapper around FindFirstFile and FindNextFile
+	class FindFiles : boost::noncopyable
 	{
 		std::stack<HANDLE> handles;
 		const bool skipDotDirectories;
@@ -170,14 +171,39 @@ namespace Instalog { namespace SystemFacades {
 		bool valid;
 
 	public:
+		/// @summary	The data of the next file found.
 		WIN32_FIND_DATAW data;
 
-		FileIt(std::wstring const& pattern, bool recursive = false, bool includeRelativeSubPath = true, bool skipDotDirectories = true);
+		/// @brief	Constructor
+		///
+		/// @param	pattern				  	A pattern specifying the files of interest.  Supports 
+		/// 								everything that FindFirstFile supports (check MSDN docs 
+		/// 								for this)
+		/// @param	recursive			  	(optional) whether to recurse deeper into directories or
+		/// 								not
+		/// @param	includeRelativeSubPath	(optional) if recursive is set to true, when this is set
+		/// 								to true, it will print the part of the path between the 
+		/// 								root pattern path and the file.  For example, if the 
+		/// 								pattern is "C:\*" and the current file is "C:\foo\bar",
+		/// 								the cFileName part of the data struct will be 
+		/// 								"foo\bar" when this is true and "bar" when this is 
+		/// 								false.
+		/// @param	skipDotDirectories	  	(optional) if this is true, the implied directories . 
+		/// 								and .. will be skipped
+		/// 
+		/// @detail This will swallow invalid path and invalid file exceptions and instead just set
+		/// 		IsValid to false.
+		FindFiles(std::wstring const& pattern, bool recursive = false, bool includeRelativeSubPath = true, bool skipDotDirectories = true);
 
-		~FileIt();
+		/// @brief	Destructor.
+		~FindFiles();
 
+		/// @brief	Populates data with the next file (if there is one)
 		void Next();
 
+		/// @brief	Query if the data struct contains valid data
+		///
+		/// @return	true if valid, false if not.
 		bool IsValid();
 	};
 
