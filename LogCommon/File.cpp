@@ -211,15 +211,22 @@ namespace Instalog { namespace SystemFacades {
 		}
 	}
 
-	FileIt::FileIt( std::wstring const& path, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
+	FileIt::FileIt( std::wstring const& pattern, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
 		: recursive(recursive)
 		, skipDotDirectories(skipDotDirectories)
-		, rootPath(path)
+		, rootPath(pattern)
 		, includeRelativeSubPath(includeRelativeSubPath)
 		, valid(true)
 	{
-		std::wstring::iterator chop;
-		for (chop = rootPath.end() - 1; chop > rootPath.begin(); --chop)
+		std::wstring::iterator chop = rootPath.end() - 1;
+		for (; chop > rootPath.begin(); --chop)
+		{
+			if (*chop == L'\\')
+			{
+				break;
+			}
+		}
+		for (; chop > rootPath.begin(); --chop)
 		{
 			if (*chop != L'\\')
 			{
@@ -229,7 +236,7 @@ namespace Instalog { namespace SystemFacades {
 		rootPath.erase(chop + 1, rootPath.end());
 		rootPath.append(L"\\");
 
-		HANDLE handle = ::FindFirstFile(std::wstring(rootPath).append(L"\\*").c_str(), &data);
+		HANDLE handle = ::FindFirstFile(pattern.c_str(), &data);
 
 		if (handle == INVALID_HANDLE_VALUE)
 		{
@@ -238,7 +245,7 @@ namespace Instalog { namespace SystemFacades {
 
 		handles.push(handle);
 
-		if (skipDotDirectories)
+		if (skipDotDirectories && data.cFileName[0] == L'.')
 		{
 			Next();
 		}
@@ -265,6 +272,7 @@ namespace Instalog { namespace SystemFacades {
 				DWORD errorStatus = ::GetLastError();
 				if (errorStatus == ERROR_NO_MORE_FILES)
 				{
+					::FindClose(handles.top());
 					handles.pop();
 					if (subPaths.empty() == false)
 					{

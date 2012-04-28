@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include "gtest/gtest.h"
 #include "LogCommon/File.hpp"
+#include "LogCommon/Path.hpp"
 #include "LogCommon/Win32Exception.hpp"
 
 using Instalog::SystemFacades::File;
@@ -270,15 +271,20 @@ TEST(File, ExclusiveNoMatchDir)
 	ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
 }
 
-TEST(FileIt, NonExistantDirectory)
+TEST(FileIt, NonExistentFile)
 {
-	ASSERT_THROW(FileIt(L"C:\\Nonexistent"), ErrorPathNotFoundException);
+	ASSERT_THROW(FileIt(L"C:\\Nonexistent"), ErrorFileNotFoundException);
+}
+
+TEST(FileIt, NonExistentDirectory)
+{
+	ASSERT_THROW(FileIt(L"C:\\Nonexistent\\*"), ErrorPathNotFoundException);
 }
 
 TEST(FileIt, HostsExists)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc");
+	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -291,10 +297,51 @@ TEST(FileIt, HostsExists)
 	ASSERT_TRUE(foundHosts);
 }
 
+TEST(FileIt, OnlyHostsStarFollowing)
+{
+	bool foundHosts = false;
+	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\hos*");
+
+	for(; foundHosts == false && files.IsValid(); files.Next())
+	{
+		std::wcout << files.data.cFileName << std::endl;
+		if (boost::iequals(files.data.cFileName, L"hosts"))
+		{
+			foundHosts = true;
+		}
+		else
+		{
+			FAIL() << "Got an entry that wasn't hosts";
+		}
+	}
+
+	ASSERT_TRUE(foundHosts);
+}
+
+TEST(FileIt, OnlyHostsStarPreceding)
+{
+	bool foundHosts = false;
+	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*ts");
+
+	for(; foundHosts == false && files.IsValid(); files.Next())
+	{
+		if (boost::iequals(files.data.cFileName, L"hosts"))
+		{
+			foundHosts = true;
+		}
+		else
+		{
+			FAIL() << "Got an entry that wasn't hosts";
+		}
+	}
+
+	ASSERT_TRUE(foundHosts);
+}
+
 TEST(FileIt, HostsExistsRecursive)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers", true);
+	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -310,7 +357,7 @@ TEST(FileIt, HostsExistsRecursive)
 TEST(FileIt, HostsExistsRecursiveTwoLevels)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32", true);
+	FileIt files(L"C:\\Windows\\System32\\*", true);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -327,7 +374,7 @@ TEST(FileIt, HostsExistsRecursiveTwoLevels)
 TEST(FileIt, HostsNotExistsNotRecursive)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers");
+	FileIt files(L"C:\\Windows\\System32\\drivers\\*");
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -344,7 +391,7 @@ TEST(FileIt, HostsNotExistsNotRecursive)
 TEST(FileIt, HostsExistsNoSubpath)
 {
 	bool foundHosts = false;
-	FileIt files(L"C:\\Windows\\System32\\drivers", true, false);
+	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true, false);
 
 	for(; foundHosts == false && files.IsValid(); files.Next())
 	{
@@ -359,7 +406,7 @@ TEST(FileIt, HostsExistsNoSubpath)
 
 TEST(FileIt, NoDots)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc");
+	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*");
 
 	for(; files.IsValid(); files.Next())
 	{
@@ -373,7 +420,7 @@ TEST(FileIt, NoDots)
 
 TEST(FileIt, NoDotsRecursive)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers", true);
+	FileIt files(L"C:\\Windows\\System32\\drivers\\*", true);
 
 	for(; files.IsValid(); files.Next())
 	{
@@ -386,7 +433,7 @@ TEST(FileIt, NoDotsRecursive)
 
 TEST(FileIt, Dots)
 {
-	FileIt files(L"C:\\Windows\\System32\\drivers\\etc", false, true, false);
+	FileIt files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, true, false);
 
 	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
 	files.Next();
@@ -395,9 +442,14 @@ TEST(FileIt, Dots)
 
 struct FileItDirectoryFixture : public testing::Test
 {
+	std::wstring tempPath;
+
 	virtual void SetUp()
 	{
-		if (::CreateDirectory(L"ThisDirectoryShouldBeEmpty", NULL) == false)
+		tempPath = L"%TEMP%\\ThisDirectoryShouldBeEmpty";
+		Instalog::Path::ResolveFromCommandLine(tempPath);
+
+		if (::CreateDirectory(tempPath.c_str(), NULL) == false)
 		{
 			DWORD lastError = ::GetLastError();
 			if (lastError != ERROR_ALREADY_EXISTS)
@@ -409,7 +461,7 @@ struct FileItDirectoryFixture : public testing::Test
 
 	virtual void TearDown()
 	{
-		if (::RemoveDirectory(L"ThisDirectoryShouldBeEmpty") == false)
+		if (::RemoveDirectory(tempPath.c_str()) == false)
 		{
 			FAIL() << "Could not remove directory after FileItDirectoryFixture.  Remove this manually";
 		}
@@ -418,14 +470,14 @@ struct FileItDirectoryFixture : public testing::Test
 
 TEST_F(FileItDirectoryFixture, EmptyDirectory)
 {
-	FileIt files(L"ThisDirectoryShouldBeEmpty");
+	FileIt files(std::wstring(tempPath).append(L"\\*"));
 
 	ASSERT_FALSE(files.IsValid());
 }
 
 TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
 {
-	FileIt files(L"ThisDirectoryShouldBeEmpty", false, true, false);
+	FileIt files(std::wstring(tempPath).append(L"\\*"), false, true, false);
 
 	EXPECT_EQ(L".", std::wstring(files.data.cFileName));
 	EXPECT_TRUE(files.IsValid());

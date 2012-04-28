@@ -172,7 +172,7 @@ namespace Instalog { namespace SystemFacades {
 	public:
 		WIN32_FIND_DATAW data;
 
-		FileIt(std::wstring const& path, bool recursive = false, bool includeRelativeSubPath = true, bool skipDotDirectories = true);
+		FileIt(std::wstring const& pattern, bool recursive = false, bool includeRelativeSubPath = true, bool skipDotDirectories = true);
 
 		~FileIt();
 
