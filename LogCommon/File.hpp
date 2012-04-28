@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <stack>
 #include <boost/noncopyable.hpp>
 #include <windows.h>
 
@@ -15,7 +16,9 @@ namespace Instalog { namespace SystemFacades {
 	{
 		HANDLE hFile;
 	public:
+		/// @brief	Default constructor.
 		File();
+
 		///
 		/// @param	filename		  	Filename of the file.
 		/// @param	desiredAccess	  	(optional) the desired access.
@@ -33,8 +36,20 @@ namespace Instalog { namespace SystemFacades {
 			DWORD createdDisposition = OPEN_EXISTING,
 			DWORD flags = FILE_ATTRIBUTE_NORMAL
 		);
+		
+		/// @brief	Move constructor
+		///
+		/// @param [in,out]	other	The other.
 		File(File && other);
+
+		/// @brief	Assignment operator.
+		///
+		/// @param	other	The other.
+		///
+		/// @return	A shallow copy of this instance.
 		File& operator=(File other);
+
+		/// @brief	Destructor.
 		~File();
 
 		/// @brief	Gets the size of the file in bytes
@@ -142,6 +157,25 @@ namespace Instalog { namespace SystemFacades {
 		/// 
 		/// @throw	Win32Exception on error
 		static std::wstring GetCompany(std::wstring const& target);
+	};
+
+	class FileIt : boost::noncopyable
+	{
+		std::stack<HANDLE> handles;
+		const bool skipDotDirectories;
+		const bool recursive;
+		const bool includeRelativeSubPath;
+		std::wstring rootPath;
+		std::stack<const std::wstring> subPaths;
+
+	public:
+		WIN32_FIND_DATAW data;
+
+		FileIt(std::wstring const& path, bool recursive = false, bool includeRelativeSubPath = true, bool skipDotDirectories = true);
+
+		~FileIt();
+
+		bool Next();
 	};
 
 }}

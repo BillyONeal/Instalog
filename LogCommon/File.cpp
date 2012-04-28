@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include "File.hpp"
 #include "Win32Exception.hpp"
+#include <boost/algorithm/string/predicate.hpp>
 
 #pragma comment(lib, "Version.lib")
 
@@ -124,7 +125,7 @@ namespace Instalog { namespace SystemFacades {
 	{
 		DWORD attributes = ::GetFileAttributesW(filename.c_str());
 
-		return attributes == FILE_ATTRIBUTE_DIRECTORY;
+		return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && (attributes != INVALID_FILE_ATTRIBUTES);
 	}
 
 	bool File::IsExecutable( std::wstring const& filename )
@@ -208,6 +209,117 @@ namespace Instalog { namespace SystemFacades {
 		{
 			return (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0;
 		}
+	}
+
+	FileIt::FileIt( std::wstring const& path, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
+		: recursive(recursive)
+		, skipDotDirectories(skipDotDirectories)
+		, rootPath(path)
+		, includeRelativeSubPath(includeRelativeSubPath)
+	{
+		std::wstring::iterator chop;
+		for (chop = rootPath.end() - 1; chop > rootPath.begin(); --chop)
+		{
+			if (*chop != L'\\')
+			{
+				break;
+			}
+		}
+		rootPath.erase(chop + 1, rootPath.end());
+		rootPath.append(L"\\");
+
+		HANDLE handle = ::FindFirstFile(std::wstring(rootPath).append(L"\\*").c_str(), &data);
+
+		if (handle == INVALID_HANDLE_VALUE)
+		{
+			Win32Exception::ThrowFromLastError();
+		}
+
+		handles.push(handle);
+
+		if (skipDotDirectories)
+		{
+			Next();
+		}
+	}
+
+	FileIt::~FileIt()
+	{
+		while (handles.empty() == false)
+		{
+			::FindClose(handles.top());
+			handles.pop();
+		}
+	}
+
+	bool FileIt::Next()
+	{
+		bool alreadyIncludedSubPath = false;
+
+		// Get the next file, skip . and .. if requested
+		do 
+		{
+			if (::FindNextFile(handles.top(), &data) == false)
+			{
+				DWORD errorStatus = ::GetLastError();
+				if (errorStatus == ERROR_NO_MORE_FILES)
+				{
+					handles.pop();
+					if (subPaths.empty() == false)
+					{
+						subPaths.pop();
+					}				
+					if (handles.empty())
+					{
+						return false;
+					}
+					else
+					{
+						return Next();
+					}
+				}
+				else
+				{
+					Win32Exception::Throw(errorStatus);
+				}
+			}
+		} while (skipDotDirectories && (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0));
+
+		if (recursive)
+		{
+			if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(data.cFileName, L".") != 0 && wcscmp(data.cFileName, L"..") != 0)
+			{
+				if (subPaths.empty())
+				{
+					subPaths.push(std::wstring(data.cFileName).append(L"\\"));		
+				}
+				else
+				{
+					subPaths.push(std::wstring(subPaths.top()).append(data.cFileName).append(L"\\"));				
+				}
+
+				HANDLE handle = ::FindFirstFile(std::wstring(rootPath).append(subPaths.top()).append(L"*").c_str(), &data);
+				if (handle == INVALID_HANDLE_VALUE)
+				{
+					Win32Exception::ThrowFromLastError();
+				}
+
+				handles.push(handle);
+
+				if (skipDotDirectories)
+				{
+					FileIt::Next();
+					alreadyIncludedSubPath = true;
+				}
+			}
+		}
+
+		if (includeRelativeSubPath && alreadyIncludedSubPath == false && subPaths.empty() == false)
+		{
+			wcscpy_s(reinterpret_cast<wchar_t*>(&data.cFileName), MAX_PATH, std::wstring(subPaths.top()).append(data.cFileName).c_str());
+		}
+
+		return true;
 	}
 
 }}
