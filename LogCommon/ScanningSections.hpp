@@ -134,7 +134,7 @@ namespace Instalog
 		}
 		virtual std::wstring GetName() const
 		{
-			return L"Find*M";
+			return L"Created Last 30";
 		}
 		virtual LogSectionPriorities GetPriority() const
 		{
