@@ -379,6 +379,26 @@ TEST(StringUtilities, Url_UrlEscape)
 	str = L"htt#p";
 	HttpEscape(str);
 	EXPECT_EQ(L"htt##p", str);
+
+	str = L"http://go.microsoft.com/";
+	HttpEscape(str);
+	EXPECT_EQ(L"htt#p://go.microsoft.com/", str);
+
+	str = L"HTTp://go.microsoft.com/";
+	HttpEscape(str);
+	EXPECT_EQ(L"htt#p://go.microsoft.com/", str);
+
+	str = L"hTtp://go.microsoft.com/";
+	HttpEscape(str);
+	EXPECT_EQ(L"htt#p://go.microsoft.com/", str);
+
+	str = L"hthttptp://go.microsoft.com/";
+	HttpEscape(str);
+	EXPECT_EQ(L"hthtt#ptp://go.microsoft.com/", str);
+
+	str = L"htt#p://go.microsoft.com/";
+	HttpEscape(str);
+	EXPECT_EQ(L"htt##p://go.microsoft.com/", str);
 }
 
 TEST(StringUtilities, UnescapeEmpty)

@@ -263,7 +263,7 @@ namespace Instalog {
             auto value = key[valueName];
             output << prefix << L": ";
             std::wstring val(value.GetString());
-            GeneralProcess(output, val);
+            dataProcess(output, val);
             output << L'\n';
         }
         catch (ErrorFileNotFoundException const&)
