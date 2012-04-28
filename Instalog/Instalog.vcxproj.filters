@@ -29,4 +29,16 @@
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Instalog.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\LogCommon\Running Processes.txt" />
+    <None Include="..\LogCommon\Services Drivers.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\LogCommon\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

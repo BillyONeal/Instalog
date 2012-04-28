@@ -35,7 +35,7 @@ namespace Instalog
 	/// @param [in,out]	target 	String to escape
 	/// @param	escapeCharacter	(optional) the escape character.
 	/// @param	rightDelimiter 	(optional) the right delimiter.
-	void UrlEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
+	void HttpEscape(std::wstring &target, wchar_t escapeCharacter = L'#', wchar_t rightDelimiter = L'\0');
 
 	/// @brief	Malformed escaped sequence 
 	class MalformedEscapedSequence : public std::exception 

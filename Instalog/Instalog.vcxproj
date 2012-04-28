@@ -188,6 +188,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </MASM>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Instalog.ico" />
+    <None Include="..\LogCommon\Running Processes.txt" />
+    <None Include="..\LogCommon\Services Drivers.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\LogCommon\resource.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

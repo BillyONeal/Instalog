@@ -336,6 +336,14 @@ namespace Instalog { namespace SystemFacades {
 		return std::move(result);
 	}
 
+    void RegistryKey::Check() const
+    {
+        if (Invalid())
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+    }
+
 	RegistryKeySizeInformation::RegistryKeySizeInformation( unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues ) : lastWriteTime_(lastWriteTime)
 		, numberOfSubkeys_(numberOfSubkeys)
 		, numberOfValues_(numberOfValues)
