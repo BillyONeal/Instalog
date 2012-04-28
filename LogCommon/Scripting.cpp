@@ -134,8 +134,8 @@ namespace Instalog
 			logOutput << L"\n" << header << L"\n\n";
 			begin->first.GetDefinition().Execute(logOutput, begin->first, begin->second);
 		}
-		logOutput << std::endl;
-		WriteScriptFooter(logOutput);
+		logOutput << L'\n';
+        WriteScriptFooter(logOutput);
 		ui->ReportFinished();
 	}
 

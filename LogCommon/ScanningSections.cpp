@@ -635,10 +635,8 @@ namespace Instalog
 
 		FILETIME fileTime;
 		GetSystemTimeAsFileTime(&fileTime);
-		ULARGE_INTEGER oneMonthAgo;
-		oneMonthAgo.LowPart = fileTime.dwLowDateTime;
-		oneMonthAgo.HighPart = fileTime.dwHighDateTime;
-		oneMonthAgo.QuadPart -= 25920000000000; /* 30 days of 100-nanosecond intervals */
+        unsigned __int64 oneMonthAgo = FiletimeToInteger(fileTime);
+		oneMonthAgo-= 25920000000000; /* 30 days of 100-nanosecond intervals */
 
 		std::vector<WIN32_FIND_DATAW> fileData;
 
@@ -647,21 +645,18 @@ namespace Instalog
 			searchDirectories + (sizeof(searchDirectories)/sizeof(const wchar_t *))
 			);
 
-		for (auto directory = directories.begin(); directory < directories.end(); ++directory)
+		for (auto directory = directories.begin(); directory != directories.end(); ++directory)
 		{
 			std::wstring fullDirectory(*directory);
-			Path::ResolveFromCommandLine(fullDirectory);
+			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
 			for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
 			{
-				ULARGE_INTEGER createdTime;
-				createdTime.LowPart = files.data.ftCreationTime.dwLowDateTime;
-				createdTime.HighPart = files.data.ftCreationTime.dwHighDateTime;
-
-				if (createdTime.QuadPart >= oneMonthAgo.QuadPart)
+                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+				if (createdTime >= oneMonthAgo)
 				{
 					WIN32_FIND_DATAW findData = files.data;
-					wcscpy_s(reinterpret_cast<wchar_t*>(findData.cFileName), MAX_PATH, std::wstring(fullDirectory).append(findData.cFileName).c_str());
+					wcscpy_s(findData.cFileName, MAX_PATH, std::wstring(fullDirectory).append(findData.cFileName).c_str());
 
 					fileData.emplace_back(std::move(findData));
 				}
@@ -672,7 +667,7 @@ namespace Instalog
 
 		for (auto data = fileData.begin(); data < fileData.end(); ++data)
 		{
-			WriteFileListingFile(logOutput, data->cFileName);
+			WriteFileListingFromFindData(logOutput, *data);
 			logOutput << std::endl;
 		}
 	}

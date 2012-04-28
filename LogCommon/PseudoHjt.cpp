@@ -237,6 +237,17 @@ namespace Instalog {
     }
 
     /**
+     * Values that represent possible sources of CLSIDs in ClsidValueBasedOutput queries.
+     */
+    enum ClsidSource
+    {
+        NAME,
+        VALUE
+    };
+
+    //static void ClsidValueBasedOutput(std::wostream& output, std::wstring const& rootKey, )
+
+    /**
      * Single registry value output.
      *
      * @param [in,out] output The output stream.
