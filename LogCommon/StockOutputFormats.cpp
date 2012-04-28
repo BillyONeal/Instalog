@@ -11,8 +11,9 @@
 #include "Library.hpp"
 #include "Path.hpp"
 #include "File.hpp"
-#include "StockOutputFormats.hpp"
 #include "InstalogVersion.hpp"
+#include "StringUtilities.hpp"
+#include "StockOutputFormats.hpp"
 
 using Instalog::SystemFacades::Win32Exception;
 using Instalog::SystemFacades::File;
@@ -138,6 +139,28 @@ namespace Instalog {
 		WriteFileAttributes(str, fad.dwFileAttributes);
 		str << L' ' << targetFile;
 	}
+
+    void WriteFileListingFromFindData( std::wostream &str, WIN32_FIND_DATAW const& fad )
+    {
+		unsigned __int64 size = 
+			static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+			| fad.nFileSizeLow;
+		unsigned __int64 ctime = 
+			static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+			| fad.ftCreationTime.dwLowDateTime;
+		unsigned __int64 mtime = 
+			static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+			| fad.ftLastWriteTime.dwLowDateTime;
+		WriteDefaultDateFormat(str, ctime);
+		str << L" . ";
+		WriteDefaultDateFormat(str, mtime);
+		str << L' ' << std::setw(10) << std::setfill(L' ') << size << L' ';
+		WriteFileAttributes(str, fad.dwFileAttributes);
+		str << L' ';
+        std::wstring escapedFileName(fad.cFileName);
+        GeneralEscape(escapedFileName);
+        str << escapedFileName;
+    }
 
 	void WriteMemoryInformation( std::wostream &log )
 	{

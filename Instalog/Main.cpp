@@ -61,6 +61,7 @@ int main()
 		Script s = sd.Parse(defaultScript);
 		std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
 		s.Run(outFile, ui.get());
+        outFile.close();
 #ifdef NDEBUG
 	}
 	catch (Instalog::SystemFacades::HresultException const& ex)

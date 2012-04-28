@@ -3,10 +3,11 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
-#include "Path.hpp"
 #include <boost/algorithm/string.hpp>
 #include "File.hpp"
 #include "StringUtilities.hpp"
+#include "Win32Exception.hpp"
+#include "Path.hpp"
 
 namespace Instalog { namespace Path {
 
@@ -210,18 +211,7 @@ namespace Instalog { namespace Path {
 		{
             return false;
         }
-        std::vector<wchar_t> buff(path.size() * 2);
-        DWORD expectedLen = ExpandEnvironmentStringsW(path.c_str(), buff.data(), static_cast<DWORD>(buff.size())) - 1;
-        buff.resize(expectedLen);
-        if (expectedLen > buff.size())
-        {
-            expectedLen = ExpandEnvironmentStringsW(path.c_str(), buff.data(), static_cast<DWORD>(buff.size())) - 1;
-            if (expectedLen > buff.size())
-            {
-                throw std::runtime_error("Could not allocate the right buffer size for ExpandEnvironmentStrings");
-            }
-        }
-        path.assign(buff.cbegin(), buff.cend());
+        path = Path::ExpandEnvStrings(path);
 
         if (path[0] == L'\"')
         {
@@ -278,5 +268,23 @@ namespace Instalog { namespace Path {
 			}
 		}
 	}
+
+    std::wstring ExpandEnvStrings( std::wstring const& input )
+    {
+        std::wstring result;
+        DWORD errorCheck = static_cast<DWORD>(input.size());
+        do
+        {
+            result.resize(static_cast<std::size_t>(errorCheck));
+            errorCheck = ::ExpandEnvironmentStringsW(input.c_str(), &result[0], static_cast<DWORD>(result.size()));
+        } while (errorCheck != 0 && errorCheck != result.size());
+        if (errorCheck == 0)
+        {
+            using namespace Instalog::SystemFacades;
+            Win32Exception::ThrowFromLastError();
+        }
+        result.resize(static_cast<std::size_t>(errorCheck) - 1);
+        return std::move(result);
+    }
 
 }}

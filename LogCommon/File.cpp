@@ -343,7 +343,7 @@ namespace Instalog { namespace SystemFacades {
 
 		if (includeRelativeSubPath && alreadyIncludedSubPath == false && subPaths.empty() == false)
 		{
-			wcscpy_s(reinterpret_cast<wchar_t*>(&data.cFileName), MAX_PATH, std::wstring(subPaths.top()).append(data.cFileName).c_str());
+			wcscpy_s(data.cFileName, MAX_PATH, std::wstring(subPaths.top()).append(data.cFileName).c_str());
 		}
 	}
 

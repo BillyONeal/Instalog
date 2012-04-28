@@ -39,4 +39,12 @@ namespace Instalog { namespace Path {
 	/// @return	The Windows path.
 	std::wstring GetWindowsPath();
 
+    /**
+     * Expands environment strings.
+     *
+     * @param input The input string to expand environment variables inside.
+     *
+     * @return The string with environment strings expanded.
+     */
+    std::wstring ExpandEnvStrings(std::wstring const& input);
 }}
