@@ -272,13 +272,15 @@ namespace Instalog {
         }
     }
 
+
+
     /**
      * Internet explorer output.
      *
      * @param [in,out] output The output stream.
      * @param rootKey         The root key where Internet Explorer is being rooted.
      */
-    static void InternetExplorerOutput(std::wostream& output, std::wstring const& rootKey)
+    static void InternetExplorerMainOutput(std::wostream& output, std::wstring const& rootKey)
     {
         RegistryKey ieRoot(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
         RegistryKey ieMain(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
@@ -350,7 +352,7 @@ namespace Instalog {
      */
     static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
     {
-        InternetExplorerOutput(output, rootKey);
+        InternetExplorerMainOutput(output, rootKey);
         RunKeyOutput(output, rootKey, L"Run");
         RunKeyOutput(output, rootKey, L"RunOnce");
         RunKeyOutput(output, rootKey, L"RunServices");

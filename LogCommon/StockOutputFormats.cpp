@@ -134,7 +134,7 @@ namespace Instalog {
 		WriteDefaultDateFormat(str, ctime);
 		str << L" . ";
 		WriteDefaultDateFormat(str, mtime);
-		str << L' ' << size << L' ';
+		str << L' ' << std::setw(10) << size << L' ';
 		WriteFileAttributes(str, fad.dwFileAttributes);
 		str << L' ' << targetFile;
 	}
