@@ -89,6 +89,40 @@ TEST(PathPrettify, SpacesOkay)
 	ASSERT_EQ(L"C:\\Example\\Foo bar\\Target.exe", path);
 }
 
+static void TestExpansion(std::wstring const& expected, std::wstring source, bool expectedReturn = true)
+{
+	EXPECT_EQ(expectedReturn, ExpandShortPath(source));
+	EXPECT_EQ(expected, source);
+}
+
+TEST(PathExpanding, DirectoryExpansion)
+{
+	TestExpansion(L"C:\\Program Files\\", L"C:\\Progra~1\\");
+}
+
+TEST(PathExpanding, NonExistantDirectoryExpansion)
+{
+	TestExpansion(L"C:\\zzzzz~1\\", L"C:\\zzzzz~1\\", false);
+}
+
+TEST(PathExpanding, FileExpansion)
+{
+	HANDLE hFile = ::CreateFileW(L"Temporary Long Path File", GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		std::wcout << ::GetLastError() << std::endl;
+	}
+
+	TestExpansion(L"Temporary Long Path File", L"Tempor~1", true);
+
+	::CloseHandle(hFile);
+}
+
+TEST(PathExpanding, NonExistantFileExpansion)
+{
+	TestExpansion(L"zzzzzz~1", L"zzzzzz~1", false);
+}
+
 static void TestResolve(std::wstring const& expected, std::wstring source, bool expectedReturn = true)
 {
 	EXPECT_EQ(expectedReturn, ResolveFromCommandLine(source));

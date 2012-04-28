@@ -228,7 +228,6 @@ namespace Instalog { namespace Path {
             std::wstring unescaped;
             unescaped.reserve(path.size());
             std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
-            Prettify(unescaped.begin(), unescaped.end());
             if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
             {
                 std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
@@ -241,7 +240,9 @@ namespace Instalog { namespace Path {
             }
 
             path = unescaped;
-            return SystemFacades::File::IsExclusiveFile(unescaped);
+			ExpandShortPath(path);
+			Prettify(path.begin(), path.end());
+            return SystemFacades::File::IsExclusiveFile(path);
         }
         else
         {
@@ -249,6 +250,7 @@ namespace Instalog { namespace Path {
             bool status = StripArgumentsFromPath(path);
             if (status)
             {
+				ExpandShortPath(path);
                 Prettify(path.begin(), path.end());
             }
             return status;
@@ -277,6 +279,20 @@ namespace Instalog { namespace Path {
 				}
 			}
 		}
+	}
+
+	bool ExpandShortPath( std::wstring &path )
+	{
+		if (SystemFacades::File::Exists(path))
+		{
+			wchar_t buffer[MAX_PATH];
+			::GetLongPathNameW(path.c_str(), buffer, MAX_PATH);
+			path = std::wstring(buffer);
+
+			return true;
+		}
+
+		return false;
 	}
 
 }}

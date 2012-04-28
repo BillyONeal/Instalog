@@ -23,6 +23,11 @@ namespace Instalog { namespace Path {
 	/// @param	last 	An iterator one past the end of the path to be pretified
 	void Prettify(std::wstring::iterator first, std::wstring::iterator last);
 
+	/// @brief	Expands a short windows path to the corresponding long version
+	///
+	/// @param	path	Full long path to the file
+	bool ExpandShortPath(std::wstring &path);
+
 	/// @brief	Resolve a path from the command line 
 	/// 
 	/// @details This is intended to work in the same way as Windows does it
