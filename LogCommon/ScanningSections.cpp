@@ -625,6 +625,7 @@ namespace Instalog
 			L"%programfiles%\\",
 			L"%AppData%\\",
 			L"%AllUsersprofile%\\",
+			L"%Common Appdata%", // Only exists on Vista and newer
 #ifdef _M_X64
 			L"%SystemRoot%\\SysWow64\\",
 			L"%ProgramFiles(x86)%\\",
