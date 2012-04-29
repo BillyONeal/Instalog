@@ -94,6 +94,7 @@
       <Profile>false</Profile>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -135,6 +136,7 @@
       <Profile>true</Profile>
       <MinimumRequiredVersion>
       </MinimumRequiredVersion>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
