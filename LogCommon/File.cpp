@@ -302,7 +302,7 @@ namespace Instalog { namespace SystemFacades {
 					}
 					else
 					{
-						return;
+						return Next();
 					}
 				}
 				else

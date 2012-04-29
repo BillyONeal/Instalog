@@ -558,9 +558,16 @@ namespace Instalog
         std::sort(entries.begin(), entries.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
         std::copy(entries.cbegin(), entries.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
 	}
-
-	// The output will then be sorted by creation date, then by modification date, then by size, then by
-	// attribute string, and finally by file path.
+	
+	/// @brief	Sort WIN32_FIND_DATAW structs.
+	///
+	/// @param	d1	The first const WIN32_FIND_DATAW;
+	/// @param	d2	The second const WIN32_FIND_DATAW;
+	///
+	/// @return	true if it succeeds, false if it fails.
+	/// 
+	/// @detail The output will then be sorted by creation date, then by modification date, then by 
+	/// 		size, then by attribute string, and finally by file path.
 	bool SortWin32FindDataW(const WIN32_FIND_DATAW& d1, const WIN32_FIND_DATAW& d2)
 	{
 		using SystemFacades::File;
@@ -606,13 +613,81 @@ namespace Instalog
 
 		return std::wstring(d1.cFileName) > std::wstring(d2.cFileName);
 	}
-	
-	void FindStarM::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+
+	/// @brief	Gets the number of 100-nanosecond intervals since 1600-whatever that were x months ago
+	///
+	/// @param	months	The number of months to go back
+	///
+	/// @return	The int representation of a filetime that was that many months ago
+	unsigned __int64 MonthsAgo(int months)
+	{
+		FILETIME fileTime;
+		GetSystemTimeAsFileTime(&fileTime);
+		unsigned __int64 monthsAgo = FiletimeToInteger(fileTime);
+		monthsAgo -= months * 25920000000000; /* 30 days of 100-nanosecond intervals */
+		return monthsAgo;
+	}
+
+	/// @brief	Adds a base path to cFileName data in the WIN32_FIND_DATAW struct
+	///
+	/// @param [in,out]	fileData	WIN32_FIND_DATAW struct of interest
+	/// @param	basePath			Base path to prepend to the file path
+	///
+	/// @return	The modified struct (it is the same as the argument passed in)
+	WIN32_FIND_DATAW AddBasePathToFileData(WIN32_FIND_DATAW &fileData, std::wstring const& basePath)
+	{
+		wcscpy_s(fileData.cFileName, MAX_PATH, std::wstring(basePath).append(fileData.cFileName).c_str());
+		return fileData;
+	}
+
+	/// @brief	Removes long strings of 12 or more closely created files from a list
+	///
+	/// @param [in,out]	fileData	File data of interest
+	void RemoveWindowsUpdateRuns( std::vector<WIN32_FIND_DATAW> &fileData ) 
+	{
+		// Remove "runs" of files
+		if (fileData.size() >= 12)
+		{
+			auto rangeStart = fileData.begin();
+			auto rangeEnd = rangeStart + 1;
+			for (; rangeEnd != fileData.end(); ++rangeEnd)
+			{
+				if (FiletimeToInteger((rangeEnd - 1)->ftCreationTime) - FiletimeToInteger(rangeEnd->ftCreationTime) <= 10000000)
+				{
+					continue;
+				}
+				else
+				{
+					if (std::distance(rangeStart, rangeEnd) >= 12)
+					{
+						rangeStart = fileData.erase(rangeStart, rangeEnd);
+					}
+					else
+					{
+						rangeStart = rangeEnd;
+					}
+
+					if (std::distance(rangeStart, fileData.end()) >= 12)
+					{
+						rangeEnd = rangeStart + 1;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	/// @brief	Gets the CreatedLast30 file data
+	///
+	/// @return	The CreatedLast30 file data.
+	std::vector<WIN32_FIND_DATAW> GetCreatedLast30FileData()
 	{
 		using SystemFacades::FindFiles;
-		using SystemFacades::Win32Exception;
 
-		static const wchar_t *searchDirectories[] = {
+		static const wchar_t *directories[] = {
 			L"%SystemRoot%\\System32\\drivers\\",
 			L"%SystemRoot%\\System32\\wbem\\",
 			L"%SystemRoot%\\System32\\",
@@ -625,7 +700,6 @@ namespace Instalog
 			L"%programfiles%\\",
 			L"%AppData%\\",
 			L"%AllUsersprofile%\\",
-			L"%Common Appdata%", // Only exists on Vista and newer
 #ifdef _M_X64
 			L"%SystemRoot%\\SysWow64\\",
 			L"%ProgramFiles(x86)%\\",
@@ -633,43 +707,335 @@ namespace Instalog
 #endif
 		};
 
-		FILETIME fileTime;
-		GetSystemTimeAsFileTime(&fileTime);
-        unsigned __int64 oneMonthAgo = FiletimeToInteger(fileTime);
-		oneMonthAgo-= 25920000000000; /* 30 days of 100-nanosecond intervals */
+		unsigned __int64 oneMonthAgo = MonthsAgo(1);
 
 		std::vector<WIN32_FIND_DATAW> fileData;
 
-		std::vector<std::wstring> directories(
-			searchDirectories,
-			searchDirectories + (sizeof(searchDirectories)/sizeof(const wchar_t *))
-			);
-
-		for (auto directory = directories.begin(); directory != directories.end(); ++directory)
+		for (size_t i = 0; i < sizeof(directories) / sizeof(const wchar_t *); ++i)
 		{
-			std::wstring fullDirectory(*directory);
+			std::wstring fullDirectory(directories[i]);
 			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
 			for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
 			{
-                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+				unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
 				if (createdTime >= oneMonthAgo)
 				{
-					WIN32_FIND_DATAW findData = files.data;
-					wcscpy_s(findData.cFileName, MAX_PATH, std::wstring(fullDirectory).append(findData.cFileName).c_str());
-
-					fileData.emplace_back(std::move(findData));
+					fileData.emplace_back(std::move(AddBasePathToFileData(files.data, fullDirectory)));
 				}
 			}
 		}
 
 		std::sort(fileData.begin(), fileData.end(), SortWin32FindDataW);
 
-		for (auto data = fileData.begin(); data < fileData.end(); ++data)
+		RemoveWindowsUpdateRuns(fileData);
+		
+		return fileData;
+	}
+
+	/// @brief	Checks if the path has one of the given extensions
+	///
+	/// @param	path		 	Full pathname of the file.
+	/// @param	extensions   	The extensions to check for
+	/// @param	numextensions	The number of extensions in the extensions array
+	///
+	/// @return	true if a matching extension is found, false otherwise
+	bool ExtensionCheck(const wchar_t *path, const wchar_t **extensions, size_t numextensions)
+	{
+		for (size_t i = 0; i < numextensions; ++i)
 		{
-			WriteFileListingFromFindData(logOutput, *data);
-			logOutput << std::endl;
+			if (boost::iends_with(path, extensions[i]))
+			{
+				return true;
+			}
 		}
+
+		return false;
+	}
+
+	/// @brief	Gets a Find3M file data.
+	///
+	/// @param	createdLast30FileData	The createdLast30 data.  If this is empty, it will be 
+	/// 								assumed that CreatedLast30 wasn't run and therefore the 
+	/// 								results should not be stripped from the log.
+	///
+	/// @return	The Find3M file data.
+	std::vector<WIN32_FIND_DATAW> GetFind3MFileData(std::vector<WIN32_FIND_DATAW> &createdLast30FileData)
+	{
+		using SystemFacades::FindFiles;
+		using SystemFacades::File;
+
+		std::vector<WIN32_FIND_DATAW> fileData;
+
+		unsigned __int64 threeMonthsAgo = MonthsAgo(3);
+
+		// The first part of list1 is generated the same as list5
+		static const wchar_t *extensions_list15[] = { 
+			L"bat", L"reg", L"vbs", L"wsf", L"vbe", L"msi", L"msp", L"com", L"pif", L"ren", L"vir", 
+			L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"drv"
+		};
+		static const wchar_t *directories_list1a[] = {
+			L"%PROGRAMFILES%\\",
+			L"%COMMONPROGRAMFILES%\\",
+#ifdef _M_X64
+			L"%PROGRAMFILES(x86)%\\",
+			L"%COMMONPROGRAMFILES(x86)%\\",
+#endif
+		};
+		for (size_t i = 0; i < sizeof(directories_list1a) / sizeof(const wchar_t *); ++i) 
+		{
+			std::wstring fullDirectory(directories_list1a[i]);
+			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+
+			for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+			{
+				// Discard entries that do not have the proper extension
+				if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+				{
+					continue;
+				}
+
+				WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+
+				// Discard entries that are not executables
+				if (File::IsExecutable(data.cFileName) == false)
+				{	
+					continue;
+				}
+
+				fileData.emplace_back(std::move(data));	
+			}
+		}
+
+		// The second part of list1 also has 3M filtering
+		static const wchar_t *directories_list1b[] = {
+			L"%APPDATA%\\",
+			L"%SYSTEMDRIVE%\\",
+			L"%SYSTEMROOT%\\",
+			L"%SYSTEMROOT%\\system32\\",
+			L"%USERPROFILE%\\",
+			L"%ALLUSERSPROFILE%\\",
+#ifdef _M_X64
+			L"%SYSTEMROOT%\\Syswow64\\",
+#endif
+		};
+		for (size_t i = 0; i < sizeof(directories_list1b) / sizeof(const wchar_t *); ++i) 
+		{
+			std::wstring fullDirectory(directories_list1b[i]);
+			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+
+			for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+			{
+				unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+				if (createdTime >= threeMonthsAgo)
+				{
+					// Discard entries that do not have the proper extension
+					if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+					{
+						continue;	
+					}
+
+					WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+
+					// Discard entries that are not executable
+					if (File::IsExecutable(data.cFileName) == false)
+					{			
+						continue;
+					}			
+
+					fileData.emplace_back(std::move(data));	
+				}
+			}
+		}
+
+		// list5 is basically list1b (3M filtering) but also has recursive			
+		static const wchar_t *directories_list5[] = {
+			L"%SYSTEMROOT%\\java\\",
+			L"%SYSTEMROOT%\\msapps\\",
+			L"%SYSTEMROOT%\\pif\\",
+			L"%SYSTEMROOT%\\Registration\\",
+			L"%SYSTEMROOT%\\help\\",
+			L"%SYSTEMROOT%\\web\\",
+			L"%SYSTEMROOT%\\pchealth\\",
+			L"%SYSTEMROOT%\\srchasst\\",
+			L"%SYSTEMROOT%\\tasks\\",
+			L"%SYSTEMROOT%\\apppatch\\",
+			L"%SYSTEMROOT%\\Internet Logs\\",
+			L"%SYSTEMROOT%\\Media\\",
+			L"%SYSTEMROOT%\\prefetch\\",
+			L"%SYSTEMROOT%\\cursors\\",
+			L"%SYSTEMROOT%\\inf\\",
+		};
+		for (size_t i = 0; i < sizeof(directories_list5) / sizeof(const wchar_t *); ++i) 
+		{
+			std::wstring fullDirectory(directories_list5[i]);
+			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+
+			// Recursive
+			for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
+			{
+				unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+				if (createdTime >= threeMonthsAgo)
+				{
+					// Discard entries that do not have the proper extension
+					if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+					{
+						continue;	
+					}
+
+					WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+
+					// Discard entries that are not executable
+					if (File::IsExecutable(data.cFileName) == false)
+					{			
+						continue;
+					}			
+
+					fileData.emplace_back(std::move(data));	
+				}
+			}
+		}
+
+		static const wchar_t *directories_list2[] = {
+			L"%SYSTEMROOT%\\System\\",
+			L"%SYSTEMROOT%\\System32\\Wbem\\",
+			L"%SYSTEMROOT%\\System32\\GroupPolicy\\Machine\\Scripts\\Shutdown\\",
+			L"%SYSTEMROOT%\\System32\\GroupPolicy\\User\\Scripts\\Logoff\\",
+#ifdef _M_X64
+			L"%SYSTEMROOT%\\Syswow64\\Drivers\\",
+			L"%SYSTEMROOT%\\Syswow64\\Wbem\\",
+#endif
+		};
+		static const wchar_t *extensions_list2_notExecutable[] = { 
+			L"com", L"pif", L"ren", L"vir", L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"dat", L"drv"
+		};
+		static const wchar_t *extensions_list2_notDirectory[] = { 
+			L"bat", L"cmd", L"reg", L"vbs", L"wsf", L"vbe", L"msi", L"msp"
+		};
+		for (size_t i = 0; i < sizeof(directories_list2) / sizeof(const wchar_t *); ++i) 
+		{
+			std::wstring fullDirectory(directories_list2[i]);
+			fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+
+			// List2 is recursive
+			for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
+			{
+				// Discard entries that are more than three months old
+				unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+				if (createdTime < threeMonthsAgo)
+				{
+					continue;
+				}
+
+				WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+
+				// Discard entries that have list2_nonExecutable extensions and are not executable
+				if (ExtensionCheck(data.cFileName, extensions_list2_notExecutable, sizeof(extensions_list2_notExecutable) / sizeof(const wchar_t *)))
+				{
+					if (File::IsExecutable(data.cFileName) == false)
+					{
+						continue;
+					}
+				}
+
+				// Discard entries that have list2_notDirectory extensions and are not directories
+				if (ExtensionCheck(data.cFileName, extensions_list2_notDirectory, sizeof(extensions_list2_notDirectory) / sizeof(const wchar_t *)))
+				{
+					if (File::IsDirectory(data.cFileName) == false)
+					{
+						continue;
+					}
+				}
+
+				fileData.emplace_back(std::move(data));
+			}
+		}
+
+		std::wstring directory_list3 = L"%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\";
+		directory_list3 = Path::ExpandEnvStrings(directory_list3);
+		for (FindFiles files(std::wstring(directory_list3).append(L"*"), true); files.IsValid(); files.Next())
+		{
+			WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, directory_list3);
+
+			// Discard non-executables
+			if (File::IsExecutable(data.cFileName) == false)
+			{
+				continue;
+			}
+
+			fileData.emplace_back(std::move(data));
+		}
+
+		std::wstring directory_list6 = L"%SYSTEMROOT%\\Fonts\\";
+		directory_list6 = Path::ExpandEnvStrings(directory_list6);
+		static const wchar_t *extensions_list6[] = { 
+			L"com", L"pif", L"ren", L"vir", L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"dat", L"drv"
+		};
+		// List6 is recursive
+		for (FindFiles files(std::wstring(directory_list6).append(L"*"), true); files.IsValid(); files.Next())
+		{
+			WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, directory_list6);
+
+			unsigned __int64 fileSize = File::GetSize(data.cFileName);
+
+			// Keep only those with size between 1500 and 2000 bytes 
+			// or
+			// greater than 1500 bytes and executable and with list6 extensions
+			if ((fileSize >= 1500 && fileSize <= 2000) ||
+				(ExtensionCheck(data.cFileName, extensions_list6, sizeof(extensions_list6) / sizeof(const wchar_t *)) &&
+				fileSize >= 1500 && File::IsExecutable(data.cFileName)))
+			{
+				fileData.emplace_back(std::move(data));
+			}
+		}
+
+		// Sort entries
+		std::sort(fileData.begin(), fileData.end(), SortWin32FindDataW);
+
+		// Remove "runs" of files
+		RemoveWindowsUpdateRuns(fileData);
+
+		// Remove things from CreatedLast30
+		fileData.erase(
+			std::remove_if(fileData.begin(), fileData.end(), [&](WIN32_FIND_DATAW const& val)->bool {
+				return std::binary_search(createdLast30FileData.begin(), createdLast30FileData.end(), val, SortWin32FindDataW);
+			}),
+			fileData.end());
+
+		return fileData;
+	}
+
+	/// @brief	Logs given FileData
+	///
+	/// @param [in,out]	logOutput	The log output stream.
+	/// @param	fileData		 	The fileData to output
+	void PrintFileData( std::wostream& logOutput, std::vector<WIN32_FIND_DATAW> const& fileData)
+	{
+		for (size_t i = 0; i < 100 && i < fileData.size(); ++i)
+		{
+			WriteFileListingFromFindData(logOutput, fileData[i]);
+			logOutput << L'\n';
+		}
+
+		if (fileData.size() > 100)
+		{
+			logOutput << L"\nToo many files to show.  Most recent 100 files shown above.\n";
+		}
+	}
+	
+	void FindStarM::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
+	{
+		std::vector<WIN32_FIND_DATAW> createdLast30FileData(GetCreatedLast30FileData());
+
+		PrintFileData(logOutput, createdLast30FileData);
+
+		std::wstring head(L"Find3M");
+		Header(head);
+		logOutput << L'\n' << head << L'\n' << L'\n';
+
+		std::vector<WIN32_FIND_DATAW> find3MFileData(GetFind3MFileData(createdLast30FileData));
+
+		PrintFileData(logOutput, find3MFileData);
 	}
 
 }
