@@ -36,6 +36,14 @@ using namespace Instalog;
 /// @brief	Main entry-point for this application.
 int main()
 {
+    std::wcout <<
+        L" ___           _        _\n"
+        L"|_ _|_ __  ___| |_ __ _| | ___   __ _\n"
+        L" | || '_ \\/ __| __/ _` | |/ _ \\ / _` |\n"
+        L" | || | | \\__ \\ || (_| | | (_) | (_| |\n"
+        L"|___|_| |_|___/\\__\\__,_|_|\\___/ \\__, |\n"
+        L"by Jacob Snyder and Billy ONeal |___/\n";
+
 	Instalog::SystemFacades::Com com;
 #ifdef NDEBUG
 	try
@@ -76,6 +84,8 @@ int main()
 	{
 		std::cerr << "Exception: " << ex.what() << std::endl;
 	}
+    std::wcout << L"Press any key to close this window.";
+    std::wcin.get();
 #else
 	system("notepad.exe Instalog.txt");
 #endif
