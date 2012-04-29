@@ -208,8 +208,9 @@ namespace Instalog {
         wht.push_back(L"\\REGISTRY\\MACHINE\\SYSTEM");
         wht.push_back(L"\\REGISTRY\\MACHINE\\BCD00000000");
         wht.push_back(L"\\REGISTRY\\MACHINE\\SOFTWARE");
-        wht.push_back(L"\\REGISTRY\\MACHINE\\SECURITY");
-        wht.push_back(L"\\REGISTRY\\MACHINE\\SAM");
+		wht.push_back(L"\\REGISTRY\\MACHINE\\SECURITY");
+		wht.push_back(L"\\REGISTRY\\MACHINE\\SAM");
+		wht.push_back(L"\\REGISTRY\\MACHINE\\COMPONENTS");
         std::sort(wht.begin(), wht.end());
         std::vector<std::wstring> hives;
         {
