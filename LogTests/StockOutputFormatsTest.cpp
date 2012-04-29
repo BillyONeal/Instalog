@@ -146,7 +146,7 @@ TEST(StockFormats, Listing)
 	WriteDefaultDateFormat(expected, ctime);
 	expected << L" . ";
 	WriteDefaultDateFormat(expected, mtime);
-	expected << L' ' << fad.nFileSizeLow << L' ';
+	expected << L' ' << std::setw(10) << std::setfill(L' ') << fad.nFileSizeLow << L' ';
 	WriteFileAttributes(expected, fad.dwFileAttributes);
 	expected << L" C:\\Windows\\Explorer.exe";
 	EXPECT_EQ(expected.str(), ss.str());

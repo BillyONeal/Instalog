@@ -273,12 +273,12 @@ TEST(File, ExclusiveNoMatchDir)
 
 TEST(FindFiles, NonExistentFile)
 {
-	ASSERT_THROW(FindFiles(L"C:\\Nonexistent"), ErrorFileNotFoundException);
+	FindFiles(L"C:\\Nonexistent");
 }
 
 TEST(FindFiles, NonExistentDirectory)
 {
-	ASSERT_THROW(FindFiles(L"C:\\Nonexistent\\*"), ErrorPathNotFoundException);
+	FindFiles(L"C:\\Nonexistent\\*");
 }
 
 TEST(FindFiles, HostsExists)
