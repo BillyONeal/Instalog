@@ -56,7 +56,11 @@ namespace Instalog
             }
             Path::Prettify(executable.begin(), executable.end());
             std::wstring pathElement;
-            if (std::find(fullPrintList.begin(), fullPrintList.end(), executable) != fullPrintList.end())
+            auto equTest = [&] (std::wstring const& str) -> bool
+            {
+                return boost::iequals(executable, str, std::locale());
+            };
+            if (std::find_if(fullPrintList.begin(), fullPrintList.end(), equTest) != fullPrintList.end())
             {
                 pathElement = it->GetCmdLine();
             }
