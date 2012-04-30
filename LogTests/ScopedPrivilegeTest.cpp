@@ -60,15 +60,15 @@ static bool HasPrivilege(LPCWSTR privilegeName)
 
 TEST(ScopedPrivilege, PrivilegeGetsTaken)
 {
-	ScopedPrivilege priv(SE_INC_WORKING_SET_NAME);
-	ASSERT_TRUE(::HasPrivilege(SE_INC_WORKING_SET_NAME));
+	ScopedPrivilege priv(SE_BACKUP_NAME);
+	ASSERT_TRUE(::HasPrivilege(SE_BACKUP_NAME));
 }
 
 TEST(ScopedPrivilege, PrivilegeGetsReleased)
 {
 	{
-		ScopedPrivilege priv(SE_INC_WORKING_SET_NAME);
-		ASSERT_TRUE(::HasPrivilege(SE_INC_WORKING_SET_NAME));
+		ScopedPrivilege priv(SE_BACKUP_NAME);
+		ASSERT_TRUE(::HasPrivilege(SE_BACKUP_NAME));
 	}
-	ASSERT_FALSE(::HasPrivilege(SE_INC_WORKING_SET_NAME));
+	ASSERT_FALSE(::HasPrivilege(SE_BACKUP_NAME));
 }
