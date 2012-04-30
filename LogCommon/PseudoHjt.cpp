@@ -987,6 +987,9 @@ namespace Instalog {
         auto hives = EnumerateUserHives();
 		SecurityCenterOutput(output);
         CommonHjt(output, L"\\Registry\\Machine");
+		SpoofedDnsCheck(output, L"google.com", L".1e100.net");
+		SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
+		SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
         std::for_each(hives.cbegin(), hives.cend(), [&output](std::wstring const& hive) {
             std::wstring head(L"User Settings");
             Header(head);
@@ -997,10 +1000,7 @@ namespace Instalog {
             CommonHjt(output, hive);
         });
 
-		SpoofedDnsCheck(output, L"google.com", L".1e100.net");
-		SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
 		//SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
-		SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
 		//SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
 		//SpoofedDnsCheck(output, L"twitter.com", L".twitter.com");
 		//SpoofedDnsCheck(output, L"wellsfargo.com", L".wellsfargo.com");
