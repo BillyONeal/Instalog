@@ -11,41 +11,52 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	std::wstring HostnameFromIpAddress( std::wstring ipAddress, bool useSafeDnsAddresses /*= false*/ )
+	/// @brief	Gets the "safe" DNS servers
+	///
+	/// @exception	std::runtime_error	Thrown when the addresses array contains an invalid server 
+	/// 								IP (shouldn't happen ever)
+	///
+	/// @return	The safe servers list.
+	static std::vector<char> GetSafeServersList()
+	{
+		static const char *safeDnsServerAddresses[] = {
+			"8.8.8.8",			// Google Public DNS Primary
+			"8.8.4.4",			// Google Public DNS Secondary
+			"208.67.222.222",	// OpenDNS Primary
+			"208.67.220.220",	// OpenDNS Secondary
+		};
+		static const size_t numDnsServerAddresses = (sizeof(safeDnsServerAddresses) / sizeof(const char *));
+
+		std::vector<char> serversList(sizeof(IP4_ARRAY) + (numDnsServerAddresses - 1) * sizeof(IP4_ADDRESS));
+		reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrCount = numDnsServerAddresses;
+		for (size_t i = 0; i < numDnsServerAddresses; ++i) 
+		{
+			DWORD addr = inet_addr(safeDnsServerAddresses[i]);
+			if (addr == INADDR_NONE)
+			{
+				throw std::runtime_error("Invalid DNS server IP in array of safe addresses");
+			}
+			reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrArray[i] = addr;
+		}
+
+		return serversList;
+	}
+
+	std::wstring IpAddressFromHostname( std::wstring const& hostname, bool useSafeDnsAddresses /*= false*/ )
 	{
 		DNS_STATUS status;
 		PDNS_RECORD pDnsRecord;
-		//wchar_t pReversedIP[255];
-		//wchar_t DnsServIp[255];
 
 		if (useSafeDnsAddresses)
 		{
-			static const char *safeDnsServerAddresses[] = {
-				"8.8.8.8",			// Google Public DNS Primary
-				"8.8.4.4",			// Google Public DNS Secondary
-				"208.67.222.222",	// OpenDNS Primary
-				"208.67.220.220",	// OpenDNS Secondary
-			};
-			static const size_t numDnsServerAddresses = (sizeof(safeDnsServerAddresses) / sizeof(const char *));
+			 std::vector<char> serversList = GetSafeServersList();
 
-			std::vector<char> serversList(sizeof(IP4_ARRAY) + (numDnsServerAddresses - 1) * sizeof(IP4_ADDRESS));
-			reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrCount = numDnsServerAddresses;
-			for (size_t i = 0; i < numDnsServerAddresses; ++i) 
-			{
-				DWORD addr = inet_addr(safeDnsServerAddresses[i]);
-				if (addr == INADDR_NONE)
-				{
-					throw std::runtime_error("Invalid DNS server IP in array of safe addresses");
-				}
-				reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrArray[i] = addr;
-			}
-
-			status = DnsQuery(ipAddress.c_str(), DNS_TYPE_A, DNS_QUERY_BYPASS_CACHE, 
+			status = DnsQuery(hostname.c_str(), DNS_TYPE_A, DNS_QUERY_BYPASS_CACHE, 
 				reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrArray, &pDnsRecord, NULL);
 		}
 		else
 		{
-			status = DnsQuery(ipAddress.c_str(), DNS_TYPE_A, DNS_QUERY_BYPASS_CACHE, 
+			status = DnsQuery(hostname.c_str(), DNS_TYPE_A, DNS_QUERY_BYPASS_CACHE, 
 				NULL, &pDnsRecord, NULL);
 		}
 
@@ -66,10 +77,61 @@ namespace Instalog { namespace SystemFacades {
 			}
 			else
 			{
-				std::wcout << hostnameNarrow << std::endl;
 				return ConvertUnicode(hostnameNarrow);
 			}
 		}
+	}
+
+	std::wstring HostnameFromIpAddress( std::wstring ipAddress, bool useSafeDnsAddresses /*= false*/ )
+	{
+		std::wstring reversedIpAddress(ReverseIpAddress(ipAddress));
+		reversedIpAddress.append(L".IN-ADDR.ARPA");
+
+		DNS_STATUS status;
+		PDNS_RECORD pDnsRecord;
+
+		if (useSafeDnsAddresses)
+		{
+			std::vector<char> serversList = GetSafeServersList();
+
+			status = DnsQuery(reversedIpAddress.c_str(), DNS_TYPE_PTR, DNS_QUERY_BYPASS_CACHE, 
+				reinterpret_cast<PIP4_ARRAY>(serversList.data())->AddrArray, &pDnsRecord, NULL);
+		}
+		else
+		{
+			status = DnsQuery(reversedIpAddress.c_str(), DNS_TYPE_PTR, DNS_QUERY_BYPASS_CACHE, 
+				NULL, &pDnsRecord, NULL);
+		}
+
+		if (status)
+		{
+			return L"";
+		}
+		else
+		{
+			return pDnsRecord->Data.PTR.pNameHost;
+		}
+	}
+
+	std::wstring ReverseIpAddress( std::wstring ipAddress )
+	{
+		std::wstring reversed;
+		reversed.reserve(ipAddress.size());
+
+		auto regionStart = ipAddress.end() - 1;
+		auto regionEnd = ipAddress.end();
+		for (; regionStart != ipAddress.begin(); --regionStart)
+		{
+			if (*regionStart == L'.')
+			{
+				reversed.append(regionStart + 1, regionEnd);
+				reversed.append(L".");
+				regionEnd = regionStart;
+			}
+		}
+		reversed.append(regionStart, regionEnd);
+
+		return reversed;
 	}
 
 }}
