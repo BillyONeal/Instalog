@@ -16,6 +16,6 @@ namespace Instalog { namespace SystemFacades {
 	/// 							servers (Google's and if that fails, then OpenDNS)
 	///
 	/// @return	The string representation of the hostname, empty string on error
-	void HostnameFromIpAddress(std::wstring ipAddress, bool useSafeDnsAddresses = false);
+	std::wstring HostnameFromIpAddress(std::wstring ipAddress, bool useSafeDnsAddresses = false);
 
 }}

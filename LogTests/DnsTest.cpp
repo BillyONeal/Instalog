@@ -8,8 +8,12 @@
 
 using namespace Instalog::SystemFacades;
 
-TEST(Dns, DnsTest)
+TEST(Dns, DnsTestDefault)
 {
 	HostnameFromIpAddress(L"google.com");
+}
+
+TEST(Dns, DnsTestSafe)
+{
 	HostnameFromIpAddress(L"google.com", true);
 }
