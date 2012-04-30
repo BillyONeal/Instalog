@@ -723,6 +723,105 @@ namespace Instalog {
     }
 
     /**
+     * Process a single IE script entry.
+     *
+     * @param [in,out] out The output stream where the output is written.
+     * @param suffix       The suffix applied to the script entry (either "64" or nothing)
+     * @param valueName    Name of the value in question.
+     * @param subKey       The sub key to which the query of script is being posed.
+     */
+    static void ProcessIeScript( std::wostream& out, std::wstring const& suffix, std::wstring const& valueName, RegistryKey const& subKey ) 
+    {
+        try
+        {
+            std::wstring name(subKey.GetName());
+            std::wstring command(subKey[valueName].GetString());
+            GeneralEscape(name, L'#', L']');
+            GeneralEscape(command);
+            out << L"IeScript" << suffix << L": [" << std::move(name) << L"] " << std::move(command) << L'\n';
+        }
+        catch (ErrorFileNotFoundException const&)
+        {
+            //Expected
+        }
+    }
+
+    /**
+     * Process a single IE COM entry.
+     *
+     * @param [in,out] out The output stream where the output is written.
+     * @param suffix       The suffix applied to the script entry (either "64" or nothing)
+     * @param valueName    Name of the value in question.
+     * @param subKey       The sub key to which the query of script is being posed.
+     */
+    static void ProcessIeCom( std::wostream& out, std::wstring const& suffix, std::wstring const& valueName, RegistryKey const& subKey, std::wstring const& hiveRootPath, std::wstring const& software )
+    {
+        try
+        {
+            std::wstring name(subKey.GetName());
+            std::wstring clsid(subKey[valueName].GetString());
+            std::wstring file(L"N/A");
+            RegistryKey clsidKey(RegistryKey::Open(hiveRootPath + L"\\" + software + L"\\Classes\\CLSID\\" + clsid + L"\\InProcServer32", KEY_QUERY_VALUE));
+            if (clsidKey.Invalid())
+            {
+                clsidKey = RegistryKey::Open(L"\\Registry\\Machine\\" + software + L"\\Classes\\CLSID\\" + clsid + L"\\InProcServer32", KEY_QUERY_VALUE);
+            }
+            if (clsidKey.Valid())
+            {
+                std::wstring fileTry(clsidKey[L""].GetString());
+                if (!fileTry.empty())
+                {
+                    file = std::move(fileTry);
+                }
+            }
+            GeneralEscape(name, L'#', L'-');
+            GeneralEscape(clsid, L'#', L']');
+            out << L"IeCom" << suffix << L": [" << name << L"->" << clsid << L"] ";
+            WriteDefaultFileOutput(out, file);
+            out << L'\n';
+        }
+        catch (ErrorFileNotFoundException const&)
+        {
+            //Expected
+        }
+    }
+
+    /**
+     * Explorer extensions output.
+     *
+     * @param [in,out] out The output stream.
+     * @param rootKey      The root key where the IE settings are rooted. (user or machine hive
+     *                     root)
+     */
+    static void ExplorerExtensionsOutput(std::wostream& out, std::wstring const& rootKey)
+    {
+        std::wstring suffix(Get64Suffix());
+        std::wstring software(L"Software");
+        auto keyProcessor = [&](RegistryKey const& subKey) {
+            ProcessIeScript(out, suffix, L"Exec", subKey);
+            ProcessIeScript(out, suffix, L"Script", subKey);
+            ProcessIeCom(out, suffix, L"clsidextension", subKey, rootKey, software);
+            ProcessIeCom(out, suffix, L"bandclsid", subKey, rootKey, software);
+        };
+        RegistryKey key(RegistryKey::Open(rootKey+L"\\Software\\Microsoft\\Internet Explorer\\Extensions", KEY_ENUMERATE_SUB_KEYS));
+        if (key.Valid())
+        {
+            auto subkeys = key.EnumerateSubKeys(KEY_QUERY_VALUE);
+            std::for_each(subkeys.cbegin(), subkeys.cend(), keyProcessor);
+        }
+#ifdef _M_X64
+        key = RegistryKey::Open(rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\Extensions", KEY_ENUMERATE_SUB_KEYS);
+        suffix = std::wstring();
+        software = L"Software\\Wow6432Node";
+        if (key.Valid())
+        {
+            auto subkeys = key.EnumerateSubKeys(KEY_QUERY_VALUE);
+            std::for_each(subkeys.cbegin(), subkeys.cend(), keyProcessor);
+        }
+#endif
+    }
+
+    /**
      * Common HJT outputs. Does all the things that are repeated for the entire machine, and for
      * each user's registry.
      *
@@ -798,7 +897,7 @@ namespace Instalog {
             L"IeMenu",
             GeneralProcess
             );
-
+        ExplorerExtensionsOutput(output, rootKey);
     }
 
     /**
