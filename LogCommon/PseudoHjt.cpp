@@ -180,6 +180,41 @@ namespace Instalog {
     }
 
     /**
+     * Value major based enumeration, automatically specialized for 32 bit and 64 bit machines.
+     *
+     * @param [in,out] output The output stream where output will be written.
+     * @param root            The root key of the hive being searched.
+     * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
+     *                        32 bit registry view.
+     * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
+     *                        64 bit registry view. (Also the only registry view on 32 bit
+     *                        machines)
+     * @param prefix          The prefix applied to the log lines.
+     * @param dataProcess     (optional) [in,out] The process applied to the data before it is
+     *                        printed.
+     * @param filter          (optional) a filter function which returns true if the target should
+     *                        not be displayed in the output. The default function filters only
+     *                        empty entries.
+     */
+    static void ValueMajorBasedEnumerationBitless(
+        std::wostream& output,
+        std::wstring const& root,
+        std::wstring const& subkey32,
+        std::wstring const& subkey64,
+        std::wstring const& prefix,
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess,
+        std::function<bool(RegistryValueAndData const& entry)> filter = DoNothingFilter
+        )
+    {
+#ifdef _M_X64
+        ValueMajorBasedEnumeration(output, root + subkey64, prefix + L"64", dataProcess, filter);
+        ValueMajorBasedEnumeration(output, root + subkey32, prefix, dataProcess, filter);
+#else
+        ValueMajorBasedEnumeration(output, root + subkey64, prefix, dataProcess, filter);
+#endif
+    }
+
+    /**
      * Executes enumeration for run keys.
      *
      * @param [in,out] output The output stream.
@@ -188,12 +223,9 @@ namespace Instalog {
      */
     void RunKeyOutput(std::wostream& output, std::wstring const& runRoot, std::wstring const& name)
     {
-#ifdef _M_X64
-        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
-        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name + L"64");
-#else
-        ValueMajorBasedEnumeration(output, runRoot + L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
-#endif
+        ValueMajorBasedEnumerationBitless(output, runRoot,
+            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name,
+            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
     }
 
     /**
@@ -571,9 +603,8 @@ namespace Instalog {
         RegistryKey ieRoot(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
         RegistryKey ieMain(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
         RegistryKey ieSearch(RegistryKey::Open(ieRoot, L"Search", KEY_QUERY_VALUE));
-        std::wstring suffix64;
+        std::wstring suffix64(Get64Suffix());
 #ifdef _M_X64
-        suffix64 = L"64";
         RegistryKey ieRoot32(RegistryKey::Open(rootKey + L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
         RegistryKey ieMain32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
         RegistryKey ieSearch32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
