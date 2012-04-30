@@ -640,11 +640,6 @@ namespace Instalog {
     {
         InternetExplorerMainOutput(output, rootKey);
         ClsidValueBasedOutput(output, L"UrlSearchHook", rootKey, L"\\Microsoft\\Internet Explorer\\URLSearchHooks", NAME, CLASS_ROOT_DEFAULT);
-        RunKeyOutput(output, rootKey, L"Run");
-        RunKeyOutput(output, rootKey, L"RunOnce");
-        RunKeyOutput(output, rootKey, L"RunServices");
-        RunKeyOutput(output, rootKey, L"RunServicesOnce");
-        ExplorerRunOutput(output, rootKey);
         RegistryKey winlogon(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon", KEY_QUERY_VALUE));
         SingleRegistryValueOutput(output, winlogon, L"Shell", L"Shell", FileProcess);
         SingleRegistryValueOutput(output, winlogon, L"Userinit", L"Userinit", [](std::wostream& out, std::wstring &src) {
@@ -676,6 +671,14 @@ namespace Instalog {
             }
         }
         ClsidSubkeyBasedOutput(output, L"BHO", rootKey, L"\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects", CLASS_ROOT_DEFAULT);
+        ClsidValueBasedOutput(output, L"TB", rootKey, L"\\Microsoft\\Internet Explorer\\Toolbar", NAME, CLASS_ROOT_DEFAULT);
+        ClsidValueBasedOutput(output, L"TB", rootKey, L"\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", NAME, CLASS_ROOT_DEFAULT);
+        ClsidValueBasedOutput(output, L"EB", rootKey, L"\\Microsoft\\Internet Explorer\\Explorer Bars", NAME, CLASS_ROOT_DEFAULT);
+        RunKeyOutput(output, rootKey, L"Run");
+        RunKeyOutput(output, rootKey, L"RunOnce");
+        RunKeyOutput(output, rootKey, L"RunServices");
+        RunKeyOutput(output, rootKey, L"RunServicesOnce");
+        ExplorerRunOutput(output, rootKey);
     }
 
     /**
