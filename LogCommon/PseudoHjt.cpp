@@ -115,19 +115,6 @@ namespace Instalog {
     }
 
     /**
-     * Executes the "do nothing" filter operation. Filters only completely empty entries.
-     *
-     * @param target Target for the filter operation.
-     *
-     * @return true if the item should be filtered, false otherwise.
-     */
-    static bool DoNothingFilter(RegistryValueAndData const& target)
-    {
-        auto str = target.GetString();
-        return target.GetName().empty() && str.empty();
-    }
-
-    /**
      * Value major based enumeration; general method to enumerate a registry key, where a single
      * log line is generated per value.
      *
@@ -136,16 +123,12 @@ namespace Instalog {
      * @param prefix          The prefix which identifies the log line in the report.
      * @param dataProcess     (optional) The processing function which generates the report of the
      *                        values' data. The default writes the data as a file.
-     * @param filter          (optional) a filter function which returns true if the target should
-     *                        not be displayed in the output. The default function filters only
-     *                        empty entries.
      */
     static void ValueMajorBasedEnumeration(
         std::wostream& output,
         std::wstring const& root,
         std::wstring const& prefix,
-        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess,
-        std::function<bool(RegistryValueAndData const& entry)> filter = DoNothingFilter
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess
         )
     {
         RegistryKey key(RegistryKey::Open(root, KEY_QUERY_VALUE));
@@ -164,10 +147,6 @@ namespace Instalog {
         auto values = key.EnumerateValues();
         std::vector<std::pair<std::wstring, std::wstring>> pods;
         std::for_each(values.cbegin(), values.cend(), [&](RegistryValueAndData const& val) {
-            if (filter(val))
-            {
-                return;
-            }
             pods.emplace_back(std::pair<std::wstring, std::wstring>(val.GetName(), val.GetString()));
         });
         std::sort(pods.begin(), pods.end());
@@ -192,9 +171,6 @@ namespace Instalog {
      * @param prefix          The prefix applied to the log lines.
      * @param dataProcess     (optional) [in,out] The process applied to the data before it is
      *                        printed.
-     * @param filter          (optional) a filter function which returns true if the target should
-     *                        not be displayed in the output. The default function filters only
-     *                        empty entries.
      */
     static void ValueMajorBasedEnumerationBitless(
         std::wostream& output,
@@ -202,15 +178,14 @@ namespace Instalog {
         std::wstring const& subkey32,
         std::wstring const& subkey64,
         std::wstring const& prefix,
-        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess,
-        std::function<bool(RegistryValueAndData const& entry)> filter = DoNothingFilter
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess
         )
     {
 #ifdef _M_X64
-        ValueMajorBasedEnumeration(output, root + subkey64, prefix + L"64", dataProcess, filter);
-        ValueMajorBasedEnumeration(output, root + subkey32, prefix, dataProcess, filter);
+        ValueMajorBasedEnumeration(output, root + subkey64, prefix + L"64", dataProcess);
+        ValueMajorBasedEnumeration(output, root + subkey32, prefix, dataProcess);
 #else
-        ValueMajorBasedEnumeration(output, root + subkey64, prefix, dataProcess, filter);
+        ValueMajorBasedEnumeration(output, root + subkey64, prefix, dataProcess);
 #endif
     }
 
@@ -226,6 +201,94 @@ namespace Instalog {
         ValueMajorBasedEnumerationBitless(output, runRoot,
             L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name,
             L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name, name);
+    }
+
+    //TODO: Make the common bits of these and ValueMajorXXX go away.
+
+    /**
+     * Subkey major based enumeration; general method to enumerate a registry key, where a
+     * single log line is generated per subkey.
+     *
+     * @param [in,out] output The output stream.
+     * @param root            The root registry key from where the key is enumerated.
+     * @param prefix          The prefix which identifies the log line in the report.
+     * @param valueName       Name of the value in each subkey at which to look.
+     * @param dataProcess     (optional) The processing function which generates the report of the
+     *                        values' data. The default writes the data as a file.
+     */
+    static void SubkeyMajorBasedEnumeration(
+        std::wostream& output,
+        std::wstring const& root,
+        std::wstring const& prefix,
+        std::wstring const& valueName,
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess
+        )
+    {
+        RegistryKey key(RegistryKey::Open(root, KEY_ENUMERATE_SUB_KEYS));
+        if (key.Invalid())
+        {
+            DWORD err = ::GetLastError();
+            if (err == STATUS_OBJECT_NAME_NOT_FOUND)
+            {
+                return;
+            }
+            else
+            {
+                Win32Exception::ThrowFromNtError(::GetLastError());
+            }
+        }
+        auto values = key.EnumerateSubKeys(KEY_QUERY_VALUE);
+        std::vector<std::pair<std::wstring, std::wstring>> pods;
+        std::for_each(values.cbegin(), values.cend(), [&](RegistryKey const& val) {
+            try
+            {
+            pods.emplace_back(std::pair<std::wstring, std::wstring>(val.GetName(), val[valueName].GetString()));
+            }
+            catch (ErrorFileNotFoundException const&)
+            {
+                //Expected
+            }
+        });
+        std::sort(pods.begin(), pods.end());
+        std::for_each(pods.begin(), pods.end(), [&](std::pair<std::wstring, std::wstring>& current) {
+            GeneralEscape(current.first, L'#', L']');
+            output << prefix << L": [" << current.first << L"] ";
+            dataProcess(output, current.second);
+            output << L'\n';
+        });
+    }
+
+    /**
+     * Subkey major based enumeration, automatically specialized for 32 bit and 64 bit machines.
+     *
+     * @param [in,out] output The output stream where output will be written.
+     * @param root            The root key of the hive being searched.
+     * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
+     *                        32 bit registry view.
+     * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
+     *                        64 bit registry view. (Also the only registry view on 32 bit
+     *                        machines)
+     * @param prefix          The prefix applied to the log lines.
+     * @param valueName       Name of the value in each subkey at which to look.
+     * @param dataProcess     (optional) [in,out] The process applied to the data before it is
+     *                        printed.
+     */
+    static void SubkeyMajorBasedEnumerationBitless(
+        std::wostream& output,
+        std::wstring const& root,
+        std::wstring const& subkey32,
+        std::wstring const& subkey64,
+        std::wstring const& valueName,
+        std::wstring const& prefix,
+        std::function<void (std::wostream& out, std::wstring& source)> dataProcess = FileProcess
+        )
+    {
+#ifdef _M_X64
+        SubkeyMajorBasedEnumeration(output, root + subkey64, valueName, prefix + L"64", dataProcess);
+        SubkeyMajorBasedEnumeration(output, root + subkey32, valueName, prefix, dataProcess);
+#else
+        SubkeyMajorBasedEnumeration(output, root + subkey64, valueName, prefix, dataProcess);
+#endif
     }
 
     /**
@@ -726,6 +789,13 @@ namespace Instalog {
             L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
             L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
             L"PoliciesDisallowRun",
+            GeneralProcess
+            );
+        SubkeyMajorBasedEnumerationBitless(output, rootKey,
+            L"\\Software\\Microsoft\\Internet Explorer\\MenuExt",
+            L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\MenuExt",
+            L"",
+            L"IeMenu",
             GeneralProcess
             );
 
