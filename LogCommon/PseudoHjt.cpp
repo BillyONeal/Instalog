@@ -16,6 +16,7 @@
 #include "Registry.hpp"
 #include "PseudoHjt.hpp"
 #include "ScopeExit.hpp"
+#include "Dns.hpp"
 
 namespace Instalog {
     using namespace SystemFacades;
@@ -726,6 +727,29 @@ namespace Instalog {
         return domainName + userName;
     }
 
+	static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
+	{
+		std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
+		std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress, true));
+
+		if (boost::iends_with(responseHostname, expectedHostname) == false)
+		{
+			HttpEscape(queryHostname);
+			HttpEscape(responseHostname);
+
+			output << L"SpoofedDNS: " << queryHostname << L" -> ";
+			if (responseHostname.empty())
+			{
+				output << L"not available";
+			}
+			else
+			{
+				output << responseHostname;
+			}
+			output << L" (" << responseIpAddress << L")\n";
+		}
+	}
+
 	void PseudoHjt::Execute(
 		std::wostream& output,
 		ScriptSection const&,
@@ -744,6 +768,16 @@ namespace Instalog {
             output << L'\n' << head << L"\n\nIdentity: [" << user << L"] " << sid << L'\n';
             CommonHjt(output, hive);
         });
+
+		SpoofedDnsCheck(output, L"google.com", L".1e100.net");
+		SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
+		//SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
+		SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
+		//SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
+		//SpoofedDnsCheck(output, L"twitter.com", L".twitter.com");
+		//SpoofedDnsCheck(output, L"wellsfargo.com", L".wellsfargo.com");
+		//SpoofedDnsCheck(output, L"citibank.com", L"citibank.com");
+		//SpoofedDnsCheck(output, L"td.com", L"td.com");
 	}
 
 }
