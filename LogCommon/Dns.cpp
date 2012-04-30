@@ -116,6 +116,11 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring ReverseIpAddress( std::wstring ipAddress )
 	{
+		if (ipAddress.size() == 0)
+		{
+			return L"";
+		}
+
 		std::wstring reversed;
 		reversed.reserve(ipAddress.size());
 
