@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DnsTest.cpp" />
     <ClCompile Include="EventLogTest.cpp" />
     <ClCompile Include="FileTest.cpp" />
     <ClCompile Include="gtest-all.cc" />

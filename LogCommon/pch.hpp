@@ -23,6 +23,8 @@
 #define NTDDI_VERSION 0x05010200
 #define _WIN32_WINNT 0x0501
 #define WIN32_NO_STATUS
+#pragma comment(lib, "Ws2_32.lib")
+#include <Winsock2.h>
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <boost/iterator/iterator_facade.hpp>

@@ -80,6 +80,9 @@
     <ClCompile Include="RestorePoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Dns.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -167,6 +170,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ScopeExit.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dns.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
