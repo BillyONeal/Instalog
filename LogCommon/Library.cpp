@@ -34,8 +34,22 @@ namespace Instalog { namespace SystemFacades {
 
 	}
 
+    static bool IsVistaLater()
+    {
+        OSVERSIONINFOW info;
+        info.dwOSVersionInfoSize = sizeof(info);
+        ::GetVersionExW(&info);
+        return info.dwMajorVersion >= 6;
+    }
+
+    static bool IsVistaLaterCache()
+    {
+        static bool isVistaLater = IsVistaLater();
+        return isVistaLater;
+    }
+
 	FormattedMessageLoader::FormattedMessageLoader( std::wstring const& filename )
-		: Library( filename, LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE )
+		: Library( filename, ( IsVistaLaterCache() ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0 ) | LOAD_LIBRARY_AS_DATAFILE )
 	{
 
 	}
