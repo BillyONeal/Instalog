@@ -710,6 +710,25 @@ namespace Instalog {
         RunKeyOutput(output, rootKey, L"RunServices");
         RunKeyOutput(output, rootKey, L"RunServicesOnce");
         ExplorerRunOutput(output, rootKey);
+        ValueMajorBasedEnumerationBitless(output, rootKey,
+            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+            L"PoliciesExplorer",
+            GeneralProcess
+            );
+        ValueMajorBasedEnumerationBitless(output, rootKey,
+            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+            L"PoliciesSystem",
+            GeneralProcess
+            );
+        ValueMajorBasedEnumerationBitless(output, rootKey,
+            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
+            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
+            L"PoliciesDisallowRun",
+            GeneralProcess
+            );
+
     }
 
     /**
