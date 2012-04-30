@@ -18,6 +18,11 @@ TEST(DnsAddressFromHostname, SafeServers)
 	ASSERT_FALSE(IpAddressFromHostname(L"google.com", true).empty());
 }
 
+TEST(DnsIpReverse, EmptyIpReverse)
+{
+	ASSERT_EQ(L"", ReverseIpAddress(L""));
+}
+
 TEST(DnsIpReverse, FullIpReverse)
 {
 	ASSERT_EQ(L"901.678.345.012", ReverseIpAddress(L"012.345.678.901"));
@@ -45,5 +50,7 @@ TEST(DnsHostnameFromAddress, DefaultServers)
 
 TEST(DnsHostnameFromAddress, SafeServers)
 {
+	std::wcout << IpAddressFromHostname(L"google.com", true) << std::endl;
+	std::wcout << HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true) << std::endl;
 	ASSERT_TRUE(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true), L".1e100.net"));
 }
