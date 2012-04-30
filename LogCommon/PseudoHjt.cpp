@@ -158,6 +158,8 @@ namespace Instalog {
         });
     }
 
+#pragma warning (push)
+#pragma warning (disable: 4100) //Unreferenced formal parameter. (Becomes unreferenced in 32 bit mode)
     /**
      * Value major based enumeration, automatically specialized for 32 bit and 64 bit machines.
      *
@@ -188,6 +190,7 @@ namespace Instalog {
         ValueMajorBasedEnumeration(output, root + subkey64, prefix, dataProcess);
 #endif
     }
+#pragma warning(pop)
 
     /**
      * Executes enumeration for run keys.
@@ -258,6 +261,8 @@ namespace Instalog {
         });
     }
 
+#pragma warning (push)
+#pragma warning (disable: 4100) //Unreferenced formal parameter. (Becomes unreferenced in 32 bit mode)
     /**
      * Subkey major based enumeration, automatically specialized for 32 bit and 64 bit machines.
      *
@@ -290,6 +295,7 @@ namespace Instalog {
         SubkeyMajorBasedEnumeration(output, root + subkey64, valueName, prefix, dataProcess);
 #endif
     }
+#pragma warning(pop)
 
     /**
      * Gets the user registry hive root paths.
