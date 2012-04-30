@@ -262,6 +262,18 @@ namespace Instalog {
         CLASS_ROOT_DEFAULT
     };
 
+    /**
+     * Clsid value based output with the bitness things applied.
+     *
+     * @param [in,out] output The output stream.
+     * @param prefix          The prefix applied to each log line.
+     * @param rootKey         The root key.
+     * @param subKey          The sub key where the values are located.
+     * @param clsidKey        The clsid key for the current bitness.
+     * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
+     * @param source          Source for the CLSID (name or value).
+     * @param nameSource      Which name "wins" between the local name and the remote name.
+     */
     static void ClsidValueBasedOutputWithBits(
         std::wostream& output,
         std::wstring const& prefix,
@@ -503,6 +515,36 @@ namespace Instalog {
         RunKeyOutput(output, rootKey, L"RunServices");
         RunKeyOutput(output, rootKey, L"RunServicesOnce");
         ExplorerRunOutput(output, rootKey);
+        RegistryKey winlogon(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon", KEY_QUERY_VALUE));
+        SingleRegistryValueOutput(output, winlogon, L"Shell", L"Shell", FileProcess);
+        SingleRegistryValueOutput(output, winlogon, L"Userinit", L"Userinit", [](std::wostream& out, std::wstring &src) {
+            if (src.back() == L',')
+            {
+                src.pop_back();
+            }
+            FileProcess(out, src);
+        });
+        SingleRegistryValueOutput(output, winlogon, L"UIHost", L"UIHost", FileProcess);
+        SingleRegistryValueOutput(output, winlogon, L"TaskMan", L"TaskMan", FileProcess);
+        if (winlogon.Valid())
+        {
+            try
+            {
+                DWORD sfc = winlogon[L"SFCDisable"].GetDWord();
+                if (sfc)
+                {
+                    output << L"SFC: Disabled\n";
+                }
+                else
+                {
+                    output << L"SFC: Enabled\n";
+                }
+            }
+            catch (ErrorFileNotFoundException const&)
+            {
+                //Expected
+            }
+        }
     }
 
     /**
