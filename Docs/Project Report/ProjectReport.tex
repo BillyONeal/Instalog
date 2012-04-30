@@ -137,22 +137,14 @@ settings, which is against the wishes of the authors.
 At the time of the last report, we had finished the scaffolding parts and had
 just began actually implementation scanning sections.  Since then, progress has
 been much slower due to heavy courseload in other classes.  Despite this,
-however, a significant amount of work has been completed.  Since the last
-report, the Registry wrapper has been finished, and the event viewer, machine
-specifications, and restore points scanning sections have been completed.  The
-event viewer section wound up being more work that expected and took almost two
-weeks due to the fact that the API for querying events is difficult to work with
-and required a wrapper as well (which was unforeseen when the other wrappers
-were written).  Additionally, Windows Vista introduced a new logging API, so two
-radically different wrappers had to be written for each implementation.  
-
-In addition to completing these scanning components, work is still continuing on
-the Psuedo Hijack This scanning section.  
-
-After working on several scanning sections, it became clear that the
-whitelisting and scripting support that was originally designed was inadequate
-for features that would be implemented later.  These sections were redesigned
-and reimplemented, which took several days.
+however, we have finished most of what we set out to do under the revised scope
+limit.  In fact, the only thing that we were not able to finish is parts of the
+Pseudo Hijack This report, which will be finished once the semester is up.  We
+also implemented Spoofed DNS check even though this was not part of the features
+to be implemented under the scope limit. We have identified a few tweaks that we
+would like to do once this is finished before we start work on the scripting
+functionality, but for the most part, things have gone pretty well with the
+implementation.
 
 Lastly, support for Windows XP RTM and Windows XP Service Pack 1 has been
 restored because a rather simple work-around was found to support compiling for
@@ -336,13 +328,10 @@ At the time of the second interim report, it was suggested that the scope for
 the project by the final deadline be scaled back more.  It was decided that work
 would continue on the project at the same pace and if features that were
 originally promised were unimplemented or untested, they would be added to the
-scope limit and implemented after the semester had ended.  These features are:
-\begin{enumerate}
-  \item Psuedo Hijack This (work has been started but not completed)
-  \item Created Last 30
-  \item Find3M
-  \item Installed Programs
-\end{enumerate}
+scope limit and implemented after the semester had ended.  Everything has been
+finished under the revised scope limit with the exception of about half of the
+Psuedo Hijack This features.  However, Spoofed DNS check was implemented (which
+was not part of the features to be implemented under the scope limit).
 
 The authors of this tool will complete any remaining deliverables outside of the
 Senior Project course in the free time between when classes and summer
@@ -382,7 +371,9 @@ to wrap two more clunky Windows APIs, having to redesign the scripting and
 whitelisting implementations, and having other courses (primarily EECS 391) take
 up a large portion of the authors' available time.  As such, all the features
 were not completed as originally hoped and testing did not happen on all target
-operating systems.  
+operating systems.  However, most features were implemented (all the remains is
+a few remaining features from Psuedo Hijack This which shouldn't take more than
+a couple days' time to finish).
 
 \begin{figure}[h]
   	\centering
@@ -391,14 +382,18 @@ operating systems.
   	\label{gantt}
 \end{figure}
 
-In the end, the authors could not keep pace with the revised timeline.  This is
-partially due to the other factors listed above, but also is an artifact of how
-the timeline is still unrealistically fast-paced for the implementation and
-testing portions.  In hindsight, it is obvious that if over fifty days were
-spent on the requirements, specifications, and design documents, then it is
-extremely unrealistic to finish the implementation and testing in just over
-forty days.  The scope limit should have more realistic from the start, but the
-schedule was a bit too optimistic.  
+In the end, the authors were not able to entirely meet the timeline.  Despite
+pushing testing into development and having essentially an extra week to work on
+the project (because the demo was a week later than first anticipated), progress
+still came up a bit short.  This being said, the authors are very pleased with
+what \textit{did} get finished and look forward to finishing the rest of the
+project in the future.  
+
+In hindsight, it is obvious that if over fifty days were spent on the
+requirements, specifications, and design documents, then it is extremely
+unrealistic to finish the implementation and testing in just over forty days. 
+The scope limit should have more realistic from the start, but the schedule was
+a bit too optimistic.
 
 The authors of this tool began by using pair programming at the beginning of the
 project.  Once a good common ground had been established, the authors split off
@@ -469,29 +464,45 @@ sections, which correspond to a large proportion of the specification document
   \item A wrapper around Win32 Service Control Manager 
   \item A message formatter
   \item A wrapper around the ``new'' and ``old'' event viewer
+  \item A wrapper around DNS querying
 \end{itemize}
 
 From these ``scaffolding'' pieces, the following scanning sections have been
 implemented:
 \begin{itemize}
   \item Running Processes
-  \item Psuedo Hijack This (in progress, biggest part of the specification
-  \cite{Specification})
+  \item Psuedo Hijack This (in progress, the features in this section
+  correspond to the majority the specification \cite{Specification})
+\begin{itemize}
+  \item Spoofed DNS Check
+\end{itemize}
   \item Services and Drivers
+  \item Created Last 30
+  \item Find3M
+  \item Event Viewer
   \item Machine Specifications
   \item Restore Points
+  \item Installed Programs
 \end{itemize}
 
 It was suggested after interim report 2 that we narrow the scope of our initial
 scope limit, so we feel that we have been successful in getting a healthy amount
-of work on the project done.  As it is, there are only a few more scanning
-sections to complete, which shouldn't take more than a week or two of solid work
-to complete (without the interference of classes and other distractions).  
+of work on the project done.  As it is, there are only a few more parts of
+Psuedo Hijack This to finish (which shouldn't take more than a few days of
+solid work without the distraction of classes, homework, and finals).
 
-After the scanning sections are complete, we would like to let moderators on
-``expert forums'' test the tool on their own systems.  Once we iron out all of
-the kinks, we will release the tool more publicly as a replacement to tools
-like DDS.  
+After the scanning sections are complete, we would like to do a few tweaks
+before letting moderators on ``expert forums'' test the tool on their own
+systems.  First, we would like to implement better whitelisting infrastructure
+and whitelists in general.  Two weeks ago, we began refactoring the whitelisting
+infrastructure but realized this would prevent us from finishing a lot of the
+features we originally promised.  This work was shelved, and the majority of the
+remaining features were finished.  However, right now, the log output is too
+long to be useful, so whitelisting is a major must.  Second, we would like to
+implement a mock registry so that we can actually test Psuedo Hijack This
+(which is currently just tested based on the output which is not sufficient). 
+After this, we will be comfortable releasing the tool to ``forum experts'' and
+then the greater community once any final bugs are addressed.
 
 After this, it is our intent to begin implementing the remaining portions of
 this tool.  We don't know when this will be finished, however, as our schedules
