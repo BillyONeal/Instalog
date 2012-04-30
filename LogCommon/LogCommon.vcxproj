@@ -169,6 +169,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
     </ClCompile>
+    <ClCompile Include="Dns.cpp" />
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Path.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="Com.hpp" />
     <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h" />
     <ClInclude Include="DdkStructures.h" />
+    <ClInclude Include="Dns.hpp" />
     <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="InstalogVersion.hpp" />
