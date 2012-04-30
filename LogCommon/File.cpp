@@ -137,7 +137,7 @@ namespace Instalog { namespace SystemFacades {
 
 		File executable = File(filename);
 		std::vector<char> bytes = executable.ReadBytes(2);
-		return bytes[0] == 'M' && bytes[1] == 'Z';
+		return bytes.size() >=2 && bytes[0] == 'M' && bytes[1] == 'Z';
 	}
 
 	std::wstring File::GetCompany(std::wstring const& filename)

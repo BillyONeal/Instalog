@@ -24,17 +24,22 @@ static void SecCenterProductCheck(
 	std::vector<SecurityProduct> &result, 
 	wchar_t const* twoCode ) 
 {
+    HRESULT hr;
 	CComPtr<IEnumWbemClassObject> objEnumerator;
-	ThrowIfFailed(securityCenter->CreateInstanceEnum(
+	hr = securityCenter->CreateInstanceEnum(
 		productToCheck,
 		WBEM_FLAG_FORWARD_ONLY,
 		0,
 		&objEnumerator
-		));
+		);
+    if (hr == WBEM_E_INVALID_CLASS)
+    {
+        return; //Expected error on XP x64 machines
+    }
+    ThrowIfFailed(hr);
 	ULONG returnCount = 0;
 	for(;;)
 	{
-		HRESULT hr;
 		CComPtr<IWbemClassObject> obj;
 		hr = objEnumerator->Next(WBEM_INFINITE, 1, &obj, &returnCount);
 		if (hr == WBEM_S_FALSE)
