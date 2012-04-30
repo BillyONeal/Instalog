@@ -393,6 +393,137 @@ namespace Instalog {
             );
     }
 
+    //TODO: Make the common bits of these two go together.
+    /**
+     * Clsid subkey based output with the bitness things applied.
+     *
+     * @param [in,out] output The output stream.
+     * @param prefix          The prefix applied to each log line.
+     * @param rootKey         The root key.
+     * @param subKey          The sub key where the values are located.
+     * @param clsidKey        The clsid key for the current bitness.
+     * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
+     * @param source          Source for the CLSID (name or value).
+     * @param nameSource      Which name "wins" between the local name and the remote name.
+     */
+    static void ClsidSubkeyBasedOutputWithBits(
+        std::wostream& output,
+        std::wstring const& prefix,
+        std::wstring const& rootKey,
+        std::wstring const& subKey,
+        std::wstring const& clsidKey,
+        std::wstring const& backupClsidKey,
+        MasterName nameSource
+        )
+    {
+        RegistryKey itemKey(RegistryKey::Open(rootKey + subKey, KEY_ENUMERATE_SUB_KEYS));
+        if (itemKey.Invalid())
+        {
+            return;
+        }
+        auto rawValues = itemKey.EnumerateSubKeys(KEY_QUERY_VALUE);
+        std::vector<std::pair<std::wstring, std::wstring>> values;
+        values.reserve(rawValues.size());
+        std::transform(rawValues.cbegin(), rawValues.cend(), std::back_inserter(values),
+            [] (RegistryKey const& entry) -> std::pair<std::wstring, std::wstring> {
+            std::wstring name;
+            try
+            {
+                name = entry[L""].GetString();
+            }
+            catch (ErrorFileNotFoundException const&)
+            {
+                //Expected
+            }
+            std::wstring clsid(entry.GetName());
+            clsid.erase(clsid.begin(), std::find(clsid.rbegin(), clsid.rend(), L'\\').base());
+            return std::pair<std::wstring, std::wstring>(std::move(clsid), std::move(name));
+        });
+        std::for_each(values.begin(), values.end(), [&](std::pair<std::wstring, std::wstring>& currentEntry) {
+            //First try the user specific CLSID key.
+            RegistryKey clsidKey(RegistryKey::Open(rootKey + clsidKey + currentEntry.first, KEY_QUERY_VALUE));
+            if (clsidKey.Invalid())
+            {
+                //Next try the machine CLSID key.
+                clsidKey = RegistryKey::Open(backupClsidKey + currentEntry.first, KEY_QUERY_VALUE);
+            }
+            RegistryKey inProcKey;
+            if (clsidKey.Valid())
+            {
+                //Open the InProcServer32 subkey of that.
+                inProcKey = RegistryKey::Open(clsidKey, L"InProcServer32", KEY_QUERY_VALUE);
+            }
+            //The CLSID key's name is used if the remote name is the "boss", or if the current try
+            //is empty
+            if (clsidKey.Valid() && (nameSource == CLASS_ROOT_DEFAULT || currentEntry.second.empty()))
+            {
+                std::wstring remoteName(clsidKey[L""].GetString());
+                //Don't clobber the existing name in the event the actual name in the key is empty.
+                if (!remoteName.empty())
+                {
+                    currentEntry.second = std::move(remoteName);
+                }
+            }
+            std::wstring file;
+            if (inProcKey.Valid())
+            {
+                file = inProcKey[L""].GetString();
+            }
+            if (currentEntry.second.empty())
+            {
+                currentEntry.second = L"N/A";
+            }
+            GeneralEscape(currentEntry.first, L'#', L'=');
+            GeneralEscape(currentEntry.second, L'#', L':');
+            output << prefix << L": " << currentEntry.second << L": " << currentEntry.first << L'=';
+            WriteDefaultFileOutput(output, file);
+            output << L'\n';
+       });
+    }
+
+    /**
+     * CLSID value based output.
+     *
+     * @param [in,out] output The stream to write the output to.
+     * @param prefix          The prefix used to identify the type of line generated in the report.
+     * @param rootKey         The root key where the check is rooted. The CLASSES key should be
+     *                        located in \\Software\\Classes relative to this key.
+     * @param subKey          The sub key under the root key\\Software (or \\Software\\Wow6432Node
+     *                        on x64 machines) where the CLSID values are located.
+     * @param source          Where the cLSIDs themselves are located (the key or the value).
+     * @param nameSource      Which name is primary; the name stored with the CLSID, or the name
+     *                        stored with the CLASSES key.
+     */
+    static void ClsidSubkeyBasedOutput(
+        std::wostream& output,
+        std::wstring const& prefix,
+        std::wstring const& rootKey,
+        std::wstring const& subKey,
+        MasterName nameSource
+        )
+    {
+#ifdef _M_X64
+        ClsidSubkeyBasedOutputWithBits(
+            output,
+            prefix,
+            rootKey,
+            L"\\Software\\Wow6432Node" + subKey,
+            L"\\Software\\Wow6432Node\\Classes\\CLSID\\",
+            L"\\Registry\\Machine\\Software\\Wow6432Node\\Classes\\CLSID\\",
+            nameSource
+            );
+#endif
+        ClsidSubkeyBasedOutputWithBits(
+            output,
+            prefix + Get64Suffix(),
+            rootKey,
+            L"\\Software" + subKey,
+            L"\\Software\\Classes\\CLSID\\",
+            L"\\Registry\\Machine\\Software\\Classes\\CLSID\\",
+            nameSource
+            );
+    }
+
     /**
      * Single registry value output.
      *
@@ -428,8 +559,6 @@ namespace Instalog {
             //Expected error.
         }
     }
-
-
 
     /**
      * Internet explorer output.
@@ -546,6 +675,7 @@ namespace Instalog {
                 //Expected
             }
         }
+        ClsidSubkeyBasedOutput(output, L"BHO", rootKey, L"\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects", CLASS_ROOT_DEFAULT);
     }
 
     /**
