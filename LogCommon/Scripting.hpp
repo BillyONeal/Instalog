@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
+#include <memory>
 #include <string>
 #include <map>
 #include <functional>

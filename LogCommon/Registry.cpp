@@ -739,8 +739,7 @@ namespace Instalog { namespace SystemFacades {
 	{
 		std::vector<std::wstring> answer;
 		std::wstring contents(GetStringStrict());
-		boost::algorithm::split(answer, contents, 
-			std::bind(std::equal_to<wchar_t>(), std::placeholders::_1, L','));
+		boost::algorithm::split(answer, contents, std::bind1st(std::equal_to<wchar_t>(), L','));
 		std::for_each(answer.begin(), answer.end(), [] (std::wstring & a) {
 			boost::algorithm::trim_left(a, std::locale()); });
 		return std::move(answer);

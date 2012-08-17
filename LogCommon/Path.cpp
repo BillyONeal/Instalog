@@ -86,7 +86,7 @@ namespace Instalog { namespace Path {
 		wchar_t buf[32767] = L""; // 32767 is max size of environment variable
 		UINT len = ::GetEnvironmentVariableW(variable, buf, 32767);
 		auto range = boost::make_iterator_range(buf, buf + len);
-		boost::split(splitVar, range, std::bind(std::equal_to<wchar_t>(), _1, L';'));
+		boost::split(splitVar, range, std::bind1st(std::equal_to<wchar_t>(), L';'));
 		return splitVar;
 	}
 

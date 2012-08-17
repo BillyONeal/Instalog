@@ -40,8 +40,7 @@ namespace Instalog {
 		wchar_t const* resourceDataCasted = static_cast<wchar_t const*>(resourceData);
 		DWORD resourceLen = ::SizeofResource(0, resourceHandle);
 		auto sourceRange = boost::make_iterator_range(resourceDataCasted, resourceDataCasted + (resourceLen / sizeof(wchar_t)));
-		boost::algorithm::split(innards, sourceRange,
-			std::bind(std::equal_to<wchar_t>(), _1, L'\n'));
+		boost::algorithm::split(innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
 		std::for_each(innards.begin(), innards.end(), std::bind(boost::algorithm::to_lower<std::wstring>, _1, std::locale()));
 		std::for_each(innards.begin(), innards.end(), [&replacements] (std::wstring &a) {
 			std::for_each(replacements.begin(), replacements.end(), [&a] (std::pair<std::wstring, std::wstring> const&b) {
