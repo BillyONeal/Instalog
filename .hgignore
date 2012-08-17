@@ -33,3 +33,7 @@ Instalog/Instalog.txt
 LogCommon/CompiledProtocolBuffers/*
 Docs/Instalog Manual/*.pdf
 Docs/Instalog Manual/tmp/*
+Instalog/x64/Release_TraceOn/*
+LogCommon/x64/Release_TraceOn/*
+LogTests/x64/Release_TraceOn/*
+x64/Release_TraceOn/*

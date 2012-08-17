@@ -305,15 +305,6 @@ namespace Instalog {
      */
     static std::vector<std::wstring> EnumerateUserHives()
     {
-        std::vector<std::wstring> wht;
-        wht.push_back(L"\\REGISTRY\\MACHINE\\HARDWARE");
-        wht.push_back(L"\\REGISTRY\\MACHINE\\SYSTEM");
-        wht.push_back(L"\\REGISTRY\\MACHINE\\BCD00000000");
-        wht.push_back(L"\\REGISTRY\\MACHINE\\SOFTWARE");
-		wht.push_back(L"\\REGISTRY\\MACHINE\\SECURITY");
-		wht.push_back(L"\\REGISTRY\\MACHINE\\SAM");
-		wht.push_back(L"\\REGISTRY\\MACHINE\\COMPONENTS");
-        std::sort(wht.begin(), wht.end());
         std::vector<std::wstring> hives;
         {
             RegistryKey hiveList(RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\hivelist", KEY_QUERY_VALUE));
@@ -323,12 +314,8 @@ namespace Instalog {
             }
             hives = hiveList.EnumerateValueNames();
         } //Block closes key
-        hives.erase(std::remove_if(hives.begin(), hives.end(), [&wht] (std::wstring const& str) -> bool {
-            if (boost::algorithm::ends_with(str, L"_Classes"))
-            {
-                return true;
-            }
-            return std::binary_search(wht.cbegin(), wht.cend(), str);
+        hives.erase(std::remove_if(hives.begin(), hives.end(), [] (std::wstring const& str) -> bool {
+            return !boost::algorithm::istarts_with(str, L"\\Registry\\User\\S") || boost::algorithm::ends_with(str, L"_Classes");
         }), hives.end());
         std::sort(hives.begin(), hives.end());
         return std::move(hives);

@@ -175,6 +175,9 @@
     <ClInclude Include="Dns.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IlTrace.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
