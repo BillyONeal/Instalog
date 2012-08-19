@@ -99,7 +99,7 @@ TEST(Process, NtoskrnlIsInTheBuilding)
 	{
 		if (it->GetProcessId() == 4) 
 		{
-			ASSERT_STREQ(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath().c_str());
+			ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath()));
 		}
 	}
 }

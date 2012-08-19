@@ -46,7 +46,8 @@ TEST_F(RunningProcessesTest, SvchostHasFullLine)
 {
 	std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs";
 	Go();
-	ASSERT_PRED2((boost::algorithm::contains<std::wstring, std::wstring>), ss.str(), svcHost);
+	bool svcHostHasFullLine = boost::algorithm::icontains<std::wstring, std::wstring>(ss.str(), svcHost);
+	ASSERT_TRUE(svcHostHasFullLine);
 }
 
 TEST_F(RunningProcessesTest, ExplorerDoesNotHaveFullLine)

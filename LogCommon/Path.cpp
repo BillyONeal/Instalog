@@ -205,6 +205,11 @@ namespace Instalog { namespace Path {
 		return false;
 	}
 
+	static std::wstring GetRundll32Path()
+	{
+		return Path::Append(GetWindowsPath(), L"System32\\Rundll32.exe");
+	}
+
 	bool ResolveFromCommandLine(std::wstring &path)
 	{
 		if (path.empty())
@@ -218,7 +223,7 @@ namespace Instalog { namespace Path {
             std::wstring unescaped;
             unescaped.reserve(path.size());
             std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(path.begin(), path.end(), std::back_inserter(unescaped));
-            if (boost::starts_with(unescaped, GetWindowsPath().append(L"System32\\Rundll32.exe")))
+            if (boost::istarts_with(unescaped, GetRundll32Path()))
             {
                 std::wstring::iterator startOfArgument = std::find(endOfUnescape, path.end(), L'\"');
                 if (startOfArgument != path.end())
