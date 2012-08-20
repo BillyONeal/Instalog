@@ -23,7 +23,9 @@ static void SecCenterProductCheck(
 	CComPtr<IWbemServices> securityCenter, 
 	BSTR productToCheck, 
 	std::vector<SecurityProduct> &result, 
-	wchar_t const* twoCode ) 
+	wchar_t const* twoCode,
+	wchar_t const* enabledPropertyName,
+	wchar_t const* upToDatePropertyName = nullptr) 
 {
     HRESULT hr;
 	CComPtr<IEnumWbemClassObject> objEnumerator;
@@ -69,26 +71,29 @@ static void SecCenterProductCheck(
         std::wstring name(variant.bstrVal, SysStringLen(variant.bstrVal));
         INSTALOG_TRACE(name);
 
-        INSTALOG_TRACE(L"Getting onAccessScanningEnabled");
-		ThrowIfFailed(obj->Get(L"onAccessScanningEnabled",0,&variant,0,0));
+        INSTALOG_TRACE(L"Getting " << enabledPropertyName);
+		ThrowIfFailed(obj->Get(enabledPropertyName,0,&variant,0,0));
 		ThrowIfFailed(variant.ChangeType(VT_BOOL));
-		bool onAccessEnabled = variant.boolVal != 0;
-        INSTALOG_TRACE(L"Getting productUpToDate");
-		ThrowIfFailed(obj->Get(L"productUpToDate", 0, &variant, 0, 0));
-		ThrowIfFailed(variant.ChangeType(VT_BOOL));
-		SecurityProduct::UpdateStatusValues updateStatus;
-		if (variant.boolVal)
+		bool productEnabled = variant.boolVal != 0;
+		SecurityProduct::UpdateStatusValues updateStatus = SecurityProduct::UpdateNotRequired;
+		if (upToDatePropertyName != nullptr)
 		{
-			updateStatus = SecurityProduct::UpToDate;
-		}
-		else
-		{
-			updateStatus = SecurityProduct::OutOfDate;
+			INSTALOG_TRACE(L"Getting " << upToDatePropertyName);
+			ThrowIfFailed(obj->Get(upToDatePropertyName, 0, &variant, 0, 0));
+			ThrowIfFailed(variant.ChangeType(VT_BOOL));
+			if (variant.boolVal)
+			{
+				updateStatus = SecurityProduct::UpToDate;
+			}
+			else
+			{
+				updateStatus = SecurityProduct::OutOfDate;
+			}
 		}
 		result.push_back(SecurityProduct(
 			std::move(name),
 			std::move(guid),
-			onAccessEnabled,
+			productEnabled,
 			updateStatus,
 			twoCode));
 	}
@@ -186,13 +191,13 @@ static void CheckSecurityCenter( CComPtr<IWbemServices> wbemServices, std::vecto
 	ThrowIfFailed(errorCheck);
     INSTALOG_TRACE(L"AntiVirusProduct");
 	SecCenterProductCheck(securityCenter, BSTR(L"AntiVirusProduct"), result, 
-		avCode);
+		avCode, BSTR(L"onAccessScanningEnabled"), BSTR(L"productUpToDate"));
     INSTALOG_TRACE(L"FireWallProduct");
 	SecCenterProductCheck(securityCenter, BSTR(L"FireWallProduct"), result,
-		fwCode);
+		fwCode, BSTR(L"enabled"));
     INSTALOG_TRACE(L"AntiSpywareProduct");
 	SecCenterProductCheck(securityCenter, BSTR(L"AntiSpywareProduct"), result, 
-		asCode);
+		asCode, BSTR(L"productEnabled"), BSTR(L"productUpToDate"));
 }
 static void CheckSecurityCenter2( CComPtr<IWbemServices> wbemServices,
 	std::vector<SecurityProduct>& result )
