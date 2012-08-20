@@ -2,10 +2,11 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
-#include <LogCommon/Win32Exception.hpp>
-#include <LogCommon/ScopedPrivilege.hpp>
+#include "stdafx.h"
+#include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/ScopedPrivilege.hpp"
 
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using Instalog::SystemFacades::ScopedPrivilege;
 using Instalog::SystemFacades::Win32Exception;
 
@@ -58,17 +59,21 @@ static bool HasPrivilege(LPCWSTR privilegeName)
 	return false;
 }
 
-TEST(ScopedPrivilege, PrivilegeGetsTaken)
+TEST_CLASS(ScopedPrivilegeTest)
 {
-	ScopedPrivilege priv(SE_BACKUP_NAME);
-	ASSERT_TRUE(::HasPrivilege(SE_BACKUP_NAME));
-}
-
-TEST(ScopedPrivilege, PrivilegeGetsReleased)
-{
+public:
+	TEST_METHOD(PrivilegeGetsTaken)
 	{
 		ScopedPrivilege priv(SE_BACKUP_NAME);
-		ASSERT_TRUE(::HasPrivilege(SE_BACKUP_NAME));
+		Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
 	}
-	ASSERT_FALSE(::HasPrivilege(SE_BACKUP_NAME));
-}
+
+	TEST_METHOD(PrivilegeGetsReleased)
+	{
+		{
+			ScopedPrivilege priv(SE_BACKUP_NAME);
+			Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
+		}
+		Assert::IsFalse(::HasPrivilege(SE_BACKUP_NAME));
+	}
+};
