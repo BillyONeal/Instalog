@@ -20,7 +20,6 @@ namespace Instalog { namespace SystemFacades {
 	static std::vector<char> GetSafeServersList()
 	{
 		static const char *safeDnsServerAddresses[] = {
-            "129.22.104.25",
 			"8.8.8.8",			// Google Public DNS Primary
 			"8.8.4.4",			// Google Public DNS Secondary
 			"208.67.222.222",	// OpenDNS Primary
