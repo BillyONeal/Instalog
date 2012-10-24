@@ -349,6 +349,9 @@ namespace Instalog { namespace SystemFacades {
 			case ERROR_EVT_MESSAGE_ID_NOT_FOUND:
 				return L"";
 				break;
+            case ERROR_EVT_UNRESOLVED_PARAMETER_INSERT:
+                return L"No Description Available.";
+                break;
 			default:
 				Win32Exception::Throw(status);
 			}			

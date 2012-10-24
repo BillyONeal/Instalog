@@ -38,3 +38,4 @@ LogCommon/x64/Release_TraceOn/*
 LogTests/x64/Release_TraceOn/*
 x64/Release_TraceOn/*
 TestResults/*
+_ReSharper.*/*
