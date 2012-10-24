@@ -500,9 +500,7 @@ address.
 \end{verbatim}
 \item[Log Format] \hfill \\
 \verb|UrlSearchHook: ${SelectedName}: ${CLSID}=${File}| \\
-\verb|UrlSearchHook64: ${SelectedName}: ${CLSID}=${File}| \\
-\verb|UrlSearchHook: DefaultMissing| \\
-\verb|UrlSearchHook64: DefaultMissing|
+\verb|UrlSearchHook64: ${SelectedName}: ${CLSID}=${File}|
 \item[Output Description] \hfill \\
 \var{SelectedName} is either \var{Name}, \var{AlternateName}, or the string
 ``\verb|N/A|'', in order. (That is, failing to the next if the given name is
@@ -511,9 +509,6 @@ in \ref{generalescape}, using an escape character of hash (\verb|#|) and a right
 delimiter of colon (\verb|:|). \var{CLSID} shall also be escaped, using the
 same escape character but a right delimiter of equals (\verb|=|). File shall be
 passed through the resolution process defined in \ref{stdfile}.
-
-The DefaultMissing line shall be displayed in the event the default value does
-not exist.
 \item[Whitelist Considerations] \hfill \\
 The default CLSID is
 \vspace{-\baselineskip}
@@ -530,13 +525,9 @@ is ``Microsoft Url Search Hook'', and the default alternate name is the empty
 string.
 This default entry is the legitimate system default and shall be whitelisted.
 \item[Fix Considerations] \hfill \\
-For the non ``DefaultMissing'' lines, both ``Move'' and ``Fix'' are valid.
-``Move'' shall generate a script which quarantines the indicated file (if it
-exists). ``Fix'' shall generate a fix removing the URLSearchHook from the
-registry.
-
-For the ``DefaultMissing'' line, only ``Fix'' is valid; selecting it generates a
-script restoring the default value.
+Both ``Move'' and ``Fix'' are valid. ``Move'' shall generate a script which
+quarantines the indicated file (if it exists). ``Fix'' shall generate a fix
+removing the URLSearchHook from the registry.
 \end{description}
 
 \subsubsection{Shell}
@@ -838,9 +829,9 @@ security software.
 "${Name}"="${Value}"
 [${RootHive}\Software\Microsoft\Windows\CurrentVersion\
     Policies\System]
+"${Name}"="${Value}"
 [${RootHive}\Software\Microsoft\Windows\CurrentVersion\
     Policies\Explorer\DisallowRun]
-"${Name}"="${Value}"
 "${Name}"="${Value}"
 \end{verbatim}
 \item[Log Format] \hfill
@@ -877,7 +868,7 @@ copy of Windows Update\ldots)
 @="${Command}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|IeMenu: [${Name}] ${Command}|
+\verb|IeMenu: [${Name}] ${Command}| \\
 \verb|IeMenu64: [${Name}] ${Command}|
 \item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
@@ -905,7 +896,7 @@ behavior of the browser.
 "Script"="${Command}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|IeScript: [${Name}] ${Command}|
+\verb|IeScript: [${Name}] ${Command}| \\
 \verb|IeScript64: [${Name}] ${Command}|
 \item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
@@ -982,17 +973,16 @@ DPFs are ActiveX controls loaded into Internet Explorer by any website.
 \item[Data Sources] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Code Store Database\Distribution Units\${CLSID}]
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|TrustedZone: ${Domain}|
+\verb|DPF: ${CLSID}|
 \item[Output Description] \hfill \\
-\var{Domain} is escaped using the default escaping function defined in
-\ref{generalescape}.
+\var{CLSID} is escaped using the default escaping function defined in \ref{generalescape}.
 \item[Whitelisting Considerations] \hfill \\
 None.
 \item[Fix Considerations] \hfill \\
-``Fix'' shall generate a script which removes the item from the trusted zone.
+``Fix'' shall generate a script which removes the item from the registry.
 \end{description}
 
 \subsubsection{Winsock Layered Service Providers and Namespace Providers}
@@ -1181,7 +1171,7 @@ to the \textbf{Log Format} section.
 \item[Log Format] \hfill
 \vspace{-\baselineskip}
 \begin{verbatim}
-SpoofedDNS: ${Url} ${ResponseIp} ${ResponseUrl}
+SpoofedDNS: ${Url}->${ResponseUrl} (${ResponseIp})
 \end{verbatim}
 \item[Output Description] \hfill \\
 \var{Url} and \var{ResponseUrl} shall be escaped according to the
@@ -2256,7 +2246,7 @@ resolution process defined in \ref{pathresolution}, corresponds to one of the
 above. In such cases, Instalog shall enumerate the key
 \begin{verbatim}
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\${ServiceName}\Parameters]
-"DllPath"="${SvchostDll}"
+"ServiceDll"="${SvchostDll}"
 \end{verbatim}
 and display \var{SvchostDll} using the standard file output format defined in
 \ref{stdfile}. \var{SvchostGroup} shall be printed using the default escaping
@@ -2449,8 +2439,9 @@ Find3M shall be generated in the following manner:
         \item \verb|dat|
         \item \verb|drv|
     \end{itemize}
-    \item Combine all the lists generated so far, and sort according to creation
-    date.
+    \item Combine all the lists generated so far, and sort by creation date,
+    then by modification date, then by size, then by attribute string, and
+    finally by file path.
     \item Remove ``runs'' of files. That is, lines of files which are longer
     than 12 files long, which have creation date time differences of less than
     one second. (This is to remove Windows Update changes from the report).
@@ -2476,7 +2467,7 @@ where \var{Date} is the date the event was logged using the standard date format
 ID that service has given the event, and \var{Description} is the human readable
 description provided by the service.
 
-All ``Warning'' and ``Critical'' messages will be not be logged, from the
+All ``Warning'' and ``Informational'' messages will be not be logged, from the
 default System and Application event logs. All messages (including Informational
 and Warning) will be enumerated for Windows File Protection sourced events.
 
@@ -2501,7 +2492,6 @@ in Windows Managment Instrumentation.
 \item[Log Format] \hfill 
 \vspace{-\baselineskip}
 \begin{verbatim}
-${windows_version}
 Boot Device: ${boot_device}
 Install Date: ${install_date}
 System Uptime: ${boot_time} (${uptime})
@@ -2518,8 +2508,9 @@ available, the following line shall be printed:
 ${partition_letter}: is ${type}
 \end{verbatim}
 \var{partition\_letter} is simply the letter of the partition.  \var{type} is
-the type of the disk (``FIXED", ``CDROM", or ``REMOVABLE'').  If the size is
-available, the following line shall be printed:
+the type of the disk (typically ``UNKNOWN'', ``NOROOT'', ``REMOVABLE'', ``LOCAL'',
+``NETWORK'', ``CDROM'', or ``RAM'').  If the size is available, the following
+line shall be printed:
 \vspace{-\baselineskip}
 \begin{verbatim}
 ${partition_letter}: is ${type} - ${total} GiB total, ${free} GiB free
@@ -2595,7 +2586,7 @@ The installed programs shall be determined by enumerating through the registry
 for all of the \var{id}'s that are present.
 \vspace{-\baselineskip}
 \begin{verbatim}
-[HKEY_LOCAL_MACHINE\Software\Microsoft\CurrentVersion\Uninstall\${id}]
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\${id}]
 "DisplayName"="${name}"
 "VersionMajor"="${version_major}"
 "VersionMinor"="${verison_minor}"
