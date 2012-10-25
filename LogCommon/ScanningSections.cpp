@@ -130,8 +130,7 @@ namespace Instalog
             serviceStrings.emplace_back(currentSvcStream.str());
 		}
 
-        using namespace std::placeholders;
-        std::sort(serviceStrings.begin(), serviceStrings.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
+        std::sort(serviceStrings.begin(), serviceStrings.end(), [] (std::wstring const& a, std::wstring const& b) { return boost::ilexicographical_compare(a, b); });
         std::copy(serviceStrings.cbegin(), serviceStrings.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L"\n"));
 	}
 
@@ -166,13 +165,14 @@ namespace Instalog
 		currentTime.LowPart = currentFileTime.dwLowDateTime;
 		currentTime.HighPart = currentFileTime.dwHighDateTime;
 		ULARGE_INTEGER oneWeekAgo;
-		oneWeekAgo.QuadPart = currentTime.QuadPart - 6048000000000;
+		oneWeekAgo.QuadPart = currentTime.QuadPart - 6048000000000ll;
 
 		// Log applicable events
 		for (auto eventLogEntry = eventLogEntries.begin(); eventLogEntry != eventLogEntries.end(); ++eventLogEntry)
 		{
+            auto const level = (*eventLogEntry)->level;
 			// Whitelist everything but "Critical" and "Error" messages
-			if ((*eventLogEntry)->level != EventLogEntry::EvtLevelCritical && (*eventLogEntry)->level != EventLogEntry::EvtLevelError) continue;
+			if (level != EventLogEntry::EvtLevelCritical && level != EventLogEntry::EvtLevelError) continue;
 
 			// Whitelist all events that are older than this week
 			ULARGE_INTEGER date;
@@ -181,7 +181,8 @@ namespace Instalog
 			if (date.QuadPart < oneWeekAgo.QuadPart) continue;
 
 			// Whitelist EventIDs 1000, 8023, 10010
-			if ((*eventLogEntry)->eventId == 1000 || (*eventLogEntry)->eventId == 8023 || (*eventLogEntry)->eventId == 10010) continue;
+            auto eventId = (*eventLogEntry)->eventId;
+			if (eventId == 1000 || eventId == 8023 || eventId == 10010) continue;
 
 			// Print the Date
 			WriteDefaultDateFormat(logOutput, FiletimeToInteger((*eventLogEntry)->date));
@@ -194,10 +195,11 @@ namespace Instalog
 			}
 			 
 			// Print the Source
-			logOutput << (*eventLogEntry)->GetSource() << L" [";
+            auto const& source = (*eventLogEntry)->GetSource();
+			logOutput << source << L" [";
 			 
 			// Print the EventID
-			logOutput << (*eventLogEntry)->eventId << L"] ";
+			logOutput << eventId << L"] ";
 
 			// Print the description
 			std::wstring description = (*eventLogEntry)->GetDescription();

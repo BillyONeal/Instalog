@@ -327,7 +327,7 @@ namespace Instalog { namespace SystemFacades {
 		return evtFunctionHandles;
 	}
 
-	std::wstring XmlEventLogEntry::FormatMessage( DWORD messageFlag )
+	std::wstring XmlEventLogEntry::FormatEventMessage( DWORD messageFlag )
 	{
 		HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(NULL, providerName.c_str(), NULL, 0, 0);
 		if (publisherHandle == NULL)
@@ -337,13 +337,13 @@ namespace Instalog { namespace SystemFacades {
 
 		std::vector<wchar_t> buffer;
 		DWORD bufferUsed = 0;
-		while (EvtFunctions().EvtFormatMessage(publisherHandle, eventHandle, 0, 0, NULL, messageFlag, static_cast<DWORD>(buffer.capacity()), static_cast<LPWSTR>(buffer.data()), &bufferUsed) == false)
+		while (EvtFunctions().EvtFormatMessage(publisherHandle, eventHandle, 0, 0, NULL, messageFlag, static_cast<DWORD>(buffer.size()), static_cast<LPWSTR>(buffer.data()), &bufferUsed) == false)
 		{
 			DWORD status = GetLastError();
 			switch(status)
 			{
 			case ERROR_INSUFFICIENT_BUFFER: 
-				buffer.reserve(bufferUsed);
+				buffer.resize(bufferUsed);
 				break;
 			case ERROR_EVT_MESSAGE_NOT_FOUND:
 			case ERROR_EVT_MESSAGE_ID_NOT_FOUND:
@@ -376,10 +376,10 @@ namespace Instalog { namespace SystemFacades {
 		DWORD propertyCount = 0;
 		while (EvtFunctions().EvtRender(contextHandle, eventHandle, EvtRenderEventValues, static_cast<DWORD>(buffer.capacity()), buffer.data(), &bufferUsed, &propertyCount) == false)
 		{
-			DWORD status = GetLastError();
+			DWORD status = ::GetLastError();
 			if (status == ERROR_INSUFFICIENT_BUFFER)
 			{
-				buffer.reserve(bufferUsed);
+				buffer.resize(bufferUsed);
 			}
 			else
 			{
@@ -427,12 +427,12 @@ namespace Instalog { namespace SystemFacades {
 
 	std::wstring XmlEventLogEntry::GetDescription()
 	{
-		return FormatMessage(EvtFormatMessageEvent);
+		return this->FormatEventMessage(EvtFormatMessageEvent);
 	}
 
 	std::wstring XmlEventLogEntry::GetSource()
 	{
-		std::wstring response = FormatMessage(EvtFormatMessageProvider);
+		std::wstring response = this->FormatEventMessage(EvtFormatMessageProvider);
 		if (response.size() == 0)
 		{
 			return providerName;
@@ -443,12 +443,12 @@ namespace Instalog { namespace SystemFacades {
 			{ 
 				response.erase(response.begin(), response.begin() + 18);
 			}
-			return response;
+			return std::move(response);
 		}
 	}
 
 	XmlEventLog::XmlEventLog( wchar_t* logPath /*= L"System"*/, wchar_t* query /*= L"Event/System"*/ )
-		: queryHandle(EvtFunctions().EvtQuery(NULL, logPath, query, EvtQueryChannelPath | EvtQueryReverseDirection))
+		: queryHandle(EvtFunctions().EvtQuery(NULL, logPath, query, EvtQueryChannelPath))
 	{
 		if (queryHandle == NULL)
 		{
@@ -463,25 +463,26 @@ namespace Instalog { namespace SystemFacades {
 
 	std::vector<std::unique_ptr<EventLogEntry>> XmlEventLog::ReadEvents()
 	{
+        auto const maxHandlesPerCall = 100;
 		std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries;
-		HANDLE eventHandles[10];
+		HANDLE eventHandles[maxHandlesPerCall];
 		DWORD numReturned = 0;
 
-		while (EvtFunctions().EvtNext(queryHandle, 10, eventHandles, INFINITE, 0, &numReturned))
+		while (EvtFunctions().EvtNext(queryHandle, maxHandlesPerCall, eventHandles, INFINITE, 0, &numReturned))
 		{
-			for (DWORD i = 0; i < numReturned; ++i)
+			for (std::size_t i = 0; i < numReturned; ++i)
 			{
-				eventLogEntries.emplace_back(std::unique_ptr<EventLogEntry>(new XmlEventLogEntry(eventHandles[i])));
+				eventLogEntries.emplace_back(new XmlEventLogEntry(eventHandles[i]));
 			}
 		}
 
-		DWORD errorStatus = GetLastError();
+		DWORD errorStatus = ::GetLastError();
 		if (errorStatus != ERROR_NO_MORE_ITEMS)
 		{
 			Win32Exception::Throw(errorStatus);
 		}
 
-		return eventLogEntries;
+		return std::move(eventLogEntries);
 	}
 	
 	EventLogEntry::EventLogEntry( EventLogEntry && e )
@@ -489,26 +490,18 @@ namespace Instalog { namespace SystemFacades {
 		, level(e.level)
 		, eventId(e.eventId)
 	{
-		e.date.dwLowDateTime = 0;
-		e.date.dwHighDateTime = 0;
-		e.level = 0;
-		e.eventId = 0;
 	}
 
 	EventLogEntry::EventLogEntry()
 	{
-
 	}
 
 	EventLogEntry::~EventLogEntry()
 	{
-
 	}
-
 
 	EventLog::~EventLog()
 	{
-
 	}
 
 }}

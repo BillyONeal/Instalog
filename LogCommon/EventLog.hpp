@@ -93,7 +93,7 @@ namespace Instalog { namespace SystemFacades {
 		/// @param	messageFlag	The message flag.
 		///
 		/// @return	The formatted message or "" if the message didn't exist
-		std::wstring FormatMessage(DWORD messageFlag);
+		std::wstring FormatEventMessage(DWORD messageFlag);
 
 	public:
 		/// @brief	Constructor for an event from a handle to the event
