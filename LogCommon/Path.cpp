@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
+#include <unordered_set>
 #include <boost/algorithm/string.hpp>
 #include "File.hpp"
 #include "StringUtilities.hpp"
@@ -129,6 +130,28 @@ namespace Instalog { namespace Path {
 		return false;
 	}
 
+    static bool IsExclusiveFileCached(std::wstring const& testPath)
+    {
+        static std::unordered_set<std::wstring> nonexistentCache;
+        auto cacheValue = nonexistentCache.find(testPath);
+        if (cacheValue == nonexistentCache.end())
+        {
+            if (SystemFacades::File::IsExclusiveFile(testPath))
+            {
+                return true;
+            }
+            else
+            {
+                nonexistentCache.emplace(testPath, 1);
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 	static bool TryExtensions( std::wstring &searchpath, std::wstring::iterator extensionat ) 
 	{
 		static std::vector<std::wstring> splitPathExt = getSplitPathExt();
@@ -141,7 +164,7 @@ namespace Instalog { namespace Path {
 
 		// Search with no path extension
 		std::wstring pathNoPathExtension = std::wstring(searchpath.begin(), extensionat);
-		if (SystemFacades::File::IsExclusiveFile(pathNoPathExtension)) 
+        if (IsExclusiveFileCached(pathNoPathExtension)) 
 		{
 			searchpath = pathNoPathExtension;
 			return true;
@@ -152,7 +175,7 @@ namespace Instalog { namespace Path {
 		for (auto splitPathExtIt = splitPathExt.cbegin(); splitPathExtIt != splitPathExt.cend(); ++splitPathExtIt)
 		{
 			pathNoPathExtension.append(*splitPathExtIt);
-			if (SystemFacades::File::IsExclusiveFile(pathNoPathExtension)) 
+			if (IsExclusiveFileCached(pathNoPathExtension)) 
 			{
 				searchpath.assign(pathNoPathExtension);
 				return true;
