@@ -4,9 +4,9 @@
 
 #include "pch.hpp"
 #include <memory>
-#include <atlbase.h>
 #include "Library.hpp"
 #include "StringUtilities.hpp"
+#include "Com.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
@@ -86,8 +86,8 @@ namespace Instalog { namespace SystemFacades {
 
 	void ThrowFromHResult( HRESULT hRes )
 	{
-		CComPtr<IErrorInfo> iei;
-		if (S_OK == ::GetErrorInfo(0, &iei) && iei)
+		UniqueComPtr<IErrorInfo> iei;
+		if (S_OK == ::GetErrorInfo(0, iei.PassAsOutParameter()) && (iei.Get() != nullptr))
 		{
 			// get the error description from the IErrorInfo 
 			CComBSTR bStr;

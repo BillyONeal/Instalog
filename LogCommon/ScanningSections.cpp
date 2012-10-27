@@ -216,22 +216,22 @@ namespace Instalog
 	{
 		using namespace SystemFacades;
 
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+		UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 
-		CComPtr<IWbemServices> namespaceCimv2;
+		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
 
-		CComPtr<IEnumWbemClassObject> enumWin32_OperatingSystem;
+		UniqueComPtr<IEnumWbemClassObject> enumWin32_OperatingSystem;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_OperatingSystem"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_OperatingSystem));
+			BSTR(L"Win32_OperatingSystem"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_OperatingSystem.Pass()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
-		CComPtr<IWbemClassObject> response;
+		UniqueComPtr<IWbemClassObject> response;
 		CComVariant variant;
 
-		hr = enumWin32_OperatingSystem->Next(WBEM_INFINITE, 1, &response, &returnCount);
+		hr = enumWin32_OperatingSystem->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -307,22 +307,22 @@ namespace Instalog
 	{
 		using namespace SystemFacades;
 
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+		UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 
-		CComPtr<IWbemServices> namespaceCimv2;
+		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
 
-		CComPtr<IEnumWbemClassObject> enumWin32_BaseBoard;
+		UniqueComPtr<IEnumWbemClassObject> enumWin32_BaseBoard;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_BaseBoard));
+			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_BaseBoard.Pass()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
-		CComPtr<IWbemClassObject> response;
+		UniqueComPtr<IWbemClassObject> response;
 		CComVariant variant;
 
-		hr = enumWin32_BaseBoard->Next(WBEM_INFINITE, 1, &response, &returnCount);
+		hr = enumWin32_BaseBoard->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -348,22 +348,22 @@ namespace Instalog
 	{
 		using namespace SystemFacades;
 
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+		UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 
-		CComPtr<IWbemServices> namespaceCimv2;
+		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
 
-		CComPtr<IEnumWbemClassObject> enumWin32_Processor;
+		UniqueComPtr<IEnumWbemClassObject> enumWin32_Processor;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_Processor));
+			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_Processor.Pass()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
-		CComPtr<IWbemClassObject> response;
+		UniqueComPtr<IWbemClassObject> response;
 		CComVariant variant;
 
-		hr = enumWin32_Processor->Next(WBEM_INFINITE, 1, &response, &returnCount);
+		hr = enumWin32_Processor->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -386,24 +386,24 @@ namespace Instalog
 	{
 		using namespace SystemFacades;
 
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+		UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 
-		CComPtr<IWbemServices> namespaceCimv2;
+		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, &namespaceCimv2, NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
 
-		CComPtr<IEnumWbemClassObject> enumWin32_LogicalDisk;
+		UniqueComPtr<IEnumWbemClassObject> enumWin32_LogicalDisk;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, &enumWin32_LogicalDisk));
+			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_LogicalDisk.Pass()));
 
 		for (;;)
 		{
 			HRESULT hr;
 			ULONG returnCount = 0;
-			CComPtr<IWbemClassObject> response;
+			UniqueComPtr<IWbemClassObject> response;
 			CComVariant variant;
 
-			hr = enumWin32_LogicalDisk->Next(WBEM_INFINITE, 1, &response, &returnCount);
+			hr = enumWin32_LogicalDisk->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
 			if (hr == WBEM_S_FALSE)
 			{
 				break;

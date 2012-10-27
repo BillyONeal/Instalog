@@ -3,18 +3,17 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
-
-#include <atlbase.h>
-# pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "wbemuuid.lib")
 #include <wbemidl.h>
 #include <string>
+#include "Com.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
 	/// @brief	Gets a CComPtr to do WMI queries with
 	///
 	/// @return	The wbem services.
-	CComPtr<IWbemServices> GetWbemServices();
+	UniqueComPtr<IWbemServices> GetWbemServices();
 
 	/// @brief	Converts a WMI date string to a FILETIME struct as UTC time
 	///
