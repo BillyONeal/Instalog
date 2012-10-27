@@ -25,11 +25,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="OlderWindows.masm">
-      <Filter>Source Files</Filter>
-    </MASM>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Instalog.ico">
       <Filter>Resource Files</Filter>
     </None>
@@ -40,5 +35,10 @@
     <ClInclude Include="..\LogCommon\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="OlderWindows.obj">
+      <Filter>Source Files</Filter>
+    </Object>
   </ItemGroup>
 </Project>
