@@ -76,12 +76,15 @@ UniqueBstr::~UniqueBstr()
     ::SysFreeString(this->wrapped);
 }
 
-
+#pragma warning(push)
+#pragma warning(disable: 4189) // local variable is initialized but not referenced
+// (The assert gets compiled out in release mode leading to the spurrious warning)
 void UniqueVariant::Destroy()
 {
     HRESULT result = ::VariantClear(&wrappedVariant);
     assert(result == S_OK);
 }
+#pragma warning(pop)
 
 UniqueVariant::UniqueVariant()
 {
