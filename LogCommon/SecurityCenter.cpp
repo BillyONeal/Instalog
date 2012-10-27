@@ -12,6 +12,7 @@
 #include "Wmi.hpp"
 #include "SecurityCenter.hpp"
 #include "IlTrace.hpp"
+#include "Com.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -288,8 +289,8 @@ void SecurityProduct::Delete()
 	path.append(L".instanceGuid=\"");
 	path.append(guid_);
 	path.push_back(L'"');
-	CComBSTR guid(path.c_str());
-	ThrowIfFailed(securityCenter2->DeleteInstance(guid, 0, nullptr, nullptr));
+	UniqueBstr guid(path);
+    ThrowIfFailed(securityCenter2->DeleteInstance(guid.AsInput(), 0, nullptr, nullptr));
 }
 
 }}

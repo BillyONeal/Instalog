@@ -6,6 +6,7 @@
 #include <memory>
 #include <atlbase.h>
 #include "Library.hpp"
+#include "Com.hpp"
 #include "StringUtilities.hpp"
 #include "Win32Exception.hpp"
 
@@ -90,9 +91,9 @@ namespace Instalog { namespace SystemFacades {
 		if (S_OK == ::GetErrorInfo(0, &iei) && iei)
 		{
 			// get the error description from the IErrorInfo 
-			CComBSTR bStr;
-			iei->GetDescription(&bStr);
-			std::wstring errorMessage(bStr);
+			UniqueBstr bStr;
+			iei->GetDescription(bStr.AsTarget());
+            auto errorMessage = bStr.AsString();
 			std::string narrowMessage(Instalog::ConvertUnicode(errorMessage));
 			throw HresultException(hRes, errorMessage, narrowMessage);
 		}
