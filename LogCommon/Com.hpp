@@ -67,6 +67,7 @@ namespace Instalog { namespace SystemFacades {
         {
             ::SysFreeString(this->wrapped);
             this->wrapped = nullptr;
+            return &this->wrapped;
         }
         wchar_t * AsNullTerminated()
         {

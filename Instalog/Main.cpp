@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <fcntl.h>
+#define NOMINMAX
 #include <windows.h>
 #include "LogCommon/Wow64.hpp"
 #include "LogCommon/Win32Exception.hpp"
