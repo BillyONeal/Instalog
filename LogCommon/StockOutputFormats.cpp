@@ -489,6 +489,21 @@ namespace Instalog {
 		}
 		return subkeys[0][L"ProductVersion"].GetStringStrict();
 	}
+    
+    LONG GetTimeZoneBias()
+    {
+        TIME_ZONE_INFORMATION tzInfo;
+        auto tzSetting = GetTimeZoneInformation(&tzInfo);
+        switch(tzSetting)
+        {
+        case TIME_ZONE_ID_STANDARD:
+            tzInfo.Bias += tzInfo.StandardBias;
+        case TIME_ZONE_ID_DAYLIGHT:
+            tzInfo.Bias += tzInfo.DaylightBias;
+        };
+        
+        return tzInfo.Bias;
+    }
 
 	void WriteScriptHeader( std::wostream &log )
 	{
@@ -509,15 +524,11 @@ namespace Instalog {
 		log << std::wstring(userName, userNameLength - 1);
 		log << L" on ";
 
-		TIME_ZONE_INFORMATION tzInfo;
-		if (GetTimeZoneInformation(&tzInfo) == TIME_ZONE_ID_DAYLIGHT)
-		{
-			tzInfo.Bias += tzInfo.DaylightBias;
-		}
-		WriteCurrentMillisecondDate(log);
-		log << L" [GMT " << std::showpos << (-tzInfo.Bias / 60) << L':'
+        auto timeZoneBias = GetTimeZoneBias();
+        WriteCurrentMillisecondDate(log);
+		log << L" [GMT " << std::showpos << (-timeZoneBias / 60) << L':'
 			<< std::noshowpos << std::setw(2) << std::setfill(L'0')
-			<< (-tzInfo.Bias % 60) << L"]\n";
+			<< (-timeZoneBias % 60) << L"]\n";
 
 		using SystemFacades::RegistryKey;
 		RegistryKey ieKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE);
@@ -585,5 +596,6 @@ namespace Instalog {
 		unsigned __int64 msDate = Instalog::FiletimeToInteger(ft);
 		WriteMillisecondDateFormat(str, msDate);
 	}
+
 
 }

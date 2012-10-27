@@ -254,31 +254,36 @@ namespace Instalog
 		logOutput << L'\n';
 	}
 
+    struct SystemTimeInformation
+    { // MSDN says "reserved [48]" http://msdn.microsoft.com/en-us/library/windows/desktop/ms724509.aspx
+      // This came from ReactOS: http://doxygen.reactos.org/da/d46/structSYSTEM__TIMEOFDAY__INFORMATION.html
+        __int64 bootTime; // 8
+        __int64 currentTime; // 16
+        __int64 timeZoneBias; // 24
+        unsigned __int32 timeZoneId; // 28
+        unsigned __int32 reserved; // 32
+        unsigned __int64 bootTimeBias; // 40
+        unsigned __int64 sleepTimeBias; // 48
+    };
+
 	void MachineSpecifications::PerfFormattedData_PerfOS_System( std::wostream &logOutput ) const
 	{
 		NtQuerySystemInformationFunc ntQuerySysInfo = 
             SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>("NtQuerySystemInformation");
 
-        union
-        {
-            unsigned __int64 timeArray[3];
-            unsigned char c;
-        };
-
-		NTSTATUS errorCheck = ntQuerySysInfo(SystemTimeOfDayInformation, &c, sizeof(timeArray), 0);
+        const unsigned __int64 ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
+        const unsigned __int64 ticksPerHour = 10000000ull * 60ull * 60ull;
+        const unsigned __int64 ticksPerMinute = 10000000ull * 60ull;
+        SystemTimeInformation timeData;
+		NTSTATUS errorCheck = ntQuerySysInfo(SystemTimeOfDayInformation, reinterpret_cast<void*>(&timeData), sizeof(timeData), 0);
 		if (errorCheck != 0)
 		{
 			SystemFacades::Win32Exception::ThrowFromNtError(errorCheck);
 		}
-        unsigned __int64 bootTime = timeArray[0];
-        unsigned __int64 currentTime = timeArray[1];
-        unsigned __int64 uptime = currentTime - bootTime;
+        uint64_t uptime = timeData.currentTime - timeData.bootTime;
         logOutput << L"Booted at: ";
-        WriteDefaultDateFormat(logOutput, bootTime);
+        WriteDefaultDateFormat(logOutput, timeData.bootTime - (GetTimeZoneBias() * ticksPerMinute));
         logOutput << L" (Up ";
-        const unsigned __int64 ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
-        const unsigned __int64 ticksPerHour = 10000000ull * 60ull * 60ull;
-        const unsigned __int64 ticksPerMinute = 10000000ull * 60ull;
         if (uptime > ticksPerDay)
         {
             logOutput << uptime / ticksPerDay << L" Days ";

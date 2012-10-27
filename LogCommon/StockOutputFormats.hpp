@@ -42,6 +42,8 @@ namespace Instalog {
 	void WriteFileListingFile(std::wostream &str, std::wstring const& targetFile);
 	void WriteFileListingFromFindData( std::wostream &str, WIN32_FIND_DATAW const& info );
 
+    LONG GetTimeZoneBias();
+
 	/// @brief	Writes the script header.
 	///
 	/// @param [out]	log	The log stream
