@@ -6,7 +6,6 @@
 #include <functional>
 #include <algorithm>
 #include <iterator>
-#include <atlbase.h>
 #include <Sddl.h>
 #include <comdef.h>
 #include <Wbemidl.h>
@@ -942,6 +941,7 @@ namespace Instalog {
         return domainName + userName;
     }
 
+    /*
 	static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
 	{
 		std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
@@ -964,6 +964,7 @@ namespace Instalog {
 			output << L" (" << responseIpAddress << L")\n";
 		}
 	}
+    */
 
 	void PseudoHjt::Execute(
 		std::wostream& output,

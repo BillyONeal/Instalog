@@ -61,28 +61,23 @@ static void SecCenterProductCheck(
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
         INSTALOG_TRACE(L"Getting instanceGuid");
-		CComVariant variant;
-		ThrowIfFailed(obj->Get(L"instanceGuid",0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-		std::wstring guid(variant.bstrVal, SysStringLen(variant.bstrVal));
-		variant.Clear();
+		UniqueVariant variant;
+		ThrowIfFailed(obj->Get(L"instanceGuid",0,variant.PassAsOutParameter(),0,0));
+		std::wstring guid(variant.AsString());
         INSTALOG_TRACE(L"Getting displayName");
-		ThrowIfFailed(obj->Get(L"displayName",0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-        std::wstring name(variant.bstrVal, SysStringLen(variant.bstrVal));
+		ThrowIfFailed(obj->Get(L"displayName",0,variant.PassAsOutParameter(),0,0));
+        std::wstring name(variant.AsString());
         INSTALOG_TRACE(name);
 
         INSTALOG_TRACE(L"Getting " << enabledPropertyName);
-		ThrowIfFailed(obj->Get(enabledPropertyName,0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_BOOL));
-		bool productEnabled = variant.boolVal != 0;
+		ThrowIfFailed(obj->Get(enabledPropertyName,0,variant.PassAsOutParameter(),0,0));
+		bool productEnabled = variant.AsBool();
 		SecurityProduct::UpdateStatusValues updateStatus = SecurityProduct::UpdateNotRequired;
 		if (upToDatePropertyName != nullptr)
 		{
 			INSTALOG_TRACE(L"Getting " << upToDatePropertyName);
-			ThrowIfFailed(obj->Get(upToDatePropertyName, 0, &variant, 0, 0));
-			ThrowIfFailed(variant.ChangeType(VT_BOOL));
-			if (variant.boolVal)
+			ThrowIfFailed(obj->Get(upToDatePropertyName, 0, variant.PassAsOutParameter(), 0, 0));
+			if (variant.AsBool())
 			{
 				updateStatus = SecurityProduct::UpToDate;
 			}
@@ -132,21 +127,17 @@ static void SecCenter2ProductCheck(
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
-		CComVariant variant;
+		UniqueVariant variant;
         INSTALOG_TRACE(L"Getting instanceGuid");
-		ThrowIfFailed(obj->Get(L"instanceGuid",0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-		std::wstring guid(variant.bstrVal, SysStringLen(variant.bstrVal));
-		variant.Clear();
+		ThrowIfFailed(obj->Get(L"instanceGuid",0,variant.PassAsOutParameter(),0,0));
+		std::wstring guid(variant.AsString());
         INSTALOG_TRACE(L"Getting displayName");
-		ThrowIfFailed(obj->Get(L"displayName",0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-        std::wstring name(variant.bstrVal, SysStringLen(variant.bstrVal));
+		ThrowIfFailed(obj->Get(L"displayName",0,variant.PassAsOutParameter(),0,0));
+        std::wstring name(variant.AsString());
         INSTALOG_TRACE(name);
         INSTALOG_TRACE(L"Getting productState");
-		ThrowIfFailed(obj->Get(L"productState",0,&variant,0,0));
-		ThrowIfFailed(variant.ChangeType(VT_UINT));
-		UINT32 productState = variant.uintVal;
+		ThrowIfFailed(obj->Get(L"productState",0,variant.PassAsOutParameter(),0,0));
+		UINT productState = variant.AsUint();
         INSTALOG_TRACE(L"ProductState is 0x" << std::hex << productState << std::dec);
 		char productType = static_cast<char>(
 			(productState & 0x00FF0000ul) >> 16);

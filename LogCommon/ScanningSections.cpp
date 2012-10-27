@@ -220,18 +220,18 @@ namespace Instalog
 
 		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.PassAsOutParameter(), NULL));
 
 		UniqueComPtr<IEnumWbemClassObject> enumWin32_OperatingSystem;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_OperatingSystem"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_OperatingSystem.Pass()));
+			BSTR(L"Win32_OperatingSystem"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_OperatingSystem.PassAsOutParameter()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
 		UniqueComPtr<IWbemClassObject> response;
-		CComVariant variant;
+		UniqueVariant variant;
 
-		hr = enumWin32_OperatingSystem->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
+		hr = enumWin32_OperatingSystem->Next(WBEM_INFINITE, 1, response.PassAsOutParameter(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -245,14 +245,12 @@ namespace Instalog
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
 
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-		ThrowIfFailed(response->Get(L"SystemDrive", 0, &variant, NULL, NULL));
-		logOutput << L"Boot Device: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
-		variant.Clear();
+		ThrowIfFailed(response->Get(L"SystemDrive", 0, variant.PassAsOutParameter(), NULL, NULL));
+		logOutput << L"Boot Device: " << variant.AsString() << L'\n';
 
-		ThrowIfFailed(response->Get(L"InstallDate", 0, &variant, NULL, NULL));
+		ThrowIfFailed(response->Get(L"InstallDate", 0, variant.PassAsOutParameter(), NULL, NULL));
 		logOutput << L"Install Date: ";
-		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)))));
+		WriteMillisecondDateFormat(logOutput, FiletimeToInteger(WmiDateStringToFiletime(variant.AsString())));
 		logOutput << L'\n';
 	}
 
@@ -311,18 +309,18 @@ namespace Instalog
 
 		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.PassAsOutParameter(), NULL));
 
 		UniqueComPtr<IEnumWbemClassObject> enumWin32_BaseBoard;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_BaseBoard.Pass()));
+			BSTR(L"Win32_BaseBoard"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_BaseBoard.PassAsOutParameter()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
 		UniqueComPtr<IWbemClassObject> response;
-		CComVariant variant;
+		UniqueVariant variant;
 
-		hr = enumWin32_BaseBoard->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
+		hr = enumWin32_BaseBoard->Next(WBEM_INFINITE, 1, response.PassAsOutParameter(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -336,12 +334,10 @@ namespace Instalog
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
 
-		ThrowIfFailed(variant.ChangeType(VT_BSTR));
-		ThrowIfFailed(response->Get(L"Manufacturer", 0, &variant, NULL, NULL));
-		logOutput << L"Motherboard: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal));
-		ThrowIfFailed(response->Get(L"Product", 0, &variant, NULL, NULL));
-		logOutput << L" " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
-		variant.Clear();
+		ThrowIfFailed(response->Get(L"Manufacturer", 0, variant.PassAsOutParameter(), NULL, NULL));
+		logOutput << L"Motherboard: " << variant.AsString();
+		ThrowIfFailed(response->Get(L"Product", 0, variant.PassAsOutParameter(), NULL, NULL));
+		logOutput << L" " << variant.AsString() << L'\n';
 	}
 
 	void MachineSpecifications::Processor( std::wostream &logOutput ) const
@@ -352,18 +348,18 @@ namespace Instalog
 
 		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.PassAsOutParameter(), NULL));
 
 		UniqueComPtr<IEnumWbemClassObject> enumWin32_Processor;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_Processor.Pass()));
+			BSTR(L"Win32_Processor"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_Processor.PassAsOutParameter()));
 
 		HRESULT hr;
 		ULONG returnCount = 0;
 		UniqueComPtr<IWbemClassObject> response;
-		CComVariant variant;
+		UniqueVariant variant;
 
-		hr = enumWin32_Processor->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
+		hr = enumWin32_Processor->Next(WBEM_INFINITE, 1, response.PassAsOutParameter(), &returnCount);
 		if (hr == WBEM_S_FALSE)
 		{
 			throw std::runtime_error("Unexpected number of returned classes.");
@@ -377,9 +373,8 @@ namespace Instalog
 			throw std::runtime_error("Unexpected number of returned classes.");
 		}
 
-		ThrowIfFailed(response->Get(L"Name", 0, &variant, NULL, NULL));
-		logOutput << L"Processor: " << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L'\n';
-		variant.Clear();
+		ThrowIfFailed(response->Get(L"Name", 0, variant.PassAsOutParameter(), NULL, NULL));
+		logOutput << L"Processor: " << variant.AsString() << L'\n';
 	}
 
 	void MachineSpecifications::LogicalDisk( std::wostream &logOutput ) const
@@ -390,20 +385,20 @@ namespace Instalog
 
 		UniqueComPtr<IWbemServices> namespaceCimv2;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.Pass(), NULL));
+			BSTR(L"cimv2"), 0, NULL, namespaceCimv2.PassAsOutParameter(), NULL));
 
 		UniqueComPtr<IEnumWbemClassObject> enumWin32_LogicalDisk;
 		ThrowIfFailed(namespaceCimv2->CreateInstanceEnum(
-			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_LogicalDisk.Pass()));
+			BSTR(L"Win32_LogicalDisk"), WBEM_FLAG_FORWARD_ONLY, NULL, enumWin32_LogicalDisk.PassAsOutParameter()));
 
 		for (;;)
 		{
 			HRESULT hr;
 			ULONG returnCount = 0;
 			UniqueComPtr<IWbemClassObject> response;
-			CComVariant variant;
+			UniqueVariant variant;
 
-			hr = enumWin32_LogicalDisk->Next(WBEM_INFINITE, 1, response.Pass(), &returnCount);
+			hr = enumWin32_LogicalDisk->Next(WBEM_INFINITE, 1, response.PassAsOutParameter(), &returnCount);
 			if (hr == WBEM_S_FALSE)
 			{
 				break;
@@ -417,15 +412,11 @@ namespace Instalog
 				throw std::runtime_error("Unexpected number of returned classes.");
 			}
 
-			ThrowIfFailed(variant.ChangeType(VT_BSTR));
-			ThrowIfFailed(response->Get(L"DeviceID", 0, &variant, NULL, NULL));
-			logOutput << std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)) << L" is ";
-			variant.Clear();
+			ThrowIfFailed(response->Get(L"DeviceID", 0, variant.PassAsOutParameter(), NULL, NULL));
+			logOutput << variant.AsString() << L" is ";
 			
-			ThrowIfFailed(variant.ChangeType(VT_I4));
-			ThrowIfFailed(response->Get(L"DriveType", 0, &variant, NULL, NULL));
-			ULONG driveType = variant.ulVal;
-			switch (driveType)
+			ThrowIfFailed(response->Get(L"DriveType", 0, variant.PassAsOutParameter(), NULL, NULL));
+			switch (variant.AsUlong())
 			{
 			case 0: logOutput << L"UNKNOWN"; break;
 			case 1: logOutput << L"NOROOT"; break;
@@ -434,12 +425,11 @@ namespace Instalog
 			case 4: logOutput << L"NETWORK"; break;
 			case 5: logOutput << L"CDROM"; break;
 			case 6: logOutput << L"RAM"; break;
+            default: assert(false);
 			}
-			variant.Clear();
 
-			ThrowIfFailed(variant.ChangeType(VT_BSTR));
-			ThrowIfFailed(response->Get(L"Size", 0, &variant, NULL, NULL));
-			ULONGLONG totalSize = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
+			ThrowIfFailed(response->Get(L"Size", 0, variant.PassAsOutParameter(), NULL, NULL));
+			ULONGLONG totalSize = variant.AsUlonglong();
 
 			if (totalSize == 0)
 			{
@@ -447,8 +437,8 @@ namespace Instalog
 			}
 			else
 			{
-				ThrowIfFailed(response->Get(L"FreeSpace", 0, &variant, NULL, NULL));
-				ULONGLONG freeSpace = _wtoi64(std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal)).c_str());
+				ThrowIfFailed(response->Get(L"FreeSpace", 0, variant.PassAsOutParameter(), NULL, NULL));
+				ULONGLONG freeSpace = variant.AsUlonglong();
 
 				totalSize /= 1073741824;
 				freeSpace /= 1073741824;

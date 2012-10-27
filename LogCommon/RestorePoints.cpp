@@ -43,27 +43,20 @@ namespace Instalog { namespace SystemFacades {
 				throw std::runtime_error("Unexpected number of returned classes.");
 			}
 
-			CComVariant variant;
+			UniqueVariant variant;
 			RestorePoint restorePoint;
 			
-			ThrowIfFailed(variant.ChangeType(VT_BSTR));
-			ThrowIfFailed(systemRestore->Get(L"Description", 0, &variant, NULL, NULL));
-			restorePoint.Description = std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal));
-			variant.Clear();
-			ThrowIfFailed(systemRestore->Get(L"CreationTime", 0, &variant, NULL, NULL));
-			restorePoint.CreationTime = std::wstring(variant.bstrVal, SysStringLen(variant.bstrVal));
-			variant.Clear();
+			ThrowIfFailed(systemRestore->Get(L"Description", 0, variant.PassAsOutParameter(), NULL, NULL));
+			restorePoint.Description = variant.AsString();
+			ThrowIfFailed(systemRestore->Get(L"CreationTime", 0, variant.PassAsOutParameter(), NULL, NULL));
+			restorePoint.CreationTime = variant.AsString();
 
-			ThrowIfFailed(variant.ChangeType(VT_UINT));
-			ThrowIfFailed(systemRestore->Get(L"RestorePointType", 0, &variant, NULL, NULL));
-			restorePoint.RestorePointType = variant.uintVal;
-			variant.Clear();
-			ThrowIfFailed(systemRestore->Get(L"EventType", 0, &variant, NULL, NULL));
-			restorePoint.EventType = variant.uintVal;
-			variant.Clear();
-			ThrowIfFailed(systemRestore->Get(L"SequenceNumber", 0, &variant, NULL, NULL));
-			restorePoint.SequenceNumber = variant.uintVal;
-			variant.Clear();
+			ThrowIfFailed(systemRestore->Get(L"RestorePointType", 0, variant.PassAsOutParameter(), NULL, NULL));
+			restorePoint.RestorePointType = variant.AsUint();
+			ThrowIfFailed(systemRestore->Get(L"EventType", 0, variant.PassAsOutParameter(), NULL, NULL));
+			restorePoint.EventType = variant.AsUint();
+			ThrowIfFailed(systemRestore->Get(L"SequenceNumber", 0, variant.PassAsOutParameter(), NULL, NULL));
+			restorePoint.SequenceNumber = variant.AsUint();
 
 			restorePoints.push_back(restorePoint);
 		}
