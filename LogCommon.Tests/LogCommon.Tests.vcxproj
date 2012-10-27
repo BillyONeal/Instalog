@@ -158,7 +158,6 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ComTest.cpp" />
     <ClCompile Include="DnsTest.cpp" />
     <ClCompile Include="EventLogTest.cpp" />
     <ClCompile Include="FileTest.cpp" />

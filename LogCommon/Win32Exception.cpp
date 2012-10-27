@@ -7,7 +7,6 @@
 #include "Library.hpp"
 #include "Com.hpp"
 #include "StringUtilities.hpp"
-#include "Com.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
