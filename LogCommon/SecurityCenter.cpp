@@ -21,7 +21,7 @@ static const wchar_t fwCode[] = L"FW";
 static const wchar_t asCode[] = L"AS";
 
 static void SecCenterProductCheck( 
-	CComPtr<IWbemServices> securityCenter, 
+	UniqueComPtr<IWbemServices>& securityCenter, 
 	BSTR productToCheck, 
 	std::vector<SecurityProduct> &result, 
 	wchar_t const* twoCode,
@@ -29,12 +29,12 @@ static void SecCenterProductCheck(
 	wchar_t const* upToDatePropertyName = nullptr) 
 {
     HRESULT hr;
-	CComPtr<IEnumWbemClassObject> objEnumerator;
+	UniqueComPtr<IEnumWbemClassObject> objEnumerator;
 	hr = securityCenter->CreateInstanceEnum(
 		productToCheck,
 		WBEM_FLAG_FORWARD_ONLY,
 		0,
-		&objEnumerator
+		objEnumerator.PassAsOutParameter()
 		);
     if (hr == WBEM_E_INVALID_CLASS)
     {
@@ -45,8 +45,8 @@ static void SecCenterProductCheck(
     INSTALOG_TRACE(L"Enumerating...");
 	for(;;)
 	{
-		CComPtr<IWbemClassObject> obj;
-		hr = objEnumerator->Next(WBEM_INFINITE, 1, &obj, &returnCount);
+		UniqueComPtr<IWbemClassObject> obj;
+		hr = objEnumerator->Next(WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
         INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
 		if (hr == WBEM_S_FALSE)
 		{
@@ -101,24 +101,24 @@ static void SecCenterProductCheck(
 }
 
 static void SecCenter2ProductCheck( 
-	CComPtr<IWbemServices> securityCenter2, 
+	UniqueComPtr<IWbemServices>& securityCenter2, 
 	BSTR productToCheck, 
 	std::vector<SecurityProduct> &result, 
 	const wchar_t * twoCode ) 
 {
-	CComPtr<IEnumWbemClassObject> objEnumerator;
+	UniqueComPtr<IEnumWbemClassObject> objEnumerator;
 	ThrowIfFailed(securityCenter2->CreateInstanceEnum(
 		productToCheck,
 		WBEM_FLAG_FORWARD_ONLY,
 		0,
-		&objEnumerator
+		objEnumerator.PassAsOutParameter()
 		));
 	ULONG returnCount = 0;
 	for(;;)
 	{
 		HRESULT hr;
-		CComPtr<IWbemClassObject> obj;
-		hr = objEnumerator->Next(WBEM_INFINITE, 1, &obj, &returnCount);
+		UniqueComPtr<IWbemClassObject> obj;
+		hr = objEnumerator->Next(WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
         INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
 		if (hr == WBEM_S_FALSE)
 		{
@@ -178,11 +178,11 @@ static void SecCenter2ProductCheck(
 	}
 }
 
-static void CheckSecurityCenter( CComPtr<IWbemServices> wbemServices, std::vector<SecurityProduct>& result )
+static void CheckSecurityCenter( UniqueComPtr<IWbemServices>& wbemServices, std::vector<SecurityProduct>& result )
 {
-	CComPtr<IWbemServices> securityCenter;
+	UniqueComPtr<IWbemServices> securityCenter;
 	HRESULT errorCheck = wbemServices->OpenNamespace(
-		BSTR(L"SecurityCenter"),0,0,&securityCenter,0);
+		BSTR(L"SecurityCenter"),0,0,securityCenter.PassAsOutParameter(),0);
 	//On versions of Windows prior to XP SP2, there is no security center to query; so this would be
 	//an expected failure.
 	if (errorCheck == WBEM_E_INVALID_NAMESPACE)
@@ -200,12 +200,12 @@ static void CheckSecurityCenter( CComPtr<IWbemServices> wbemServices, std::vecto
 	SecCenterProductCheck(securityCenter, BSTR(L"AntiSpywareProduct"), result, 
 		asCode, BSTR(L"productEnabled"), BSTR(L"productUpToDate"));
 }
-static void CheckSecurityCenter2( CComPtr<IWbemServices> wbemServices,
+static void CheckSecurityCenter2( UniqueComPtr<IWbemServices>& wbemServices,
 	std::vector<SecurityProduct>& result )
 {
-	CComPtr<IWbemServices> securityCenter2;
+	UniqueComPtr<IWbemServices> securityCenter2;
 	ThrowIfFailed(wbemServices->OpenNamespace(
-		BSTR(L"SecurityCenter2"),0,0,&securityCenter2,0));
+		BSTR(L"SecurityCenter2"),0,0,securityCenter2.PassAsOutParameter(),0));
     INSTALOG_TRACE(L"AntiVirusProduct");
 	SecCenter2ProductCheck(securityCenter2, BSTR(L"AntiVirusProduct"), result, 
 		avCode);
@@ -225,7 +225,7 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
 	std::vector<SecurityProduct> result;
 	GetVersionExW(&version);
     INSTALOG_TRACE(L"Making IWbemServices");
-	CComPtr<IWbemServices> wbemServices(GetWbemServices());
+	UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 	if (version.dwMajorVersion >= 6)
 	{
         INSTALOG_TRACE(L"Enumerating SecurityCenter2");
@@ -264,10 +264,10 @@ std::wostream& operator<<( std::wostream& lhs, const SecurityProduct& rhs )
 
 void SecurityProduct::Delete()
 {
-	CComPtr<IWbemServices> wbemServices(GetWbemServices());
-	CComPtr<IWbemServices> securityCenter2;
+	UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
+	UniqueComPtr<IWbemServices> securityCenter2;
 	ThrowIfFailed(wbemServices->OpenNamespace(
-		BSTR(L"SecurityCenter2"),0,0,&securityCenter2,0));
+		BSTR(L"SecurityCenter2"),0,0,securityCenter2.PassAsOutParameter(),0));
 	std::wstring path;
 	if (wcscmp(GetTwoLetterPrefix(), avCode) == 0)
 	{

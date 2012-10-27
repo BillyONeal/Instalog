@@ -12,24 +12,24 @@ namespace Instalog { namespace SystemFacades {
 
 	std::vector<RestorePoint> EnumerateRestorePoints()
 	{
-		CComPtr<IWbemServices> wbemServices(GetWbemServices());
+		UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
 
-		CComPtr<IWbemServices> namespaceDefault;
+		UniqueComPtr<IWbemServices> namespaceDefault;
 		ThrowIfFailed(wbemServices->OpenNamespace(
-			BSTR(L"default"), 0, NULL, &namespaceDefault, NULL));
+			BSTR(L"default"), 0, NULL, namespaceDefault.PassAsOutParameter(), NULL));
 
-		CComPtr<IEnumWbemClassObject> systemRestoreEnumerator;
+		UniqueComPtr<IEnumWbemClassObject> systemRestoreEnumerator;
 		ThrowIfFailed(namespaceDefault->CreateInstanceEnum(
-			BSTR(L"SystemRestore"), WBEM_FLAG_FORWARD_ONLY, NULL, &systemRestoreEnumerator));
+			BSTR(L"SystemRestore"), WBEM_FLAG_FORWARD_ONLY, NULL, systemRestoreEnumerator.PassAsOutParameter()));
 
 		std::vector<RestorePoint> restorePoints;
 
 		for (;;)
 		{
 			HRESULT hr;
-			CComPtr<IWbemClassObject> systemRestore;
+			UniqueComPtr<IWbemClassObject> systemRestore;
 			ULONG returnCount = 0;
-			hr = systemRestoreEnumerator->Next(WBEM_INFINITE, 1, &systemRestore, &returnCount);
+			hr = systemRestoreEnumerator->Next(WBEM_INFINITE, 1, systemRestore.PassAsOutParameter(), &returnCount);
 			if (hr == WBEM_S_FALSE)
 			{
 				break;

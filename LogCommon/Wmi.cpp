@@ -8,15 +8,13 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	CComPtr<IWbemServices> GetWbemServices()
+	UniqueComPtr<IWbemServices> GetWbemServices()
 	{
-		CComPtr<IWbemLocator> locator;
-		ThrowIfFailed(locator.CoCreateInstance(CLSID_WbemLocator, 0, 
-			CLSCTX_INPROC_SERVER));
-		CComPtr<IWbemServices> wbemServices;
-		ThrowIfFailed(locator->ConnectServer(BSTR(L"ROOT"),0,0,0,0,0,0,&wbemServices));
+        auto locator = UniqueComPtr<IWbemLocator>::Create(CLSID_WbemLocator, CLSCTX_INPROC_SERVER);
+		UniqueComPtr<IWbemServices> wbemServices;
+		ThrowIfFailed(locator->ConnectServer(BSTR(L"ROOT"),0,0,0,0,0,0,wbemServices.PassAsOutParameter()));
 		ThrowIfFailed(CoSetProxyBlanket(
-			wbemServices,
+			wbemServices.Get(),
 			RPC_C_AUTHN_WINNT,
 			RPC_C_AUTHZ_NONE,
 			0,
