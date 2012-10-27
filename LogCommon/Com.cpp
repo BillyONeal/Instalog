@@ -76,4 +76,74 @@ UniqueBstr::~UniqueBstr()
     ::SysFreeString(this->wrapped);
 }
 
+
+void UniqueVariant::Destroy()
+{
+    HRESULT result = ::VariantClear(&wrappedVariant);
+    assert(result == S_OK);
+}
+
+UniqueVariant::UniqueVariant()
+{
+    ::VariantInit(&this->wrappedVariant);
+}
+
+VARIANT* UniqueVariant::PassAsOutParameter()
+{
+    this->Destroy();
+    ::VariantInit(&this->wrappedVariant);
+    return &this->wrappedVariant;
+}
+
+VARIANT& UniqueVariant::Get()
+{
+    return this->wrappedVariant;
+}
+
+VARIANT const& UniqueVariant::Get() const
+{
+    return this->wrappedVariant;
+}
+
+std::wstring UniqueVariant::AsString() const
+{
+    UniqueVariant bstrVariant;
+    ThrowIfFailed(::VariantChangeType(bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR));
+    BSTR asBstr = bstrVariant.Get().bstrVal;
+    return std::wstring(asBstr, ::SysStringLen(asBstr));
+}
+
+UINT UniqueVariant::AsUint() const
+{
+    UniqueVariant uintVariant;
+    ThrowIfFailed(::VariantChangeType(uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT));
+    return uintVariant.Get().uintVal;
+}
+
+ULONG UniqueVariant::AsUlong() const
+{
+    UniqueVariant ulongVariant;
+    ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4));
+    return ulongVariant.Get().ulVal;
+}
+
+ULONGLONG UniqueVariant::AsUlonglong() const
+{
+    UniqueVariant ulongVariant;
+    ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8));
+    return ulongVariant.Get().ullVal;
+}
+
+bool UniqueVariant::AsBool() const
+{
+    UniqueVariant booleanVariant;
+    ThrowIfFailed(::VariantChangeType(booleanVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BOOL));
+    return booleanVariant.Get().boolVal != 0;
+}
+
+UniqueVariant::~UniqueVariant()
+{
+    this->Destroy();
+}
+
 }} // namespace Instalog::SystemFacades

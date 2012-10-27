@@ -106,64 +106,17 @@ namespace Instalog { namespace SystemFacades {
         VARIANT wrappedVariant;
         UniqueVariant(UniqueVariant const&);
         UniqueVariant& operator=(UniqueVariant const&);
-        void Destroy()
-        {
-            HRESULT result = ::VariantClear(&wrappedVariant);
-            assert(result == S_OK);
-        }
+        void Destroy();
     public:
-        UniqueVariant()
-        {
-            ::VariantInit(&this->wrappedVariant);
-        }
-        VARIANT* PassAsOutParameter()
-        {
-            this->Destroy();
-            ::VariantInit(&this->wrappedVariant);
-            return &this->wrappedVariant;
-        }
-        VARIANT& Get()
-        {
-            return this->wrappedVariant;
-        }
-        VARIANT const& Get() const
-        {
-            return this->wrappedVariant;
-        }
-        std::wstring AsString() const
-        {
-            UniqueVariant bstrVariant;
-            ThrowIfFailed(::VariantChangeType(bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR));
-            BSTR asBstr = bstrVariant.Get().bstrVal;
-            return std::wstring(asBstr, ::SysStringLen(asBstr));
-        }
-        UINT AsUint() const
-        {
-            UniqueVariant uintVariant;
-            ThrowIfFailed(::VariantChangeType(uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT));
-            return uintVariant.Get().uintVal;
-        }
-        ULONG AsUlong() const
-        {
-            UniqueVariant ulongVariant;
-            ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4));
-            return ulongVariant.Get().ulVal;
-        }
-        ULONGLONG AsUlonglong() const
-        {
-            UniqueVariant ulongVariant;
-            ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8));
-            return ulongVariant.Get().ullVal;
-        }
-        bool AsBool() const
-        {
-            UniqueVariant booleanVariant;
-            ThrowIfFailed(::VariantChangeType(booleanVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BOOL));
-            return booleanVariant.Get().boolVal != 0;
-        }
-        ~UniqueVariant()
-        {
-            this->Destroy();
-        }
+        UniqueVariant();
+        VARIANT* PassAsOutParameter();
+        VARIANT& Get();
+        VARIANT const& Get() const;
+        std::wstring AsString() const;
+        UINT AsUint() const;
+        ULONG AsUlong() const;
+        ULONGLONG AsUlonglong() const;
+        bool AsBool() const;
+        ~UniqueVariant();
     };
 }}
