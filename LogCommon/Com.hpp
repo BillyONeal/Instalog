@@ -91,51 +91,13 @@ namespace Instalog { namespace SystemFacades {
         UniqueBstr(UniqueBstr const&);
         UniqueBstr& operator=(UniqueBstr const&);
     public:
-        UniqueBstr()
-            : wrapped(nullptr)
-        { }
-        UniqueBstr(std::wstring const& source)
-        {
-            if (source.empty())
-            {
-                this->wrapped = nullptr;
-                return;
-            }
-
-            assert(source.size() <= std::numeric_limits<UINT>::max());
-            UINT lengthPrefix = static_cast<UINT>(source.size());
-            this->wrapped = ::SysAllocStringLen(source.data(), lengthPrefix);
-            if (this->wrapped == nullptr)
-            {
-                throw std::bad_alloc();
-            }
-        }
-        UniqueBstr(UniqueBstr && other)
-            : wrapped(other.wrapped)
-        {
-            other.wrapped = nullptr;
-        }
-        BSTR AsInput() const
-        {
-            return this->wrapped;
-        }
-        BSTR* AsTarget()
-        {
-            ::SysFreeString(this->wrapped);
-            this->wrapped = nullptr;
-            return &this->wrapped;
-        }
-        uint32_t Length()
-        {
-            return ::SysStringLen(this->wrapped);
-        }
-        std::wstring AsString()
-        {
-            return std::wstring(this->wrapped, this->Length());
-        }
-        ~UniqueBstr()
-        {
-            ::SysFreeString(this->wrapped);
-        }
+        UniqueBstr();
+        UniqueBstr(std::wstring const& source);
+        UniqueBstr(UniqueBstr && other);
+        BSTR AsInput() const;
+        BSTR* AsTarget();
+        uint32_t Length();
+        std::wstring AsString();
+        ~UniqueBstr();
     };
 }}
