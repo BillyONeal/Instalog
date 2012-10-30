@@ -283,6 +283,7 @@
     <ClCompile Include="ScanningSections.cpp" />
     <ClCompile Include="SecurityCenter.cpp" />
     <ClCompile Include="ServiceControlManager.cpp" />
+    <ClCompile Include="SharpStreams.cpp" />
     <ClCompile Include="StockOutputFormats.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="Whitelist.cpp" />
@@ -314,6 +315,7 @@
     <ClInclude Include="Scripting.hpp" />
     <ClInclude Include="SecurityCenter.hpp" />
     <ClInclude Include="ServiceControlManager.hpp" />
+    <ClInclude Include="SharpStreams.hpp" />
     <ClInclude Include="StockOutputFormats.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />

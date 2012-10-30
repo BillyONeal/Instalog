@@ -279,7 +279,11 @@
     <ClInclude Include="..\LogCommon\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="OlderWindows.obj" />
+    <Object Include="OlderWindows.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_TraceOn|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Object>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
