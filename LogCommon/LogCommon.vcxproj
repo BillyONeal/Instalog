@@ -237,6 +237,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\ThirdParty\StackWalker\StackWalker.cpp" />
     <ClCompile Include="Com.cpp" />
     <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -292,6 +293,7 @@
     <ClCompile Include="Wmi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ThirdParty\StackWalker\StackWalker.h" />
     <ClInclude Include="Com.hpp" />
     <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h" />
     <ClInclude Include="DdkStructures.h" />
