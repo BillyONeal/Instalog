@@ -618,6 +618,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				break;
 			}
+
 			if (*(wcend() - 1) == L'\0')
 			{
 				result.assign(wcbegin(), wcend() - 1);
@@ -626,7 +627,7 @@ namespace Instalog { namespace SystemFacades {
 			{
 				result.assign(wcbegin(), wcend());
 			}
-			
+
 			break;
 		case REG_DWORD:
 			if (size() != 4)
@@ -703,6 +704,12 @@ namespace Instalog { namespace SystemFacades {
 				}
 			}
 		}
+
+        // Sometimes, there will be a string value with a bunch of nulls on the end; presumably because
+        // the programmer calling RegSetValue or RegSetValueEx calculated the length wrong.
+        auto lastNull = std::find_if(result.rbegin(), result.rend(), [] (wchar_t x) { return x != L'\0'; }).base();
+        result.erase(lastNull, result.end());
+			
 		return std::move(result);
 	}
 
