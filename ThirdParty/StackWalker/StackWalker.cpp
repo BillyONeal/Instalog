@@ -83,6 +83,7 @@
 #include <stdlib.h>
 #pragma comment(lib, "version.lib")  // for "VerQueryValue"
 #pragma warning(disable:4826)
+#pragma warning(disable:4740)
 
 #include "StackWalker.h"
 
