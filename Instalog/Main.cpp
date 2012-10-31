@@ -91,7 +91,7 @@ LONG WINAPI UnhandledExceptionHandler(LPEXCEPTION_POINTERS pointers)
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
-    std::cerr << "FAILURE!\n";
+    std::wcerr << "FAILURE!\n";
     auto ehExceptionRecord = reinterpret_cast<EHExceptionRecord *>(pointers->ExceptionRecord);
     auto ehObjectPtr = ehExceptionRecord->params.pExceptionObject;
     auto stdException = static_cast<std::exception*>(ehObjectPtr);
@@ -109,11 +109,13 @@ LONG WINAPI UnhandledExceptionHandler(LPEXCEPTION_POINTERS pointers)
 	{
 		std::cerr << "C++ Exception: " << stdException->what() << std::endl;
 	}
-    std::cerr << "Call Stack:\n";
+    std::wcerr << "Call Stack:\n";
     InstalogStackWalker walker;
     walker.ShowCallstack(::GetCurrentThread(), pointers->ContextRecord);
+    std::cerr << "Press enter to close this window...";
+    std::wcin.get();
     ::TerminateProcess(::GetCurrentProcess(), 1);
-    return 0; // compiler warnings....
+    return 0;
 }
 
 /// @brief	Main entry-point for this application.
