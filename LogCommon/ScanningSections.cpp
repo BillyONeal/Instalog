@@ -434,14 +434,14 @@ namespace Instalog
 			}
 
 			ThrowIfFailed(response->Get(L"Size", 0, variant.PassAsOutParameter(), NULL, NULL));
-			ULONGLONG totalSize = variant.AsUlonglong();
 
-			if (totalSize == 0)
+			if (variant.IsNull())
 			{
 				logOutput << L'\n';
 			}
 			else
 			{
+                ULONGLONG totalSize = variant.AsUlonglong();
 				ThrowIfFailed(response->Get(L"FreeSpace", 0, variant.PassAsOutParameter(), NULL, NULL));
 				ULONGLONG freeSpace = variant.AsUlonglong();
 

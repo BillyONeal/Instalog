@@ -117,6 +117,7 @@ namespace Instalog { namespace SystemFacades {
         ULONG AsUlong() const;
         ULONGLONG AsUlonglong() const;
         bool AsBool() const;
+        bool IsNull() const;
         ~UniqueVariant();
     };
 }}

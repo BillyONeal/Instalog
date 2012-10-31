@@ -144,6 +144,11 @@ bool UniqueVariant::AsBool() const
     return booleanVariant.Get().boolVal != 0;
 }
 
+bool UniqueVariant::IsNull() const
+{
+    return this->wrappedVariant.vt == VT_NULL;
+}
+
 UniqueVariant::~UniqueVariant()
 {
     this->Destroy();
