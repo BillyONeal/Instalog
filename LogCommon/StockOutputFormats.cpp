@@ -562,7 +562,7 @@ namespace Instalog {
 		if (flashKey.Valid())
 		{
 			std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
-			boost::algorithm::replace_all(flashVer, L",", L".");
+            std::transform(flashVer.begin(), flashVer.end(), flashVer.begin(), [] (wchar_t x) { return x == L',' ? L'.' : x; });
 			log << L" Flash: " << flashVer;
 		}
 
