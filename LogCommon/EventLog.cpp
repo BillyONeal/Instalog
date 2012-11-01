@@ -472,7 +472,7 @@ namespace Instalog { namespace SystemFacades {
 		{
 			for (std::size_t i = 0; i < numReturned; ++i)
 			{
-				eventLogEntries.emplace_back(new XmlEventLogEntry(eventHandles[i]));
+				eventLogEntries.emplace_back(std::unique_ptr<EventLogEntry>(new XmlEventLogEntry(eventHandles[i])));
 			}
 		}
 
