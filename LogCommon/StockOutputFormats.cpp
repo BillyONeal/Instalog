@@ -555,9 +555,9 @@ namespace Instalog {
 		}
 
 #ifdef _M_X64
-		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayerPlugin", KEY_QUERY_VALUE);
 #else
-		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayerPlugin", KEY_QUERY_VALUE);
 #endif
 
 #ifdef _M_X64
