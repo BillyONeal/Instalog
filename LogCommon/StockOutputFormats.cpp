@@ -555,11 +555,22 @@ namespace Instalog {
 		}
 
 #ifdef _M_X64
+		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+#else
+		RegistryKey flashPluginKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
+#endif
+
+#ifdef _M_X64
 		RegistryKey flashKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
 #else
 		RegistryKey flashKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer", KEY_QUERY_VALUE);
 #endif
-		if (flashKey.Valid())
+        if (flashPluginKey.Valid())
+        {
+			std::wstring flashVer(flashPluginKey[L"Version"].GetStringStrict());
+			log << L" Flash: " << flashVer;
+        }
+		else if (flashKey.Valid())
 		{
 			std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
             std::transform(flashVer.begin(), flashVer.end(), flashVer.begin(), [] (wchar_t x) { return x == L',' ? L'.' : x; });
