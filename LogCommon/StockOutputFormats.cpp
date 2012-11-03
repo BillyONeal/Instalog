@@ -505,7 +505,16 @@ namespace Instalog {
         return tzInfo.Bias;
     }
 
-	void WriteScriptHeader( std::wostream &log )
+    unsigned __int64 GetLocalTime()
+    {
+		SYSTEMTIME st;
+		FILETIME ft;
+		GetLocalTime(&st);
+		SystemTimeToFileTime(&st, &ft);
+        return FiletimeToInteger(ft);
+    }
+
+	void WriteScriptHeader( std::wostream &log, unsigned __int64 startTime )
 	{
 		log << L"Instalog " INSTALOG_VERSION;
 		switch(GetSystemMetrics(SM_CLEANBOOT))
@@ -525,7 +534,8 @@ namespace Instalog {
 		log << L" on ";
 
         auto timeZoneBias = GetTimeZoneBias();
-        WriteCurrentMillisecondDate(log);
+
+        WriteMillisecondDateFormat(log, startTime);
 		log << L" [GMT " << std::showpos << (-timeZoneBias / 60) << L':'
 			<< std::noshowpos << std::setw(2) << std::setfill(L'0')
 			<< (-timeZoneBias % 60) << L"]\n";
@@ -591,22 +601,15 @@ namespace Instalog {
 		log << L"\n";
 	}
 
-	void WriteScriptFooter( std::wostream &log )
+	void WriteScriptFooter( std::wostream &log, unsigned __int64 startTime )
 	{
-		log << L"Instalog " INSTALOG_VERSION L" finished ";
-		WriteCurrentMillisecondDate(log);
-		log << L'\n';
+        auto endTime = Instalog::GetLocalTime();
+        auto duration = endTime - startTime;
+        auto seconds = duration / 10000000ull;
+        auto milliseconds = (duration / 10000ull) - (seconds * 1000);
+		log << L"Instalog " INSTALOG_VERSION L" finished at ";
+		WriteMillisecondDateFormat(log, endTime);
+		log << " (Generation took " << seconds << L'.' << std::setw(4) << std::setfill(L'0') << milliseconds << L" seconds)\n";
 	}
-
-	void WriteCurrentMillisecondDate( std::wostream &str )
-	{
-		SYSTEMTIME st;
-		FILETIME ft;
-		GetLocalTime(&st);
-		SystemTimeToFileTime(&st, &ft);
-		unsigned __int64 msDate = Instalog::FiletimeToInteger(ft);
-		WriteMillisecondDateFormat(str, msDate);
-	}
-
 
 }

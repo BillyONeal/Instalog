@@ -112,7 +112,8 @@ namespace Instalog
 	void Script::Run( std::wostream& logOutput, IUserInterface *ui ) const
 	{
 		ui->LogMessage(L"Starting Execution");
-		WriteScriptHeader(logOutput);
+        auto startTime = Instalog::GetLocalTime();
+		WriteScriptHeader(logOutput, startTime);
         typedef std::pair<ScriptSection, std::vector<std::wstring> > contained;
         auto cmp = [](contained const& lhs, contained const& rhs) -> bool {
             auto const& lhsDef = lhs.first.GetDefinition();
@@ -135,7 +136,7 @@ namespace Instalog
 			begin->first.GetDefinition().Execute(logOutput, begin->first, begin->second);
 		}
 		logOutput << L'\n';
-        WriteScriptFooter(logOutput);
+        WriteScriptFooter(logOutput, startTime);
 		ui->ReportFinished();
 	}
 

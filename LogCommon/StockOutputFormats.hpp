@@ -23,11 +23,6 @@ namespace Instalog {
 	/// @param	time	   	The time.  Note that this is a FILETIME structure (though it expects a plain __int64 to avoid including windows.h).  Use FiletimeToInteger() to convert to a __int64.
 	void WriteMillisecondDateFormat(std::wostream &str, unsigned __int64 time);
 
-	/// @brief	Writes the current date format including milliseconds
-	///
-	/// @param [out]	str	The string stream to write the date to
-	void WriteCurrentMillisecondDate(std::wostream &str);
-
 	/// @brief	Writes the file attributes
 	///
 	/// @param [out]	str	The string stream to write the attributes to
@@ -47,12 +42,14 @@ namespace Instalog {
 	/// @brief	Writes the script header.
 	///
 	/// @param [out]	log	The log stream
-	void WriteScriptHeader(std::wostream &log);
+    /// @param [in]     startTime The starting time of report generation.
+	void WriteScriptHeader(std::wostream &log, unsigned __int64 startTime);
 
 	/// @brief	Writes the script footer.
 	///
 	/// @param [out]	log	The log stream.
-	void WriteScriptFooter(std::wostream &log);
+    /// @param [in]     startTime The time that report generation started.
+	void WriteScriptFooter(std::wostream &log, unsigned __int64 startTime);
 
 	/// @brief	Writes the memory information.
 	///
@@ -64,4 +61,7 @@ namespace Instalog {
 	/// @param [out]	log	The log stream.
 	void WriteOsVersion(std::wostream &log);
 
+    /// @brief  Gets the current local time as a FILETIME cast to an unsigned __int64.
+    /// @return The current time.
+    unsigned __int64 GetLocalTime();
 }
