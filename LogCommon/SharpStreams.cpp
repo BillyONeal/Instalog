@@ -132,9 +132,9 @@ static std::uint32_t DecodeUtf16(const wchar_t *target, std::uint32_t length, st
     {
         // Surrogate pair
         std::uint32_t codePoint;
-        wchar_t upperCodePoint = L'0';
+        wchar_t upperCodePoint = L'\0';
         bool valid = true; // Assume that it's a valid surrogate pair
-        if (lowerCodePoint >= 0xD800 && lowerCodePoint <= 0xDBFF) // Character in reserved range
+        if (lowerCodePoint < 0xD800 || lowerCodePoint > 0xDBFF) // Character in reserved range
         {
             valid = false;
         }
@@ -201,7 +201,7 @@ static unsigned char EncodeUtf8(std::uint32_t codePoint, unsigned char buffer[4]
         buffer[2] = static_cast<unsigned char>(0x80 | (codePoint & lowerOrderSixBits));
         return 3;
     }
-    else if (codePoint < 0x10FFFF)
+    else if (codePoint <= 0x10FFFF)
     {
         // Encode as four code units
         buffer[0] = static_cast<unsigned char>(0xF0 | codePoint >> 18);
@@ -259,7 +259,7 @@ static std::uint32_t DecodeUtf8(const unsigned char *target, std::uint32_t lengt
         {
             return replacementCharacter;
         }
-        std::uint32_t result = ((firstByte & 0x1F) << 5) | (target[idx + 1] & lowerOrderSixBits);
+        std::uint32_t result = ((firstByte & 0x1F) << 6) | (target[idx + 1] & lowerOrderSixBits);
         // If two code units, range must be between 0x80-0x7FF inclusive
         if (result >= 0x80 && result <= 0x7FF)
         {
@@ -279,7 +279,7 @@ static std::uint32_t DecodeUtf8(const unsigned char *target, std::uint32_t lengt
         {
             return replacementCharacter;
         }
-        std::uint32_t result = ((firstByte & 0xF) << 11) | ((target[idx + 1] & lowerOrderSixBits) << 6) | (target[idx + 2] & lowerOrderSixBits);
+        std::uint32_t result = ((firstByte & 0xF) << 12) | ((target[idx + 1] & lowerOrderSixBits) << 6) | (target[idx + 2] & lowerOrderSixBits);
         // If two code units, range must be between 0x800-0xFFFF inclusive
         // but not the invalid UTF-16 range 0xD800-0xDFFF
         if (result >= 0x800 && result <= 0xFFFF && !(result >= 0xD800 && result <= 0xDFFF))

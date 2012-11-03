@@ -99,4 +99,18 @@ public:
             Assert::IsTrue(std::equal(rounded.begin(), rounded.end(), example));
         }
     }
+
+    TEST_METHOD(RoundTripToUtf16)
+    {
+        Utf8Encoder encoder;
+        for (std::size_t idx = 0; idx < _countof(utf8Examples); ++idx)
+        {
+            auto example = utf8Examples[idx];
+            auto exampleLength = std::strlen(example);
+            auto answer = encoder.GetChars(reinterpret_cast<const unsigned char*>(example), static_cast<uint32_t>(exampleLength));
+            auto rounded = encoder.GetBytes(answer.data(), static_cast<uint32_t>(answer.size()));
+            Assert::IsTrue(rounded.size() == exampleLength);
+            Assert::IsTrue(std::equal(rounded.begin(), rounded.end(), reinterpret_cast<const unsigned char*>(example)));
+        }
+    }
 };
