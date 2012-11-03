@@ -65,6 +65,9 @@
     <ClCompile Include="Win32GlueTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SharpStreamsTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc" />

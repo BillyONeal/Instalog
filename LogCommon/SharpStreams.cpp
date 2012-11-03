@@ -12,7 +12,7 @@ namespace Instalog { namespace SharpStreams {
 #ifdef WIN32
 using Instalog::SystemFacades::Win32Exception;
 
-static std::vector<wchar_t> WindowsGetCharsWithCodepage( const UINT codepage, unsigned char * target, std::uint32_t length )
+static std::vector<wchar_t> WindowsGetCharsWithCodepage( const UINT codepage, const unsigned char * target, std::uint32_t length )
 {
     if (length > static_cast<std::uint32_t>(std::numeric_limits<int>::max()))
     {
@@ -36,7 +36,7 @@ static std::vector<wchar_t> WindowsGetCharsWithCodepage( const UINT codepage, un
     return std::move(result);
 }
 
-static std::vector<unsigned char> WindowsGetBytesWithCodepage( const UINT codepage, wchar_t * target, std::uint32_t length )
+static std::vector<unsigned char> WindowsGetBytesWithCodepage( const UINT codepage, const wchar_t * target, std::uint32_t length )
 {
     const DWORD flags = WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS;
     if (length > static_cast<std::uint32_t>(std::numeric_limits<int>::max()))
@@ -65,12 +65,12 @@ std::wstring AcpEncoder::Name()
     return L"CP_ACP";
 }
 
-std::vector<wchar_t> AcpEncoder::GetChars(unsigned char *target, std::uint32_t length)
+std::vector<wchar_t> AcpEncoder::GetChars(const unsigned char *target, std::uint32_t length)
 {
     return WindowsGetCharsWithCodepage(CP_ACP, target, length);
 }
 
-std::vector<unsigned char> AcpEncoder::GetBytes(wchar_t *target, std::uint32_t length)
+std::vector<unsigned char> AcpEncoder::GetBytes(const wchar_t *target, std::uint32_t length)
 {
     return WindowsGetBytesWithCodepage(CP_ACP, target, length);
 }
@@ -80,12 +80,12 @@ std::wstring OemEncoder::Name()
     return L"CP_OEM";
 }
 
-std::vector<wchar_t> OemEncoder::GetChars(unsigned char *target, std::uint32_t length)
+std::vector<wchar_t> OemEncoder::GetChars(const unsigned char *target, std::uint32_t length)
 {
     return WindowsGetCharsWithCodepage(CP_OEMCP, target, length);
 }
 
-std::vector<unsigned char> OemEncoder::GetBytes(wchar_t *target, std::uint32_t length)
+std::vector<unsigned char> OemEncoder::GetBytes(const wchar_t *target, std::uint32_t length)
 {
     return WindowsGetBytesWithCodepage(CP_OEMCP, target, length);
 }
@@ -118,7 +118,7 @@ static bool EncodeUtf16(std::uint32_t codePoint, wchar_t& lowerCodePoint, wchar_
     }
 }
 
-static std::uint32_t DecodeUtf16(wchar_t *target, std::uint32_t length, std::uint32_t& idx)
+static std::uint32_t DecodeUtf16(const wchar_t *target, std::uint32_t length, std::uint32_t& idx)
 {
     // Decode UTF-16 into a code point
     // See http://tools.ietf.org/html/rfc2781
@@ -220,12 +220,12 @@ static unsigned char EncodeUtf8(std::uint32_t codePoint, unsigned char buffer[4]
     }
 }
 
-static bool ValidateUtf8SuffixCodeUnits(unsigned char *target, std::uint32_t length, std::uint32_t idx, std::uint32_t requestedLength)
+static bool ValidateUtf8SuffixCodeUnits(const unsigned char *target, std::uint32_t length, std::uint32_t idx, std::uint32_t requestedLength)
 {
     // Calculate the range of characters we are validating:
-    std::uint32_t startIndex = length + idx;
+    std::uint32_t startIndex = idx;
     std::uint32_t endIndex = startIndex + requestedLength;
-    if (endIndex >= length) // Not enough characters remaining
+    if (endIndex > length) // Not enough characters remaining
     {
         return false;
     }
@@ -244,7 +244,7 @@ static bool ValidateUtf8SuffixCodeUnits(unsigned char *target, std::uint32_t len
     return true;
 }
 
-static std::uint32_t DecodeUtf8(unsigned char *target, std::uint32_t length, std::uint32_t& idx)
+static std::uint32_t DecodeUtf8(const unsigned char *target, std::uint32_t length, std::uint32_t& idx)
 {
     auto firstByte = target[idx];
     if (firstByte < 0x80)
@@ -258,7 +258,8 @@ static std::uint32_t DecodeUtf8(unsigned char *target, std::uint32_t length, std
         if (!ValidateUtf8SuffixCodeUnits(target, length, idx, 2))
         {
             return replacementCharacter;
-        }        std::uint32_t result = ((firstByte & 0x1F) << 5) | (target[idx + 1] & lowerOrderSixBits);
+        }
+        std::uint32_t result = ((firstByte & 0x1F) << 5) | (target[idx + 1] & lowerOrderSixBits);
         // If two code units, range must be between 0x80-0x7FF inclusive
         if (result >= 0x80 && result <= 0x7FF)
         {
@@ -324,7 +325,7 @@ std::wstring Utf8Encoder::Name()
     return L"UTF-8";
 }
 
-std::vector<wchar_t> Utf8Encoder::GetChars(unsigned char *target, std::uint32_t length)
+std::vector<wchar_t> Utf8Encoder::GetChars(const unsigned char *target, std::uint32_t length)
 {
     std::vector<wchar_t> results;
     results.reserve(length); // Reasonable to have a starting assumption of 1:1 UTF16->UTF8
@@ -347,7 +348,7 @@ std::vector<wchar_t> Utf8Encoder::GetChars(unsigned char *target, std::uint32_t 
     return std::move(results);
 }
 
-std::vector<unsigned char> Utf8Encoder::GetBytes(wchar_t *target, std::uint32_t length)
+std::vector<unsigned char> Utf8Encoder::GetBytes(const wchar_t *target, std::uint32_t length)
 {
     std::vector<unsigned char> results;
     results.reserve(length); // Reasonable to have a starting assumption of 1:1 UTF16->UTF8
@@ -370,17 +371,17 @@ std::wstring Utf16Encoder::Name()
     return L"UTF-16";
 }
 
-std::vector<wchar_t> Utf16Encoder::GetChars(unsigned char *target, std::uint32_t length)
+std::vector<wchar_t> Utf16Encoder::GetChars(const unsigned char *target, std::uint32_t length)
 {
-    auto targetCast = reinterpret_cast<wchar_t *>(target);
+    auto targetCast = reinterpret_cast<const wchar_t *>(target);
     auto targetCastEnd = targetCast + length / sizeof(wchar_t);
     return std::vector<wchar_t>(targetCast, targetCastEnd);
 }
 
-std::vector<unsigned char> Utf16Encoder::GetBytes(wchar_t *target, std::uint32_t length)
+std::vector<unsigned char> Utf16Encoder::GetBytes(const wchar_t *target, std::uint32_t length)
 {
-    auto targetCast = reinterpret_cast<unsigned char *>(target);
-    auto targetCastEnd = reinterpret_cast<unsigned char *>(target + length);
+    auto targetCast = reinterpret_cast<const unsigned char *>(target);
+    auto targetCastEnd = reinterpret_cast<const unsigned char *>(target + length);
     return std::vector<unsigned char>(targetCast, targetCastEnd);
 }
 

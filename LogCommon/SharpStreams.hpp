@@ -22,8 +22,8 @@ namespace Instalog { namespace SharpStreams {
     struct Encoder
     {
         virtual std::wstring Name() = 0;
-        virtual std::vector<wchar_t> GetChars(unsigned char *target, std::uint32_t length) = 0;
-        virtual std::vector<unsigned char> GetBytes(wchar_t *target, std::uint32_t length) = 0;
+        virtual std::vector<wchar_t> GetChars(const unsigned char *target, std::uint32_t length) = 0;
+        virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) = 0;
         virtual ~Encoder() {}
     };
 
@@ -32,16 +32,16 @@ namespace Instalog { namespace SharpStreams {
     struct AcpEncoder : public Encoder
     {
         virtual std::wstring Name() override;
-        virtual std::vector<wchar_t> GetChars(unsigned char *target, std::uint32_t length) override;
-        virtual std::vector<unsigned char> GetBytes(wchar_t *target, std::uint32_t length) override;
+        virtual std::vector<wchar_t> GetChars(const unsigned char *target, std::uint32_t length) override;
+        virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) override;
     };
 
     // Converts wide character strings to or from the system's current OEM code page. (CP_OEMCP in Windows Headers)
     struct OemEncoder : public Encoder
     {
         virtual std::wstring Name() override;
-        virtual std::vector<wchar_t> GetChars(unsigned char *target, std::uint32_t length) override;
-        virtual std::vector<unsigned char> GetBytes(wchar_t *target, std::uint32_t length) override;
+        virtual std::vector<wchar_t> GetChars(const unsigned char *target, std::uint32_t length) override;
+        virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) override;
     };
 #endif
 
@@ -49,16 +49,16 @@ namespace Instalog { namespace SharpStreams {
     struct Utf8Encoder : public Encoder
     {
         virtual std::wstring Name() override;
-        virtual std::vector<wchar_t> GetChars(unsigned char *target, std::uint32_t length) override;
-        virtual std::vector<unsigned char> GetBytes(wchar_t *target, std::uint32_t length) override;
+        virtual std::vector<wchar_t> GetChars(const unsigned char *target, std::uint32_t length) override;
+        virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) override;
     };
 
     // Converts wide character strings to or from UTF-16 (which is a no-op)
     struct Utf16Encoder : public Encoder
     {
         virtual std::wstring Name() override;
-        virtual std::vector<wchar_t> GetChars(unsigned char *target, std::uint32_t length) override;
-        virtual std::vector<unsigned char> GetBytes(wchar_t *target, std::uint32_t length) override;
+        virtual std::vector<wchar_t> GetChars(const unsigned char *target, std::uint32_t length) override;
+        virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) override;
     };
 
     enum SeekOrigin
