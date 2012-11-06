@@ -4,6 +4,7 @@
 #include "pch.hpp"
 #include <limits>
 #include <stdexcept>
+#include "ScopeExit.hpp"
 #include "Win32Exception.hpp"
 #include "SharpStreams.hpp"
 
@@ -383,6 +384,83 @@ std::vector<unsigned char> Utf16Encoder::GetBytes(const wchar_t *target, std::ui
     auto targetCast = reinterpret_cast<const unsigned char *>(target);
     auto targetCastEnd = reinterpret_cast<const unsigned char *>(target + length);
     return std::vector<unsigned char>(targetCast, targetCastEnd);
+}
+
+FileStream::FileStream(std::wstring fileName, DWORD desiredAccess, DWORD shareMode, DWORD creationDisposition, DWORD attributes)
+    : hFile(::CreateFileW(fileName.c_str(), desiredAccess, shareMode, nullptr, creationDisposition, attributes | FILE_FLAG_OVERLAPPED, nullptr))
+{
+    if (this->hFile == INVALID_HANDLE_VALUE)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+}
+
+FileStream::~FileStream()
+{
+    this->Flush();
+    if (this->hFile != INVALID_HANDLE_VALUE)
+    {
+#ifndef NDEBUG
+        assert(::CloseHandle(hFile));
+#else
+        ::CloseHandle(hFile);
+#endif
+    }
+}
+
+void FileStream::Flush()
+{
+#ifndef NDEBUG
+        assert(::FlushFileBuffers(hFile));
+#else
+        ::FlushFileBuffers(hFile);
+#endif
+}
+
+void FileStream::Seek(std::int64_t offset, SeekOrigin origin)
+{
+    DWORD moveMethod;
+    switch (origin)
+    {
+    case SeekOrigin::Beginning:
+        moveMethod = FILE_BEGIN;
+        break;
+    case SeekOrigin::Current:
+        moveMethod = FILE_CURRENT;
+        break;
+    case SeekOrigin::End:
+        moveMethod = FILE_END;
+        break;
+    default:
+        assert(false);
+    }
+
+    LONG lower = static_cast<LONG>(offset & 0xFFFFFFFFl);
+    LONG upper = static_cast<LONG>((offset >> 32) & 0xFFFFFFFFl);
+    auto result = ::SetFilePointer(this->hFile, lower, &upper, moveMethod);
+    if (result == INVALID_SET_FILE_POINTER)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+}
+
+void FileStream::Read(unsigned char *target, std::uint32_t offset, std::uint32_t length)
+{
+    OVERLAPPED overlapped = {};
+    overlapped.hEvent = ::CreateEvent(nullptr, true, false, nullptr);
+    if (overlapped.hEvent == NULL)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+
+    ScopeExit exit([=]() {::CloseHandle(overlapped.hEvent);});
+    DWORD readLength = 0;
+    BOOL readResult = ::ReadFile(this->hFile, target, length, nullptr, &overlapped);
+    ::GetOverlappedResult(
+}
+
+void FileStream::Write(unsigned char *target, std::uint32_t offset, std::uint32_t length)
+{
 }
 
 }} // Instalog::SharpStreams

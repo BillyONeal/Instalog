@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <Windows.h>
 
 namespace Instalog { namespace SharpStreams {
 
@@ -61,7 +62,7 @@ namespace Instalog { namespace SharpStreams {
         virtual std::vector<unsigned char> GetBytes(const wchar_t *target, std::uint32_t length) override;
     };
 
-    enum SeekOrigin
+    enum class SeekOrigin
     {
         Beginning,
         Current,
@@ -70,7 +71,7 @@ namespace Instalog { namespace SharpStreams {
 
     // Represents a basic on-disk or in-memory representation of a stream of bytes.
     // This is the low-level representation of a file handle or memory buffer.
-    struct Stream
+    struct Stream : boost::noncopyable
     {
         virtual ~Stream() {}
         virtual void Flush();
@@ -79,15 +80,28 @@ namespace Instalog { namespace SharpStreams {
         virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length);
     };
 
-    class FileStream
+    class FileStream : public Stream
     {
-
+        HANDLE hFile;
+    public:
+        FileStream(std::wstring fileName, DWORD desiredAccess, DWORD shareMode, DWORD creationDisposition, DWORD attributes);
+        ~FileStream();
+        virtual void Flush() override;
+        virtual void Seek(std::int64_t offset, SeekOrigin origin) override;
+        virtual void Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
+        virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
     };
 
-    class StringStream
+    class MemoryStream : public Stream
     {
-        std::wstring backingStore;
+        std::vector<unsigned char> buffer;
     public:
+        virtual void Flush() override;
+        virtual void Seek(std::int64_t offset, SeekOrigin origin) override;
+        virtual void Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
+        virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
+        const std::vector<unsigned char>& GetReadOnlyBufferView() const;
+        std::vector<unsigned char> GetBufferCopy() const;
     };
 
 }} // Instalog::SharpStreams
