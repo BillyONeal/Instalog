@@ -387,7 +387,7 @@ std::vector<unsigned char> Utf16Encoder::GetBytes(const wchar_t *target, std::ui
 }
 
 FileStream::FileStream(std::wstring fileName, DWORD desiredAccess, DWORD shareMode, DWORD creationDisposition, DWORD attributes)
-    : hFile(::CreateFileW(fileName.c_str(), desiredAccess, shareMode, nullptr, creationDisposition, attributes | FILE_FLAG_OVERLAPPED, nullptr))
+    : hFile(::CreateFileW(fileName.c_str(), desiredAccess, shareMode, nullptr, creationDisposition, attributes, nullptr))
 {
     if (this->hFile == INVALID_HANDLE_VALUE)
     {
@@ -444,23 +444,102 @@ void FileStream::Seek(std::int64_t offset, SeekOrigin origin)
     }
 }
 
-void FileStream::Read(unsigned char *target, std::uint32_t offset, std::uint32_t length)
+std::uint32_t FileStream::Read(unsigned char *target, std::uint32_t offset, std::uint32_t length)
 {
-    OVERLAPPED overlapped = {};
-    overlapped.hEvent = ::CreateEvent(nullptr, true, false, nullptr);
-    if (overlapped.hEvent == NULL)
+    DWORD readLength = 0;
+    BOOL readResult = ::ReadFile(this->hFile, target, length, &readLength, nullptr);
+    if (!readResult)
     {
         Win32Exception::ThrowFromLastError();
     }
 
-    ScopeExit exit([=]() {::CloseHandle(overlapped.hEvent);});
-    DWORD readLength = 0;
-    BOOL readResult = ::ReadFile(this->hFile, target, length, nullptr, &overlapped);
-    ::GetOverlappedResult(
+    return readLength;
 }
 
 void FileStream::Write(unsigned char *target, std::uint32_t offset, std::uint32_t length)
 {
+    DWORD writeLength = 0;
+    BOOL writeResult = ::WriteFile(this->hFile, target, length, &writeLength, nullptr);
+    if (!writeResult)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+}
+
+
+void MemoryStream::Flush()
+{
+    // MemoryStream doesn't actually do anything on flush.
+}
+
+void MemoryStream::Seek( std::int64_t offset, SeekOrigin origin )
+{
+    switch (origin)
+    {
+    case SeekOrigin::Beginning:
+        // Do nothing
+        break;
+    case SeekOrigin::Current:
+        offset += this->pointer;
+        break;
+    case SeekOrigin::End:
+        offset += static_cast<std::int64_t>(this->buffer.size());
+        break;
+    }
+
+    if (offset < 0)
+    {
+        throw std::out_of_range("Cannot seek to a negative value.");
+    }
+    else if (offset > this->buffer.size())
+    {
+        this->buffer.resize(offset);
+    }
+
+    this->pointer = offset;
+}
+
+std::uint32_t MemoryStream::Read( unsigned char *target, std::uint32_t offset, std::uint32_t length )
+{
+    std::uint32_t actualRead = std::min<std::uint32_t>(length, this->GetAvailableToRead());
+    target += offset;
+    std::copy_n(buffer.cbegin() + this->pointer, actualRead, target);
+    this->pointer += actualRead;
+    return actualRead;
+}
+
+std::size_t MemoryStream::GetAvailableToRead() const
+{
+    assert(this->pointer <= this->buffer.size());
+    return this->buffer.size() - this->pointer;
+}
+
+void MemoryStream::Write( unsigned char *target, std::uint32_t offset, std::uint32_t length )
+{
+    std::size_t newLength = length + this->pointer;
+    if (newLength > this->buffer.size())
+    {
+        this->buffer.resize(newLength);
+    }
+
+    std::copy_n(target + offset, length, this->buffer.begin() + this->pointer);
+    this->pointer += length;
+}
+
+const std::vector<unsigned char>& MemoryStream::GetReadOnlyBufferView() const
+{
+    return this->buffer;
+}
+
+std::vector<unsigned char> MemoryStream::GetBufferCopy() const
+{
+    return this->buffer;
+}
+
+std::vector<unsigned char> MemoryStream::StealBuffer()
+{
+    this->pointer = 0;
+    return std::move(this->buffer);
 }
 
 }} // Instalog::SharpStreams

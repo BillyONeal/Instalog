@@ -76,7 +76,7 @@ namespace Instalog { namespace SharpStreams {
         virtual ~Stream() {}
         virtual void Flush();
         virtual void Seek(std::int64_t offset, SeekOrigin origin);
-        virtual void Read(unsigned char *target, std::uint32_t offset, std::uint32_t length);
+        virtual std::uint32_t Read(unsigned char *target, std::uint32_t offset, std::uint32_t length);
         virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length);
     };
 
@@ -88,20 +88,23 @@ namespace Instalog { namespace SharpStreams {
         ~FileStream();
         virtual void Flush() override;
         virtual void Seek(std::int64_t offset, SeekOrigin origin) override;
-        virtual void Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
+        virtual std::uint32_t Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
         virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
     };
 
     class MemoryStream : public Stream
     {
         std::vector<unsigned char> buffer;
+        std::size_t pointer;
+        std::size_t GetAvailableToRead() const;
     public:
         virtual void Flush() override;
         virtual void Seek(std::int64_t offset, SeekOrigin origin) override;
-        virtual void Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
+        virtual std::uint32_t Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
         virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length) override;
         const std::vector<unsigned char>& GetReadOnlyBufferView() const;
         std::vector<unsigned char> GetBufferCopy() const;
+        std::vector<unsigned char> StealBuffer();
     };
 
 }} // Instalog::SharpStreams
