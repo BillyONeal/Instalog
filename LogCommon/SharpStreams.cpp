@@ -4,6 +4,7 @@
 #include "pch.hpp"
 #include <limits>
 #include <stdexcept>
+#include "MakeUnique.hpp"
 #include "ScopeExit.hpp"
 #include "Win32Exception.hpp"
 #include "SharpStreams.hpp"
@@ -541,5 +542,15 @@ std::vector<unsigned char> MemoryStream::StealBuffer()
     this->pointer = 0;
     return std::move(this->buffer);
 }
+
+TextWriter::TextWriter()
+    : newLine(L"\r\n")
+    , encoder(make_unique<Utf8Encoder>());
+{ }
+
+TextWriter::TextWriter(std::unique_ptr<Encoder> encoder)
+    : newLine(L"\r\n")
+    , encoder(std::move(encoder))
+{ }
 
 }} // Instalog::SharpStreams

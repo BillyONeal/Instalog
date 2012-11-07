@@ -193,6 +193,9 @@
     <ClInclude Include="..\ThirdParty\StackWalker\StackWalker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MakeUnique.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />

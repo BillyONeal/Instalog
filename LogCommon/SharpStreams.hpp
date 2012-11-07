@@ -107,4 +107,45 @@ namespace Instalog { namespace SharpStreams {
         std::vector<unsigned char> StealBuffer();
     };
 
+    class TextWriter
+    {
+        std::wstring newLine;
+        std::unique_ptr<Encoder> encoder;
+    public:
+        std::wstring const& GetNewline() const;
+        void SetNewline(std::wstring line);
+        Encoder const * GetEncoder() const;
+        void SetEncoder(std::unique_ptr<Encoder> encoder);
+        virtual void Flush() = 0;
+        virtual void Write(bool value) = 0;
+        virtual void Write(char value) = 0;
+        virtual void Write(wchar_t value) = 0;
+        virtual void Write(double value) = 0;
+        virtual void Write(float value) = 0;
+        virtual void Write(std::int32_t value) = 0;
+        virtual void Write(std::int64_t value) = 0;
+        virtual void Write(std::uint32_t value) = 0;
+        virtual void Write(std::uint64_t value) = 0;
+        virtual void Write(std::string const& value) = 0;
+        virtual void Write(char const* value) = 0;
+        virtual void Write(std::wstring const& value) = 0;
+        virtual void Write(wchar_t const* value) = 0;
+        virtual void WriteLine(bool value) = 0;
+        virtual void WriteLine(char value) = 0;
+        virtual void WriteLine(wchar_t value) = 0;
+        virtual void WriteLine(double value) = 0;
+        virtual void WriteLine(float value) = 0;
+        virtual void WriteLine(std::int32_t value) = 0;
+        virtual void WriteLine(std::int64_t value) = 0;
+        virtual void WriteLine(std::uint32_t value) = 0;
+        virtual void WriteLine(std::uint64_t value) = 0;
+        virtual void WriteLine(std::string const& value) = 0;
+        virtual void WriteLine(char const* value) = 0;
+        virtual void WriteLine(std::wstring const& value) = 0;
+        virtual void WriteLine(wchar_t const* value) = 0;
+        TextWriter();
+        TextWriter(std::unique_ptr<Encoder> encoder);
+        virtual ~TextWriter() { }
+    };
+
 }} // Instalog::SharpStreams
