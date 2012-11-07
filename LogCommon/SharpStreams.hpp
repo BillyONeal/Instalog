@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <boost/noncopyable.hpp>
 #include <Windows.h>
 
 namespace Instalog { namespace SharpStreams {
@@ -74,10 +75,10 @@ namespace Instalog { namespace SharpStreams {
     struct Stream : boost::noncopyable
     {
         virtual ~Stream() {}
-        virtual void Flush();
-        virtual void Seek(std::int64_t offset, SeekOrigin origin);
-        virtual std::uint32_t Read(unsigned char *target, std::uint32_t offset, std::uint32_t length);
-        virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length);
+        virtual void Flush() = 0;
+        virtual void Seek(std::int64_t offset, SeekOrigin origin) = 0;
+        virtual std::uint32_t Read(unsigned char *target, std::uint32_t offset, std::uint32_t length) = 0;
+        virtual void Write(unsigned char *target, std::uint32_t offset, std::uint32_t length) = 0;
     };
 
     class FileStream : public Stream

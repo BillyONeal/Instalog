@@ -9,6 +9,7 @@
 #include <functional>
 #include <vector>
 #include <exception>
+#include <boost/noncopyable.hpp>
 #include "StringUtilities.hpp"
 #include "UserInterface.hpp"
 

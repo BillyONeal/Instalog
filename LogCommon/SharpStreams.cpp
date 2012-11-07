@@ -420,7 +420,7 @@ void FileStream::Flush()
 
 void FileStream::Seek(std::int64_t offset, SeekOrigin origin)
 {
-    DWORD moveMethod;
+    DWORD moveMethod = 0;
     switch (origin)
     {
     case SeekOrigin::Beginning:
@@ -448,7 +448,7 @@ void FileStream::Seek(std::int64_t offset, SeekOrigin origin)
 std::uint32_t FileStream::Read(unsigned char *target, std::uint32_t offset, std::uint32_t length)
 {
     DWORD readLength = 0;
-    BOOL readResult = ::ReadFile(this->hFile, target, length, &readLength, nullptr);
+    BOOL readResult = ::ReadFile(this->hFile, target + offset, length, &readLength, nullptr);
     if (!readResult)
     {
         Win32Exception::ThrowFromLastError();
@@ -460,7 +460,7 @@ std::uint32_t FileStream::Read(unsigned char *target, std::uint32_t offset, std:
 void FileStream::Write(unsigned char *target, std::uint32_t offset, std::uint32_t length)
 {
     DWORD writeLength = 0;
-    BOOL writeResult = ::WriteFile(this->hFile, target, length, &writeLength, nullptr);
+    BOOL writeResult = ::WriteFile(this->hFile, target + offset, length, &writeLength, nullptr);
     if (!writeResult)
     {
         Win32Exception::ThrowFromLastError();
@@ -492,7 +492,7 @@ void MemoryStream::Seek( std::int64_t offset, SeekOrigin origin )
     {
         throw std::out_of_range("Cannot seek to a negative value.");
     }
-    else if (offset > this->buffer.size())
+    else if (static_cast<std::uint64_t>(offset) > this->buffer.size())
     {
         this->buffer.resize(offset);
     }
@@ -502,7 +502,7 @@ void MemoryStream::Seek( std::int64_t offset, SeekOrigin origin )
 
 std::uint32_t MemoryStream::Read( unsigned char *target, std::uint32_t offset, std::uint32_t length )
 {
-    std::uint32_t actualRead = std::min<std::uint32_t>(length, this->GetAvailableToRead());
+    std::uint32_t actualRead = std::min(length, static_cast<std::uint32_t>(this->GetAvailableToRead()));
     target += offset;
     std::copy_n(buffer.cbegin() + this->pointer, actualRead, target);
     this->pointer += actualRead;
@@ -545,7 +545,7 @@ std::vector<unsigned char> MemoryStream::StealBuffer()
 
 TextWriter::TextWriter()
     : newLine(L"\r\n")
-    , encoder(make_unique<Utf8Encoder>());
+    , encoder(make_unique<Utf8Encoder>())
 { }
 
 TextWriter::TextWriter(std::unique_ptr<Encoder> encoder)
