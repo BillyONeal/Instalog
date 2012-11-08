@@ -118,17 +118,17 @@ namespace Instalog { namespace SystemFacades {
         return RegistryKeyOpen(hRoot, ustrKey, samDesired);
     }
 
-    RegistryKey RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+    RegistryKey RegistryKey::Open( std::wstring const& key, REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/ )
     {
         return RegistryKeyOpen(0, key, samDesired);
     }
 
-    RegistryKey RegistryKey::Open( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+    RegistryKey RegistryKey::Open( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/ )
     {
         return RegistryKeyOpen(parent.GetHkey(), key, samDesired);
     }
 
-    RegistryKey RegistryKey::Open( RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/ )
+    RegistryKey RegistryKey::Open( RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/ )
     {
         return RegistryKeyOpen(parent.GetHkey(), key, samDesired);
     }
@@ -153,12 +153,12 @@ namespace Instalog { namespace SystemFacades {
         return RegistryKey(hOpened);
     }
 
-    RegistryKey RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+    RegistryKey RegistryKey::Create( std::wstring const& key, REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
     {
         return RegistryKeyCreate(0, key, samDesired, options);
     }
 
-    RegistryKey RegistryKey::Create( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_ALL_ACCESS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
+    RegistryKey RegistryKey::Create( RegistryKey const& parent, std::wstring const& key, REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/, DWORD options /*= REG_OPTION_NON_VOLATILE */ )
     {
         return RegistryKeyCreate(parent.GetHkey(), key, samDesired, options);
     }
@@ -248,7 +248,7 @@ namespace Instalog { namespace SystemFacades {
         return *this;
     }
 
-    std::vector<RegistryKey> RegistryKey::EnumerateSubKeys(REGSAM samDesired /* = KEY_ALL_ACCESS */) const
+    std::vector<RegistryKey> RegistryKey::EnumerateSubKeys(REGSAM samDesired /* = KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS */) const
     {
         std::vector<std::wstring> names(EnumerateSubKeyNames());
         std::vector<RegistryKey> result(names.size());

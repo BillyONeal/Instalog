@@ -372,7 +372,7 @@ namespace Instalog { namespace SystemFacades {
         ///
         /// @return    A vector of child registry keys. In the event an error occurs
         ///         in opening any of these keys, they will be invalid.
-        std::vector<RegistryKey> EnumerateSubKeys(REGSAM samDesired = KEY_ALL_ACCESS) const;
+        std::vector<RegistryKey> EnumerateSubKeys(REGSAM samDesired = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS) const;
 
         /// @brief    Opens a registry key.
         ///
@@ -383,7 +383,7 @@ namespace Instalog { namespace SystemFacades {
         /// @return    A RegistryKey instance. In the event an error occurs, this
         ///         instance will be invalid. Call GetLastError for extended
         ///         error information.
-        static RegistryKey Open(std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+        static RegistryKey Open(std::wstring const& key, REGSAM samDesired = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 
         /// @brief    Opens a registry key.
         ///
@@ -395,7 +395,7 @@ namespace Instalog { namespace SystemFacades {
         /// @return    A RegistryKey instance. In the event an error occurs, this
         ///         instance will be invalid. Call GetLastError for extended
         ///         error information.
-        static RegistryKey Open(RegistryKey const& parent, std::wstring const& key, REGSAM samDesired = KEY_ALL_ACCESS);
+        static RegistryKey Open(RegistryKey const& parent, std::wstring const& key, REGSAM samDesired = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 
         /// @brief    Opens a registry key.
         ///
@@ -407,7 +407,7 @@ namespace Instalog { namespace SystemFacades {
         /// @return    A RegistryKey instance. In the event an error occurs, this
         ///         instance will be invalid. Call GetLastError for extended
         ///         error information.
-        static RegistryKey Open(RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired = KEY_ALL_ACCESS);
+        static RegistryKey Open(RegistryKey const& parent, UNICODE_STRING& key, REGSAM samDesired = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 
         /// @brief    Opens or creates a registry key.
         ///
@@ -422,7 +422,7 @@ namespace Instalog { namespace SystemFacades {
         ///         error information.
         static RegistryKey Create(
             std::wstring const& key,
-            REGSAM samDesired = KEY_ALL_ACCESS,
+            REGSAM samDesired = KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
             DWORD options = REG_OPTION_NON_VOLATILE
         );
 
@@ -442,7 +442,7 @@ namespace Instalog { namespace SystemFacades {
         static RegistryKey Create(
             RegistryKey const& parent,
             std::wstring const& key,
-            REGSAM samDesired = KEY_ALL_ACCESS,
+            REGSAM samDesired = KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
             DWORD options = REG_OPTION_NON_VOLATILE
         );
 
