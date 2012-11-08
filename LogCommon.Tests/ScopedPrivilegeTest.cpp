@@ -12,68 +12,68 @@ using Instalog::SystemFacades::Win32Exception;
 
 static bool HasPrivilege(LPCWSTR privilegeName)
 {
-	HANDLE procToken;
-	::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &procToken);
-	DWORD bufferLength = 1024;
-	std::vector<unsigned char> buff;
-	DWORD lastError = ERROR_INSUFFICIENT_BUFFER;
-	while(lastError == ERROR_INSUFFICIENT_BUFFER)
-	{
-		buff.resize(static_cast<std::vector<unsigned char>::size_type>(bufferLength));
-		if (::GetTokenInformation(procToken, TokenPrivileges, &buff[0], bufferLength, &bufferLength) == 0)
-		{
-			lastError = ::GetLastError();
-		}
-		else
-		{
-			lastError = ERROR_SUCCESS;
-		}
-	}
-	if (lastError != ERROR_SUCCESS)
-	{
-		Win32Exception::Throw(lastError);
-	}
-	TOKEN_PRIVILEGES const* privStruct = reinterpret_cast<TOKEN_PRIVILEGES*>(&buff[0]);
-	LUID privValue;
-	if (::LookupPrivilegeValueW(nullptr, privilegeName, &privValue) == 0)
-	{
-		Win32Exception::ThrowFromLastError();
-	}
-	for (std::size_t idx = 0; idx < privStruct->PrivilegeCount; ++idx)
-	{
-		LUID_AND_ATTRIBUTES const& currentPrivilege = privStruct->Privileges[idx];
-		if (currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED && currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED_BY_DEFAULT)
-		{
-			continue;
-		}
-		if (currentPrivilege.Luid.HighPart != privValue.HighPart)
-		{
-			continue;
-		}
-		if (currentPrivilege.Luid.LowPart != privValue.LowPart)
-		{
-			continue;
-		}
-		return true;
-	}
-	return false;
+    HANDLE procToken;
+    ::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &procToken);
+    DWORD bufferLength = 1024;
+    std::vector<unsigned char> buff;
+    DWORD lastError = ERROR_INSUFFICIENT_BUFFER;
+    while(lastError == ERROR_INSUFFICIENT_BUFFER)
+    {
+        buff.resize(static_cast<std::vector<unsigned char>::size_type>(bufferLength));
+        if (::GetTokenInformation(procToken, TokenPrivileges, &buff[0], bufferLength, &bufferLength) == 0)
+        {
+            lastError = ::GetLastError();
+        }
+        else
+        {
+            lastError = ERROR_SUCCESS;
+        }
+    }
+    if (lastError != ERROR_SUCCESS)
+    {
+        Win32Exception::Throw(lastError);
+    }
+    TOKEN_PRIVILEGES const* privStruct = reinterpret_cast<TOKEN_PRIVILEGES*>(&buff[0]);
+    LUID privValue;
+    if (::LookupPrivilegeValueW(nullptr, privilegeName, &privValue) == 0)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+    for (std::size_t idx = 0; idx < privStruct->PrivilegeCount; ++idx)
+    {
+        LUID_AND_ATTRIBUTES const& currentPrivilege = privStruct->Privileges[idx];
+        if (currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED && currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED_BY_DEFAULT)
+        {
+            continue;
+        }
+        if (currentPrivilege.Luid.HighPart != privValue.HighPart)
+        {
+            continue;
+        }
+        if (currentPrivilege.Luid.LowPart != privValue.LowPart)
+        {
+            continue;
+        }
+        return true;
+    }
+    return false;
 }
 
 TEST_CLASS(ScopedPrivilegeTest)
 {
 public:
-	TEST_METHOD(PrivilegeGetsTaken)
-	{
-		ScopedPrivilege priv(SE_BACKUP_NAME);
-		Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
-	}
+    TEST_METHOD(PrivilegeGetsTaken)
+    {
+        ScopedPrivilege priv(SE_BACKUP_NAME);
+        Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
+    }
 
-	TEST_METHOD(PrivilegeGetsReleased)
-	{
-		{
-			ScopedPrivilege priv(SE_BACKUP_NAME);
-			Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
-		}
-		Assert::IsFalse(::HasPrivilege(SE_BACKUP_NAME));
-	}
+    TEST_METHOD(PrivilegeGetsReleased)
+    {
+        {
+            ScopedPrivilege priv(SE_BACKUP_NAME);
+            Assert::IsTrue(::HasPrivilege(SE_BACKUP_NAME));
+        }
+        Assert::IsFalse(::HasPrivilege(SE_BACKUP_NAME));
+    }
 };

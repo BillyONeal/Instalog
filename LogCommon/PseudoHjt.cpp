@@ -20,20 +20,20 @@
 namespace Instalog {
     using namespace SystemFacades;
 
-	std::wstring PseudoHjt::GetScriptCommand() const
-	{
-		return L"pseudohijackthis";
-	}
+    std::wstring PseudoHjt::GetScriptCommand() const
+    {
+        return L"pseudohijackthis";
+    }
 
-	std::wstring PseudoHjt::GetName() const
-	{
-		return L"Pseudo HijackThis";
-	}
+    std::wstring PseudoHjt::GetName() const
+    {
+        return L"Pseudo HijackThis";
+    }
 
-	LogSectionPriorities PseudoHjt::GetPriority() const
-	{
-		return SCANNING;
-	}
+    LogSectionPriorities PseudoHjt::GetPriority() const
+    {
+        return SCANNING;
+    }
 
     static std::wstring Get64Suffix()
     {
@@ -49,34 +49,34 @@ namespace Instalog {
      *
      * @param [in,out] output The stream to receive the output.
      */
-	static void SecurityCenterOutput( std::wostream& output )
-	{
-		using SystemFacades::SecurityProduct;
-		auto products = SystemFacades::EnumerateSecurityProducts();
-		for (auto it = products.cbegin(); it != products.cend(); ++it)
-		{
-			output << it->GetTwoLetterPrefix()
-				<< L": [" << it->GetInstanceGuid() << L"] ";
-			if (it->IsEnabled())
-			{
-				output << L'E';
-			}
-			else
-			{
-				output << L'D';
-			}
-			switch (it->GetUpdateStatus())
-			{
-			case SecurityProduct::OutOfDate:
-				output << L'O';
-				break;
-			case SecurityProduct::UpToDate:
-				output << L'U';
-				break;
-			}
-			output << L' ' << it->GetName() << L'\n';
-		}
-	}
+    static void SecurityCenterOutput( std::wostream& output )
+    {
+        using SystemFacades::SecurityProduct;
+        auto products = SystemFacades::EnumerateSecurityProducts();
+        for (auto it = products.cbegin(); it != products.cend(); ++it)
+        {
+            output << it->GetTwoLetterPrefix()
+                << L": [" << it->GetInstanceGuid() << L"] ";
+            if (it->IsEnabled())
+            {
+                output << L'E';
+            }
+            else
+            {
+                output << L'D';
+            }
+            switch (it->GetUpdateStatus())
+            {
+            case SecurityProduct::OutOfDate:
+                output << L'O';
+                break;
+            case SecurityProduct::UpToDate:
+                output << L'U';
+                break;
+            }
+            output << L' ' << it->GetName() << L'\n';
+        }
+    }
 
     /**
      * A processing function which writes the target string in the default escaped function,
@@ -942,42 +942,42 @@ namespace Instalog {
     }
 
     /*
-	static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
-	{
-		std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
-		std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress, true));
+    static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
+    {
+        std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
+        std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress, true));
 
-		if (boost::iends_with(responseHostname, expectedHostname) == false)
-		{
-			HttpEscape(queryHostname);
-			HttpEscape(responseHostname);
+        if (boost::iends_with(responseHostname, expectedHostname) == false)
+        {
+            HttpEscape(queryHostname);
+            HttpEscape(responseHostname);
 
-			output << L"SpoofedDNS: " << queryHostname << L" -> ";
-			if (responseHostname.empty())
-			{
-				output << L"not available";
-			}
-			else
-			{
-				output << responseHostname;
-			}
-			output << L" (" << responseIpAddress << L")\n";
-		}
-	}
+            output << L"SpoofedDNS: " << queryHostname << L" -> ";
+            if (responseHostname.empty())
+            {
+                output << L"not available";
+            }
+            else
+            {
+                output << responseHostname;
+            }
+            output << L" (" << responseIpAddress << L")\n";
+        }
+    }
     */
 
-	void PseudoHjt::Execute(
-		std::wostream& output,
-		ScriptSection const&,
-		std::vector<std::wstring> const&
-	) const
-	{
+    void PseudoHjt::Execute(
+        std::wostream& output,
+        ScriptSection const&,
+        std::vector<std::wstring> const&
+    ) const
+    {
         auto hives = EnumerateUserHives();
-		SecurityCenterOutput(output);
+        SecurityCenterOutput(output);
         CommonHjt(output, L"\\Registry\\Machine");
-		//SpoofedDnsCheck(output, L"google.com", L".1e100.net");
-		//SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
-		//SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
+        //SpoofedDnsCheck(output, L"google.com", L".1e100.net");
+        //SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
+        //SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
         std::for_each(hives.cbegin(), hives.cend(), [&output](std::wstring const& hive) {
             std::wstring head(L"User Settings");
             Header(head);
@@ -988,12 +988,12 @@ namespace Instalog {
             CommonHjt(output, hive);
         });
 
-		//SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
-		//SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
-		//SpoofedDnsCheck(output, L"twitter.com", L".twitter.com");
-		//SpoofedDnsCheck(output, L"wellsfargo.com", L".wellsfargo.com");
-		//SpoofedDnsCheck(output, L"citibank.com", L"citibank.com");
-		//SpoofedDnsCheck(output, L"td.com", L"td.com");
-	}
+        //SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
+        //SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
+        //SpoofedDnsCheck(output, L"twitter.com", L".twitter.com");
+        //SpoofedDnsCheck(output, L"wellsfargo.com", L".wellsfargo.com");
+        //SpoofedDnsCheck(output, L"citibank.com", L"citibank.com");
+        //SpoofedDnsCheck(output, L"td.com", L"td.com");
+    }
 
 }

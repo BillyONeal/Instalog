@@ -25,21 +25,21 @@
 #include "LogCommon/PseudoHjt.hpp"
 #include "LogCommon/Com.hpp"
 
-/// @brief	Console "user interface"
+/// @brief    Console "user interface"
 struct ConsoleInterface : public Instalog::IUserInterface
 {
-	virtual void ReportProgressPercent(std::size_t progress)
-	{
-		std::wcout << progress << L" percent complete.\n";
-	}
-	virtual void ReportFinished()
-	{
-		std::wcout << L"Complete.\n";
-	}
-	virtual void LogMessage(std::wstring const& str)
-	{
-		std::wcout << str << L"\n";
-	}
+    virtual void ReportProgressPercent(std::size_t progress)
+    {
+        std::wcout << progress << L" percent complete.\n";
+    }
+    virtual void ReportFinished()
+    {
+        std::wcout << L"Complete.\n";
+    }
+    virtual void LogMessage(std::wstring const& str)
+    {
+        std::wcout << str << L"\n";
+    }
 };
 
 using namespace Instalog;
@@ -97,18 +97,18 @@ LONG WINAPI UnhandledExceptionHandler(LPEXCEPTION_POINTERS pointers)
     auto stdException = static_cast<std::exception*>(ehObjectPtr);
     auto hresultExt = dynamic_cast<Instalog::SystemFacades::HresultException*>(stdException);
     auto win32Ext = dynamic_cast<Instalog::SystemFacades::Win32Exception*>(stdException);
-	if (hresultExt != nullptr)
-	{
-		std::wcerr << L"HRESULT Error: 0x" << std::hex << hresultExt->GetErrorCode() << L": " << hresultExt->GetErrorStringW() << std::endl;
-	}
+    if (hresultExt != nullptr)
+    {
+        std::wcerr << L"HRESULT Error: 0x" << std::hex << hresultExt->GetErrorCode() << L": " << hresultExt->GetErrorStringW() << std::endl;
+    }
     else if (win32Ext != nullptr)
-	{
-		std::wcerr << L"Win32 Error: 0x" << std::hex << win32Ext->GetErrorCode() << L": " << win32Ext->GetWideMessage() << std::endl;
-	}
+    {
+        std::wcerr << L"Win32 Error: 0x" << std::hex << win32Ext->GetErrorCode() << L": " << win32Ext->GetWideMessage() << std::endl;
+    }
     else
-	{
-		std::cerr << "C++ Exception: " << stdException->what() << std::endl;
-	}
+    {
+        std::cerr << "C++ Exception: " << stdException->what() << std::endl;
+    }
     std::wcerr << "Call Stack:\n";
     InstalogStackWalker walker;
     walker.ShowCallstack(::GetCurrentThread(), pointers->ContextRecord);
@@ -118,7 +118,7 @@ LONG WINAPI UnhandledExceptionHandler(LPEXCEPTION_POINTERS pointers)
     return 0;
 }
 
-/// @brief	Main entry-point for this application.
+/// @brief    Main entry-point for this application.
 int main()
 {
     std::wcout <<
@@ -130,7 +130,7 @@ int main()
         L"by Jacob Snyder and Billy ONeal |___/\n";
 
     ::SetUnhandledExceptionFilter(UnhandledExceptionHandler);
-	Instalog::SystemFacades::Com com;
+    Instalog::SystemFacades::Com com;
     if (Instalog::SystemFacades::IsWow64())
     {
         std::cerr << "This program is not designed to be run under WOW64 mode. Please download the x64 copy of Instalog instead.";

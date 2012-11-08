@@ -9,7 +9,7 @@ option cc_generic_services = false;
 message WhitelistEntryBlob {
     required uint32 index = 1;
     optional string strData = 2;
-	optional bool alwaysAccept = 3;
+    optional bool alwaysAccept = 3;
 }
 
 message WhitelistEntry {
@@ -17,6 +17,6 @@ message WhitelistEntry {
 }
 
 message Whitelist {
-	repeated WhitelistEntry entries = 1;
+    repeated WhitelistEntry entries = 1;
 }
 

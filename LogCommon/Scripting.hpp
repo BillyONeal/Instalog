@@ -15,23 +15,23 @@
 
 namespace Instalog
 {
-	/// @brief	The relative priorities of different script actions
-	enum LogSectionPriorities
-	{
-		MEMORY,
-		DISK_PERSISTENT,
-		WMI,
-		WHITELISTING,
-		SCANNING
-	};
-	
-	struct ISectionDefinition;
+    /// @brief    The relative priorities of different script actions
+    enum LogSectionPriorities
+    {
+        MEMORY,
+        DISK_PERSISTENT,
+        WMI,
+        WHITELISTING,
+        SCANNING
+    };
+    
+    struct ISectionDefinition;
 
-	/// @brief	Script section.
-	class ScriptSection
-	{
-		ISectionDefinition const* targetSection;
-		std::wstring argument;
+    /// @brief    Script section.
+    class ScriptSection
+    {
+        ISectionDefinition const* targetSection;
+        std::wstring argument;
         std::size_t parseIndex;
 
     public:
@@ -85,96 +85,96 @@ namespace Instalog
          *
          * @return true if this should be ordered before rhs.
          */
-		bool operator<(const ScriptSection& rhs) const;
-	};
+        bool operator<(const ScriptSection& rhs) const;
+    };
 
-	/// @brief	Section definition.
-	struct ISectionDefinition
-	{
-		/// @brief	Destructor.
-		virtual ~ISectionDefinition() {}
+    /// @brief    Section definition.
+    struct ISectionDefinition
+    {
+        /// @brief    Destructor.
+        virtual ~ISectionDefinition() {}
 
-		/// @brief	Gets the script command that is used in a script
-		///
-		/// @return	The script command.
-		virtual std::wstring GetScriptCommand() const = 0;
+        /// @brief    Gets the script command that is used in a script
+        ///
+        /// @return    The script command.
+        virtual std::wstring GetScriptCommand() const = 0;
 
-		/// @brief	Gets the human-friendly name of the script section.
-		///
-		/// @return	The name.
-		virtual std::wstring GetName() const = 0;
+        /// @brief    Gets the human-friendly name of the script section.
+        ///
+        /// @return    The name.
+        virtual std::wstring GetName() const = 0;
 
-		/// @brief	Gets the priority.
-		///
-		/// @return	The priority.
-		virtual LogSectionPriorities GetPriority() const = 0;
+        /// @brief    Gets the priority.
+        ///
+        /// @return    The priority.
+        virtual LogSectionPriorities GetPriority() const = 0;
 
-		virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const = 0;
-	};
+        virtual void Execute(std::wostream& logOutput, ScriptSection const& sectionData, std::vector<std::wstring> const& options) const = 0;
+    };
 
-	class Script;
+    class Script;
 
-	/// @brief	Handles script sections and parses scripts
-	class ScriptParser : boost::noncopyable
-	{
-		std::map<std::wstring, std::unique_ptr<ISectionDefinition>> sectionTypes;
-	public:
-		/// @brief	Adds a section type.
-		///
-		/// @param	sectionTypeToAdd	The section type to add.
-		void AddSectionDefinition(std::unique_ptr<ISectionDefinition> sectionTypeToAdd);
+    /// @brief    Handles script sections and parses scripts
+    class ScriptParser : boost::noncopyable
+    {
+        std::map<std::wstring, std::unique_ptr<ISectionDefinition>> sectionTypes;
+    public:
+        /// @brief    Adds a section type.
+        ///
+        /// @param    sectionTypeToAdd    The section type to add.
+        void AddSectionDefinition(std::unique_ptr<ISectionDefinition> sectionTypeToAdd);
 
-		/// @brief	Parses a given script
-		///
-		/// @param	script	The script.
-		///
-		/// @return	Script to run
-		/// 
-		/// @exception UnknownScriptSectionException Thrown if an unknown script section is supplied
-		Script Parse(std::wstring const& script) const;
-	};
+        /// @brief    Parses a given script
+        ///
+        /// @param    script    The script.
+        ///
+        /// @return    Script to run
+        /// 
+        /// @exception UnknownScriptSectionException Thrown if an unknown script section is supplied
+        Script Parse(std::wstring const& script) const;
+    };
 
-	/// @brief	Script that can be run
-	class Script
-	{
-		ScriptParser const* parent_;
-		std::map<ScriptSection, std::vector<std::wstring>> sections;
-	public:
-		/// @brief	Constructor.
-		///
-		/// @param	parent	The ScriptDispatcher that constructed this Script
-		Script(ScriptParser const* parent);
+    /// @brief    Script that can be run
+    class Script
+    {
+        ScriptParser const* parent_;
+        std::map<ScriptSection, std::vector<std::wstring>> sections;
+    public:
+        /// @brief    Constructor.
+        ///
+        /// @param    parent    The ScriptDispatcher that constructed this Script
+        Script(ScriptParser const* parent);
 
-		/// @brief	Gets the sections.
-		///
-		/// @return	The sections.
-		std::map<ScriptSection, std::vector<std::wstring>> const& GetSections() const;
+        /// @brief    Gets the sections.
+        ///
+        /// @return    The sections.
+        std::map<ScriptSection, std::vector<std::wstring>> const& GetSections() const;
 
-		/// @brief	Adds a ISectionDefinition with given arguments and options
-		///
-		/// @param	def	   	The section definition to add.
-		/// @param	arg	   	The arguments to the section.
-		/// @param	options	Options (lines) supplied to the section
-		void Add(ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options, std::size_t index);
+        /// @brief    Adds a ISectionDefinition with given arguments and options
+        ///
+        /// @param    def           The section definition to add.
+        /// @param    arg           The arguments to the section.
+        /// @param    options    Options (lines) supplied to the section
+        void Add(ISectionDefinition const* def, std::wstring const& arg, std::vector<std::wstring> const& options, std::size_t index);
 
-		/// @brief	Runs the script
-		///
-		/// @param [out]	logOutput	Stream to output log to 
-		/// @param [out]	ui		 	The UI to send messages to
-		void Run(std::wostream& logOutput, IUserInterface *ui) const;
-	};
+        /// @brief    Runs the script
+        ///
+        /// @param [out]    logOutput    Stream to output log to 
+        /// @param [out]    ui             The UI to send messages to
+        void Run(std::wostream& logOutput, IUserInterface *ui) const;
+    };
 
-	/// @brief	Thrown when an unknown script section is encountered
-	class UnknownScriptSectionException : public std::exception
-	{
-		std::string unknown;
-	public:
-		UnknownScriptSectionException(std::wstring& sectionTitle)
-			: unknown(ConvertUnicode(sectionTitle) + " is not a known script section type.")
-		{ }
-		virtual char const* what() const
-		{
-			return unknown.c_str();
-		}
-	};
+    /// @brief    Thrown when an unknown script section is encountered
+    class UnknownScriptSectionException : public std::exception
+    {
+        std::string unknown;
+    public:
+        UnknownScriptSectionException(std::wstring& sectionTitle)
+            : unknown(ConvertUnicode(sectionTitle) + " is not a known script section type.")
+        { }
+        virtual char const* what() const
+        {
+            return unknown.c_str();
+        }
+    };
 }

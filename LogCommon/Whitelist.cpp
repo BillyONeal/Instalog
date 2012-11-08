@@ -17,64 +17,64 @@
 using Instalog::SystemFacades::Win32Exception;
 
 namespace Instalog {
-	static HMODULE GetCurrentModule()
-	{
-		HMODULE hModule = NULL;
-		BOOL errorCheck = ::GetModuleHandleEx(
-			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-			(LPCTSTR)GetCurrentModule,
-			&hModule);
-		if (errorCheck == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		return hModule;
-	}
+    static HMODULE GetCurrentModule()
+    {
+        HMODULE hModule = NULL;
+        BOOL errorCheck = ::GetModuleHandleEx(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            (LPCTSTR)GetCurrentModule,
+            &hModule);
+        if (errorCheck == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+        return hModule;
+    }
 
-	Whitelist::Whitelist( __int32 whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
-	{
-		using namespace std::placeholders;
-		HMODULE hMod = GetCurrentModule();
-		HRSRC resourceHandle = ::FindResource(hMod, MAKEINTRESOURCEW(whitelistId), L"WHITELIST");
-		if (resourceHandle == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		HGLOBAL resourceGlobal = ::LoadResource(hMod, resourceHandle);
-		if (resourceGlobal == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		void * resourceData = ::LockResource(resourceGlobal);
-		if (resourceData == 0)
-		{
-			Win32Exception::ThrowFromLastError();
-		}
-		wchar_t const* resourceDataCasted = static_cast<wchar_t const*>(resourceData);
-		DWORD resourceLen = ::SizeofResource(hMod, resourceHandle);
-		auto sourceRange = boost::make_iterator_range(resourceDataCasted, resourceDataCasted + (resourceLen / sizeof(wchar_t)));
-		boost::algorithm::split(innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
-		std::for_each(innards.begin(), innards.end(), std::bind(boost::algorithm::to_lower<std::wstring>, _1, std::locale()));
-		std::for_each(innards.begin(), innards.end(), [&replacements] (std::wstring &a) {
-			std::for_each(replacements.begin(), replacements.end(), [&a] (std::pair<std::wstring, std::wstring> const&b) {
-				if (boost::algorithm::istarts_with(a, b.first))
-				{
-					a.replace(a.begin(), a.begin() + b.first.size(), b.second);
-				}
-			});
-		});
-		std::sort(innards.begin(), innards.end());
-	}
+    Whitelist::Whitelist( __int32 whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
+    {
+        using namespace std::placeholders;
+        HMODULE hMod = GetCurrentModule();
+        HRSRC resourceHandle = ::FindResource(hMod, MAKEINTRESOURCEW(whitelistId), L"WHITELIST");
+        if (resourceHandle == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+        HGLOBAL resourceGlobal = ::LoadResource(hMod, resourceHandle);
+        if (resourceGlobal == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+        void * resourceData = ::LockResource(resourceGlobal);
+        if (resourceData == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+        wchar_t const* resourceDataCasted = static_cast<wchar_t const*>(resourceData);
+        DWORD resourceLen = ::SizeofResource(hMod, resourceHandle);
+        auto sourceRange = boost::make_iterator_range(resourceDataCasted, resourceDataCasted + (resourceLen / sizeof(wchar_t)));
+        boost::algorithm::split(innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
+        std::for_each(innards.begin(), innards.end(), std::bind(boost::algorithm::to_lower<std::wstring>, _1, std::locale()));
+        std::for_each(innards.begin(), innards.end(), [&replacements] (std::wstring &a) {
+            std::for_each(replacements.begin(), replacements.end(), [&a] (std::pair<std::wstring, std::wstring> const&b) {
+                if (boost::algorithm::istarts_with(a, b.first))
+                {
+                    a.replace(a.begin(), a.begin() + b.first.size(), b.second);
+                }
+            });
+        });
+        std::sort(innards.begin(), innards.end());
+    }
 
-	bool Whitelist::IsOnWhitelist( std::wstring checked ) const
-	{
-		boost::algorithm::to_lower(checked);
-		return std::binary_search(innards.begin(), innards.end(), checked);
-	}
+    bool Whitelist::IsOnWhitelist( std::wstring checked ) const
+    {
+        boost::algorithm::to_lower(checked);
+        return std::binary_search(innards.begin(), innards.end(), checked);
+    }
 
-	void Whitelist::PrintAll( std::wostream & str ) const
-	{
-		std::copy(innards.begin(), innards.end(), std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
-	}
+    void Whitelist::PrintAll( std::wostream & str ) const
+    {
+        std::copy(innards.begin(), innards.end(), std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
+    }
 
 }

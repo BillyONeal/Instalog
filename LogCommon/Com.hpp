@@ -9,14 +9,14 @@
 
 namespace Instalog { namespace SystemFacades {
 
-	struct Com : boost::noncopyable
-	{
+    struct Com : boost::noncopyable
+    {
         /// <summary>Initializes a new instance of the Com class. Initializes the Component Object Model.</summary>
-		Com(DWORD threadingType = COINIT_APARTMENTTHREADED);
+        Com(DWORD threadingType = COINIT_APARTMENTTHREADED);
 
         /// <summary>Finalizes an instance of the Com class. Shuts down Component Object Model.</summary>
-		~Com();
-	};
+        ~Com();
+    };
 
     /// <summary>
     /// Unique com pointer. Similar to ATL's CComPtr, except allows only a unique reference with move
