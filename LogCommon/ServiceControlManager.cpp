@@ -148,7 +148,7 @@ namespace Instalog { namespace SystemFacades {
 
     ServiceControlManager::ServiceControlManager( DWORD desiredAccess /* = SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE */ )
     {
-        scmHandle = OpenSCManagerW(NULL, NULL, desiredAccess);
+        scmHandle = ::OpenSCManagerW(NULL, NULL, desiredAccess);
 
         if (scmHandle == NULL)
         {
@@ -158,37 +158,38 @@ namespace Instalog { namespace SystemFacades {
 
     ServiceControlManager::~ServiceControlManager()
     {
-        CloseServiceHandle(scmHandle);
+        ::CloseServiceHandle(scmHandle);
     }
 
     std::vector<Service> ServiceControlManager::GetServices() const
     {
+        DWORD const bufferSize = 65536;
         std::vector<Service> services;
 
-        std::aligned_storage<65536 /* (64K bytes max size) */, std::alignment_of<ENUM_SERVICE_STATUSW>::value>::type
-            servicesBufferBacking;
-        auto servicesBuffer = reinterpret_cast<unsigned char*>(&servicesBufferBacking);
+        // 64k bytes stack buffer size aligned for ENUM_SERVICE_STATUSW structures.
+        typedef std::aligned_storage<bufferSize, std::alignment_of<ENUM_SERVICE_STATUSW>::value>::type buffer_type;
+        buffer_type servicesBufferBacking;
+        auto servicesBuffer = reinterpret_cast<ENUM_SERVICE_STATUSW*>(&servicesBufferBacking);
         DWORD bytesNeeded = 0; // not needed
         DWORD servicesReturned = 0;
         DWORD resumeHandle = 0;
         BOOL status = false;
         DWORD error = ERROR_MORE_DATA;
 
-        while (status == false && error == ERROR_MORE_DATA)
+        do
         {
-            status = EnumServicesStatusW(scmHandle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL, reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBuffer), 65536, &bytesNeeded, &servicesReturned, &resumeHandle);
-            error = GetLastError();
+            status = ::EnumServicesStatusW(scmHandle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL, servicesBuffer, bufferSize, &bytesNeeded, &servicesReturned, &resumeHandle);
+            error = ::GetLastError();
             if (status == false && error != ERROR_MORE_DATA)
             {
                 Win32Exception::Throw(error);
             }
 
-            for (unsigned char* servicesBufferLocation = servicesBuffer; servicesReturned > 0; --servicesReturned, servicesBufferLocation += sizeof(ENUM_SERVICE_STATUSW))
+            for (auto enumServiceStatus = servicesBuffer; servicesReturned > 0; --servicesReturned, ++enumServiceStatus)
             {
-                ENUM_SERVICE_STATUS *enumServiceStatus = reinterpret_cast<ENUM_SERVICE_STATUSW*>(servicesBufferLocation);
                 services.emplace_back(enumServiceStatus->lpServiceName, enumServiceStatus->lpDisplayName, enumServiceStatus->ServiceStatus, scmHandle);
             }
-        }
+        } while (status == false && error == ERROR_MORE_DATA);
 
         return std::move(services);
     }
