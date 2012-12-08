@@ -21,14 +21,30 @@ namespace Instalog { namespace SystemFacades {
         // Set the state
         switch (status.dwCurrentState)
         {
-        case SERVICE_STOPPED:            this->state = L"S"; break;
-        case SERVICE_START_PENDING:        this->state = L"R?"; break;
-        case SERVICE_STOP_PENDING:        this->state = L"S?"; break;
-        case SERVICE_RUNNING:            this->state = L"R"; break;
-        case SERVICE_CONTINUE_PENDING:    this->state = L"C?"; break;
-        case SERVICE_PAUSE_PENDING:        this->state = L"P?"; break;
-        case SERVICE_PAUSED:            this->state = L"P"; break;
-        default:                        this->state = L"?"; break;
+        case SERVICE_STOPPED:
+            this->state = L"S";
+            break;
+        case SERVICE_START_PENDING:
+            this->state = L"R?";
+            break;
+        case SERVICE_STOP_PENDING:
+            this->state = L"S?";
+            break;
+        case SERVICE_RUNNING:
+            this->state = L"R";
+            break;
+        case SERVICE_CONTINUE_PENDING:
+            this->state = L"C?";
+            break;
+        case SERVICE_PAUSE_PENDING:
+            this->state = L"P?";
+            break;
+        case SERVICE_PAUSED:
+            this->state = L"P";
+            break;
+        default:
+            this->state = L"?";
+            break;
         }
 
         serviceHandle = OpenServiceW(scmHandle, this->serviceName.c_str(), SERVICE_QUERY_CONFIG);
