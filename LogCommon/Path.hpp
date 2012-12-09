@@ -68,7 +68,7 @@ namespace Instalog { namespace Path {
     class path
     {
         // C++ standard references are current as of N3485.
-        static_assert(std::is_same<wchar_t, std::allocator_traits<AllocatorT>::value_type>::value, "The allocator for paths must store wchar_t instances.");
+        static_assert(std::is_same<wchar_t, typename std::allocator_traits<AllocatorT>::value_type>::value, "The allocator for paths must store wchar_t instances.");
     public:
         // 23.2.1 [container.requirements.general]/4
         // General container requirements
@@ -113,46 +113,52 @@ namespace Instalog { namespace Path {
         allocator_type get_allocator() const;
         explicit path(allocator_type const& allocator = allocator_type());
         path(path const& other, allocator_type const& allocator);
-        path(path && other);
         path(path && other, allocator_type const& allocator);
 
         // 23.2.3 [sequence.reqmts]/4
         // Sequence container requirements. path meets most of these. Exceptions are noted.
         // The constructor taking an initial size and element is not supported.
-        template <typename iteratorType>
-        path(iteratorType left, iteratorType right, Allocator const& allocator);
+        // The enable_if use below is to comply with 23.2.3 [sequence.reqmts]/14:
+        //     ... is called with a type InputIterator that does not qualify as an input iterator
+        //     then the constructor shall not participate in overload resolution.
+        template <typename InputIterator>
+        path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
+             InputIterator last, allocator_type const& allocator = allocator_type());
         // The constructor and copy assignment operator from initializer_list are left out
         // because MSVC++ doens't support initializer_list yet.
         // emplace is left out because MSVC++ doesn't support variadic templates yet.
         iterator insert(const_iterator insertionPoint, wchar_t character);
         iterator insert(const_iterator insertionPoint, size_type count, wchar_t character);
-        template<typename iteratorType>
-        iterator insert(const_iterator insertionPoint, iteratorType start, iteratorType finish);
+        template<typename InputIterator>
+        typename std::enable_if<!std::is_integral<InputIterator>::value, iterator>::type
+            insert(const_iterator insertionPoint, InputIterator start, InputIterator finish);
         // Initializer list based insert not defined because MSVC++ doesn't support initializer list
         iterator erase(const_iterator removalPoint) throw();
         iterator erase(const_iterator removalBegin, const_iterator removalEnd) throw();
         void clear() throw();
-        template<typename iteratorType>
-        void assign(iteratorType start, iteratorType finish);
+        // The enable_if use below is to comply with 23.2.3 [sequence.reqmts]/14:
+        template<typename InputIterator>
+        typename std::enable_if<!std::is_integral<InputIterator>::value>::type
+            assign(InputIterator start, InputIterator finish);
         // Initializer list based assign not defined because MSVC++ doesn't support initializer list
         void assign(size_type count, wchar_t character);
 
         // 23.2.3 [sequence.reqmts]/16
         // Sequence container optional requirements
-        reference front() throw();
-        const_reference front() const throw();
-        reference back() throw();
-        const_reference back() const throw();
+        reference_type front() throw();
+        reference_type const front() const throw();
+        reference_type back() throw();
+        reference_type const back() const throw();
         // Emplace front omitted because it is inefficient in this container
         // Emplace back omitted because MSVC++ doesn't support variadic templates
         void push_back(wchar_t character);
         // push front omitted because it is inefficient in this container.
         // pop front omitted because it is inefficient in this container.
         void pop_back() throw();
-        reference operator[](size_type index) throw();
-        const_reference operator[](size_type index) const throw();
-        reference at(size_type index);
-        const_reference at(size_type index) const;
+        reference_type operator[](size_type index) throw();
+        reference_type const operator[](size_type index) const throw();
+        reference_type at(size_type index);
+        reference_type const at(size_type index) const;
 
         // Additional members
         size_type capacity() const throw();
