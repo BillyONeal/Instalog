@@ -75,13 +75,14 @@ namespace Instalog { namespace Path {
         typedef wchar_t* pointer;
         typedef wchar_t const* const_pointer;
         typedef wchar_t& reference_type;
+        typedef wchar_t const& const_reference_type;
         typedef pointer iterator;
         typedef const_pointer const_iterator;
         typedef std::ptrdiff_t difference_type;
         typedef std::size_t size_type;
-        path();
+        path() throw();
         path(path const& other);
-        path(path && other);
+        path(path && other) throw();
         path& operator=(path other);
         iterator begin() throw();
         const_iterator begin() const throw();
@@ -137,17 +138,17 @@ namespace Instalog { namespace Path {
         // 23.2.3 [sequence.reqmts]/16
         // Sequence container optional requirements
         reference_type front() throw();
-        reference_type const front() const throw();
+        const_reference_type front() const throw();
         reference_type back() throw();
-        reference_type const back() const throw();
+        const_reference_type back() const throw();
         // Emplace front omitted because it is inefficient in this container
         // Emplace back omitted because MSVC++ doesn't support variadic templates
         void push_back(wchar_t character);
         // push front omitted because it is inefficient in this container.
         // pop front omitted because it is inefficient in this container.
         void pop_back() throw();
-        reference_type const operator[](size_type index) const throw();
-        reference_type const at(size_type index) const;
+        const_reference_type operator[](size_type index) const throw();
+        const_reference_type at(size_type index) const;
 
         // Additional members
         size_type capacity() const throw();
@@ -172,32 +173,63 @@ namespace Instalog { namespace Path {
         reverse_const_iterator ruend() const throw();
         reverse_const_iterator cruend() const throw();
         reference_type ufront() throw();
-        reference_type const ufront() const throw();
+        const_reference_type ufront() const throw();
         reference_type uback() throw();
-        reference_type const uback() const throw();
+        const_reference_type uback() const throw();
     private:
+        void ensure_capacity(size_type desiredCapacity);
+        pointer upperBase() throw();
+        const_pointer upperBase() const throw();
         size_type size_;
         size_type capacity_;
         pointer base_;
     };
 
     template <typename InputIterator>
-    path::path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
+    inline path::path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
          InputIterator last)
     {
     }
 
-    bool operator==(path const& lhs, path const& rhs) throw();
+    inline bool operator==(path const& lhs, path const& rhs) throw()
+    {
+        if (lhs.size() != rhs.size())
+        {
+            return false;
+        }
+        else
+        {
+            return std::equal(lhs.ubegin(), lhs.uend(), rhs.ubegin());
+        }
+    }
 
-    bool operator!=(path const& lhs, path const& rhs) throw();
+    inline bool operator!=(path const& lhs, path const& rhs) throw()
+    {
+        return !(lhs == rhs);
+    }
 
-    bool operator<(path const& lhs, path const& rhs) throw();
+    inline bool operator<(path const& lhs, path const& rhs) throw()
+    {
+        return std::lexicographical_compare(lhs.ubegin(), lhs.uend(), rhs.ubegin(), rhs.uend());
+    }
 
-    bool operator>(path const& lhs, path const& rhs) throw();
+    inline bool operator>(path const& lhs, path const& rhs) throw()
+    {
+        return rhs < lhs;
+    }
 
-    bool operator<=(path const& lhs, path const& rhs) throw();
+    inline bool operator<=(path const& lhs, path const& rhs) throw()
+    {
+        return !(lhs > rhs);
+    }
 
-    bool operator>=(path const& lhs, path const& rhs) throw();
+    inline bool operator>=(path const& lhs, path const& rhs) throw()
+    {
+        return !(lhs < rhs);
+    }
 
-    void swap(path& lhs, path& rhs) throw();
+    inline void swap(path& lhs, path& rhs) throw()
+    {
+        return lhs.swap(rhs);
+    }
 }}

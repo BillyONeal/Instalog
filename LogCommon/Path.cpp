@@ -330,151 +330,246 @@ namespace Instalog { namespace Path {
         return std::move(result);
     }
 
-    path::path()
+    //
+    // Path uses a memory block like the following:
+    // +---------------------+----+-------+-----------------------+----+-------+
+    // | Display path string | \0 | Empty | Uppercase path string | \0 | Empty |
+    // +---------------------+----+-------+-----------------------+----+-------+
+    //  | <-    size()   -> |  1
+    //  | <-        capacity() + 1       |
+    //                                     | <-    size()     -> |  1
+    //                                     | <-        capacity() + 1      -> |
+    //  | <-                   capacity() * 2 + 2                          -> |
+
+    /**
+     * Converts a given size of a path into the size of the memory block required to hold a path of that size.
+     */
+    static inline std::size_t capacity_to_memory_capacity(std::size_t capacity)
     {
+        return 2 * capacity + 2;
     }
+
+    path::path() throw()
+        : base_(nullptr)
+        , size_(0)
+        , capacity_(0)
+    { }
 
     path::path(path const& other)
+        : capacity_(other.size())
+        , size_(other.size())
+        , base_(new wchar_t[capacity_to_memory_capacity(this->capacity_)])
     {
+        auto uppercaseBegin = other.upperBase();
+        // +1 for null terminator
+        std::copy(other.base_, other.base_ + other.size_ + 1, this->base_);
+        std::copy(uppercaseBegin, uppercaseBegin + other.size_ + 1, this->upperBase());
     }
 
-    path::path(path && other)
+    path::path(path && other) throw()
+        : base_(other.base_)
+        , size_(other.size_)
+        , capacity_(other.capacity_)
     {
+        other.base_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
     }
 
     path& path::operator=(path other)
     {
+        other.swap(*this);
+        return *this;
     }
 
-    path::iterator begin() throw()
+    path::iterator path::begin() throw()
     {
+        return this->base_;
     }
 
     path::const_iterator path::begin() const throw()
     {
+        return this->base_;
     }
 
     path::const_iterator path::cbegin() const throw()
     {
+        return this->base_;
     }
 
     path::iterator path::end() throw()
     {
+        return this->base_ + this->size();
     }
 
     path::const_iterator path::end() const throw()
     {
+        return this->base_ + this->size();
     }
 
     path::const_iterator path::cend() const throw()
     {
+        return this->base_ + this->size();
     }
 
     void path::swap(path& other) throw()
     {
+        using std::swap;
+        swap(this->base_, other.base_);
+        swap(this->size_, other.size_);
+        swap(this->capacity_, other.capacity_);
     }
 
     path::size_type path::size() const throw()
     {
+        return this->size_;
     }
 
     path::size_type path::max_size() const throw()
     {
+        return (std::numeric_limits<std::size_t>::max() / 2) - 2;
     }
 
     bool path::empty() const throw()
     {
+        return this->size() == 0;
     }
 
     path::~path() throw()
     {
+        if (this->base_ != nullptr)
+        {
+            delete [] this->base_;
+        }
     }
 
     path::reverse_iterator path::rbegin() throw()
     {
+        return path::reverse_iterator(this->end());
     }
 
     path::reverse_const_iterator path::rbegin() const throw()
     {
+        return path::reverse_const_iterator(this->end());
     }
 
     path::reverse_const_iterator path::crbegin() const throw()
     {
+        return path::reverse_const_iterator(this->end());
     }
 
     path::reverse_iterator path::rend() throw()
     {
+        return path::reverse_iterator(this->begin());
     }
 
     path::reverse_const_iterator path::rend() const throw()
     {
+        return path::reverse_const_iterator(this->begin());
     }
 
     path::reverse_const_iterator path::crend() const throw()
     {
+        return path::reverse_const_iterator(this->begin());
     }
 
     path::iterator path::ubegin() throw()
     {
+        return this->upperBase();
     }
 
     path::const_iterator path::ubegin() const throw()
     {
+        return this->upperBase();
     }
 
     path::const_iterator path::cubegin() const throw()
     {
+        return this->upperBase();
     }
 
     path::iterator path::uend() throw()
     {
+        return this->upperBase() + this->size();
     }
 
     path::const_iterator path::uend() const throw()
     {
+        return this->upperBase() + this->size();
     }
 
     path::const_iterator path::cuend() const throw()
     {
+        return this->upperBase() + this->size();
     }
 
     path::reverse_iterator path::rubegin() throw()
     {
+        return path::reverse_iterator(this->uend());
     }
 
     path::reverse_const_iterator path::rubegin() const throw()
     {
+        return path::reverse_const_iterator(this->uend());
     }
 
     path::reverse_const_iterator path::crubegin() const throw()
     {
+        return path::reverse_const_iterator(this->uend());
     }
 
     path::reverse_iterator path::ruend() throw()
     {
+        return path::reverse_iterator(this->ubegin());
     }
 
     path::reverse_const_iterator path::ruend() const throw()
     {
+        return path::reverse_const_iterator(this->ubegin());
     }
 
     path::reverse_const_iterator path::cruend() const throw()
     {
+        return path::reverse_const_iterator(this->ubegin());
     }
 
     path::reference_type path::ufront() throw()
     {
+        assert(!this->empty());
+        return *this->ubegin();
     }
 
-    path::reference_type const path::ufront() const throw()
+    path::const_reference_type path::ufront() const throw()
     {
+        assert(!this->empty());
+        return *this->ubegin();
     }
 
     path::reference_type path::uback() throw()
     {
+        assert(!this->empty());
+        return *(this->uend() - 1);
     }
 
-    path::reference_type const path::uback() const throw()
+    path::const_reference_type path::uback() const throw()
     {
+        assert(!this->empty());
+        return *(this->uend() - 1);
+    }
+
+    void path::ensure_capacity(path::size_type desiredCapacity)
+    {
+        auto newCapacity = std::max(desiredCapacity, this->capacity_ * 2);
+        this->reserve(newCapacity);
+    }
+
+    path::pointer path::upperBase() throw()
+    {
+        return this->base_ + this->capacity_ + 1;
+    }
+
+    path::const_pointer path::upperBase() const throw()
+    {
+        return this->base_ + this->capacity_ + 1;
     }
 }}
