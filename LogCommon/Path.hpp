@@ -55,20 +55,19 @@ namespace Instalog { namespace Path {
      */
     std::wstring ExpandEnvStrings(std::wstring const& input);
 
-    class path_view;
-
     /**
      * @brief Represents a Windows path.
      * 
      * @details This class encapsulates the concept of a path string. It maintains both upper case and display case versions of the strings in question, and
      *          maintains the actual memory buffer in which the path data is stored. Comparisons are done in a case insensitive manner; but otherwise this
      *          is similar to the standard vector template.
+     *
+     * @todo Make this container allocator-aware.
+     * @todo non-const operator[]/at() (possible "view" or something like that)
      */
-    template<typename AllocatorT = std::allocator<wchar_t>>
     class path
     {
         // C++ standard references are current as of N3485.
-        static_assert(std::is_same<wchar_t, typename std::allocator_traits<AllocatorT>::value_type>::value, "The allocator for paths must store wchar_t instances.");
     public:
         // 23.2.1 [container.requirements.general]/4
         // General container requirements
@@ -80,7 +79,7 @@ namespace Instalog { namespace Path {
         typedef const_pointer const_iterator;
         typedef std::ptrdiff_t difference_type;
         typedef std::size_t size_type;
-        // Default constructor below in allocator container requirements.
+        path();
         path(path const& other);
         path(path && other);
         path& operator=(path other);
@@ -90,7 +89,7 @@ namespace Instalog { namespace Path {
         iterator end() throw();
         const_iterator end() const throw();
         const_iterator cend() const throw();
-        void swap(path<AllocatorT>& other) throw();
+        void swap(path& other) throw();
         size_type size() const throw();
         size_type max_size() const throw();
         bool empty() const throw();
@@ -107,14 +106,6 @@ namespace Instalog { namespace Path {
         reverse_const_iterator rend() const throw();
         reverse_const_iterator crend() const throw();
 
-        // 23.2.1 [container.requirements.general]/11
-        // Allocator aware container requirements
-        typedef AllocatorT allocator_type;
-        allocator_type get_allocator() const;
-        explicit path(allocator_type const& allocator = allocator_type());
-        path(path const& other, allocator_type const& allocator);
-        path(path && other, allocator_type const& allocator);
-
         // 23.2.3 [sequence.reqmts]/4
         // Sequence container requirements. path meets most of these. Exceptions are noted.
         // The constructor taking an initial size and element is not supported.
@@ -123,7 +114,7 @@ namespace Instalog { namespace Path {
         //     then the constructor shall not participate in overload resolution.
         template <typename InputIterator>
         path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
-             InputIterator last, allocator_type const& allocator = allocator_type());
+             InputIterator last);
         // The constructor and copy assignment operator from initializer_list are left out
         // because MSVC++ doens't support initializer_list yet.
         // emplace is left out because MSVC++ doesn't support variadic templates yet.
@@ -155,9 +146,7 @@ namespace Instalog { namespace Path {
         // push front omitted because it is inefficient in this container.
         // pop front omitted because it is inefficient in this container.
         void pop_back() throw();
-        reference_type operator[](size_type index) throw();
         reference_type const operator[](size_type index) const throw();
-        reference_type at(size_type index);
         reference_type const at(size_type index) const;
 
         // Additional members
@@ -168,31 +157,47 @@ namespace Instalog { namespace Path {
         const_pointer c_str() const throw();
         path(wchar_t const* string);
         explicit path(std::wstring const& string);
+
+        // Uppercase range inteface.
+        iterator ubegin() throw();
+        const_iterator ubegin() const throw();
+        const_iterator cubegin() const throw();
+        iterator uend() throw();
+        const_iterator uend() const throw();
+        const_iterator cuend() const throw();
+        reverse_iterator rubegin() throw();
+        reverse_const_iterator rubegin() const throw();
+        reverse_const_iterator crubegin() const throw();
+        reverse_iterator ruend() throw();
+        reverse_const_iterator ruend() const throw();
+        reverse_const_iterator cruend() const throw();
+        reference_type ufront() throw();
+        reference_type const ufront() const throw();
+        reference_type uback() throw();
+        reference_type const uback() const throw();
     private:
-        allocator_type allocator_;
         size_type size_;
         size_type capacity_;
         pointer base_;
     };
 
-    template<typename AllocatorT>
-    bool operator==(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    template <typename InputIterator>
+    path::path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
+         InputIterator last)
+    {
+    }
 
-    template<typename AllocatorT>
-    bool operator!=(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    bool operator==(path const& lhs, path const& rhs) throw();
 
-    template<typename AllocatorT>
-    bool operator<(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    bool operator!=(path const& lhs, path const& rhs) throw();
 
-    template<typename AllocatorT>
-    bool operator>(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    bool operator<(path const& lhs, path const& rhs) throw();
 
-    template<typename AllocatorT>
-    bool operator<=(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    bool operator>(path const& lhs, path const& rhs) throw();
 
-    template<typename AllocatorT>
-    bool operator>=(path<AllocatorT> const& lhs, path<AllocatorT> const& rhs) throw();
+    bool operator<=(path const& lhs, path const& rhs) throw();
 
-    template<typename AllocatorT>
-    void swap(path<AllocatorT>& lhs, path<AllocatorT>& rhs) throw();
+    bool operator>=(path const& lhs, path const& rhs) throw();
+
+    void swap(path& lhs, path& rhs) throw();
 }}

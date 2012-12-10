@@ -330,4 +330,151 @@ namespace Instalog { namespace Path {
         return std::move(result);
     }
 
+    path::path()
+    {
+    }
+
+    path::path(path const& other)
+    {
+    }
+
+    path::path(path && other)
+    {
+    }
+
+    path& path::operator=(path other)
+    {
+    }
+
+    path::iterator begin() throw()
+    {
+    }
+
+    path::const_iterator path::begin() const throw()
+    {
+    }
+
+    path::const_iterator path::cbegin() const throw()
+    {
+    }
+
+    path::iterator path::end() throw()
+    {
+    }
+
+    path::const_iterator path::end() const throw()
+    {
+    }
+
+    path::const_iterator path::cend() const throw()
+    {
+    }
+
+    void path::swap(path& other) throw()
+    {
+    }
+
+    path::size_type path::size() const throw()
+    {
+    }
+
+    path::size_type path::max_size() const throw()
+    {
+    }
+
+    bool path::empty() const throw()
+    {
+    }
+
+    path::~path() throw()
+    {
+    }
+
+    path::reverse_iterator path::rbegin() throw()
+    {
+    }
+
+    path::reverse_const_iterator path::rbegin() const throw()
+    {
+    }
+
+    path::reverse_const_iterator path::crbegin() const throw()
+    {
+    }
+
+    path::reverse_iterator path::rend() throw()
+    {
+    }
+
+    path::reverse_const_iterator path::rend() const throw()
+    {
+    }
+
+    path::reverse_const_iterator path::crend() const throw()
+    {
+    }
+
+    path::iterator path::ubegin() throw()
+    {
+    }
+
+    path::const_iterator path::ubegin() const throw()
+    {
+    }
+
+    path::const_iterator path::cubegin() const throw()
+    {
+    }
+
+    path::iterator path::uend() throw()
+    {
+    }
+
+    path::const_iterator path::uend() const throw()
+    {
+    }
+
+    path::const_iterator path::cuend() const throw()
+    {
+    }
+
+    path::reverse_iterator path::rubegin() throw()
+    {
+    }
+
+    path::reverse_const_iterator path::rubegin() const throw()
+    {
+    }
+
+    path::reverse_const_iterator path::crubegin() const throw()
+    {
+    }
+
+    path::reverse_iterator path::ruend() throw()
+    {
+    }
+
+    path::reverse_const_iterator path::ruend() const throw()
+    {
+    }
+
+    path::reverse_const_iterator path::cruend() const throw()
+    {
+    }
+
+    path::reference_type path::ufront() throw()
+    {
+    }
+
+    path::reference_type const path::ufront() const throw()
+    {
+    }
+
+    path::reference_type path::uback() throw()
+    {
+    }
+
+    path::reference_type const path::uback() const throw()
+    {
+    }
 }}
