@@ -330,6 +330,11 @@ namespace Instalog { namespace Path {
         return std::move(result);
     }
 
+    __declspec(noreturn) static inline void throw_length_error()
+    {
+        throw std::length_error("Path maximum length exceeded.");
+    }
+
     //
     // Path uses a memory block like the following:
     // +---------------------+----+-------+-----------------------+----+-------+
@@ -347,6 +352,27 @@ namespace Instalog { namespace Path {
     static inline std::size_t capacity_to_memory_capacity(std::size_t capacity)
     {
         return 2 * capacity + 2;
+    }
+
+    /*
+     * Converts a memory buffer to upper case.
+     *
+     * @remarks Right now this is Win32 specific.
+     */
+    void path::uppercase_range(path::size_type length, path::const_pointer start, path::pointer target)
+    {
+        if (length >= std::numeric_limits<INT>::max())
+        {
+            // Can't happen. But in case it does....
+            std::terminate();
+        }
+
+        int asInt = static_cast<int>(length);
+        auto result = ::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, source, asInt, target, asInt);
+        if (!result)
+        {
+            assert(!"Something, somewhere, when horribly wrong");
+        }
     }
 
     path::path() throw()
@@ -427,7 +453,18 @@ namespace Instalog { namespace Path {
 
     path::size_type path::max_size() const throw()
     {
-        return (std::numeric_limits<std::size_t>::max() / 2) - 2;
+        // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+        // The Windows API has many functions that also have Unicode versions to permit an
+        // extended-length path for a maximum total path length of 32,767 characters. This
+        // type of path is composed of components separated by backslashes, each up to the
+        // value returned in the lpMaximumComponentLength parameter of the GetVolumeInformation
+        // function (this value is commonly 255 characters). To specify an extended-length
+        // path, use the "\\?\" prefix. For example, "\\?\D:\very long path".
+        //
+        // Note  The maximum path of 32,767 characters is approximate, because the "\\?\"
+        // prefix may be expanded to a longer string by the system at run time, and this
+        // expansion applies to the total length
+        return 32767;
     }
 
     bool path::empty() const throw()
@@ -559,8 +596,41 @@ namespace Instalog { namespace Path {
 
     void path::ensure_capacity(path::size_type desiredCapacity)
     {
+        if (desiredCapacity > this->max_size())
+        {
+            throw_length_error();
+        }
+
         auto newCapacity = std::max(desiredCapacity, this->capacity_ * 2);
+        // Don't let capacity doubling exceed max_size
+        newCapacity = std::min(newCapacity, this->max_size());
+
         this->reserve(newCapacity);
+    }
+
+    void path::reserve(size_type count)
+    {
+        if (count < this->capacity_)
+        {
+            return;
+        }
+
+        if (count >= this->max_size())
+        {
+            throw_length_error();
+        }
+
+        auto buffer = new wchar_t[count * 2 + 2];
+        if (this->base_)
+        {
+            auto upperBegin = this->upperBase();
+            std::copy(this->base_, this->base_ + this->size() + 1, buffer);
+            std::copy(upperBegin, upperBegin + this->size() + 1, buffer + count + 1);
+            delete [] this->base_;
+        }
+
+        this->base_ = buffer;
+        this->capacity_ = count;
     }
 
     path::pointer path::upperBase() throw()
@@ -571,5 +641,85 @@ namespace Instalog { namespace Path {
     path::const_pointer path::upperBase() const throw()
     {
         return this->base_ + this->capacity_ + 1;
+    }
+
+    path::pointer path::data() throw()
+    {
+        return this->base_;
+    }
+
+    path::const_pointer path::data() const throw()
+    {
+        return this->base_;
+    }
+
+    path::const_pointer path::c_str() const throw()
+    {
+        return this->base_;
+    }
+
+    path::path(wchar_t const* string)
+        : capacity_(0)
+        , base_(nullptr)
+    {
+        auto length = std::wcslen(string);
+        this->size_ = length;
+        this->ensure_capacity(length);
+
+        auto upperStart = this->upperBase();
+        std::copy(string, string + length + 1, this->base_);
+        path::uppercase_range(this->size_, this->base_, upperStart);
+        upperStart[this->size_] = L'\0';
+    }
+
+    path::path(std::wstring const& string)
+        : capacity_(0)
+        , base_(nullptr)
+    {
+        this->size_ = string.size();
+        this->ensure_capacity(string.size());
+
+        auto upperStart = this->upperBase();
+        std::copy(string.cbegin(), string.cend(), this->base_);
+        this->base_[this->size_] = L'\0';
+        path::uppercase_range(this->size_, this->base_, upperStart);
+        upperStart[this->size_] = L'\0';
+    }
+
+    void path::push_back(wchar_t character)
+    {
+        auto lastSize = this->size();
+        this->ensure_capacity(lastSize + 1);
+        auto upper = this->upperBase();
+        this->base_[lastSize] = character;
+        path::uppercase_range(1, this->base_ + lastSize, upper + lastSize);
+        ++this->size_;
+        this->base_[this->size()] = L'\0';
+        upper[this->size()] = L'\0';
+    }
+    
+    void path::pop_back() throw()
+    {
+        if (!this->empty())
+        {
+            this->base_[this->size() - 1] = L'\0';
+            this->upperBase()[this->size() - 1] = L'\0';
+            --this->size_;
+        }
+    }
+
+    path::const_reference_type path::operator[](path::size_type index) const throw()
+    {
+        return this->base_[index];
+    }
+
+    path::const_reference_type path::at(path::size_type index) const
+    {
+        if (index >= this->size())
+        {
+            throw std::length_error("Reference to path using path::at() exceeded range.");
+        }
+
+        return this->base_[index];
     }
 }}

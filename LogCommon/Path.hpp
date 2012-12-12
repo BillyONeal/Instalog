@@ -5,6 +5,8 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <iterator>
+#include <algorithm>
 #include <type_traits>
 
 namespace Instalog { namespace Path {
@@ -110,28 +112,21 @@ namespace Instalog { namespace Path {
         // 23.2.3 [sequence.reqmts]/4
         // Sequence container requirements. path meets most of these. Exceptions are noted.
         // The constructor taking an initial size and element is not supported.
-        // The enable_if use below is to comply with 23.2.3 [sequence.reqmts]/14:
-        //     ... is called with a type InputIterator that does not qualify as an input iterator
-        //     then the constructor shall not participate in overload resolution.
         template <typename InputIterator>
-        path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
-             InputIterator last);
+        path(InputIterator first, InputIterator last);
         // The constructor and copy assignment operator from initializer_list are left out
         // because MSVC++ doens't support initializer_list yet.
         // emplace is left out because MSVC++ doesn't support variadic templates yet.
         iterator insert(const_iterator insertionPoint, wchar_t character);
         iterator insert(const_iterator insertionPoint, size_type count, wchar_t character);
         template<typename InputIterator>
-        typename std::enable_if<!std::is_integral<InputIterator>::value, iterator>::type
-            insert(const_iterator insertionPoint, InputIterator start, InputIterator finish);
+        iterator insert(const_iterator insertionPoint, InputIterator start, InputIterator finish);
         // Initializer list based insert not defined because MSVC++ doesn't support initializer list
         iterator erase(const_iterator removalPoint) throw();
         iterator erase(const_iterator removalBegin, const_iterator removalEnd) throw();
         void clear() throw();
-        // The enable_if use below is to comply with 23.2.3 [sequence.reqmts]/14:
         template<typename InputIterator>
-        typename std::enable_if<!std::is_integral<InputIterator>::value>::type
-            assign(InputIterator start, InputIterator finish);
+        void assign(InputIterator start, InputIterator finish);
         // Initializer list based assign not defined because MSVC++ doesn't support initializer list
         void assign(size_type count, wchar_t character);
 
@@ -177,6 +172,19 @@ namespace Instalog { namespace Path {
         reference_type uback() throw();
         const_reference_type uback() const throw();
     private:
+        static void uppercase_range(size_type length, const_pointer start, pointer target);
+        template <typename InputIterator>
+        void range_construct(InputIterator first, InputIterator last, std::input_iterator_tag);
+        template <typename ForwardIterator>
+        void range_construct(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
+        template <typename InputIterator>
+        iterator range_insert(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag);
+        template <typename ForwardIterator>
+        iterator range_insert(const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
+        template <typename InputIterator>
+        void range_assign(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag);
+        template <typename ForwardIterator>
+        void range_assign(const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
         void ensure_capacity(size_type desiredCapacity);
         pointer upperBase() throw();
         const_pointer upperBase() const throw();
@@ -186,8 +194,62 @@ namespace Instalog { namespace Path {
     };
 
     template <typename InputIterator>
-    inline path::path(typename std::enable_if<!std::is_integral<InputIterator>::value, InputIterator>::type first,
-         InputIterator last)
+    inline path::path(InputIterator first, InputIterator last)
+        : size_(0)
+        , capacity_(0)
+        , base_(nullptr)
+    {
+        this->range_construct(first, last, typename std::iterator_traits<InputIterator>::iterator_category());
+    }
+
+    template <typename InputIterator>
+    void path::range_construct(InputIterator first, InputIterator last, std::input_iterator_tag)
+    {
+        this->reserve(260); //MAX_PATH
+        for (; first != last; ++first)
+        {
+            this->push_back(*first);
+        }
+    }
+
+    template <typename ForwardIterator>
+    void path::range_construct(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+    {
+        this->reserve(std::distance(first, last));
+        this->insert(this->begin(), first, last);
+    }
+
+    template<typename InputIterator>
+    typename path::iterator path::insert(path::const_iterator insertionPoint, InputIterator start, InputIterator finish)
+    {
+        return this->range_insert(insertionPoint, start, finish, typename std::iterator_traits<InputIterator>::iterator_category());
+    }
+
+    template <typename InputIterator>
+    path::iterator path::range_insert(path::const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+    {
+    }
+
+    template <typename ForwardIterator>
+    path::iterator path::range_insert(path::const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+    {
+    }
+
+    template<typename InputIterator>
+    void assign(InputIterator start, InputIterator finish)
+    {
+        this->range_assign(start, finish, typename std::iterator_traits<InputIterator>::iterator_category());
+    }
+
+    template <typename InputIterator>
+    path::iterator path::range_assign(path::const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+    {
+        this->clear();
+        this->range_construct(position, first, last, std::input_iterator_tag());
+    }
+
+    template <typename ForwardIterator>
+    path::iterator path::range_assign(path::const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
     {
     }
 
