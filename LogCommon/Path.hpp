@@ -172,15 +172,12 @@ namespace Instalog { namespace Path {
         reference_type uback() throw();
         const_reference_type uback() const throw();
     private:
+        static size_type get_next_geometric_size(size_type currentSize, size_type requiredSize, size_type maxSize);
         static void uppercase_range(size_type length, const_pointer start, pointer target);
         template <typename InputIterator>
         void range_construct(InputIterator first, InputIterator last, std::input_iterator_tag);
         template <typename ForwardIterator>
         void range_construct(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
-        template <typename InputIterator>
-        iterator range_insert(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag);
-        template <typename ForwardIterator>
-        iterator range_insert(const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
         template <typename InputIterator>
         void range_assign(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag);
         template <typename ForwardIterator>
@@ -219,29 +216,10 @@ namespace Instalog { namespace Path {
         this->insert(this->begin(), first, last);
     }
 
-    template<typename InputIterator>
-    typename path::iterator path::insert(path::const_iterator insertionPoint, InputIterator start, InputIterator finish)
+    template<typename ForwardIterator>
+    typename path::iterator path::insert(path::const_iterator insertionPoint, ForwardIterator first, ForwardIterator last)
     {
-        return this->range_insert(insertionPoint, start, finish, typename std::iterator_traits<InputIterator>::iterator_category());
-    }
-
-    template <typename InputIterator>
-    path::iterator path::range_insert(
-        path::const_iterator position,
-        InputIterator first,
-        InputIterator last,
-        std::input_iterator_tag)
-    {
-    }
-
-    template <typename ForwardIterator>
-    path::iterator path::range_insert(
-        path::const_iterator position,
-        ForwardIterator first,
-        ForwardIterator last,
-        std::forward_iterator_tag)
-    {
-        auto insertionIndex = std::distance(this->begin(), position);
+        auto insertionIndex = std::distance(this->cbegin(), insertionPoint);
         auto additionalLength = std::distance(first, last);
         auto requiredCapacity = this->size() + additionalLength;
         if (requiredCapacity <= this->capacity())
@@ -253,8 +231,8 @@ namespace Instalog { namespace Path {
             // Last block, move things after the insertion point after
             auto uBase = this->upperBase();
             auto base = this->base_;
-            std::memmove(base + insertionIndex, base + insertionIndex + additionalLength, additionalLength);
-            std::memmove(upperBase + insertionIndex, upperBase + insertionIndex + additionalLength, additionalLength);
+            std::copy_n(base_ + insertionIndex, additionalLength, base + insertionIndex + additionalLength);
+            std::copy_n(uBase + insertionIndex, additionalLength, uBase + insertionIndex + additionalLength);
 
             // Okay, now the inserted block
             std::copy(first, last, base + insertionIndex);
@@ -263,9 +241,30 @@ namespace Instalog { namespace Path {
         else
         {
             // Boo! Reallocation required
+            auto newCapacity = get_next_geometric_size(this->capacity(), requiredCapacity, this->max_size());
+            auto newBase = new wchar_t[newCapacity];
+            // Okay, if that succeeded, we are nothrow at this point.
+
+            // First block, before the insertion:
+            std::copy_n(this->base_, insertionIndex, newBase);
+            std::copy_n(this->base_ + this->capacity_, insertionIndex, newBase + newCapacity);
+
+            // Inserted block
+            std::copy(first, last, newBase + insertionIndex);
+            uppercase_range(additionalLength, newBase + insertionIndex, newBase + insertionIndex + newCapacity);
+
+            // Last block, after the insertion
+            std::copy_n(this->base_ + insertionIndex, this->size_ - insertionIndex, newBase + insertionIndex + additionalLength);
+            std::copy_n(this->base_ + insertionIndex + this->capacity(), this->size_ - insertionIndex, newBase + insertionIndex + additionalLength + this->capacity());
+
+            // Okay, free the old block
+            delete [] this->base_;
+            this->base_ = newBase;
+            this->capacity_ = newCapacity;
         }
 
-        return this->begin() + inseritonIndex;
+        this->size_ = requiredCapacity;
+        return this->begin() + insertionIndex;
     }
 
     template<typename InputIterator>

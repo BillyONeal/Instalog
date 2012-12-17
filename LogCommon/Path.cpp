@@ -450,6 +450,11 @@ namespace Instalog { namespace Path {
     {
         return this->size_;
     }
+    
+    path::size_type path::capacity() const throw()
+    {
+        return this->capacity_;
+    }
 
     path::size_type path::max_size() const throw()
     {
@@ -594,18 +599,22 @@ namespace Instalog { namespace Path {
         return *(this->uend() - 1);
     }
 
-    void path::ensure_capacity(path::size_type desiredCapacity)
+    path::size_type path::get_next_geometric_size(path::size_type currentSize, path::size_type requiredSize, path::size_type maxSize)
     {
-        if (desiredCapacity > this->max_size())
+        if (requiredSize > maxSize)
         {
             throw_length_error();
         }
 
-        auto newCapacity = std::max(desiredCapacity, this->capacity_ * 2);
+        auto newCapacity = std::max(requiredSize, currentSize * 2);
         // Don't let capacity doubling exceed max_size
-        newCapacity = std::min(newCapacity, this->max_size());
+        newCapacity = std::min(newCapacity, maxSize);
+        return newCapacity;
+    }
 
-        this->reserve(newCapacity);
+    void path::ensure_capacity(path::size_type desiredCapacity)
+    {
+        this->reserve(get_next_geometric_size(this->capacity(), desiredCapacity, this->max_size()));
     }
 
     void path::reserve(size_type count)
