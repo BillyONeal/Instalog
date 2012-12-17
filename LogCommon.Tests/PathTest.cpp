@@ -324,3 +324,32 @@ public:
         ::CloseHandle(hFile2);
     }
 };
+
+TEST_CLASS(PathClass)
+{
+    path examplePath;
+public:
+    TEST_METHOD_INITIALIZE(SetUp)
+    {
+        examplePath = L"C:\\I am an example path.exe";
+    }
+
+    TEST_METHOD(UppercaseSanity)
+    {
+        std::wstring result(L"C:\\I AM AN EXAMPLE PATH.EXE");
+        Assert::IsTrue(std::equal(examplePath.ubegin(), examplePath.uend(), result.begin()));
+    }
+
+    TEST_METHOD(CanInsert)
+    {
+        auto insertionLength = 233;
+        // Force reallocation
+        Assert::IsTrue(insertionLength > examplePath.capacity());
+        std::wstring buffer;
+        buffer.insert(buffer.begin(), insertionLength, L'a');
+        examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
+        buffer.insert(0, L"C:\\");
+        buffer.append(L"I AM AN EXAMPLE PATH.EXE");
+        Assert::IsTrue(std::equal(buffer.begin(), buffer.end(), examplePath.ubegin()));
+    }
+};

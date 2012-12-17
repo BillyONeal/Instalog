@@ -152,7 +152,7 @@ namespace Instalog { namespace Path {
         const_pointer data() const throw();
         const_pointer c_str() const throw();
         path(wchar_t const* string);
-        explicit path(std::wstring const& string);
+        path(std::wstring const& string);
 
         // Uppercase range inteface.
         iterator ubegin() throw();
@@ -242,14 +242,14 @@ namespace Instalog { namespace Path {
     }
 
     template <typename InputIterator>
-    path::iterator path::range_assign(path::const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+    void path::range_assign(path::const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
     {
         this->clear();
         this->range_construct(position, first, last, std::input_iterator_tag());
     }
 
     template <typename ForwardIterator>
-    path::iterator path::range_assign(path::const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+    void path::range_assign(path::const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
     {
     }
 
