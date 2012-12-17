@@ -226,13 +226,46 @@ namespace Instalog { namespace Path {
     }
 
     template <typename InputIterator>
-    path::iterator path::range_insert(path::const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+    path::iterator path::range_insert(
+        path::const_iterator position,
+        InputIterator first,
+        InputIterator last,
+        std::input_iterator_tag)
     {
     }
 
     template <typename ForwardIterator>
-    path::iterator path::range_insert(path::const_iterator position, ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+    path::iterator path::range_insert(
+        path::const_iterator position,
+        ForwardIterator first,
+        ForwardIterator last,
+        std::forward_iterator_tag)
     {
+        auto insertionIndex = std::distance(this->begin(), position);
+        auto additionalLength = std::distance(first, last);
+        auto requiredCapacity = this->size() + additionalLength;
+        if (requiredCapacity <= this->capacity())
+        {
+            // Awesome, just copy the needed bits
+
+            // First block, before the insertion; nothing required as there was no reallocation
+
+            // Last block, move things after the insertion point after
+            auto uBase = this->upperBase();
+            auto base = this->base_;
+            std::memmove(base + insertionIndex, base + insertionIndex + additionalLength, additionalLength);
+            std::memmove(upperBase + insertionIndex, upperBase + insertionIndex + additionalLength, additionalLength);
+
+            // Okay, now the inserted block
+            std::copy(first, last, base + insertionIndex);
+            uppercase_range(additionalLength, base + insertionIndex, uBase + insertionIndex);
+        }
+        else
+        {
+            // Boo! Reallocation required
+        }
+
+        return this->begin() + inseritonIndex;
     }
 
     template<typename InputIterator>
