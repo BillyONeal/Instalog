@@ -368,7 +368,7 @@ namespace Instalog { namespace Path {
         }
 
         int asInt = static_cast<int>(length);
-        auto result = ::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, source, asInt, target, asInt);
+        auto result = ::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, start, asInt, target, asInt);
         if (!result)
         {
             assert(!"Something, somewhere, when horribly wrong");
