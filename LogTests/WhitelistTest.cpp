@@ -43,5 +43,5 @@ TEST(Whitelist, DoesPrefixesAfterLowercase)
 	std::vector<std::pair<std::wstring, std::wstring>> replacements;
 	replacements.emplace_back(std::pair<std::wstring, std::wstring>(L"C:\\windows", L"d:\\windows"));
 	Whitelist w(IDR_RUNNINGPROCESSESWHITELIST, replacements);
-	EXPECT_FALSE(w.IsOnWhitelist(L"D:\\Windows\\System32\\Ntoskrnl.exe"));
+	EXPECT_TRUE(w.IsOnWhitelist(L"D:\\Windows\\System32\\Ntoskrnl.exe"));
 }
