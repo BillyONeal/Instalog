@@ -361,7 +361,11 @@ namespace Instalog { namespace Path {
      */
     void path::uppercase_range(path::size_type length, path::const_pointer start, path::pointer target)
     {
-        if (length >= static_cast<path::size_type>(std::numeric_limits<INT>::max()))
+		if (length == 0)
+		{
+			return;
+		}
+        else if (length >= static_cast<path::size_type>(std::numeric_limits<INT>::max()))
         {
             // Can't happen. But in case it does....
             std::terminate();
@@ -371,7 +375,7 @@ namespace Instalog { namespace Path {
         auto result = ::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, start, asInt, target, asInt);
         if (!result)
         {
-            assert(!"Something, somewhere, when horribly wrong");
+			SystemFacades::Win32Exception::ThrowFromLastError();
         }
     }
 
@@ -665,6 +669,11 @@ namespace Instalog { namespace Path {
     path::const_pointer path::c_str() const throw()
     {
         return this->base_;
+    }
+
+    path::const_pointer path::uc_str() const throw()
+    {
+		return this->upperBase();
     }
 
     path::path(wchar_t const* string)
