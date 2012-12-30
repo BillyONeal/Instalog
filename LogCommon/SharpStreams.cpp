@@ -492,12 +492,14 @@ void MemoryStream::Seek( std::int64_t offset, SeekOrigin origin )
     {
         throw std::out_of_range("Cannot seek to a negative value.");
     }
-    else if (static_cast<std::uint64_t>(offset) > this->buffer.size())
+
+    auto sizeOffset = static_cast<std::size_t>(offset);
+    if (sizeOffset > this->buffer.size())
     {
-        this->buffer.resize(offset);
+        this->buffer.resize(sizeOffset);
     }
 
-    this->pointer = offset;
+    this->pointer = sizeOffset;
 }
 
 std::uint32_t MemoryStream::Read( unsigned char *target, std::uint32_t offset, std::uint32_t length )

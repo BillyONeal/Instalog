@@ -18,6 +18,13 @@ TEST(DnsAddressFromHostname, SafeServers)
 	ASSERT_FALSE(IpAddressFromHostname(L"google.com", true).empty());
 }
 
+/* This needs reworked; see issue 13
+TEST_METHOD(GetIpAddressFromHostnameSafeServers)
+{
+    Assert::IsFalse(IpAddressFromHostname(L"google.com", true).empty());
+}
+*/
+
 TEST(DnsIpReverse, EmptyIpReverse)
 {
 	ASSERT_EQ(L"", ReverseIpAddress(L""));
@@ -48,9 +55,11 @@ TEST(DnsHostnameFromAddress, DefaultServers)
 	ASSERT_TRUE(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com")), L".1e100.net"));
 }
 
-TEST(DnsHostnameFromAddress, SafeServers)
+/* This needs reworked; see issue 13
+TEST_METHOD(DnsHostnameFromAddressSafeServers)
 {
-	std::wcout << IpAddressFromHostname(L"google.com", true) << std::endl;
-	std::wcout << HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true) << std::endl;
-	ASSERT_TRUE(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true), L".1e100.net"));
+    std::wcout << IpAddressFromHostname(L"google.com", true) << std::endl;
+    std::wcout << HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true) << std::endl;
+    Assert::IsTrue(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true), L".1e100.net"));
 }
+*/

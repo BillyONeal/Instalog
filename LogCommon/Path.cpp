@@ -361,7 +361,7 @@ namespace Instalog { namespace Path {
      */
     void path::uppercase_range(path::size_type length, path::const_pointer start, path::pointer target)
     {
-        if (length >= std::numeric_limits<INT>::max())
+        if (length >= static_cast<path::size_type>(std::numeric_limits<INT>::max()))
         {
             // Can't happen. But in case it does....
             std::terminate();

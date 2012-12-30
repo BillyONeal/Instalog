@@ -304,3 +304,33 @@ TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
 	::CloseHandle(hFile);
 	::CloseHandle(hFile2);
 }
+
+/*
+struct PathClassTests : testing::Test
+{
+    path examplePath;
+    virtual void SetUp()
+    {
+        examplePath = L"C:\\I am an example path.exe";
+    }
+};
+
+TEST_F(PathClassTests, UppercaseSanity)
+{
+    std::wstring result(L"C:\\I AM AN EXAMPLE PATH.EXE");
+    ASSERT_TRUE(std::equal(examplePath.ubegin(), examplePath.uend(), result.begin()));
+}
+
+TEST_F(PathClassTests, CanInsert)
+{
+    auto insertionLength = 233u;
+    // Force reallocation
+    ASSERT_GT(insertionLength, examplePath.capacity());
+    std::wstring buffer;
+    buffer.insert(buffer.begin(), insertionLength, L'a');
+    examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
+    buffer.insert(0, L"C:\\");
+    buffer.append(L"I AM AN EXAMPLE PATH.EXE");
+    ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), examplePath.ubegin()));
+}
+*/

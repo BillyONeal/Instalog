@@ -2,10 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "stdafx.h"
+#include "pch.hpp"
 #include "../LogCommon/SharpStreams.hpp"
 
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace Instalog::SharpStreams;
 
 // I stole this list from the example table on http://en.wikipedia.org/wiki/UTF-1
@@ -83,34 +82,30 @@ static const char *utf8Examples[] = {
     "\xF4\x8F\xBF\xBF"
 };
 
-TEST_CLASS(Utf8EncodersTest)
+TEST(Utf8EncodersTest, RoundTripToUtf8)
 {
-public:
-    TEST_METHOD(RoundTripToUtf8)
+    Utf8Encoder encoder;
+    for (std::size_t idx = 0; idx < _countof(utf16LeExamples); ++idx)
     {
-        Utf8Encoder encoder;
-        for (std::size_t idx = 0; idx < _countof(utf16LeExamples); ++idx)
-        {
-            auto example = reinterpret_cast<const wchar_t*>(utf16LeExamples[idx]);
-            auto exampleLength = std::wcslen(example);
-            auto answer = encoder.GetBytes(example, static_cast<uint32_t>(exampleLength));
-            auto rounded = encoder.GetChars(answer.data(), static_cast<uint32_t>(answer.size()));
-            Assert::IsTrue(rounded.size() == exampleLength);
-            Assert::IsTrue(std::equal(rounded.begin(), rounded.end(), example));
-        }
+        auto example = reinterpret_cast<const wchar_t*>(utf16LeExamples[idx]);
+        auto exampleLength = std::wcslen(example);
+        auto answer = encoder.GetBytes(example, static_cast<uint32_t>(exampleLength));
+        auto rounded = encoder.GetChars(answer.data(), static_cast<uint32_t>(answer.size()));
+        ASSERT_EQ(rounded.size(),  exampleLength);
+        ASSERT_TRUE(std::equal(rounded.begin(), rounded.end(), example));
     }
+}
 
-    TEST_METHOD(RoundTripToUtf16)
+TEST(Utf8EncodersTest, RoundTripToUtf16)
+{
+    Utf8Encoder encoder;
+    for (std::size_t idx = 0; idx < _countof(utf8Examples); ++idx)
     {
-        Utf8Encoder encoder;
-        for (std::size_t idx = 0; idx < _countof(utf8Examples); ++idx)
-        {
-            auto example = utf8Examples[idx];
-            auto exampleLength = std::strlen(example);
-            auto answer = encoder.GetChars(reinterpret_cast<const unsigned char*>(example), static_cast<uint32_t>(exampleLength));
-            auto rounded = encoder.GetBytes(answer.data(), static_cast<uint32_t>(answer.size()));
-            Assert::IsTrue(rounded.size() == exampleLength);
-            Assert::IsTrue(std::equal(rounded.begin(), rounded.end(), reinterpret_cast<const unsigned char*>(example)));
-        }
+        auto example = utf8Examples[idx];
+        auto exampleLength = std::strlen(example);
+        auto answer = encoder.GetChars(reinterpret_cast<const unsigned char*>(example), static_cast<uint32_t>(exampleLength));
+        auto rounded = encoder.GetBytes(answer.data(), static_cast<uint32_t>(answer.size()));
+        ASSERT_EQ(rounded.size(), exampleLength);
+        ASSERT_TRUE(std::equal(rounded.begin(), rounded.end(), reinterpret_cast<const unsigned char*>(example)));
     }
-};
+}

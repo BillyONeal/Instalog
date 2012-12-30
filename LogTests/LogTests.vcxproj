@@ -276,6 +276,7 @@
     <ClCompile Include="ScopedPrivilegeTest.cpp" />
     <ClCompile Include="ScriptingTest.cpp" />
     <ClCompile Include="ServiceControlManagerTest.cpp" />
+    <ClCompile Include="SharpStreamsTests.cpp" />
     <ClCompile Include="StockOutputFormatsTest.cpp" />
     <ClCompile Include="StringUtilitiesTest.cpp" />
     <ClCompile Include="WhitelistTest.cpp" />
