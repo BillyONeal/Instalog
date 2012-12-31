@@ -233,8 +233,7 @@ struct PathResolutionPathOrderFixture : public testing::Test
         pathBuffer.pop_back(); //remove null
         boost::algorithm::split(pathItems, pathBuffer, std::bind1st(std::equal_to<wchar_t>(), L';'));
         ASSERT_LE(3ul, pathItems.size());
-        std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(),
-            std::bind(Append, _1, fileName));
+		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [&] (std::wstring &x) { return Append(x, fileName); });
         std::for_each(pathItems.begin(), pathItems.end(), [] (std::wstring& a) { Prettify(a.begin(), a.end()); });
     }
 };
@@ -278,8 +277,7 @@ struct PathResolutionPathExtOrderFixture : public testing::Test
         boost::algorithm::split(pathItems, pathBuffer, std::bind1st(std::equal_to<wchar_t>(), L';'));
         ASSERT_LE(3u, pathItems.size());
         std::for_each(pathItems.begin(), pathItems.end(), [this] (std::wstring& a) { a.insert(0, fileName); } );
-        std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(),
-            std::bind(Append, L"C:\\Windows\\System32", _1));
+		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [] (std::wstring &x) { return Append(L"C:\\Windows\\System32", x); });
         std::for_each(pathItems.begin(), pathItems.end(), [] (std::wstring& a) { Prettify(a.begin(), a.end()); });
     }
 };

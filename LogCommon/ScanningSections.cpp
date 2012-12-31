@@ -555,8 +555,7 @@ namespace Instalog
             }
             entries.emplace_back(std::move(currentEntry));
         }
-        using namespace std::placeholders;
-        std::sort(entries.begin(), entries.end(), std::bind(boost::ilexicographical_compare<std::wstring, std::wstring>, _1, _2, std::locale()));
+		std::sort(entries.begin(), entries.end(), [] (std::wstring const& a, std::wstring const& b) { return boost::ilexicographical_compare(a, b); });
         std::copy(entries.cbegin(), entries.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
     }
     
