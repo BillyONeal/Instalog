@@ -20,7 +20,7 @@ namespace Instalog { namespace Path {
         }
         else if (path.size() > 0 && more.size() == 0)
         {
-            return path;
+            return std::move(path);
         }
         else if (path.size() == 0 && more.size() > 0)
         {
@@ -33,16 +33,19 @@ namespace Instalog { namespace Path {
 
             if (*pathend == L'\\' && *morebegin == L'\\')
             {
-                return path.append(++morebegin, more.end());
+                path.append(++morebegin, more.end());
+				return std::move(path);
             }
             else if (*pathend == L'\\' || *morebegin == L'\\')
             {
-                return path.append(more);
+                path.append(more);
+				return std::move(path);
             }
             else
             {
                 path.push_back(L'\\');
-                return path.append(more);
+                path.append(more);
+				return std::move(path);
             }
         }
     }
@@ -88,7 +91,7 @@ namespace Instalog { namespace Path {
         UINT len = ::GetEnvironmentVariableW(variable, buf, 32767);
         auto range = boost::make_iterator_range(buf, buf + len);
         boost::split(splitVar, range, std::bind1st(std::equal_to<wchar_t>(), L';'));
-        return splitVar;
+        return std::move(splitVar);
     }
 
     static std::vector<std::wstring> getSplitPath()
