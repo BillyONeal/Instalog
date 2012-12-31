@@ -315,14 +315,44 @@ namespace Instalog { namespace SystemFacades {
         /// @param    name    The name of the value to retrieve.
         ///
         /// @return    The value.
-        RegistryValue const GetValue(std::wstring name) const;
+        RegistryValue const GetValue(std::wstring const& name) const;
 
         /// @brief    Array indexer operator. Forwards to GetValue()
         ///
         /// @param    name    The name of the value to retrieve.
         ///
         /// @return    The registry value retrieved from the given name.
-        RegistryValue const operator[](std::wstring name) const;
+        RegistryValue const operator[](std::wstring const& name) const;
+
+		/// Sets a registry value.
+		/// @param name			 The name of the value.
+		/// @param dataSize		 Size of the data.
+		/// @param [in,out] data If non-null, the data.
+		/// @param type			 The type to which the value shall be set.
+        /// @throws Instalog::SystemFacades::Win32Exception on failure
+		/// @throws std::out_of_range The parameter dataSize exceeds std::numeric_limits<uint32_t>::max().
+		void SetValue(std::wstring const& name, std::size_t dataSize, void const* data, DWORD type);
+
+		/// Sets a registry value.
+		/// @param name The value name.
+		/// @param data The value data.
+		/// @param type The value type.
+        /// @throws Instalog::SystemFacades::Win32Exception on failure
+        template <typename Ty>
+		void SetValue(std::wstring const& name, std::vector<Ty> const& data, DWORD type)
+		{
+			this->SetValue(name, data.size() * sizeof(Ty), static_cast<void const *>(data.data()), type);
+		}
+
+		/// Sets a registry value.
+		/// @param name The value name.
+		/// @param data The value data.
+		/// @param type (optional) The type. If not supplied, defaults to REG_SZ.
+        /// @throws Instalog::SystemFacades::Win32Exception on failure
+		void SetValue(std::wstring const& name, std::wstring const& data, DWORD type = REG_SZ)
+		{
+			this->SetValue(name, data.size() * sizeof(wchar_t), static_cast<void const *>(data.data()), type);
+		}
 
         /// @brief    Deletes this registry key. This method requires that the
         ///         registry key was opened with the DELETE access right.

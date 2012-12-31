@@ -660,6 +660,14 @@ typedef NTSTATUS (NTAPI *NtQueryValueKeyFunc)(
     __out      PULONG ResultLength
     );
 
+typedef NTSTATUS (NTAPI *NtSetValueKeyFunc)(
+    __in       HANDLE KeyHandle,
+    __in       PUNICODE_STRING ValueName,
+    __in_opt   ULONG TitleIndex,
+    __in       DWORD Type,
+    __in_opt   PVOID Data,
+    __in       ULONG DataSize
+    );
 }
 
 inline UNICODE_STRING WstringToUnicodeString(std::wstring const& target)

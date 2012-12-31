@@ -4,12 +4,35 @@
 
 #include "pch.hpp"
 #include <array>
+#include "sddl.h"
 #include "gtest/gtest.h"
 #include "LogCommon/Win32Glue.hpp"
 #include "LogCommon/Registry.hpp"
 #include "LogCommon/Win32Exception.hpp"
 
 using namespace Instalog::SystemFacades;
+
+static std::wstring GetCurrentUserRelativeKeyPath(wchar_t const* other)
+{
+	std::wstring resultStr;
+	resultStr.reserve(1024);
+	resultStr.append(L"\\Registry\\User\\");
+	union
+	{
+	TOKEN_USER user;
+	unsigned char storage[SECURITY_MAX_SID_SIZE + sizeof(TOKEN_USER)];
+	};
+	HANDLE hToken;
+	DWORD len = 0;
+	::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken);
+	::GetTokenInformation(hToken, TokenUser, &user, SECURITY_MAX_SID_SIZE, &len);
+	LPWSTR result;
+	::ConvertSidToStringSidW(user.User.Sid, &result);
+	resultStr.append(result);
+	::LocalFree(result);
+	resultStr.append(other);
+	return std::move(resultStr);
+}
 
 TEST(Registry, IsDefaultConstructable)
 {
@@ -19,14 +42,14 @@ TEST(Registry, IsDefaultConstructable)
 
 TEST(Registry, CanCreateKey)
 {
-	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
+	RegistryKey keyUnderTest = RegistryKey::Create(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"), KEY_QUERY_VALUE | DELETE);
 	if (keyUnderTest.Invalid())
 	{
 		DWORD last = ::GetLastError();
 		Win32Exception::ThrowFromNtError(last);
 	}
 	HKEY hTest;
-	LSTATUS ls = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\NonexistentTestKeyHere", 0, KEY_ALL_ACCESS, &hTest);
+	LSTATUS ls = ::RegOpenKeyExW(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\NonexistentTestKeyHere", 0, KEY_ALL_ACCESS, &hTest);
 	EXPECT_EQ(ERROR_SUCCESS, ls);
 	::RegCloseKey(hTest);
 	keyUnderTest.Delete();
@@ -34,26 +57,26 @@ TEST(Registry, CanCreateKey)
 
 TEST(Registry, CanOpenKey)
 {
-	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE | DELETE);
+	RegistryKey keyUnderTest = RegistryKey::Create(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"), KEY_QUERY_VALUE | DELETE);
 	if (keyUnderTest.Invalid())
 	{
 		DWORD last = ::GetLastError();
 		Win32Exception::ThrowFromNtError(last);
 	}
-	RegistryKey keyOpenedAgain = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
+	RegistryKey keyOpenedAgain = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"), KEY_QUERY_VALUE);
 	EXPECT_TRUE(keyOpenedAgain.Valid());
 	keyUnderTest.Delete();
 }
 
 TEST(Registry, CantOpenNonexistentKey)
 {
-	RegistryKey keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", KEY_QUERY_VALUE);
+	RegistryKey keyUnderTest = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"), KEY_QUERY_VALUE);
 	ASSERT_TRUE(keyUnderTest.Invalid());
 }
 
 TEST(Registry, CanCreateSubkey)
 {
-	RegistryKey rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
+	RegistryKey rootKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft"));
 	ASSERT_TRUE(rootKey.Valid());
 	RegistryKey subKey = RegistryKey::Create(rootKey, L"Example", KEY_ALL_ACCESS);
 	if (subKey.Invalid())
@@ -66,15 +89,15 @@ TEST(Registry, CanCreateSubkey)
 
 TEST(Registry, CanDelete)
 {
-	RegistryKey keyUnderTest = RegistryKey::Create(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere", DELETE);
+	RegistryKey keyUnderTest = RegistryKey::Create(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"), DELETE);
 	keyUnderTest.Delete();
-	keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\NonexistentTestKeyHere");
+	keyUnderTest = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft\\NonexistentTestKeyHere"));
 	ASSERT_TRUE(keyUnderTest.Invalid());
 }
 
 TEST(Registry, CanOpenSubkey)
 {
-	RegistryKey rootKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft");
+	RegistryKey rootKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft"));
 	ASSERT_TRUE(rootKey.Valid());
 	RegistryKey subKey = RegistryKey::Open(rootKey, L"Windows", KEY_ALL_ACCESS);
 	EXPECT_TRUE(subKey.Valid());
@@ -83,7 +106,7 @@ TEST(Registry, CanOpenSubkey)
 TEST(Registry, GetsRightSizeInformation)
 {
 	HKEY hKey;
-	LSTATUS errorCheck = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM", 0, KEY_READ, &hKey);
+	LSTATUS errorCheck = ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software", 0, KEY_READ, &hKey);
 	ASSERT_EQ(0, errorCheck);
 	DWORD subKeys;
 	DWORD values;
@@ -104,43 +127,41 @@ TEST(Registry, GetsRightSizeInformation)
 	);
 	RegCloseKey(hKey);
 	unsigned __int64 convertedTime = Instalog::FiletimeToInteger(lastTime);
-	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_READ);
+	RegistryKey systemKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software"), KEY_READ);
 	auto sizeInfo = systemKey.GetSizeInformation();
 	ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());
 	ASSERT_EQ(subKeys, sizeInfo.GetNumberOfSubkeys());
 	ASSERT_EQ(values, sizeInfo.GetNumberOfValues());
 }
 
-static std::vector<std::wstring> GetDefaultSystemKeySubkeys()
+static std::vector<std::wstring> GetDefaultUserKeySubkeys()
 {
 	std::vector<std::wstring> defaultItems;
-	defaultItems.push_back(L"ControlSet001");
-	defaultItems.push_back(L"MountedDevices");
-	defaultItems.push_back(L"Select");
-	defaultItems.push_back(L"Setup");
-	defaultItems.push_back(L"WPA");
+	defaultItems.push_back(L"Console");
+	defaultItems.push_back(L"Environment");
+	defaultItems.push_back(L"Software");
 	std::sort(defaultItems.begin(), defaultItems.end());
 	return std::move(defaultItems);
 }
 
-static void CheckVectorContainsSubkeys(std::vector<std::wstring> const& vec)
+static void CheckVectorContainsUserSubkeys(std::vector<std::wstring> const& vec)
 {
-	auto defaultItems = GetDefaultSystemKeySubkeys();
+	auto defaultItems = GetDefaultUserKeySubkeys();
 	ASSERT_TRUE(std::includes(vec.begin(), vec.end(), defaultItems.begin(), defaultItems.end()));
 }
 
 TEST(Registry, CanEnumerateSubKeyNames)
 {
-	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	RegistryKey systemKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey.Valid());
 	auto subkeyNames = systemKey.EnumerateSubKeyNames();
 	std::sort(subkeyNames.begin(), subkeyNames.end());
-	CheckVectorContainsSubkeys(subkeyNames);
+	CheckVectorContainsUserSubkeys(subkeyNames);
 }
 
 TEST(Registry, SubKeyNamesCanBeSorted)
 {
-	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	RegistryKey systemKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
 	ASSERT_TRUE(systemKey.Valid());
 	std::vector<std::wstring> col(systemKey.EnumerateSubKeyNames());
 	std::sort(col.begin(), col.end());
@@ -149,17 +170,21 @@ TEST(Registry, SubKeyNamesCanBeSorted)
 
 TEST(Registry, CanGetName)
 {
-	RegistryKey servicesKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services", KEY_QUERY_VALUE);
-	ASSERT_TRUE(servicesKey.Valid());
-	if (!boost::iequals(L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services", servicesKey.GetName()))
+	RegistryKey userSoftwareKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software"), KEY_QUERY_VALUE);
+	ASSERT_TRUE(userSoftwareKey.Valid());
+	RegistryKey newLinkKey = RegistryKey::Create(GetCurrentUserRelativeKeyPath(L"\\ExampleLink"), KEY_SET_VALUE | KEY_CREATE_LINK, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK);
+	if (newLinkKey.Valid())
 	{
-		GTEST_FAIL() << L"Expected \\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services , got "<< servicesKey.GetName() << L" instead";
+		newLinkKey.SetValue(L"SymbolicLinkValue", GetCurrentUserRelativeKeyPath(L"\\Software"), REG_LINK);
 	}
+
+	RegistryKey shouldMatchSoftwareKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\ExampleLink"), KEY_QUERY_VALUE);
+	ASSERT_STREQ(userSoftwareKey.GetName().c_str(), shouldMatchSoftwareKey.GetName().c_str());
 }
 
 TEST(Registry, CanGetSubKeysOpened)
 {
-	RegistryKey systemKey = RegistryKey::Open(L"\\Registry\\Machine\\SYSTEM", KEY_ENUMERATE_SUB_KEYS);
+	RegistryKey systemKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
 	std::vector<RegistryKey> subkeys(systemKey.EnumerateSubKeys(KEY_QUERY_VALUE));
 	std::vector<std::wstring> names(subkeys.size());
 	std::transform(subkeys.cbegin(), subkeys.cend(), names.begin(),
@@ -169,7 +194,7 @@ TEST(Registry, CanGetSubKeysOpened)
 		return std::move(name);
 	});
 	std::sort(names.begin(), names.end());
-	CheckVectorContainsSubkeys(names);
+	CheckVectorContainsUserSubkeys(names);
 }
 
 static wchar_t exampleData[] = L"example example example test test example \0 embedded";
@@ -213,7 +238,7 @@ struct RegistryValueTest : public testing::Test
 		DWORD exampleDword = 0xDEADBEEFul;
 		unsigned __int64 exampleQWord = 0xBADC0FFEEBADBAD1ull;
 		unsigned __int64 exampleSmallQword = exampleDword;
-		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE | KEY_CREATE_SUB_KEY, 0, &hKey, 0);
+		LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE | KEY_CREATE_SUB_KEY, 0, &hKey, 0);
 		ASSERT_EQ(0, errorCheck);
 		::RegSetValueExW(hKey, L"ExampleDataNone", 0, REG_NONE, exampleDataCasted, sizeof(exampleData));
 		::RegSetValueExW(hKey, L"ExampleDataBinary", 0, REG_BINARY, exampleDataCasted, sizeof(exampleData));
@@ -243,15 +268,15 @@ struct RegistryValueTest : public testing::Test
 
 		::RegCloseKey(hConversions);
 		::RegCloseKey(hKey);
-		keyUnderTest = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", KEY_QUERY_VALUE);
-		conversionsKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal\\Conversions", KEY_QUERY_VALUE);
+		keyUnderTest = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal"), KEY_QUERY_VALUE);
+		conversionsKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal\\Conversions"), KEY_QUERY_VALUE);
 		ASSERT_TRUE(keyUnderTest.Valid());
 		ASSERT_TRUE(conversionsKey.Valid());
 	}
 	void TearDown()
 	{
-		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal\\Conversions", DELETE).Delete();
-		RegistryKey::Open(L"\\Registry\\Machine\\Software\\BillyONeal", DELETE).Delete();
+		RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal\\Conversions"), DELETE).Delete();
+		RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal"), DELETE).Delete();
 	}
 
 	std::vector<RegistryValueAndData> GetAndSort()

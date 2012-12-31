@@ -26,6 +26,7 @@ namespace Instalog { namespace SystemFacades {
     static NtEnumerateKeyFunc PNtEnumerateKey = GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
     static NtEnumerateValueKeyFunc PNtEnumerateValueKeyFunc = GetNtDll().GetProcAddress<NtEnumerateValueKeyFunc>("NtEnumerateValueKey");
     static NtQueryValueKeyFunc PNtQueryValueKeyFunc = GetNtDll().GetProcAddress<NtQueryValueKeyFunc>("NtQueryValueKey");
+    static NtSetValueKeyFunc PNtSetValueKeyFunc = GetNtDll().GetProcAddress<NtSetValueKeyFunc>("NtSetValueKey");
 
     RegistryKey::~RegistryKey()
     {
@@ -55,12 +56,12 @@ namespace Instalog { namespace SystemFacades {
         : hKey_(INVALID_HANDLE_VALUE)
     { }
 
-    RegistryValue const RegistryKey::operator[]( std::wstring name ) const
+    RegistryValue const RegistryKey::operator[]( std::wstring const& name ) const
     {
         return GetValue(std::move(name));
     }
 
-    RegistryValue const RegistryKey::GetValue( std::wstring name ) const
+    RegistryValue const RegistryKey::GetValue( std::wstring const& name ) const
     {
         UNICODE_STRING valueName(WstringToUnicodeString(name));
         std::vector<unsigned char> buff(MAX_PATH);
@@ -92,6 +93,22 @@ namespace Instalog { namespace SystemFacades {
         buff.resize(len);
         return RegistryValue(type, std::move(buff));
     }
+
+	void RegistryKey::SetValue(std::wstring const& name, std::size_t dataSize, void const* data, DWORD type)
+	{
+		if (dataSize > std::numeric_limits<ULONG>::max())
+		{
+			throw std::out_of_range("Registry key data was too long.");
+		}
+
+		UNICODE_STRING valueName(WstringToUnicodeString(name));
+		auto clippedSize = static_cast<ULONG>(dataSize);
+		NTSTATUS status = PNtSetValueKeyFunc(hKey_, &valueName, 0, type, const_cast<PVOID>(data), clippedSize);
+		if (!NT_SUCCESS(status))
+		{
+			Win32Exception::ThrowFromNtError(status);
+		}
+	}
 
     static RegistryKey RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
     {
