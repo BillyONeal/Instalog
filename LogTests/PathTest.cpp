@@ -268,7 +268,6 @@ struct PathResolutionPathExtOrderFixture : public testing::Test
     { }
     virtual void SetUp()
     {
-        using namespace std::placeholders;
         std::wstring pathBuffer;
         DWORD pathLen = ::GetEnvironmentVariableW(L"PATHEXT", nullptr, 0);
         pathBuffer.resize(pathLen);
