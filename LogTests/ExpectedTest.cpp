@@ -58,4 +58,51 @@ TEST(ExpectedOfT, CanContainExceptionInFlight)
     ASSERT_THROW(uut.rethrow(), std::bad_alloc);
 }
 
-TEST(ExpectedOfT, Can
+TEST(ExpectedOfT, CanCopyT)
+{
+    expected<std::wstring> uut(L"I am a string");
+    expected<std::wstring> copied(uut);
+    ASSERT_STREQ(uut.get().c_str(), copied.get().c_str());
+}
+
+TEST(ExpectedOfT, CanMoveT)
+{
+    expected<std::wstring> uut(L"I am a string");
+    expected<std::wstring> moved(std::move(uut));
+    ASSERT_STREQ(L"", uut.get().c_str());
+    ASSERT_STREQ(L"I am a string", moved.get().c_str());
+}
+
+TEST(ExpectedOfT, CanCopyConstruct)
+{
+    expected<std::wstring> uut(expected<std::wstring>::from_exception(std::bad_alloc()));
+    expected<std::wstring> copy(uut);
+    ASSERT_THROW(uut.rethrow(), std::bad_alloc);
+}
+
+TEST(ExpectedOfT, SwapValids)
+{
+    expected<std::wstring> uutOne(L"Example");
+    expected<std::wstring> uutTwo(L"Other");
+    swap(uutOne, uutTwo);
+    ASSERT_STREQ(L"Other", uutOne.get().c_str());
+    ASSERT_STREQ(L"Example", uutTwo.get().c_str());
+}
+
+TEST(ExpectedOfT, SwapLeftValidRightInvalid)
+{
+    expected<std::wstring> uutOne(L"Foo");
+    expected<std::wstring> uutTwo(expected<std::wstring>::from_exception(std::bad_alloc()));
+    uutOne.swap(uutTwo);
+    ASSERT_STREQ(L"Foo", uutTwo.get().c_str());
+    ASSERT_THROW(uutOne.rethrow(), std::bad_alloc);
+}
+
+TEST(ExpectedOfT, SwapLeftInvalidRightValid)
+{
+    expected<std::wstring> uutOne(L"Foo");
+    expected<std::wstring> uutTwo(expected<std::wstring>::from_exception(std::bad_alloc()));
+    uutTwo.swap(uutOne);
+    ASSERT_STREQ(L"Foo", uutTwo.get().c_str());
+    ASSERT_THROW(uutOne.rethrow(), std::bad_alloc);
+}

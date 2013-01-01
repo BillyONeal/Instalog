@@ -4,6 +4,7 @@
 #pragma once
 #include <cassert>
 #include <stdexcept>
+#include <algorithm>
 #include <type_traits>
 #include <exception>
 #include <memory>
@@ -23,6 +24,12 @@ struct uninitalized_expected : public std::logic_error
         : std::logic_error("Attempted to read an expected<t> which was unintialized.")
     { }
 };
+
+template <typename Ty>
+class expected;
+
+template <typename Ty>
+inline void swap(expected<Ty>& lhs, expected<Ty>& rhs);
 
 /**
  * An expected of T. Contains either a T or an exception if an exception was encountered when producing T.
@@ -160,6 +167,17 @@ public:
     }
 
     /**
+     * Assignment operator.
+     * @param source Source for the assignment.
+     * @return A shallow copy of this instance.
+     */
+    expected<Ty>& operator=(expected<Ty> source)
+    {
+        source.swap(*this);
+        return *this;
+    }
+
+    /**
      * Initializes this instance from the given exception pointer.
      * @param ptr The exception pointer from which this instance shall be initialized.
      * @return An expected<T> containing ptr.
@@ -262,6 +280,56 @@ public:
         rethrow();
         return get_value_storage();
     }
+
+    /**
+     * Swaps the given item with this instance.
+     * @param [in,out] target Target for the swap.
+     */
+    void swap(expected<Ty>& target)
+    {
+        if (isValid)
+        {
+            if (target.isValid)
+            {
+                using std::swap;
+                swap(get_value_storage(), target.get_value_storage());
+            }
+            else
+            {
+                std::swap(isValid, target.isValid);
+                using std::exception_ptr;
+                std::exception_ptr moved(std::move(target.get_exception_storage()));
+                target.get_exception_storage().~exception_ptr();
+                new (&target.get_value_storage()) Ty(std::move(get_value_storage()));
+                get_value_storage().~Ty();
+                new (&get_exception_storage()) exception_ptr(std::move(moved));
+            }
+        }
+        else
+        {
+            if (target.isValid)
+            {
+                target.swap(*this);
+            }
+            else
+            {
+                using std::swap;
+                swap(get_exception_storage(), target.get_exception_storage());
+            }
+        }
+    }
 };
+
+/**
+ * Swaps a pair of expected of Ts.
+ * @tparam typename Ty Type of the expected<T>.
+ * @param [in,out] lhs The left hand side.
+ * @param [in,out] rhs The right hand side.
+ */
+template <typename Ty>
+inline void swap(expected<Ty>& lhs, expected<Ty>& rhs)
+{
+    lhs.swap(rhs);
+}
 
 }
