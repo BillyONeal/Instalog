@@ -38,10 +38,10 @@ struct TestingSectionDefinition : public ISectionDefinition
 
 struct OneSectionDefinition : public TestingSectionDefinition
 {
-	virtual std::wstring GetScriptCommand() const
-	{
-		return L"one";
-	}
+    virtual std::wstring GetScriptCommand() const
+    {
+        return L"one";
+    }
     virtual std::wstring GetName() const
     {
         return L"OnE";
@@ -54,10 +54,10 @@ struct OneSectionDefinition : public TestingSectionDefinition
 
 struct TwoSectionDefinition : public TestingSectionDefinition
 {
-	virtual std::wstring GetScriptCommand() const
-	{
-		return L"twosies";
-	}
+    virtual std::wstring GetScriptCommand() const
+    {
+        return L"twosies";
+    }
     virtual std::wstring GetName() const
     {
         return L"Twosies";
@@ -253,14 +253,14 @@ TEST(ScriptTest, CanExecute)
     std::unique_ptr<IUserInterface> ui(new DoNothingUserInterface);
     std::wostringstream logOutput;
     s.Run(logOutput, ui.get());
-	std::wstring out(logOutput.str());
-	out.pop_back(); // \n
-	out.erase(std::find(out.rbegin(), out.rend(), L'\n').base(), out.end());
-	out.erase(out.begin(), std::find(out.begin(), out.end(), L'='));
-	out.pop_back();
+    std::wstring out(logOutput.str());
+    out.pop_back(); // \n
+    out.erase(std::find(out.rbegin(), out.rend(), L'\n').base(), out.end());
+    out.erase(out.begin(), std::find(out.begin(), out.end(), L'='));
+    out.pop_back();
     ASSERT_EQ(L"======================= OnE ======================\n\nOnE "
-		L"section has.GetArgument() \"argArg\" and options \n{OptionOne}\n\n"
-		L"===================== Twosies ====================\n\nTwosies "
-		L"section has.GetArgument() \"\" and options \n{OptionTwo}\n{OptionThree}\n",
-		out);
+        L"section has.GetArgument() \"argArg\" and options \n{OptionOne}\n\n"
+        L"===================== Twosies ====================\n\nTwosies "
+        L"section has.GetArgument() \"\" and options \n{OptionTwo}\n{OptionThree}\n",
+        out);
 }

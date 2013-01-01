@@ -233,7 +233,7 @@ struct PathResolutionPathOrderFixture : public testing::Test
         pathBuffer.pop_back(); //remove null
         boost::algorithm::split(pathItems, pathBuffer, std::bind1st(std::equal_to<wchar_t>(), L';'));
         ASSERT_LE(3ul, pathItems.size());
-		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [&] (std::wstring &x) { return Append(x, fileName); });
+        std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [&] (std::wstring &x) { return Append(x, fileName); });
         std::for_each(pathItems.begin(), pathItems.end(), [] (std::wstring& a) { Prettify(a.begin(), a.end()); });
     }
 };
@@ -276,7 +276,7 @@ struct PathResolutionPathExtOrderFixture : public testing::Test
         boost::algorithm::split(pathItems, pathBuffer, std::bind1st(std::equal_to<wchar_t>(), L';'));
         ASSERT_LE(3u, pathItems.size());
         std::for_each(pathItems.begin(), pathItems.end(), [this] (std::wstring& a) { a.insert(0, fileName); } );
-		std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [] (std::wstring &x) { return Append(L"C:\\Windows\\System32", x); });
+        std::transform(pathItems.begin(), pathItems.end(), pathItems.begin(), [] (std::wstring &x) { return Append(L"C:\\Windows\\System32", x); });
         std::for_each(pathItems.begin(), pathItems.end(), [] (std::wstring& a) { Prettify(a.begin(), a.end()); });
     }
 };
@@ -327,47 +327,47 @@ TEST_F(PathClassTests, CanInsert)
     examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
     buffer.insert(0, L"C:\\");
     buffer.append(L"I am an example path.exe");
-	ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-	boost::algorithm::to_upper(buffer);
-	ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
+    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
+    boost::algorithm::to_upper(buffer);
+    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
 }
 
 TEST_F(PathClassTests, CanInsertNoRealloc)
 {
     // Force reallocation
-	examplePath.reserve(260);
+    examplePath.reserve(260);
     std::wstring buffer(L"aaaa");
     examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
     buffer.insert(0, L"C:\\");
     buffer.append(L"I am an example path.exe");
-	ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-	boost::algorithm::to_upper(buffer);
-	ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
+    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
+    boost::algorithm::to_upper(buffer);
+    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
 }
 
 TEST_F(PathClassTests, CanInsertBorderCaseNoReallocate)
 {
-	auto insertionLength = examplePath.capacity() - examplePath.size();
-	auto oldCapacity = examplePath.capacity();
+    auto insertionLength = examplePath.capacity() - examplePath.size();
+    auto oldCapacity = examplePath.capacity();
     std::wstring buffer;
     buffer.insert(buffer.begin(), insertionLength, L'a');
     examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
     buffer.insert(0, L"C:\\");
     buffer.append(L"I am an example path.exe");
-	ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-	boost::algorithm::to_upper(buffer);
-	ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
-	ASSERT_EQ(examplePath.size(), examplePath.capacity());
-	ASSERT_EQ(oldCapacity, examplePath.capacity());
+    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
+    boost::algorithm::to_upper(buffer);
+    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
+    ASSERT_EQ(examplePath.size(), examplePath.capacity());
+    ASSERT_EQ(oldCapacity, examplePath.capacity());
 }
 
 TEST_F(PathClassTests, CanInsertNothing)
 {
-	// Insert zero length
-	char *nullPtr = nullptr;
+    // Insert zero length
+    char *nullPtr = nullptr;
     examplePath.insert(examplePath.begin() + 3, nullPtr, nullPtr);
     std::wstring buffer(L"C:\\I am an example path.exe");
-	ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-	boost::algorithm::to_upper(buffer);
-	ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
+    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
+    boost::algorithm::to_upper(buffer);
+    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
 }

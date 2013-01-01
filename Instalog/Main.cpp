@@ -40,27 +40,27 @@ static int instalog_main();
 #ifndef NDEBUG
 int main()
 {
-	return instalog_main();
+    return instalog_main();
 }
 #else
 int main()
 {
-	try
-	{
-		return instalog_main();
-	}
-	catch (Instalog::SystemFacades::HresultException const& hRes)
-	{
-		std::wcerr << "FAILURE!\n";
+    try
+    {
+        return instalog_main();
+    }
+    catch (Instalog::SystemFacades::HresultException const& hRes)
+    {
+        std::wcerr << "FAILURE!\n";
         std::wcerr << L"HRESULT Error: 0x" << std::hex << hRes.GetErrorCode() << L": " << hRes.GetErrorStringW() << std::endl;
-	}
-	catch (Instalog::SystemFacades::Win32Exception const& win)
-	{
-		std::wcerr << "FAILURE!\n";
+    }
+    catch (Instalog::SystemFacades::Win32Exception const& win)
+    {
+        std::wcerr << "FAILURE!\n";
         std::wcerr << L"Win32 Error: 0x" << std::hex << win.GetErrorCode() << L": " << win.GetWideMessage() << std::endl;
-	}
-	catch (std::exception const& stdExt)
-	{
+    }
+    catch (std::exception const& stdExt)
+    {
         std::cerr << "C++ Exception: " << stdExt.what() << std::endl;
     }
 
@@ -103,5 +103,5 @@ static int instalog_main()
     outFile.close();
     std::wcout << L"Press enter to close this window.";
     std::wcin.get();
-	return 0;
+    return 0;
 }

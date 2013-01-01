@@ -94,21 +94,21 @@ namespace Instalog { namespace SystemFacades {
         return RegistryValue(type, std::move(buff));
     }
 
-	void RegistryKey::SetValue(std::wstring const& name, std::size_t dataSize, void const* data, DWORD type)
-	{
-		if (dataSize > std::numeric_limits<ULONG>::max())
-		{
-			throw std::out_of_range("Registry key data was too long.");
-		}
+    void RegistryKey::SetValue(std::wstring const& name, std::size_t dataSize, void const* data, DWORD type)
+    {
+        if (dataSize > std::numeric_limits<ULONG>::max())
+        {
+            throw std::out_of_range("Registry key data was too long.");
+        }
 
-		UNICODE_STRING valueName(WstringToUnicodeString(name));
-		auto clippedSize = static_cast<ULONG>(dataSize);
-		NTSTATUS status = PNtSetValueKeyFunc(hKey_, &valueName, 0, type, const_cast<PVOID>(data), clippedSize);
-		if (!NT_SUCCESS(status))
-		{
-			Win32Exception::ThrowFromNtError(status);
-		}
-	}
+        UNICODE_STRING valueName(WstringToUnicodeString(name));
+        auto clippedSize = static_cast<ULONG>(dataSize);
+        NTSTATUS status = PNtSetValueKeyFunc(hKey_, &valueName, 0, type, const_cast<PVOID>(data), clippedSize);
+        if (!NT_SUCCESS(status))
+        {
+            Win32Exception::ThrowFromNtError(status);
+        }
+    }
 
     static RegistryKey RegistryKeyOpen( HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired )
     {

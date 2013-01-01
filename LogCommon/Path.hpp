@@ -223,30 +223,30 @@ namespace Instalog { namespace Path {
         auto insertionIndex = std::distance(this->cbegin(), insertionPoint);
         auto additionalLength = std::distance(first, last);
         auto requiredCapacity = this->size() + additionalLength;
-		auto afterInsertionLength = this->size() - insertionIndex + 1; // +1 for null terminator
+        auto afterInsertionLength = this->size() - insertionIndex + 1; // +1 for null terminator
 
         if (requiredCapacity <= this->capacity())
         {
             // Awesome, just copy the needed bits
             auto base = this->base_;
-			auto insertionPoint = base + insertionIndex;
-			auto shiftedInsertionPoint = insertionPoint + additionalLength;
+            auto insertionPoint = base + insertionIndex;
+            auto shiftedInsertionPoint = insertionPoint + additionalLength;
             auto uBase = this->upperBase();
-			auto upperInsertionPoint = uBase + insertionIndex;
-			auto upperShiftedInsertionPoint = upperInsertionPoint + additionalLength;
+            auto upperInsertionPoint = uBase + insertionIndex;
+            auto upperShiftedInsertionPoint = upperInsertionPoint + additionalLength;
 
             // First block, before the insertion; nothing required as there was no reallocation
 
             // Third block, move things after the insertion point after (memmove instead of copy due to overlapping regions)
-			std::wmemmove(shiftedInsertionPoint, insertionPoint, afterInsertionLength);
+            std::wmemmove(shiftedInsertionPoint, insertionPoint, afterInsertionLength);
 
             // Second block, the inserted block
             std::copy(first, last, insertionPoint);
 
-			// Fourth block, upper before the insertion; nothing required as there was no reallocation
-			
-			// Sixth block, upper after the insertion, move things after the insertion point after (memmove instead of copy due to overlapping regions)
-			std::wmemmove(upperShiftedInsertionPoint, upperInsertionPoint, afterInsertionLength);
+            // Fourth block, upper before the insertion; nothing required as there was no reallocation
+            
+            // Sixth block, upper after the insertion, move things after the insertion point after (memmove instead of copy due to overlapping regions)
+            std::wmemmove(upperShiftedInsertionPoint, upperInsertionPoint, afterInsertionLength);
 
             // Fifth block, the upper inserted block
             uppercase_range(additionalLength, insertionPoint, upperInsertionPoint);
@@ -258,35 +258,35 @@ namespace Instalog { namespace Path {
             auto newBase = new wchar_t[newCapacity * 2 + 2];
             // Okay, if that succeeded, we are nothrow at this point.
 
-			// Pointers from the old block
-			auto base = this->base_;
-			auto baseAfterInsertion = base + insertionIndex;
-			auto upperBase = this->upperBase();
-			auto upperBaseAfterInsertion = upperBase + insertionIndex;
+            // Pointers from the old block
+            auto base = this->base_;
+            auto baseAfterInsertion = base + insertionIndex;
+            auto upperBase = this->upperBase();
+            auto upperBaseAfterInsertion = upperBase + insertionIndex;
 
-			// Pointers into the new block
-			auto insertionPoint = newBase + insertionIndex;
-			auto afterInsertionPoint = insertionPoint + additionalLength;
-			auto newUpperBase = newBase + newCapacity + 1;
-			auto upperInsertionPoint = newUpperBase + insertionIndex;
-			auto upperAfterInsertionPoint = upperInsertionPoint + additionalLength;
+            // Pointers into the new block
+            auto insertionPoint = newBase + insertionIndex;
+            auto afterInsertionPoint = insertionPoint + additionalLength;
+            auto newUpperBase = newBase + newCapacity + 1;
+            auto upperInsertionPoint = newUpperBase + insertionIndex;
+            auto upperAfterInsertionPoint = upperInsertionPoint + additionalLength;
 
             // First block, before the insertion:
             std::copy_n(base, insertionIndex, newBase);
 
-			// Second block, the insertion itself:
+            // Second block, the insertion itself:
             std::copy(first, last, insertionPoint);
 
-			// Third block, after the insertion:
+            // Third block, after the insertion:
             std::copy_n(baseAfterInsertion, afterInsertionLength, afterInsertionPoint);
 
             // Fourth block, upper before the insertion:
             std::copy_n(upperBase, insertionIndex, newUpperBase);
 
-			// Fifth block, upper insertion itself:
+            // Fifth block, upper insertion itself:
             uppercase_range(additionalLength, insertionPoint, upperInsertionPoint);
 
-			// Sixth block, upper after the insertion:
+            // Sixth block, upper after the insertion:
             std::copy_n(upperBaseAfterInsertion, afterInsertionLength, upperAfterInsertionPoint);
 
             // Okay, free the old block

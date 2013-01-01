@@ -12,18 +12,18 @@ using Instalog::SystemFacades::XmlEventLog;
 
 TEST(OldEventLog, ReceivedEventLogEntries)
 {
-	OldEventLog eventLog;
+    OldEventLog eventLog;
 
-	std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries = eventLog.ReadEvents();
+    std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries = eventLog.ReadEvents();
 
-	ASSERT_TRUE(eventLogEntries.size() > 0);
+    ASSERT_TRUE(eventLogEntries.size() > 0);
 }
 
 TEST(XmlEventLog, ReceivedEventLogEntries)
 {
-	XmlEventLog eventLog;
+    XmlEventLog eventLog;
 
-	std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries(eventLog.ReadEvents());
+    std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries(eventLog.ReadEvents());
 
-	ASSERT_TRUE(eventLogEntries.size() > 0);
+    ASSERT_TRUE(eventLogEntries.size() > 0);
 }
