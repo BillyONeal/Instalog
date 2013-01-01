@@ -245,6 +245,7 @@
   <ItemGroup>
     <ClCompile Include="DnsTest.cpp" />
     <ClCompile Include="EventLogTest.cpp" />
+    <ClCompile Include="ExpectedTest.cpp" />
     <ClCompile Include="FileTest.cpp" />
     <ClCompile Include="gtest-all.cc" />
     <ClCompile Include="gtest_main.cc" />

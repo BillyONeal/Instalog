@@ -135,7 +135,7 @@ namespace Instalog { namespace SystemFacades {
         if (IsDirectory(filename))
             return false;
 
-        File executable = File(filename);
+        File executable(filename, FILE_READ_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING);
         std::vector<char> bytes = executable.ReadBytes(2);
         return bytes.size() >=2 && bytes[0] == 'M' && bytes[1] == 'Z';
     }

@@ -34,18 +34,18 @@ namespace Instalog { namespace Path {
             if (*pathend == L'\\' && *morebegin == L'\\')
             {
                 path.append(++morebegin, more.end());
-				return std::move(path);
+                return std::move(path);
             }
             else if (*pathend == L'\\' || *morebegin == L'\\')
             {
                 path.append(more);
-				return std::move(path);
+                return std::move(path);
             }
             else
             {
                 path.push_back(L'\\');
                 path.append(more);
-				return std::move(path);
+                return std::move(path);
             }
         }
     }
@@ -364,10 +364,10 @@ namespace Instalog { namespace Path {
      */
     void path::uppercase_range(path::size_type length, path::const_pointer start, path::pointer target)
     {
-		if (length == 0)
-		{
-			return;
-		}
+        if (length == 0)
+        {
+            return;
+        }
         else if (length >= static_cast<path::size_type>(std::numeric_limits<INT>::max()))
         {
             // Can't happen. But in case it does....
@@ -378,7 +378,7 @@ namespace Instalog { namespace Path {
         auto result = ::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, start, asInt, target, asInt);
         if (!result)
         {
-			SystemFacades::Win32Exception::ThrowFromLastError();
+            SystemFacades::Win32Exception::ThrowFromLastError();
         }
     }
 
@@ -676,7 +676,7 @@ namespace Instalog { namespace Path {
 
     path::const_pointer path::uc_str() const throw()
     {
-		return this->upperBase();
+        return this->upperBase();
     }
 
     path::path(wchar_t const* string)

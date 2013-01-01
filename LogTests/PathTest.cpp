@@ -64,8 +64,8 @@ TEST(PathAppendTest, BothAreEmpty)
 
 TEST(PathAppendTest, AppendFailure)
 {
-    EXPECT_EQ(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found",
-        Append(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64", L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found"));
+    EXPECT_STREQ(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found",
+        Append(L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64", L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found").c_str());
 }
 
 TEST(PathPrettify, CorrectOutput)

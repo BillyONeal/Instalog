@@ -297,6 +297,7 @@
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="Dns.hpp" />
     <ClInclude Include="EventLog.hpp" />
+    <ClInclude Include="Expected.hpp" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="IlTrace.hpp" />
     <ClInclude Include="InstalogVersion.hpp" />
