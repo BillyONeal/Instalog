@@ -218,57 +218,146 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    FindFiles::FindFiles( std::wstring const& pattern, bool recursive /*= false*/, bool includeRelativeSubPath /*= true*/, bool skipDotDirectories /*= true*/ )
+    /// Initializes a new instance of the FindFilesRecord class.
+    /// @param prefix    The prefix path.
+    /// @param winSource The windows data record source.
+    FindFilesRecord::FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource)
+        : dwFileAttributes(winSource.dwFileAttributes)
+    {
+        prefix.append(winSource.cFileName);
+        cFileName = std::move(prefix);
+        ftCreationTime = static_cast<std::uint64_t>(winSource.ftCreationTime.dwHighDateTime) << 32 & winSource.ftCreationTime.dwLowDateTime;
+        ftLastAccessTime = static_cast<std::uint64_t>(winSource.ftLastAccessTime.dwHighDateTime) << 32 & winSource.ftLastAccessTime.dwLowDateTime;
+        ftLastWriteTime = static_cast<std::uint64_t>(winSource.ftLastWriteTime.dwHighDateTime) << 32 & winSource.ftLastWriteTime.dwLowDateTime;
+        nFileSize = static_cast<std::uint64_t>(winSource.nFileSizeHigh) << 32 & winSource.nFileSizeLow;
+    }
+
+    /// Initializes a new instance of the File class.
+    /// @param other The copied record.
+    FindFilesRecord::FindFilesRecord(FindFilesRecord const& other)
+        : cFileName(other.cFileName)
+        , ftCreationTime(other.ftCreationTime)
+        , ftLastAccessTime(other.ftLastAccessTime)
+        , ftLastWriteTime(other.ftLastWriteTime)
+        , nFileSize(other.nFileSize)
+        , dwFileAttributes(other.dwFileAttributes)
+    { }
+
+    /// Initializes a moved instance of the File class.
+    /// @param other The moved record.
+    FindFilesRecord::FindFilesRecord(FindFilesRecord&& other) throw()
+        : cFileName(std::move(other.cFileName))
+        , ftCreationTime(other.ftCreationTime)
+        , ftLastAccessTime(other.ftLastAccessTime)
+        , ftLastWriteTime(other.ftLastWriteTime)
+        , nFileSize(other.nFileSize)
+        , dwFileAttributes(other.dwFileAttributes)
+    { }
+
+    /// Assignment operator.
+    /// @param other The copied item.
+    /// @return A shallow copy of this object.
+    FindFilesRecord& FindFilesRecord::operator=(FindFilesRecord other)
+    {
+        other.swap(*this);
+        return *this;
+    }
+
+    /// Gets file name.
+    /// @return The file name.
+    std::wstring const& FindFilesRecord::GetFileName() const throw()
+    {
+        return cFileName;
+    }
+
+    /// Gets creation time.
+    /// @return The creation time.
+    std::uint64_t FindFilesRecord::GetCreationTime() const throw()
+    {
+        return ftCreationTime;
+    }
+
+    /// Gets the last access time.
+    /// @return The last access time.
+    std::uint64_t FindFilesRecord::GetLastAccessTime() const throw()
+    {
+        return ftLastAccessTime;
+    }
+
+    /// Gets the last write time.
+    /// @return The last write time.
+    std::uint64_t FindFilesRecord::GetLastWriteTime() const throw()
+    {
+        return ftLastWriteTime;
+    }
+
+    /// Gets the size.
+    /// @return The size.
+    std::uint64_t FindFilesRecord::GetSize() const throw()
+    {
+        return nFileSize;
+    }
+
+    /// Gets the attributes.
+    /// @return The attributes.
+    DWORD FindFilesRecord::GetAttributes() const throw()
+    {
+        return dwFileAttributes;
+    }
+
+    /// Swaps the given record.
+    /// @param [in,out] other The other record with which to swap.
+    void FindFilesRecord::swap(FindFilesRecord &other) throw()
+    {
+        using std::swap;
+        swap(cFileName, other.cFileName);
+        swap(ftCreationTime, other.ftCreationTime);
+        swap(ftLastAccessTime, other.ftLastAccessTime);
+        swap(ftLastWriteTime, other.ftLastWriteTime);
+        swap(nFileSize, other.nFileSize);
+        swap(dwFileAttributes, other.dwFileAttributes);
+    }
+
+    FindFiles::FindFiles( std::wstring patternSpec, bool recursive /*= false*/, bool skipDotDirectories /*= true*/ )
         : recursive(recursive)
         , skipDotDirectories(skipDotDirectories)
-        , rootPath(pattern)
-        , includeRelativeSubPath(includeRelativeSubPath)
-        , valid(true)
     {
-        std::wstring::iterator chop = rootPath.end() - 1;
-        for (; chop > rootPath.begin(); --chop)
+        auto patternStart = std::find(patternSpec.crbegin(), patternSpec.crend(), L'\\');
+        auto patternBase = patternStart.base();
+        if (patternStart == patternSpec.crend() || patternStart + 1 == patternSpec.crend())
         {
-            if (*chop == L'\\')
-            {
-                break;
-            }
+            // We didn't find a pattern, default to selecting everything.
+            pattern = L"*";
         }
-        for (; chop > rootPath.begin(); --chop)
+        else
         {
-            if (*chop != L'\\')
-            {
-                break;
-            }
+            // We found a pattern, store it
+            pattern.assign(patternBase + 1, patternSpec.cend());
         }
-        rootPath.erase(chop + 1, rootPath.end());
-        rootPath.append(L"\\");
+        patternSpec.erase(patternBase, patternSpec.cend());
+        patternSpec.push_back(L'\\');
+        subPaths.push(std::move(patternSpec));
 
-        HANDLE handle = ::FindFirstFile(pattern.c_str(), &data);
+        WIN32_FIND_DATAW dataBlock;
+        HANDLE handle = ::FindFirstFileW(pattern.c_str(), &dataBlock);
 
         if (handle == INVALID_HANDLE_VALUE)
         {
-            DWORD lastError = ::GetLastError();
-            
-            if (lastError == ERROR_FILE_NOT_FOUND || lastError == ERROR_PATH_NOT_FOUND)
-            {
-                valid = false;
-                return;
-            }
-            else
-            {
-                Win32Exception::ThrowFromLastError();
-            }
+            data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
         }
-
-        handles.push(handle);
-
-        if (skipDotDirectories && data.cFileName[0] == L'.')
+        else
         {
-            Next();
+            data = FindFilesRecord(rootPath, dataBlock);
+            handles.push(handle);
+
+            if (skipDotDirectories && data.get().GetFileName() == L".")
+            {
+                Next();
+            }
         }
     }
 
-    FindFiles::~FindFiles()
+    FindFiles::~FindFiles() throw()
     {
         while (handles.empty() == false)
         {
@@ -277,32 +366,66 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    void FindFiles::Next()
+    void FindFiles::Next() throw()
     {
-        bool alreadyIncludedSubPath = false;
+        WIN32_FIND_DATAW dataBlock;
+        if (recursive && data.is_valid())
+        {
+            auto const& previous= data.get();
+            if ((previous.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && !IsDotDirectory(previous))
+            {
+                std::wstring nextRoot;
+                if (subPaths.empty())
+                {
+                    nextRoot.append(rootPath);
+                }
+                else
+                {
+                    nextRoot.append(subPaths.top());
+                }
+
+                nextRoot.append(dataBlock.cFileName);
+                nextRoot.push_back(L'\\');
+                subPaths.push(nextRoot);
+
+                nextRoot.append(pattern);
+                HANDLE handle = ::FindFirstFile(nextRoot.c_str(), &dataBlock);
+                if (handle == INVALID_HANDLE_VALUE)
+                {
+                    data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
+                }
+                else
+                {
+                    data = FindFilesRecord(subPaths.top(), dataBlock);
+                    handles.push(handle);
+
+                    if (skipDotDirectories && IsDotDirectory(data.get()))
+                    {
+                        FindFiles::Next();
+                    }
+                }
+            }
+        }
 
         // Get the next file, skip . and .. if requested
         do 
         {
-            if (::FindNextFile(handles.top(), &data) == false)
+            if (::FindNextFile(handles.top(), &dataBlock) == false)
             {
                 DWORD errorStatus = ::GetLastError();
                 if (errorStatus == ERROR_NO_MORE_FILES)
                 {
                     ::FindClose(handles.top());
                     handles.pop();
-                    if (subPaths.empty() == false)
+                    if (!subPaths.empty())
                     {
                         subPaths.pop();
                     }                
-                    if (handles.empty())
+                    if (!handles.empty())
                     {
-                        valid = false;
+                        data.clear();
+                        Next();
                         return;
-                    }
-                    else
-                    {
-                        return Next();
                     }
                 }
                 else
@@ -310,46 +433,12 @@ namespace Instalog { namespace SystemFacades {
                     Win32Exception::Throw(errorStatus);
                 }
             }
-        } while (skipDotDirectories && (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0));
-
-        if (recursive)
-        {
-            if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(data.cFileName, L".") != 0 && wcscmp(data.cFileName, L"..") != 0)
-            {
-                if (subPaths.empty())
-                {
-                    subPaths.push(std::wstring(data.cFileName).append(L"\\"));        
-                }
-                else
-                {
-                    subPaths.push(std::wstring(subPaths.top()).append(data.cFileName).append(L"\\"));                
-                }
-
-                HANDLE handle = ::FindFirstFile(std::wstring(rootPath).append(subPaths.top()).append(L"*").c_str(), &data);
-                if (handle == INVALID_HANDLE_VALUE)
-                {
-                    Win32Exception::ThrowFromLastError();
-                }
-
-                handles.push(handle);
-
-                if (skipDotDirectories)
-                {
-                    FindFiles::Next();
-                    alreadyIncludedSubPath = true;
-                }
-            }
-        }
+        } while (skipDotDirectories && (wcscmp(dataBlock.cFileName, L".") == 0 || wcscmp(dataBlock.cFileName, L"..") == 0));
 
         if (includeRelativeSubPath && alreadyIncludedSubPath == false && subPaths.empty() == false)
         {
-            wcscpy_s(data.cFileName, MAX_PATH, std::wstring(subPaths.top()).append(data.cFileName).c_str());
+            wcscpy_s(data.get().cFileName, MAX_PATH, std::wstring(subPaths.top()).append(data.get().cFileName).c_str());
         }
-    }
-
-    bool FindFiles::IsValid()
-    {
-        return valid;
     }
 
 }}

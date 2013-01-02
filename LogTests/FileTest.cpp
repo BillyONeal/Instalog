@@ -409,22 +409,6 @@ TEST(FindFiles, HostsNotExistsNotRecursive)
     ASSERT_FALSE(foundHosts);
 }
 
-TEST(FindFiles, HostsExistsNoSubpath)
-{
-    bool foundHosts = false;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true, false);
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
-    {
-        if (boost::iequals(files.data.cFileName, L"hosts"))
-        {
-            foundHosts = true;
-        }
-    }
-
-    ASSERT_TRUE(foundHosts);
-}
-
 TEST(FindFiles, NoDots)
 {
     FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*");
@@ -454,7 +438,7 @@ TEST(FindFiles, NoDotsRecursive)
 
 TEST(FindFiles, Dots)
 {
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, true, false);
+    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, false);
 
     EXPECT_EQ(L".", std::wstring(files.data.cFileName));
     files.Next();
@@ -498,7 +482,7 @@ TEST_F(FileItDirectoryFixture, EmptyDirectory)
 
 TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
 {
-    FindFiles files(std::wstring(tempPath).append(L"\\*"), false, true, false);
+    FindFiles files(std::wstring(tempPath).append(L"\\*"), false, false);
 
     EXPECT_EQ(L".", std::wstring(files.data.cFileName));
     EXPECT_TRUE(files.IsValid());

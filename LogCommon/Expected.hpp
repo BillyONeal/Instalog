@@ -101,6 +101,30 @@ private:
         return *reinterpret_cast<const_pointer>(&tStorage);
     }
 
+    /**
+     * Destorys the contents of this expected<T>.
+     */
+    void destroy() throw()
+    {
+        if (isValid)
+        {
+            get_value_storage().~Ty();
+        }
+        else
+        {
+            using std::exception_ptr;
+            get_exception_storage().~exception_ptr();
+        }
+    }
+
+    /**
+     * Constructs an empty exception_ptr as this instance's default state.
+     */
+    void default_initialize() throw()
+    {
+        new (&get_exception_storage()) std::exception_ptr();
+    }
+
 public:
 
     /**
@@ -109,7 +133,7 @@ public:
     expected()
         : isValid(false)
     {
-        new (&get_exception_storage()) std::exception_ptr();
+        default_initalize();
     }
 
     /**
@@ -216,15 +240,17 @@ public:
      */
     ~expected() throw()
     {
-        if (isValid)
-        {
-            get_value_storage().~Ty();
-        }
-        else
-        {
-            using std::exception_ptr;
-            get_exception_storage().~exception_ptr();
-        }
+        destroy();
+    }
+
+    /**
+     * Clears the contents of this expected<t>, and reverts it to a default-initalzied state.
+     */
+    void clear() throw()
+    {
+        destroy();
+        isValid = false;
+        default_initialize();
     }
 
     /**
