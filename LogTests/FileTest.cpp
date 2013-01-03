@@ -309,7 +309,7 @@ TEST(FindFiles, HostsExists)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
+        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
         {
             foundHosts = true;
         }
@@ -326,7 +326,7 @@ TEST(FindFiles, OnlyHostsStarFollowing)
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
         std::wcout << files.GetData().get().GetFileName() << std::endl;
-        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
+        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
         {
             foundHosts = true;
         }
@@ -346,7 +346,7 @@ TEST(FindFiles, OnlyHostsStarPreceding)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
+        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
         {
             foundHosts = true;
         }
@@ -366,7 +366,12 @@ TEST(FindFiles, HostsExistsRecursive)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.GetData().get().GetFileName(), L"etc\\hosts"))
+        if (!files.GetData().is_valid())
+        {
+            continue;
+        }
+
+        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -382,7 +387,12 @@ TEST(FindFiles, HostsExistsRecursiveTwoLevels)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.GetData().get().GetFileName(), L"drivers\\etc\\hosts"))
+        if (!files.GetData().is_valid())
+        {
+            continue;
+        }
+
+        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\drivers\\etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -399,6 +409,11 @@ TEST(FindFiles, HostsNotExistsNotRecursive)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
+        if (!files.GetData().is_valid())
+        {
+            continue;
+        }
+
         if (boost::icontains(files.GetData().get().GetFileName(), L"hosts"))
         {
             foundHosts = true;
@@ -429,6 +444,11 @@ TEST(FindFiles, NoDotsRecursive)
 
     for(; files.IsValid(); files.Next())
     {
+        if (!files.GetData().is_valid())
+        {
+            continue;
+        }
+
         if (boost::ends_with(files.GetData().get().GetFileName(), L"."))
         {
             FAIL() << ". or .. directory mistakenly included in enumeration";
@@ -440,9 +460,9 @@ TEST(FindFiles, Dots)
 {
     FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, false);
 
-    EXPECT_EQ(L".", std::wstring(files.GetData().get().GetFileName()));
+    EXPECT_EQ(L"C:\\Windows\\System32\\drivers\\etc\\.", std::wstring(files.GetData().get().GetFileName()));
     files.Next();
-    EXPECT_EQ(L"..", std::wstring(files.GetData().get().GetFileName()));
+    EXPECT_EQ(L"C:\\Windows\\System32\\drivers\\etc\\..", std::wstring(files.GetData().get().GetFileName()));
 }
 
 struct FileItDirectoryFixture : public testing::Test
@@ -482,11 +502,16 @@ TEST_F(FileItDirectoryFixture, EmptyDirectory)
 
 TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
 {
-    FindFiles files(std::wstring(tempPath).append(L"\\*"), false, false);
+    std::wstring workingBuffer(tempPath);
+    workingBuffer.append(L"\\*");
+    FindFiles files(workingBuffer, false, false);
+    workingBuffer.pop_back();
+    workingBuffer.push_back(L'.');
 
-    EXPECT_EQ(L".", std::wstring(files.GetData().get().GetFileName()));
+    EXPECT_EQ(workingBuffer, files.GetData().get().GetFileName());
     EXPECT_TRUE(files.IsValid());
     files.Next();
-    EXPECT_EQ(L"..", std::wstring(files.GetData().get().GetFileName()));
+    workingBuffer.push_back(L'.');
+    EXPECT_EQ(workingBuffer, files.GetData().get().GetFileName());
     EXPECT_TRUE(files.IsValid());
 }

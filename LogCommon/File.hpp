@@ -281,7 +281,7 @@ namespace Instalog { namespace SystemFacades {
          */
         bool IsValid() throw()
         {
-            return handles.empty();
+            return !handles.empty();
         }
     };
 

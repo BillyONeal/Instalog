@@ -333,18 +333,23 @@ namespace Instalog { namespace SystemFacades {
     {
         auto patternStart = std::find(patternSpec.crbegin(), patternSpec.crend(), L'\\');
         auto patternBase = patternStart.base();
-        if (patternStart == patternSpec.crend() || patternStart + 1 == patternSpec.crend())
+        if (patternStart == patternSpec.crend())
+        {
+            pattern = patternSpec;
+            subPaths.emplace(L".\\");
+        }
+        else if (patternStart == patternSpec.crbegin())
         {
             // We didn't find a pattern, default to selecting everything.
             pattern = L"*";
+            subPaths.emplace(patternSpec);
         }
         else
         {
             // We found a pattern, store it
-            pattern.assign(patternBase + 1, patternSpec.cend());
+            subPaths.emplace(patternSpec.cbegin(), patternBase);
+            pattern.assign(patternBase, patternSpec.cend());
         }
-        subPaths.emplace(patternSpec.cbegin(), patternBase);
-        subPaths.top().push_back(L'\\');
 
         WIN32_FIND_DATAW dataBlock;
         HANDLE handle = ::FindFirstFileW(GetNextSpec().c_str(), &dataBlock);
@@ -355,10 +360,14 @@ namespace Instalog { namespace SystemFacades {
         }
         else
         {
-            data = FindFilesRecord(subPaths.top(), dataBlock);
-            if (skipDotDirectories && IsDotDirectory(data.get()))
+            handles.push(handle);
+            if (skipDotDirectories && (std::wcscmp(L".", dataBlock.cFileName) == 0  || std::wcscmp(L"..", dataBlock.cFileName) == 0))
             {
                 Next();
+            }
+            else
+            {
+                data = FindFilesRecord(subPaths.top(), dataBlock);
             }
         }
     }
@@ -375,7 +384,7 @@ namespace Instalog { namespace SystemFacades {
     void FindFiles::Next() throw()
     {
         WIN32_FIND_DATAW dataBlock;
-        if (recursive && data.is_valid())
+        if (recursive && IsValid())
         {
             auto const& previous = data.get();
             if ((previous.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && !IsDotDirectory(previous))
@@ -420,12 +429,13 @@ namespace Instalog { namespace SystemFacades {
                     ::FindClose(handles.top());
                     handles.pop();
                     subPaths.pop();
-                    if (!handles.empty())
+                    data.clear();
+                    if (IsValid())
                     {
-                        data.clear();
                         this->Next();
-                        return;
                     }
+
+                    return;
                 }
                 else
                 {
