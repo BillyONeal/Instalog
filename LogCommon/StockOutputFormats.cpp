@@ -20,7 +20,7 @@ using Instalog::SystemFacades::File;
 
 namespace Instalog {
 
-    static void DateFormatImpl(std::wostream &str, unsigned __int64 time, bool ms)
+    static void DateFormatImpl(std::wostream &str, std::uint64_t time, bool ms)
     {
         using namespace boost::io;
         SYSTEMTIME st;
@@ -42,15 +42,15 @@ namespace Instalog {
         }
     }
     
-    void WriteDefaultDateFormat(std::wostream &str, unsigned __int64 time)
+    void WriteDefaultDateFormat(std::wostream &str, std::uint64_t time)
     {
         DateFormatImpl(str, time, false);
     }
-    void WriteMillisecondDateFormat(std::wostream &str, unsigned __int64 time)
+    void WriteMillisecondDateFormat(std::wostream &str, std::uint64_t time)
     {
         DateFormatImpl(str, time, true);
     }
-    void WriteFileAttributes( std::wostream &str, unsigned __int32 attributes )
+    void WriteFileAttributes( std::wostream &str, std::int32_t attributes )
     {
         if (attributes & FILE_ATTRIBUTE_DIRECTORY)
             str << L'd';
@@ -109,12 +109,12 @@ namespace Instalog {
             companyInfo = L"";
         }
         WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
-        unsigned __int64 size = 
-            static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+        std::uint64_t size = 
+            static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32
             | fad.nFileSizeLow;
         str << targetFile << L" [" << size << L' ';
-        unsigned __int64 ctime = 
-            static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+        std::uint64_t ctime = 
+            static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
             | fad.ftCreationTime.dwLowDateTime;
         WriteDefaultDateFormat(str, ctime);
         str << companyInfo << L"]";
@@ -123,14 +123,14 @@ namespace Instalog {
     void WriteFileListingFile( std::wostream &str, std::wstring const& targetFile )
     {
         WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
-        unsigned __int64 size = 
-            static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+        std::uint64_t size = 
+            static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32
             | fad.nFileSizeLow;
-        unsigned __int64 ctime = 
-            static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+        std::uint64_t ctime = 
+            static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
             | fad.ftCreationTime.dwLowDateTime;
-        unsigned __int64 mtime = 
-            static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+        std::uint64_t mtime = 
+            static_cast<std::uint64_t>(fad.ftLastWriteTime.dwHighDateTime) << 32
             | fad.ftLastWriteTime.dwLowDateTime;
         WriteDefaultDateFormat(str, ctime);
         str << L" . ";
@@ -142,14 +142,14 @@ namespace Instalog {
 
     void WriteFileListingFromFindData( std::wostream &str, WIN32_FIND_DATAW const& fad )
     {
-        unsigned __int64 size = 
-            static_cast<unsigned __int64>(fad.nFileSizeHigh) << 32
+        std::uint64_t size = 
+            static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32
             | fad.nFileSizeLow;
-        unsigned __int64 ctime = 
-            static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+        std::uint64_t ctime = 
+            static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
             | fad.ftCreationTime.dwLowDateTime;
-        unsigned __int64 mtime = 
-            static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+        std::uint64_t mtime = 
+            static_cast<std::uint64_t>(fad.ftLastWriteTime.dwHighDateTime) << 32
             | fad.ftLastWriteTime.dwLowDateTime;
         WriteDefaultDateFormat(str, ctime);
         str << L" . ";
@@ -164,8 +164,8 @@ namespace Instalog {
 
     void WriteMemoryInformation( std::wostream &log )
     {
-        unsigned __int64 availableRam = 0;
-        unsigned __int64 totalRam = 0;
+        std::uint64_t availableRam = 0;
+        std::uint64_t totalRam = 0;
         MEMORYSTATUSEX memStatus;
         memStatus.dwLength = sizeof(MEMORYSTATUSEX);
         GlobalMemoryStatusEx(&memStatus);
@@ -505,7 +505,7 @@ namespace Instalog {
         return tzInfo.Bias;
     }
 
-    unsigned __int64 GetLocalTime()
+    std::uint64_t GetLocalTime()
     {
         SYSTEMTIME st;
         FILETIME ft;
@@ -514,7 +514,7 @@ namespace Instalog {
         return FiletimeToInteger(ft);
     }
 
-    void WriteScriptHeader( std::wostream &log, unsigned __int64 startTime )
+    void WriteScriptHeader( std::wostream &log, std::uint64_t startTime )
     {
         log << L"Instalog " INSTALOG_VERSION;
         switch(GetSystemMetrics(SM_CLEANBOOT))
@@ -601,7 +601,7 @@ namespace Instalog {
         log << L"\n";
     }
 
-    void WriteScriptFooter( std::wostream &log, unsigned __int64 startTime )
+    void WriteScriptFooter( std::wostream &log, std::uint64_t startTime )
     {
         auto endTime = Instalog::GetLocalTime();
         auto duration = endTime - startTime;

@@ -47,11 +47,11 @@ namespace Instalog { namespace SystemFacades {
         ::CloseHandle(hFile);
     }
 
-    unsigned __int64 File::GetSize() const
+    std::uint64_t File::GetSize() const
     {
         BY_HANDLE_FILE_INFORMATION info = GetExtendedAttributes();
 
-        unsigned __int64 highSize = info.nFileSizeHigh;
+        std::uint64_t highSize = info.nFileSizeHigh;
         highSize <<= 32;
         return highSize + info.nFileSizeLow;
     }
@@ -169,10 +169,10 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    unsigned __int64 File::GetSize( std::wstring const& filename )
+    std::uint64_t File::GetSize( std::wstring const& filename )
     {
         WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(filename);
-        unsigned __int64 size = fad.nFileSizeHigh;
+        std::uint64_t size = fad.nFileSizeHigh;
         size <<= 32;
         size |= fad.nFileSizeLow;
         return size;

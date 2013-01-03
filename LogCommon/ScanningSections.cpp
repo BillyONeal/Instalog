@@ -257,13 +257,13 @@ namespace Instalog
     struct SystemTimeInformation
     { // MSDN says "reserved [48]" http://msdn.microsoft.com/en-us/library/windows/desktop/ms724509.aspx
       // This came from ReactOS: http://doxygen.reactos.org/da/d46/structSYSTEM__TIMEOFDAY__INFORMATION.html
-        __int64 bootTime; // 8
-        __int64 currentTime; // 16
-        __int64 timeZoneBias; // 24
-        unsigned __int32 timeZoneId; // 28
-        unsigned __int32 reserved; // 32
-        unsigned __int64 bootTimeBias; // 40
-        unsigned __int64 sleepTimeBias; // 48
+        std::int64_t bootTime; // 8
+        std::int64_t currentTime; // 16
+        std::int64_t timeZoneBias; // 24
+        std::int32_t timeZoneId; // 28
+        std::int32_t reserved; // 32
+        std::uint64_t bootTimeBias; // 40
+        std::uint64_t sleepTimeBias; // 48
     };
 
     void MachineSpecifications::PerfFormattedData_PerfOS_System( std::wostream &logOutput ) const
@@ -271,9 +271,9 @@ namespace Instalog
         NtQuerySystemInformationFunc ntQuerySysInfo = 
             SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>("NtQuerySystemInformation");
 
-        const unsigned __int64 ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
-        const unsigned __int64 ticksPerHour = 10000000ull * 60ull * 60ull;
-        const unsigned __int64 ticksPerMinute = 10000000ull * 60ull;
+        const std::uint64_t ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
+        const std::uint64_t ticksPerHour = 10000000ull * 60ull * 60ull;
+        const std::uint64_t ticksPerMinute = 10000000ull * 60ull;
         SystemTimeInformation timeData;
         NTSTATUS errorCheck = ntQuerySysInfo(SystemTimeOfDayInformation, reinterpret_cast<void*>(&timeData), sizeof(timeData), 0);
         if (errorCheck != 0)
@@ -619,11 +619,11 @@ namespace Instalog
     /// @param    months    The number of months to go back
     ///
     /// @return    The int representation of a filetime that was that many months ago
-    unsigned __int64 MonthsAgo(int months)
+    std::uint64_t MonthsAgo(int months)
     {
         FILETIME fileTime;
         GetSystemTimeAsFileTime(&fileTime);
-        unsigned __int64 monthsAgo = FiletimeToInteger(fileTime);
+        std::uint64_t monthsAgo = FiletimeToInteger(fileTime);
         monthsAgo -= months * 25920000000000; /* 30 days of 100-nanosecond intervals */
         return monthsAgo;
     }
@@ -707,7 +707,7 @@ namespace Instalog
 #endif
         };
 
-        unsigned __int64 oneMonthAgo = MonthsAgo(1);
+        std::uint64_t oneMonthAgo = MonthsAgo(1);
 
         std::vector<WIN32_FIND_DATAW> fileData;
 
@@ -718,10 +718,10 @@ namespace Instalog
 
             for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
             {
-                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+                std::uint64_t createdTime = files.GetData().get().GetCreationTime();
                 if (createdTime >= oneMonthAgo)
                 {
-                    fileData.emplace_back(std::move(AddBasePathToFileData(files.data, fullDirectory)));
+                    fileData.emplace_back(std::move(AddBasePathToFileData(files.GetData().get(), fullDirectory)));
                 }
             }
         }
@@ -767,7 +767,7 @@ namespace Instalog
 
         std::vector<WIN32_FIND_DATAW> fileData;
 
-        unsigned __int64 threeMonthsAgo = MonthsAgo(3);
+        std::uint64_t threeMonthsAgo = MonthsAgo(3);
 
         // The first part of list1 is generated the same as list5
         static const wchar_t *extensions_list15[] = { 
@@ -826,7 +826,7 @@ namespace Instalog
 
             for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
             {
-                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
                 if (createdTime >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
@@ -874,7 +874,7 @@ namespace Instalog
             // Recursive
             for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
             {
-                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
                 if (createdTime >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
@@ -921,7 +921,7 @@ namespace Instalog
             for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
             {
                 // Discard entries that are more than three months old
-                unsigned __int64 createdTime = FiletimeToInteger(files.data.ftCreationTime);
+                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
                 if (createdTime < threeMonthsAgo)
                 {
                     continue;
@@ -976,7 +976,7 @@ namespace Instalog
         {
             WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, directory_list6);
 
-            unsigned __int64 fileSize = File::GetSize(data.cFileName);
+            std::uint64_t fileSize = File::GetSize(data.cFileName);
 
             // Keep only those with size between 1500 and 2000 bytes 
             // or

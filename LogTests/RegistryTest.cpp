@@ -126,7 +126,7 @@ TEST(Registry, GetsRightSizeInformation)
         &lastTime
     );
     RegCloseKey(hKey);
-    unsigned __int64 convertedTime = Instalog::FiletimeToInteger(lastTime);
+    std::uint64_t convertedTime = Instalog::FiletimeToInteger(lastTime);
     RegistryKey systemKey = RegistryKey::Open(GetCurrentUserRelativeKeyPath(L"\\Software"), KEY_READ);
     auto sizeInfo = systemKey.GetSizeInformation();
     ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());
@@ -236,8 +236,8 @@ struct RegistryValueTest : public testing::Test
     {
         HKEY hKey;
         DWORD exampleDword = 0xDEADBEEFul;
-        unsigned __int64 exampleQWord = 0xBADC0FFEEBADBAD1ull;
-        unsigned __int64 exampleSmallQword = exampleDword;
+        std::uint64_t exampleQWord = 0xBADC0FFEEBADBAD1ull;
+        std::uint64_t exampleSmallQword = exampleDword;
         LSTATUS errorCheck = ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\BillyONeal", 0, 0, 0, KEY_SET_VALUE | KEY_CREATE_SUB_KEY, 0, &hKey, 0);
         ASSERT_EQ(0, errorCheck);
         ::RegSetValueExW(hKey, L"ExampleDataNone", 0, REG_NONE, exampleDataCasted, sizeof(exampleData));
@@ -253,12 +253,12 @@ struct RegistryValueTest : public testing::Test
         ::RegSetValueExW(hKey, L"ExampleDword", 0, REG_DWORD, &dwordArray[0], sizeof(DWORD));
         std::reverse(dwordArray.begin(), dwordArray.end());
         ::RegSetValueExW(hKey, L"ExampleFDword", 0, REG_DWORD_BIG_ENDIAN, &dwordArray[0], sizeof(DWORD));
-        ::RegSetValueExW(hKey, L"ExampleQWord", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleQWord), sizeof(unsigned __int64));
+        ::RegSetValueExW(hKey, L"ExampleQWord", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleQWord), sizeof(std::uint64_t));
 
         HKEY hConversions;
         errorCheck = ::RegCreateKeyExW(hKey, L"Conversions", 0, 0, 0, KEY_SET_VALUE, 0, &hConversions, 0);
         ASSERT_EQ(errorCheck, 0);
-        ::RegSetValueExW(hConversions, L"SmallQword", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleSmallQword), sizeof(unsigned __int64));
+        ::RegSetValueExW(hConversions, L"SmallQword", 0, REG_QWORD, reinterpret_cast<BYTE const*>(&exampleSmallQword), sizeof(std::uint64_t));
         ::RegSetValueExW(hConversions, L"WordData", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordData), sizeof(wordData));
         ::RegSetValueExW(hConversions, L"WordDataAppended", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordDataAppended), sizeof(wordDataAppended));
         ::RegSetValueExW(hConversions, L"WordDataTooLong", 0, REG_SZ, reinterpret_cast<BYTE const*>(wordDataTooLong), sizeof(wordDataTooLong));

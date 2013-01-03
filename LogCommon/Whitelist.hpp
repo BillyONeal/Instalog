@@ -22,7 +22,7 @@ namespace Instalog {
         /// @param    replacements    (optional) the replacements.  These are in the form of pairs of strings.  Matches from the first part of the pair are replaced with the second part.
         /// 
         /// @throws    Win32Exception on error
-        Whitelist(__int32 whitelistId, std::vector<std::pair<std::wstring, std::wstring>> const& replacements = std::vector<std::pair<std::wstring, std::wstring>>());
+        Whitelist(std::int32_t whitelistId, std::vector<std::pair<std::wstring, std::wstring>> const& replacements = std::vector<std::pair<std::wstring, std::wstring>>());
 
         /// @brief    Query if an item should be whitelisted
         ///

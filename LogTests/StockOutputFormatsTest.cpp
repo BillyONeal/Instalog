@@ -14,7 +14,7 @@ using namespace Instalog;
 
 TEST(StockFormats, DateIsCorrect)
 {
-    unsigned __int64 ft = 123412341234ull;
+    std::uint64_t ft = 123412341234ull;
     std::wostringstream ss;
     WriteDefaultDateFormat(ss, ft);
     EXPECT_EQ(L"1601-01-01 03:25:41", ss.str());
@@ -22,14 +22,14 @@ TEST(StockFormats, DateIsCorrect)
 
 TEST(StockFormats, InvalidDateThrows)
 {
-    unsigned __int64 ft = 0xF000000000000000ull;
+    std::uint64_t ft = 0xF000000000000000ull;
     std::wostringstream ss;
     EXPECT_THROW(WriteDefaultDateFormat(ss, ft), SystemFacades::ErrorInvalidParameterException);
 }
 
 TEST(StockFormats, DateMsIsCorrect)
 {
-    unsigned __int64 ft = 123412341234ull;
+    std::uint64_t ft = 123412341234ull;
     std::wostringstream ss;
     WriteMillisecondDateFormat(ss, ft);
     EXPECT_EQ(L"1601-01-01 03:25:41.0234", ss.str());
@@ -37,12 +37,12 @@ TEST(StockFormats, DateMsIsCorrect)
 
 TEST(StockFormats, InvalidMsDateThrows)
 {
-    unsigned __int64 ft = 0xF000000000000000ull;
+    std::uint64_t ft = 0xF000000000000000ull;
     std::wostringstream ss;
     EXPECT_THROW(WriteMillisecondDateFormat(ss, ft), SystemFacades::ErrorInvalidParameterException);
 }
 
-static void testWriteFileAttributes(unsigned __int32 attributes, std::wstring expected)
+static void testWriteFileAttributes(std::uint32_t attributes, std::wstring expected)
 {
     std::wostringstream ss;
     WriteFileAttributes(ss, attributes);
@@ -122,8 +122,8 @@ TEST(StockFormats, DefaultFileWithCompany)
     WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
     std::wstringstream expected;
     expected << L"C:\\Windows\\Explorer.exe [" << fad.nFileSizeLow << L' ';
-    unsigned __int64 ctime = 
-        static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+    std::uint64_t ctime = 
+        static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
         | fad.ftCreationTime.dwLowDateTime;
     WriteDefaultDateFormat(expected, ctime);
     expected << L" Microsoft Corporation]";
@@ -137,11 +137,11 @@ TEST(StockFormats, Listing)
     WriteFileListingFile(ss, L"C:\\Windows\\Explorer.exe");
     WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
     std::wstringstream expected;
-    unsigned __int64 ctime = 
-        static_cast<unsigned __int64>(fad.ftCreationTime.dwHighDateTime) << 32
+    std::uint64_t ctime = 
+        static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
         | fad.ftCreationTime.dwLowDateTime;
-    unsigned __int64 mtime = 
-        static_cast<unsigned __int64>(fad.ftLastWriteTime.dwHighDateTime) << 32
+    std::uint64_t mtime = 
+        static_cast<std::uint64_t>(fad.ftLastWriteTime.dwHighDateTime) << 32
         | fad.ftLastWriteTime.dwLowDateTime;
     WriteDefaultDateFormat(expected, ctime);
     expected << L" . ";

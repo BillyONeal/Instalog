@@ -95,7 +95,7 @@ namespace Instalog { namespace SystemFacades {
         ///         Thrown in the event the data cannot be interpreted as a QWORD.
         /// 
         /// @return    The value reinterpreted as a QWORD.
-        unsigned __int64 GetQWord() const;
+        std::uint64_t GetQWord() const;
 
         /// @brief    Interprets the data in this value as a QWORD, without
         ///         conversions.
@@ -107,7 +107,7 @@ namespace Instalog { namespace SystemFacades {
         ///         Thrown in the event the data is not REG_QWORD
         /// 
         /// @return    The the value reinterpreted as a QWORD.
-        unsigned __int64 GetQWordStrict() const;
+        std::uint64_t GetQWordStrict() const;
 
         /// @brief    Gets the data in this registry value, converted to a string
         ///         representation.
@@ -249,31 +249,31 @@ namespace Instalog { namespace SystemFacades {
     /// @brief    Information about the registry key size.
     class RegistryKeySizeInformation
     {
-        unsigned __int64 lastWriteTime_;
-        unsigned __int32 numberOfSubkeys_;
-        unsigned __int32 numberOfValues_;
+        std::uint64_t lastWriteTime_;
+        std::uint32_t numberOfSubkeys_;
+        std::uint32_t numberOfValues_;
     public:
         /// @brief    Constructor.
         ///
         /// @param    lastWriteTime      Time of the last write to the indicated registry key.
         /// @param    numberOfSubkeys    Number of sub keys of this registry key.
         /// @param    numberOfValues     Number of values in this registry key.
-        RegistryKeySizeInformation(unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues);
+        RegistryKeySizeInformation(std::uint64_t lastWriteTime, std::uint32_t numberOfSubkeys, std::uint32_t numberOfValues);
 
         /// @brief    Gets the number of subkeys.
         ///
         /// @return    The number of subkeys.
-        unsigned __int32 GetNumberOfSubkeys() const;
+        std::uint32_t GetNumberOfSubkeys() const;
 
         /// @brief    Gets the number of values.
         ///
         /// @return    The number of values.
-        unsigned __int32 GetNumberOfValues() const;
+        std::uint32_t GetNumberOfValues() const;
 
         /// @brief    Gets the last write time.
         ///
         /// @return    The last write time.
-        unsigned __int64 GetLastWriteTime() const;
+        std::uint64_t GetLastWriteTime() const;
     };
 
     /// @brief    Registry key.

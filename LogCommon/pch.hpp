@@ -6,6 +6,7 @@
 #define _SCL_SECURE_NO_WARNINGS
 #include <cstdlib>
 #include <cstring>
+#include <cstdint>
 #include <memory>
 #include <algorithm>
 #include <string>

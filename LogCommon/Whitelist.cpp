@@ -31,7 +31,7 @@ namespace Instalog {
         return hModule;
     }
 
-    Whitelist::Whitelist( __int32 whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
+    Whitelist::Whitelist( std::int32_t whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
     {
         using namespace std::placeholders;
         HMODULE hMod = GetCurrentModule();

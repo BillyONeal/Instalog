@@ -59,7 +59,7 @@ namespace Instalog { namespace SystemFacades {
         /// @return    The size.
         ///
         /// @throw    Win32Exception on failure
-        unsigned __int64 GetSize() const;
+        std::uint64_t GetSize() const;
 
         /// @brief    Gets the attributes of the file as a DWORD
         ///
@@ -98,7 +98,7 @@ namespace Instalog { namespace SystemFacades {
         /// @return    The size.
         ///
         /// @throw    Win32Exception on error
-        static unsigned __int64 GetSize(std::wstring const& filename);
+        static std::uint64_t GetSize(std::wstring const& filename);
 
         /// @brief    Gets the attributes of the specified file as a DWORD without opening a file handle
         ///

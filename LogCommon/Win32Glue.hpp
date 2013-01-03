@@ -12,10 +12,10 @@ namespace Instalog {
     ///
     /// @param    ft    The filetime.
     ///
-    /// @return    unsigned __int64 representation of ft
-    inline unsigned __int64 FiletimeToInteger(FILETIME const& ft)
+    /// @return    std::uint64_t representation of ft
+    inline std::uint64_t FiletimeToInteger(FILETIME const& ft)
     {
-        unsigned __int64 result = ft.dwHighDateTime;
+        std::uint64_t result = ft.dwHighDateTime;
         result <<= 32;
         result |= ft.dwLowDateTime;
         return result;

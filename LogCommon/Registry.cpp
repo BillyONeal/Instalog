@@ -361,22 +361,22 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    RegistryKeySizeInformation::RegistryKeySizeInformation( unsigned __int64 lastWriteTime, unsigned __int32 numberOfSubkeys, unsigned __int32 numberOfValues ) : lastWriteTime_(lastWriteTime)
+    RegistryKeySizeInformation::RegistryKeySizeInformation( std::uint64_t lastWriteTime, std::uint32_t numberOfSubkeys, std::uint32_t numberOfValues ) : lastWriteTime_(lastWriteTime)
         , numberOfSubkeys_(numberOfSubkeys)
         , numberOfValues_(numberOfValues)
     { }
 
-    unsigned __int32 RegistryKeySizeInformation::GetNumberOfSubkeys() const
+    std::uint32_t RegistryKeySizeInformation::GetNumberOfSubkeys() const
     {
         return numberOfSubkeys_;
     }
 
-    unsigned __int32 RegistryKeySizeInformation::GetNumberOfValues() const
+    std::uint32_t RegistryKeySizeInformation::GetNumberOfValues() const
     {
         return numberOfValues_;
     }
 
-    unsigned __int64 RegistryKeySizeInformation::GetLastWriteTime() const
+    std::uint64_t RegistryKeySizeInformation::GetLastWriteTime() const
     {
         return lastWriteTime_;
     }
@@ -461,12 +461,12 @@ namespace Instalog { namespace SystemFacades {
         return Cast()->DataLength;
     }
 
-    static unsigned __int32 BytestreamToDword( unsigned char const* first, unsigned char const* last )
+    static std::uint32_t BytestreamToDword( unsigned char const* first, unsigned char const* last )
     {
-        static_assert(sizeof(unsigned __int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+        static_assert(sizeof(std::uint32_t) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
         union
         {
-            unsigned __int32 converted;
+            std::uint32_t converted;
             unsigned char toConvert[4];
         };
         if (std::distance(first, last) < 4)
@@ -477,12 +477,12 @@ namespace Instalog { namespace SystemFacades {
         return converted;
     }
 
-    static unsigned __int32 BytestreamToDwordBe( unsigned char const* first, unsigned char const* last )
+    static std::uint32_t BytestreamToDwordBe( unsigned char const* first, unsigned char const* last )
     {
-        static_assert(sizeof(unsigned __int32) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
+        static_assert(sizeof(std::uint32_t) == sizeof(unsigned char) * 4, "This conversion assumes a 32 bit integer is 4 characters.");
         union
         {
-            unsigned __int32 converted;
+            std::uint32_t converted;
             unsigned char toConvert[4];
         };
         if (std::distance(first, last) < 4)
@@ -494,12 +494,12 @@ namespace Instalog { namespace SystemFacades {
         return converted;
     }
 
-    static unsigned __int64 BytestreamToQword( unsigned char const* first, unsigned char const* last )
+    static std::uint64_t BytestreamToQword( unsigned char const* first, unsigned char const* last )
     {
-        static_assert(sizeof(unsigned __int64) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
+        static_assert(sizeof(std::uint64_t) == sizeof(unsigned char) * 8, "This conversion assumes a 64 bit integer is 8 characters.");
         union
         {
-            unsigned __int64 converted;
+            std::uint64_t converted;
             unsigned char toConvert[8];
         };
         if (std::distance(first, last) < 8)
@@ -535,7 +535,7 @@ namespace Instalog { namespace SystemFacades {
             {
                 throw InvalidRegistryDataTypeException();
             }
-            __int64 tmp = BytestreamToQword(cbegin(), cend());
+            std::int64_t tmp = BytestreamToQword(cbegin(), cend());
             if (tmp > std::numeric_limits<DWORD>::max() || tmp < std::numeric_limits<DWORD>::min())
             {
                 throw InvalidRegistryDataTypeException();
@@ -575,7 +575,7 @@ namespace Instalog { namespace SystemFacades {
         return GetDWord();
     }
 
-    unsigned __int64 BasicRegistryValue::GetQWord() const
+    std::uint64_t BasicRegistryValue::GetQWord() const
     {
         if (GetType() == REG_QWORD)
         {
@@ -605,7 +605,7 @@ namespace Instalog { namespace SystemFacades {
         {
             try
             {
-                return boost::lexical_cast<unsigned __int64>(GetStringStrict());
+                return boost::lexical_cast<std::uint64_t>(GetStringStrict());
             }
             catch (boost::bad_lexical_cast const&)
             {
@@ -615,7 +615,7 @@ namespace Instalog { namespace SystemFacades {
         throw InvalidRegistryDataTypeException();
     }
 
-    unsigned __int64 BasicRegistryValue::GetQWordStrict() const
+    std::uint64_t BasicRegistryValue::GetQWordStrict() const
     {
         if (GetType() != REG_QWORD)
         {

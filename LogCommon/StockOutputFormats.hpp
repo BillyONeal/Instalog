@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -14,20 +15,20 @@ namespace Instalog {
     /// @brief    Writes the default date format
     ///
     /// @param [out]    str    The string stream to write the date to
-    /// @param    time           The time.  Note that this is a FILETIME structure (though it expects a plain __int64 to avoid including windows.h).  Use FiletimeToInteger() to convert to a __int64.
-    void WriteDefaultDateFormat(std::wostream &str, unsigned __int64 time);
+    /// @param    time           The time.  Note that this is a FILETIME structure (though it expects a plain std::int64_t to avoid including windows.h).  Use FiletimeToInteger() to convert to a std::int64_t.
+    void WriteDefaultDateFormat(std::wostream &str, std::uint64_t time);
 
     /// @brief    Writes the default date format including milliseconds
     ///
     /// @param [out]    str    The string stream to write the date to
-    /// @param    time           The time.  Note that this is a FILETIME structure (though it expects a plain __int64 to avoid including windows.h).  Use FiletimeToInteger() to convert to a __int64.
-    void WriteMillisecondDateFormat(std::wostream &str, unsigned __int64 time);
+    /// @param    time           The time.  Note that this is a FILETIME structure (though it expects a plain std::int64_t to avoid including windows.h).  Use FiletimeToInteger() to convert to a std::int64_t.
+    void WriteMillisecondDateFormat(std::wostream &str, std::uint64_t time);
 
     /// @brief    Writes the file attributes
     ///
     /// @param [out]    str    The string stream to write the attributes to
-    /// @param    attributes           The attributes.  Note that this is a DWORD (though it expects a plain __int32 to avoid including windows.h)
-    void WriteFileAttributes(std::wostream &str, unsigned __int32 attributes);
+    /// @param    attributes           The attributes.  Note that this is a DWORD (though it expects a plain std::int32_t to avoid including windows.h)
+    void WriteFileAttributes(std::wostream &str, std::uint32_t attributes);
 
     /// @brief    Writes the default representation of a file 
     ///
@@ -43,13 +44,13 @@ namespace Instalog {
     ///
     /// @param [out]    log    The log stream
     /// @param [in]     startTime The starting time of report generation.
-    void WriteScriptHeader(std::wostream &log, unsigned __int64 startTime);
+    void WriteScriptHeader(std::wostream &log, std::uint64_t startTime);
 
     /// @brief    Writes the script footer.
     ///
     /// @param [out]    log    The log stream.
     /// @param [in]     startTime The time that report generation started.
-    void WriteScriptFooter(std::wostream &log, unsigned __int64 startTime);
+    void WriteScriptFooter(std::wostream &log, std::uint64_t startTime);
 
     /// @brief    Writes the memory information.
     ///
@@ -61,7 +62,7 @@ namespace Instalog {
     /// @param [out]    log    The log stream.
     void WriteOsVersion(std::wostream &log);
 
-    /// @brief  Gets the current local time as a FILETIME cast to an unsigned __int64.
+    /// @brief  Gets the current local time as a FILETIME cast to an std::uint64_t.
     /// @return The current time.
-    unsigned __int64 GetLocalTime();
+    std::uint64_t GetLocalTime();
 }
