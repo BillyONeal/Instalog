@@ -246,6 +246,11 @@ namespace Instalog { namespace SystemFacades {
 
         /// @summary    The data of the next file found.
         expected<FindFilesRecord> data;
+
+        /**
+         * Gets the next file spec for enumerating recurisively.
+         */
+        std::wstring GetNextSpec() const;
     public:
 		/// Gets the data record for the current index.
 		/// @return The data record for the current index.
@@ -263,7 +268,7 @@ namespace Instalog { namespace SystemFacades {
         /// 
         /// @detail This will swallow invalid path and invalid file exceptions and instead just set
         ///         IsValid to false.
-        FindFiles(std::wstring patternSpec, bool recursive = false, bool skipDotDirectories = true);
+        FindFiles(std::wstring const& patternSpec, bool recursive = false, bool skipDotDirectories = true);
 
         /// @brief    Destructor.
         ~FindFiles() throw();

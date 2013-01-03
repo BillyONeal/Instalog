@@ -309,7 +309,7 @@ TEST(FindFiles, HostsExists)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.data.cFileName, L"hosts"))
+        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
         {
             foundHosts = true;
         }
@@ -325,8 +325,8 @@ TEST(FindFiles, OnlyHostsStarFollowing)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        std::wcout << files.data.cFileName << std::endl;
-        if (boost::iequals(files.data.cFileName, L"hosts"))
+        std::wcout << files.GetData().get().GetFileName() << std::endl;
+        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
         {
             foundHosts = true;
         }
@@ -346,7 +346,7 @@ TEST(FindFiles, OnlyHostsStarPreceding)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.data.cFileName, L"hosts"))
+        if (boost::iequals(files.GetData().get().GetFileName(), L"hosts"))
         {
             foundHosts = true;
         }
@@ -366,7 +366,7 @@ TEST(FindFiles, HostsExistsRecursive)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.data.cFileName, L"etc\\hosts"))
+        if (boost::iequals(files.GetData().get().GetFileName(), L"etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -382,7 +382,7 @@ TEST(FindFiles, HostsExistsRecursiveTwoLevels)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::iequals(files.data.cFileName, L"drivers\\etc\\hosts"))
+        if (boost::iequals(files.GetData().get().GetFileName(), L"drivers\\etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -399,7 +399,7 @@ TEST(FindFiles, HostsNotExistsNotRecursive)
 
     for(; foundHosts == false && files.IsValid(); files.Next())
     {
-        if (boost::icontains(files.data.cFileName, L"hosts"))
+        if (boost::icontains(files.GetData().get().GetFileName(), L"hosts"))
         {
             foundHosts = true;
         }
@@ -415,11 +415,11 @@ TEST(FindFiles, NoDots)
 
     for(; files.IsValid(); files.Next())
     {
-        if (boost::ends_with(files.data.cFileName, L"."))
+        if (boost::ends_with(files.GetData().get().GetFileName(), L"."))
         {
             FAIL() << ". or .. directory mistakenly included in enumeration";
         }
-        std::wcout << files.data.cFileName << std::endl;
+        std::wcout << files.GetData().get().GetFileName() << std::endl;
     } 
 }
 
@@ -429,7 +429,7 @@ TEST(FindFiles, NoDotsRecursive)
 
     for(; files.IsValid(); files.Next())
     {
-        if (boost::ends_with(files.data.cFileName, L"."))
+        if (boost::ends_with(files.GetData().get().GetFileName(), L"."))
         {
             FAIL() << ". or .. directory mistakenly included in enumeration";
         }
@@ -440,9 +440,9 @@ TEST(FindFiles, Dots)
 {
     FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, false);
 
-    EXPECT_EQ(L".", std::wstring(files.data.cFileName));
+    EXPECT_EQ(L".", std::wstring(files.GetData().get().GetFileName()));
     files.Next();
-    EXPECT_EQ(L"..", std::wstring(files.data.cFileName));
+    EXPECT_EQ(L"..", std::wstring(files.GetData().get().GetFileName()));
 }
 
 struct FileItDirectoryFixture : public testing::Test
@@ -484,9 +484,9 @@ TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
 {
     FindFiles files(std::wstring(tempPath).append(L"\\*"), false, false);
 
-    EXPECT_EQ(L".", std::wstring(files.data.cFileName));
+    EXPECT_EQ(L".", std::wstring(files.GetData().get().GetFileName()));
     EXPECT_TRUE(files.IsValid());
     files.Next();
-    EXPECT_EQ(L"..", std::wstring(files.data.cFileName));
+    EXPECT_EQ(L"..", std::wstring(files.GetData().get().GetFileName()));
     EXPECT_TRUE(files.IsValid());
 }

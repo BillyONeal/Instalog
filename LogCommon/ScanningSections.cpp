@@ -559,59 +559,45 @@ namespace Instalog
         std::copy(entries.cbegin(), entries.cend(), std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
     }
     
-    /// @brief    Sort WIN32_FIND_DATAW structs.
+    /// @brief    Sort SystemFacades::FindFilesRecord structs.
     ///
-    /// @param    d1    The first const WIN32_FIND_DATAW;
-    /// @param    d2    The second const WIN32_FIND_DATAW;
+    /// @param    d1    The first const SystemFacades::FindFilesRecord;
+    /// @param    d2    The second const SystemFacades::FindFilesRecord;
     ///
     /// @return    true if it succeeds, false if it fails.
     /// 
     /// @detail The output will then be sorted by creation date, then by modification date, then by 
     ///         size, then by attribute string, and finally by file path.
-    bool SortWin32FindDataW(const WIN32_FIND_DATAW& d1, const WIN32_FIND_DATAW& d2)
+    bool SortWin32FindDataW(const SystemFacades::FindFilesRecord& d1, const SystemFacades::FindFilesRecord& d2)
     {
         using SystemFacades::File;
 
-        ULARGE_INTEGER largeInt1;
-        largeInt1.LowPart  = d1.ftCreationTime.dwLowDateTime;
-        largeInt1.HighPart = d1.ftCreationTime.dwHighDateTime;
-        ULARGE_INTEGER largeInt2;
-        largeInt2.LowPart  = d2.ftCreationTime.dwLowDateTime;
-        largeInt2.HighPart = d2.ftCreationTime.dwHighDateTime;
-        if (largeInt1.QuadPart != largeInt2.QuadPart)
+        if (d1.GetCreationTime() != d2.GetCreationTime())
         {
-            return largeInt1.QuadPart > largeInt2.QuadPart;
+            return d1.GetCreationTime() > d2.GetCreationTime();
         }
 
-        largeInt1.LowPart  = d1.ftLastWriteTime.dwLowDateTime;
-        largeInt1.HighPart = d1.ftLastWriteTime.dwHighDateTime;
-        largeInt2.LowPart  = d2.ftLastWriteTime.dwLowDateTime;
-        largeInt2.HighPart = d2.ftLastWriteTime.dwHighDateTime;
-        if (largeInt1.QuadPart != largeInt2.QuadPart)
+        if (d1.GetLastWriteTime() != d2.GetLastWriteTime())
         {
-            return largeInt1.QuadPart > largeInt2.QuadPart;
+            return d1.GetLastWriteTime() > d2.GetLastWriteTime();
         }
 
-        largeInt1.LowPart  = d1.nFileSizeLow;
-        largeInt1.HighPart = d1.nFileSizeHigh;
-        largeInt2.LowPart  = d2.nFileSizeLow;
-        largeInt2.HighPart = d2.nFileSizeHigh;
-        if (largeInt1.QuadPart != largeInt2.QuadPart)
+        if (d1.GetSize() != d2.GetSize())
         {
-            return largeInt1.QuadPart > largeInt2.QuadPart;
+            return d1.GetSize() > d2.GetSize();
         }
 
         std::wstringstream attributes1ss, attributes2ss;
-        WriteFileAttributes(attributes1ss, File::GetAttributes(d1.cFileName));
-        WriteFileAttributes(attributes2ss, File::GetAttributes(d2.cFileName));
-        std::wstring attributes1(attributes1ss.str()),
-                     attributes2(attributes2ss.str());
+        WriteFileAttributes(attributes1ss, d1.GetAttributes());
+        WriteFileAttributes(attributes2ss, d2.GetAttributes());
+        std::wstring attributes1(attributes1ss.str());
+        std::wstring attributes2(attributes2ss.str());
         if (attributes1 != attributes2)
         {
             return attributes1 > attributes2;
         }
 
-        return std::wstring(d1.cFileName) > std::wstring(d2.cFileName);
+        return d1.GetFileName() > d2.GetFileName();
     }
 
     /// @brief    Gets the number of 100-nanosecond intervals since 1600-whatever that were x months ago
@@ -628,54 +614,40 @@ namespace Instalog
         return monthsAgo;
     }
 
-    /// @brief    Adds a base path to cFileName data in the WIN32_FIND_DATAW struct
-    ///
-    /// @param [in,out]    fileData    WIN32_FIND_DATAW struct of interest
-    /// @param    basePath            Base path to prepend to the file path
-    ///
-    /// @return    The modified struct (it is the same as the argument passed in)
-    WIN32_FIND_DATAW AddBasePathToFileData(WIN32_FIND_DATAW &fileData, std::wstring const& basePath)
-    {
-        wcscpy_s(fileData.cFileName, MAX_PATH, std::wstring(basePath).append(fileData.cFileName).c_str());
-        return fileData;
-    }
-
     /// @brief    Removes long strings of 12 or more closely created files from a list
     ///
     /// @param [in,out]    fileData    File data of interest
-    void RemoveWindowsUpdateRuns( std::vector<WIN32_FIND_DATAW> &fileData ) 
+    void RemoveWindowsUpdateRuns( std::vector<SystemFacades::FindFilesRecord> &fileData ) 
     {
+        using SystemFacades::FindFilesRecord;
         // Remove "runs" of files
-        if (fileData.size() >= 12)
+        if (fileData.size() < 12)
         {
-            auto rangeStart = fileData.begin();
-            auto rangeEnd = rangeStart + 1;
-            for (; rangeEnd != fileData.end(); ++rangeEnd)
-            {
-                if (FiletimeToInteger((rangeEnd - 1)->ftCreationTime) - FiletimeToInteger(rangeEnd->ftCreationTime) <= 10000000)
-                {
-                    continue;
-                }
-                else
-                {
-                    if (std::distance(rangeStart, rangeEnd) >= 12)
-                    {
-                        rangeStart = fileData.erase(rangeStart, rangeEnd);
-                    }
-                    else
-                    {
-                        rangeStart = rangeEnd;
-                    }
+            return;
+        }
 
-                    if (std::distance(rangeStart, fileData.end()) >= 12)
-                    {
-                        rangeEnd = rangeStart + 1;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+        auto first = fileData.begin();
+        for (; first != fileData.end(); ++first)
+        {
+            // Find the end of a run -- which is when the difference between an item and the next is
+            // greater than one second.
+            auto runEnd = std::adjacent_find(first, fileData.end(),
+                [] (FindFilesRecord const& lhs, FindFilesRecord const& rhs) { return lhs.GetCreationTime() - rhs.GetCreationTime() > 10000000; });
+
+            // Get the iterator to the second adjacent element when deciding to remove or not.
+            if (runEnd != fileData.end())
+            {
+                ++runEnd;
+            }
+
+            // If more than 12 files in this run, remove them from the results.
+            if (std::distance(first, runEnd) >= 12)
+            {
+                first = fileData.erase(first, runEnd);
+            }
+            else
+            {
+                first = runEnd;
             }
         }
     }
@@ -683,7 +655,7 @@ namespace Instalog
     /// @brief    Gets the CreatedLast30 file data
     ///
     /// @return    The CreatedLast30 file data.
-    std::vector<WIN32_FIND_DATAW> GetCreatedLast30FileData()
+    std::vector<SystemFacades::FindFilesRecord> GetCreatedLast30FileData()
     {
         using SystemFacades::FindFiles;
 
@@ -709,19 +681,20 @@ namespace Instalog
 
         std::uint64_t oneMonthAgo = MonthsAgo(1);
 
-        std::vector<WIN32_FIND_DATAW> fileData;
+        std::vector<SystemFacades::FindFilesRecord> fileData;
 
         for (size_t i = 0; i < sizeof(directories) / sizeof(const wchar_t *); ++i)
         {
             std::wstring fullDirectory(directories[i]);
             fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
-            for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
             {
-                std::uint64_t createdTime = files.GetData().get().GetCreationTime();
+                auto const& data = files.GetData();
+                std::uint64_t createdTime = data.get().GetCreationTime();
                 if (createdTime >= oneMonthAgo)
                 {
-                    fileData.emplace_back(std::move(AddBasePathToFileData(files.GetData().get(), fullDirectory)));
+                    fileData.emplace_back(data.get());
                 }
             }
         }
@@ -730,7 +703,7 @@ namespace Instalog
 
         RemoveWindowsUpdateRuns(fileData);
         
-        return fileData;
+        return std::move(fileData);
     }
 
     /// @brief    Checks if the path has one of the given extensions
@@ -740,11 +713,13 @@ namespace Instalog
     /// @param    numextensions    The number of extensions in the extensions array
     ///
     /// @return    true if a matching extension is found, false otherwise
-    bool ExtensionCheck(const wchar_t *path, const wchar_t **extensions, size_t numextensions)
+    template <typename StringType>
+    bool ExtensionCheck(StringType&& path, const wchar_t **extensions, size_t numextensions)
     {
+        std::locale loc;
         for (size_t i = 0; i < numextensions; ++i)
         {
-            if (boost::iends_with(path, extensions[i]))
+            if (boost::iends_with(std::forward<StringType>(path), extensions[i], loc))
             {
                 return true;
             }
@@ -760,12 +735,12 @@ namespace Instalog
     ///                                 results should not be stripped from the log.
     ///
     /// @return    The Find3M file data.
-    std::vector<WIN32_FIND_DATAW> GetFind3MFileData(std::vector<WIN32_FIND_DATAW> &createdLast30FileData)
+    std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(std::vector<SystemFacades::FindFilesRecord> &createdLast30FileData)
     {
         using SystemFacades::FindFiles;
         using SystemFacades::File;
 
-        std::vector<WIN32_FIND_DATAW> fileData;
+        std::vector<SystemFacades::FindFilesRecord> fileData;
 
         std::uint64_t threeMonthsAgo = MonthsAgo(3);
 
@@ -785,25 +760,31 @@ namespace Instalog
         for (size_t i = 0; i < sizeof(directories_list1a) / sizeof(const wchar_t *); ++i) 
         {
             std::wstring fullDirectory(directories_list1a[i]);
-            fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+            fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
-            for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
             {
-                // Discard entries that do not have the proper extension
-                if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+                // Discard entries that are not valid.
+                auto const& curData = files.GetData();
+                if (!curData.is_valid())
                 {
                     continue;
                 }
 
-                WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+                auto const& curRecord = curData.get();
+                // Discard entries that do not have the proper extension
+                if (ExtensionCheck(curRecord.GetFileName(), extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+                {
+                    continue;
+                }
 
                 // Discard entries that are not executables
-                if (File::IsExecutable(data.cFileName) == false)
+                if (File::IsExecutable(curRecord.GetFileName()) == false)
                 {    
                     continue;
                 }
 
-                fileData.emplace_back(std::move(data));    
+                fileData.emplace_back(curRecord);    
             }
         }
 
@@ -822,28 +803,33 @@ namespace Instalog
         for (size_t i = 0; i < sizeof(directories_list1b) / sizeof(const wchar_t *); ++i) 
         {
             std::wstring fullDirectory(directories_list1b[i]);
-            fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+            fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
-            for (FindFiles files(std::wstring(fullDirectory).append(L"*")); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
             {
-                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
-                if (createdTime >= threeMonthsAgo)
+                // Discard entries that are not valid.
+                auto const& curData = files.GetData();
+                if (!curData.is_valid())
+                {
+                    continue;
+                }
+
+                auto const& curRecord = curData.get();
+                if (curRecord.GetCreationTime() >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
-                    if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+                    if (ExtensionCheck(curRecord.GetFileName(), extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
                     {
                         continue;    
                     }
 
-                    WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
-
                     // Discard entries that are not executable
-                    if (File::IsExecutable(data.cFileName) == false)
+                    if (File::IsExecutable(curRecord.GetFileName()) == false)
                     {            
                         continue;
                     }            
 
-                    fileData.emplace_back(std::move(data));    
+                    fileData.emplace_back(curRecord);    
                 }
             }
         }
@@ -872,26 +858,31 @@ namespace Instalog
             fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
             // Recursive
-            for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory, true); files.IsValid(); files.Next())
             {
-                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
-                if (createdTime >= threeMonthsAgo)
+                // Discard entries that are not valid.
+                auto const& curData = files.GetData();
+                if (!curData.is_valid())
+                {
+                    continue;
+                }
+
+                auto const& curRecord = curData.get();
+                if (curRecord.GetCreationTime() >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
-                    if (ExtensionCheck(files.data.cFileName, extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
+                    if (ExtensionCheck(curRecord.GetFileName(), extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
                     {
                         continue;    
                     }
 
-                    WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
-
                     // Discard entries that are not executable
-                    if (File::IsExecutable(data.cFileName) == false)
+                    if (File::IsExecutable(curRecord.GetFileName()) == false)
                     {            
                         continue;
                     }            
 
-                    fileData.emplace_back(std::move(data));    
+                    fileData.emplace_back(curRecord);    
                 }
             }
         }
@@ -915,77 +906,90 @@ namespace Instalog
         for (size_t i = 0; i < sizeof(directories_list2) / sizeof(const wchar_t *); ++i) 
         {
             std::wstring fullDirectory(directories_list2[i]);
-            fullDirectory = Path::ExpandEnvStrings(fullDirectory);
+            fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
             // List2 is recursive
-            for (FindFiles files(std::wstring(fullDirectory).append(L"*"), true); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory, true); files.IsValid(); files.Next())
             {
-                // Discard entries that are more than three months old
-                std::uint64_t createdTime = FiletimeToInteger(files.data.ftCreationTime);
-                if (createdTime < threeMonthsAgo)
+                // Discard entries that are not valid.
+                auto const& curData = files.GetData();
+                if (!curData.is_valid())
                 {
                     continue;
                 }
 
-                WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, fullDirectory);
+                auto const& curRecord = curData.get();
+                // Discard entries that are more than three months old
+                if (curRecord.GetCreationTime() < threeMonthsAgo)
+                {
+                    continue;
+                }
 
                 // Discard entries that have list2_nonExecutable extensions and are not executable
-                if (ExtensionCheck(data.cFileName, extensions_list2_notExecutable, sizeof(extensions_list2_notExecutable) / sizeof(const wchar_t *)))
+                if (ExtensionCheck(curRecord.GetFileName(), extensions_list2_notExecutable, sizeof(extensions_list2_notExecutable) / sizeof(const wchar_t *)))
                 {
-                    if (File::IsExecutable(data.cFileName) == false)
+                    if (File::IsExecutable(curRecord.GetFileName()) == false)
                     {
                         continue;
                     }
                 }
 
                 // Discard entries that have list2_notDirectory extensions and are not directories
-                if (ExtensionCheck(data.cFileName, extensions_list2_notDirectory, sizeof(extensions_list2_notDirectory) / sizeof(const wchar_t *)))
+                if (ExtensionCheck(curRecord.GetFileName(), extensions_list2_notDirectory, sizeof(extensions_list2_notDirectory) / sizeof(const wchar_t *)))
                 {
-                    if (File::IsDirectory(data.cFileName) == false)
+                    if ((curRecord.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) == false)
                     {
                         continue;
                     }
                 }
 
-                fileData.emplace_back(std::move(data));
+                fileData.emplace_back(curRecord);
             }
         }
 
-        std::wstring directory_list3 = L"%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\";
-        directory_list3 = Path::ExpandEnvStrings(directory_list3);
-        for (FindFiles files(std::wstring(directory_list3).append(L"*"), true); files.IsValid(); files.Next())
+        std::wstring directory_list3 = Path::ExpandEnvStrings(L"%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\");
+        for (FindFiles files(directory_list3, true); files.IsValid(); files.Next())
         {
-            WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, directory_list3);
-
-            // Discard non-executables
-            if (File::IsExecutable(data.cFileName) == false)
+            // Discard entries that are not valid.
+            auto const& curData = files.GetData();
+            if (!curData.is_valid())
             {
                 continue;
             }
 
-            fileData.emplace_back(std::move(data));
+            auto const& curRecord = curData.get();
+            // Discard non-executables
+            if (File::IsExecutable(curRecord.GetFileName()) == false)
+            {
+                continue;
+            }
+
+            fileData.emplace_back(curRecord);
         }
 
-        std::wstring directory_list6 = L"%SYSTEMROOT%\\Fonts\\";
-        directory_list6 = Path::ExpandEnvStrings(directory_list6);
+        std::wstring directory_list6 = Path::ExpandEnvStrings(L"%SYSTEMROOT%\\Fonts\\");
         static const wchar_t *extensions_list6[] = { 
             L"com", L"pif", L"ren", L"vir", L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"dat", L"drv"
         };
         // List6 is recursive
-        for (FindFiles files(std::wstring(directory_list6).append(L"*"), true); files.IsValid(); files.Next())
+        for (FindFiles files(directory_list6); files.IsValid(); files.Next())
         {
-            WIN32_FIND_DATAW data = AddBasePathToFileData(files.data, directory_list6);
+            // Discard entries that are not valid.
+            auto const& curData = files.GetData();
+            if (!curData.is_valid())
+            {
+                continue;
+            }
 
-            std::uint64_t fileSize = File::GetSize(data.cFileName);
-
+            auto const& curRecord = curData.get();
             // Keep only those with size between 1500 and 2000 bytes 
             // or
             // greater than 1500 bytes and executable and with list6 extensions
-            if ((fileSize >= 1500 && fileSize <= 2000) ||
-                (ExtensionCheck(data.cFileName, extensions_list6, sizeof(extensions_list6) / sizeof(const wchar_t *)) &&
-                fileSize >= 1500 && File::IsExecutable(data.cFileName)))
+            if ((curRecord.GetSize() >= 1500 && curRecord.GetSize() <= 2000) ||
+                (ExtensionCheck(curRecord.GetFileName(), extensions_list6, sizeof(extensions_list6) / sizeof(const wchar_t *)) &&
+                curRecord.GetSize() >= 1500 && File::IsExecutable(curRecord.GetFileName())))
             {
-                fileData.emplace_back(std::move(data));
+                fileData.emplace_back(curRecord);
             }
         }
 
@@ -997,7 +1001,7 @@ namespace Instalog
 
         // Remove things from CreatedLast30
         fileData.erase(
-            std::remove_if(fileData.begin(), fileData.end(), [&](WIN32_FIND_DATAW const& val)->bool {
+            std::remove_if(fileData.begin(), fileData.end(), [&](SystemFacades::FindFilesRecord const& val)->bool {
                 return std::binary_search(createdLast30FileData.begin(), createdLast30FileData.end(), val, SortWin32FindDataW);
             }),
             fileData.end());
@@ -1009,7 +1013,7 @@ namespace Instalog
     ///
     /// @param [in,out]    logOutput    The log output stream.
     /// @param    fileData             The fileData to output
-    void PrintFileData( std::wostream& logOutput, std::vector<WIN32_FIND_DATAW> const& fileData)
+    void PrintFileData( std::wostream& logOutput, std::vector<SystemFacades::FindFilesRecord> const& fileData)
     {
         for (size_t i = 0; i < 100 && i < fileData.size(); ++i)
         {
@@ -1025,7 +1029,7 @@ namespace Instalog
     
     void FindStarM::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
     {
-        std::vector<WIN32_FIND_DATAW> createdLast30FileData(GetCreatedLast30FileData());
+        std::vector<SystemFacades::FindFilesRecord> createdLast30FileData(GetCreatedLast30FileData());
 
         PrintFileData(logOutput, createdLast30FileData);
 
@@ -1033,9 +1037,8 @@ namespace Instalog
         Header(head);
         logOutput << L'\n' << head << L'\n' << L'\n';
 
-        std::vector<WIN32_FIND_DATAW> find3MFileData(GetFind3MFileData(createdLast30FileData));
+        std::vector<SystemFacades::FindFilesRecord> find3MFileData(GetFind3MFileData(createdLast30FileData));
 
         PrintFileData(logOutput, find3MFileData);
     }
-
 }

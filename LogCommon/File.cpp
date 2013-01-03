@@ -318,7 +318,16 @@ namespace Instalog { namespace SystemFacades {
         swap(dwFileAttributes, other.dwFileAttributes);
     }
 
-    FindFiles::FindFiles( std::wstring patternSpec, bool recursive /*= false*/, bool skipDotDirectories /*= true*/ )
+    std::wstring FindFiles::GetNextSpec() const
+    {
+        std::wstring result;
+        result.reserve(subPaths.top().size() + pattern.size());
+        result.append(subPaths.top());
+        result.append(pattern);
+        return std::move(result);
+    }
+
+    FindFiles::FindFiles( std::wstring const& patternSpec, bool recursive /*= false*/, bool skipDotDirectories /*= true*/ )
         : recursive(recursive)
         , skipDotDirectories(skipDotDirectories)
     {
@@ -338,7 +347,7 @@ namespace Instalog { namespace SystemFacades {
         subPaths.top().push_back(L'\\');
 
         WIN32_FIND_DATAW dataBlock;
-        HANDLE handle = ::FindFirstFileW(patternSpec.c_str(), &dataBlock);
+        HANDLE handle = ::FindFirstFileW(GetNextSpec().c_str(), &dataBlock);
 
         if (handle == INVALID_HANDLE_VALUE)
         {
@@ -381,8 +390,7 @@ namespace Instalog { namespace SystemFacades {
                 nextRoot.push_back(L'\\');
                 subPaths.push(nextRoot);
 
-                nextRoot.append(pattern);
-                HANDLE handle = ::FindFirstFile(nextRoot.c_str(), &dataBlock);
+                HANDLE handle = ::FindFirstFileW(GetNextSpec().c_str(), &dataBlock);
                 if (handle == INVALID_HANDLE_VALUE)
                 {
                     data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
@@ -404,7 +412,7 @@ namespace Instalog { namespace SystemFacades {
         // Get the next file, skip . and .. if requested
         do 
         {
-            if (::FindNextFile(handles.top(), &dataBlock) == false)
+            if (::FindNextFileW(handles.top(), &dataBlock) == false)
             {
                 DWORD errorStatus = ::GetLastError();
                 if (errorStatus == ERROR_NO_MORE_FILES)

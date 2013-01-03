@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#include "File.hpp"
 #include "Win32Glue.hpp"
 
 namespace Instalog {
@@ -36,7 +37,7 @@ namespace Instalog {
     /// @param    targetFile            Target file.
     void WriteDefaultFileOutput(std::wostream &str, std::wstring targetFile);
     void WriteFileListingFile(std::wostream &str, std::wstring const& targetFile);
-    void WriteFileListingFromFindData( std::wostream &str, WIN32_FIND_DATAW const& info );
+    void WriteFileListingFromFindData( std::wostream &str, SystemFacades::FindFilesRecord const& info );
 
     LONG GetTimeZoneBias();
 

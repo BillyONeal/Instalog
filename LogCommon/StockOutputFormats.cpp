@@ -50,7 +50,7 @@ namespace Instalog {
     {
         DateFormatImpl(str, time, true);
     }
-    void WriteFileAttributes( std::wostream &str, std::int32_t attributes )
+    void WriteFileAttributes( std::wostream &str, std::uint32_t attributes )
     {
         if (attributes & FILE_ATTRIBUTE_DIRECTORY)
             str << L'd';
@@ -140,24 +140,15 @@ namespace Instalog {
         str << L' ' << targetFile;
     }
 
-    void WriteFileListingFromFindData( std::wostream &str, WIN32_FIND_DATAW const& fad )
+    void WriteFileListingFromFindData( std::wostream &str, SystemFacades::FindFilesRecord const& fad )
     {
-        std::uint64_t size = 
-            static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32
-            | fad.nFileSizeLow;
-        std::uint64_t ctime = 
-            static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32
-            | fad.ftCreationTime.dwLowDateTime;
-        std::uint64_t mtime = 
-            static_cast<std::uint64_t>(fad.ftLastWriteTime.dwHighDateTime) << 32
-            | fad.ftLastWriteTime.dwLowDateTime;
-        WriteDefaultDateFormat(str, ctime);
+        WriteDefaultDateFormat(str, fad.GetCreationTime());
         str << L" . ";
-        WriteDefaultDateFormat(str, mtime);
-        str << L' ' << std::setw(10) << std::setfill(L' ') << size << L' ';
-        WriteFileAttributes(str, fad.dwFileAttributes);
+        WriteDefaultDateFormat(str, fad.GetLastWriteTime());
+        str << L' ' << std::setw(10) << std::setfill(L' ') << fad.GetSize() << L' ';
+        WriteFileAttributes(str, fad.GetAttributes());
         str << L' ';
-        std::wstring escapedFileName(fad.cFileName);
+        std::wstring escapedFileName(fad.GetFileName());
         GeneralEscape(escapedFileName);
         str << escapedFileName;
     }
