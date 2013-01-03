@@ -241,7 +241,6 @@ namespace Instalog { namespace SystemFacades {
         std::stack<HANDLE, std::vector<HANDLE>> handles;
         const bool skipDotDirectories;
         const bool recursive;
-        const bool includeRelativeSubPath;
         std::wstring pattern;
         std::stack<const std::wstring> subPaths;
 

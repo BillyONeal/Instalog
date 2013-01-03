@@ -334,12 +334,11 @@ namespace Instalog { namespace SystemFacades {
             // We found a pattern, store it
             pattern.assign(patternBase + 1, patternSpec.cend());
         }
-        patternSpec.erase(patternBase, patternSpec.cend());
-        patternSpec.push_back(L'\\');
-        subPaths.push(std::move(patternSpec));
+        subPaths.emplace(patternSpec.cbegin(), patternBase);
+        subPaths.top().push_back(L'\\');
 
         WIN32_FIND_DATAW dataBlock;
-        HANDLE handle = ::FindFirstFileW(pattern.c_str(), &dataBlock);
+        HANDLE handle = ::FindFirstFileW(patternSpec.c_str(), &dataBlock);
 
         if (handle == INVALID_HANDLE_VALUE)
         {
@@ -347,10 +346,8 @@ namespace Instalog { namespace SystemFacades {
         }
         else
         {
-            data = FindFilesRecord(rootPath, dataBlock);
-            handles.push(handle);
-
-            if (skipDotDirectories && data.get().GetFileName() == L".")
+            data = FindFilesRecord(subPaths.top(), dataBlock);
+            if (skipDotDirectories && IsDotDirectory(data.get()))
             {
                 Next();
             }
@@ -371,18 +368,14 @@ namespace Instalog { namespace SystemFacades {
         WIN32_FIND_DATAW dataBlock;
         if (recursive && data.is_valid())
         {
-            auto const& previous= data.get();
+            auto const& previous = data.get();
             if ((previous.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && !IsDotDirectory(previous))
             {
+                assert(!subPaths.empty() && "Attempted to recurse; but no root path left.");
+                auto const& previousRoot = subPaths.top();
                 std::wstring nextRoot;
-                if (subPaths.empty())
-                {
-                    nextRoot.append(rootPath);
-                }
-                else
-                {
-                    nextRoot.append(subPaths.top());
-                }
+                nextRoot.reserve(previousRoot.size() + previous.GetFileName().size() + 1);
+                nextRoot.append(previousRoot);
 
                 nextRoot.append(dataBlock.cFileName);
                 nextRoot.push_back(L'\\');
@@ -401,8 +394,9 @@ namespace Instalog { namespace SystemFacades {
 
                     if (skipDotDirectories && IsDotDirectory(data.get()))
                     {
-                        FindFiles::Next();
+                        this->Next();
                     }
+                    return;
                 }
             }
         }
@@ -417,28 +411,22 @@ namespace Instalog { namespace SystemFacades {
                 {
                     ::FindClose(handles.top());
                     handles.pop();
-                    if (!subPaths.empty())
-                    {
-                        subPaths.pop();
-                    }                
+                    subPaths.pop();
                     if (!handles.empty())
                     {
                         data.clear();
-                        Next();
+                        this->Next();
                         return;
                     }
                 }
                 else
                 {
-                    Win32Exception::Throw(errorStatus);
+                    data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
                 }
             }
         } while (skipDotDirectories && (wcscmp(dataBlock.cFileName, L".") == 0 || wcscmp(dataBlock.cFileName, L"..") == 0));
 
-        if (includeRelativeSubPath && alreadyIncludedSubPath == false && subPaths.empty() == false)
-        {
-            wcscpy_s(data.get().cFileName, MAX_PATH, std::wstring(subPaths.top()).append(data.get().cFileName).c_str());
-        }
+        data = FindFilesRecord(subPaths.top(), dataBlock);
     }
 
 }}

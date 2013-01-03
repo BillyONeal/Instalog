@@ -133,7 +133,7 @@ public:
     expected()
         : isValid(false)
     {
-        default_initalize();
+        default_initialize();
     }
 
     /**
