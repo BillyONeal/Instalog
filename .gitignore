@@ -1,0 +1,10 @@
+*.sdf
+*.opensdf
+*.suo
+Instalog/x64
+x64
+LogCommon/CompiledProtocolBuffers
+LogCommon/x64
+LogTests/x64
+Release
+Debug
