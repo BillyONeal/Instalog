@@ -96,26 +96,26 @@ namespace Instalog { namespace SystemFacades {
         : id_(pid)
     { }
 
-	static UniqueHandle OpenProc(std::size_t processId, DWORD access)
-	{
-		UniqueHandle hProc;
-		CLIENT_ID cid;
-		cid.UniqueProcess = processId;
-		cid.UniqueThread = 0;
-		OBJECT_ATTRIBUTES attribs;
-		std::memset(&attribs, 0, sizeof(attribs));
-		attribs.Length = sizeof(attribs);
-		NtOpenProcessFunc ntOpen = GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
-		NTSTATUS errorCheck = ntOpen(hProc.Ptr(), access, &attribs, &cid);
-		if (errorCheck == ERROR_SUCCESS)
-		{
-			return hProc;
-		}
-		else
-		{
-			Win32Exception::ThrowFromNtError(errorCheck);
-		}
-	}
+    static UniqueHandle OpenProc(std::size_t processId, DWORD access)
+    {
+        UniqueHandle hProc;
+        CLIENT_ID cid;
+        cid.UniqueProcess = processId;
+        cid.UniqueThread = 0;
+        OBJECT_ATTRIBUTES attribs;
+        std::memset(&attribs, 0, sizeof(attribs));
+        attribs.Length = sizeof(attribs);
+        NtOpenProcessFunc ntOpen = GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
+        NTSTATUS errorCheck = ntOpen(hProc.Ptr(), access, &attribs, &cid);
+        if (errorCheck == ERROR_SUCCESS)
+        {
+            return hProc;
+        }
+        else
+        {
+            Win32Exception::ThrowFromNtError(errorCheck);
+        }
+    }
 
     static std::wstring GetProcessStr(std::size_t processId, std::function<UNICODE_STRING&(RTL_USER_PROCESS_PARAMETERS&)> stringTargetSelector)
     {
@@ -127,12 +127,12 @@ namespace Instalog { namespace SystemFacades {
         {
             wchar_t target[MAX_PATH] = L"";
             UINT len = ::GetWindowsDirectoryW(target, MAX_PATH);
-			if (len == 0)
-			{
-				Win32Exception::ThrowFromLastError();
-			}
+            if (len == 0)
+            {
+                Win32Exception::ThrowFromLastError();
+            }
 
-			--len;
+            --len;
             if (target[len] == L'\\')
             {
                 ::wcscat_s(target + len, MAX_PATH - len, L"System32\\Ntoskrnl.exe");
@@ -146,14 +146,14 @@ namespace Instalog { namespace SystemFacades {
         
         try
         {
-			UniqueHandle hProc(OpenProc(processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
+            UniqueHandle hProc(OpenProc(processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
             PROCESS_BASIC_INFORMATION basicInfo;
-			NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
+            NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
             NTSTATUS errorCheck = ntQuery(hProc.Get(), ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
-			if (errorCheck != ERROR_SUCCESS)
-			{
-				Win32Exception::ThrowFromNtError(errorCheck);
-			}
+            if (errorCheck != ERROR_SUCCESS)
+            {
+                Win32Exception::ThrowFromNtError(errorCheck);
+            }
             PEB *pebAddr = basicInfo.PebBaseAddress;
             PEB peb;
             if (::ReadProcessMemory(hProc.Get(), pebAddr, &peb, sizeof(peb), nullptr) == 0)
@@ -214,15 +214,15 @@ namespace Instalog { namespace SystemFacades {
         });
     }
 
-	void Process::Terminate()
-	{
-		UniqueHandle hProc(OpenProc(id_, PROCESS_TERMINATE));
-		auto terminate = GetNtDll().GetProcAddress<NtTerminateProcessFunc>("NtTerminateProcess");
-		NTSTATUS errorCheck = terminate(hProc.Get(), -1);
-		if (errorCheck != ERROR_SUCCESS)
-		{
-			Win32Exception::ThrowFromNtError(errorCheck);
-		}
-	}
+    void Process::Terminate()
+    {
+        UniqueHandle hProc(OpenProc(id_, PROCESS_TERMINATE));
+        auto terminate = GetNtDll().GetProcAddress<NtTerminateProcessFunc>("NtTerminateProcess");
+        NTSTATUS errorCheck = terminate(hProc.Get(), -1);
+        if (errorCheck != ERROR_SUCCESS)
+        {
+            Win32Exception::ThrowFromNtError(errorCheck);
+        }
+    }
 
 }}

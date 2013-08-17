@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include "resource.h"
 #include <functional>
+#include <cstdint>
 #include <algorithm>
 #include <iostream>
 #include <iterator>

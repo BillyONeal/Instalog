@@ -9,3 +9,4 @@ LogTests/x64
 Release
 Debug
 Build/
+ipch/*
