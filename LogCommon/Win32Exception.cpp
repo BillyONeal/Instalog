@@ -40,7 +40,7 @@ namespace Instalog { namespace SystemFacades {
         return FromWinError(conv(errorCode));
 	}
 
-    void Win32Exception::Throw(DWORD lastError)
+    void __declspec(noreturn) Win32Exception::Throw(DWORD lastError)
     {
 		std::rethrow_exception(FromWinError(lastError));
     }
@@ -85,7 +85,7 @@ namespace Instalog { namespace SystemFacades {
         return std::string(buffPtr, bufferLength);
     }
 
-    void Win32Exception::ThrowFromNtError( NTSTATUS errorCode )
+    void __declspec(noreturn) Win32Exception::ThrowFromNtError( NTSTATUS errorCode )
     {
 		std::rethrow_exception(FromNtError(errorCode));
     }
@@ -98,7 +98,7 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    void ThrowFromHResult( HRESULT hRes )
+    void __declspec(noreturn) ThrowFromHResult( HRESULT hRes )
     {
         UniqueComPtr<IErrorInfo> iei;
         if (S_OK == ::GetErrorInfo(0, iei.PassAsOutParameter()) && (iei.Get() != nullptr))

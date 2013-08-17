@@ -303,6 +303,7 @@
     <ClInclude Include="InstalogVersion.hpp" />
     <ClInclude Include="MakeUnique.hpp" />
     <ClInclude Include="ntstatus.h" />
+    <ClInclude Include="OptimisticBuffer.hpp" />
     <ClInclude Include="Path.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="PseudoHjt.hpp" />

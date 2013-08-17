@@ -88,4 +88,51 @@ namespace Instalog {
         return systemtime;
     }
 
+	UniqueHandle::UniqueHandle(HANDLE handle_)
+		: handle(handle_)
+	{
+	}
+
+	UniqueHandle::UniqueHandle(UniqueHandle&& other)
+		: handle(other.handle)
+	{
+		other.handle = 0;
+	}
+
+	UniqueHandle& UniqueHandle::operator=(UniqueHandle&& other)
+	{
+		HANDLE hTemp = other.handle; // Assignment to self.
+		other.handle = 0;
+		handle = hTemp;
+		return *this;
+	}
+
+	bool UniqueHandle::IsOpen() const
+	{
+		return handle != 0 && handle != INVALID_HANDLE_VALUE;
+	}
+
+	HANDLE UniqueHandle::Get()
+	{
+		return handle;
+	}
+
+	HANDLE* UniqueHandle::Ptr()
+	{
+		return &handle;
+	}
+
+	void UniqueHandle::Close()
+	{
+		if (IsOpen())
+		{
+			::CloseHandle(handle);
+			handle = 0;
+		}
+	}
+
+	UniqueHandle::~UniqueHandle()
+	{
+		Close();
+	}
 }

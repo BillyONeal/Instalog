@@ -7,6 +7,7 @@
 #include <functional>
 #include <windows.h>
 #include "Win32Exception.hpp"
+#include "Win32Glue.hpp"
 #include "Library.hpp"
 #include "ScopeExit.hpp"
 #include "ScopedPrivilege.hpp"
@@ -95,6 +96,27 @@ namespace Instalog { namespace SystemFacades {
         : id_(pid)
     { }
 
+	static UniqueHandle OpenProc(std::size_t processId, DWORD access)
+	{
+		UniqueHandle hProc;
+		CLIENT_ID cid;
+		cid.UniqueProcess = processId;
+		cid.UniqueThread = 0;
+		OBJECT_ATTRIBUTES attribs;
+		std::memset(&attribs, 0, sizeof(attribs));
+		attribs.Length = sizeof(attribs);
+		NtOpenProcessFunc ntOpen = GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
+		NTSTATUS errorCheck = ntOpen(hProc.Ptr(), access, &attribs, &cid);
+		if (errorCheck == ERROR_SUCCESS)
+		{
+			return hProc;
+		}
+		else
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+	}
+
     static std::wstring GetProcessStr(std::size_t processId, std::function<UNICODE_STRING&(RTL_USER_PROCESS_PARAMETERS&)> stringTargetSelector)
     {
         if (processId == 0)
@@ -104,7 +126,13 @@ namespace Instalog { namespace SystemFacades {
         if (processId == 4)
         {
             wchar_t target[MAX_PATH] = L"";
-            UINT len = ::GetWindowsDirectoryW(target, MAX_PATH) - 1;
+            UINT len = ::GetWindowsDirectoryW(target, MAX_PATH);
+			if (len == 0)
+			{
+				Win32Exception::ThrowFromLastError();
+			}
+
+			--len;
             if (target[len] == L'\\')
             {
                 ::wcscat_s(target + len, MAX_PATH - len, L"System32\\Ntoskrnl.exe");
@@ -115,40 +143,32 @@ namespace Instalog { namespace SystemFacades {
             }
             return target;
         }
-        NtOpenProcessFunc ntOpen = GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
-        NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
-        CLIENT_ID cid;
-        cid.UniqueProcess = processId;
-        cid.UniqueThread = 0;
-        HANDLE hProc = INVALID_HANDLE_VALUE;
-        OBJECT_ATTRIBUTES attribs;
-        std::memset(&attribs, 0, sizeof(attribs));
-        attribs.Length = sizeof(attribs);
+        
         try
         {
-            NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attribs, &cid);
-            ScopeExit se([hProc] () { CloseHandle(hProc); });
-            if (errorCheck != ERROR_SUCCESS)
-            {
-                Win32Exception::ThrowFromNtError(errorCheck);
-            }
+			UniqueHandle hProc(OpenProc(processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
             PROCESS_BASIC_INFORMATION basicInfo;
-            errorCheck = ntQuery(hProc, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+			NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
+            NTSTATUS errorCheck = ntQuery(hProc.Get(), ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+			if (errorCheck != ERROR_SUCCESS)
+			{
+				Win32Exception::ThrowFromNtError(errorCheck);
+			}
             PEB *pebAddr = basicInfo.PebBaseAddress;
             PEB peb;
-            if (::ReadProcessMemory(hProc, pebAddr, &peb, sizeof(peb), nullptr) == 0)
+            if (::ReadProcessMemory(hProc.Get(), pebAddr, &peb, sizeof(peb), nullptr) == 0)
             {
                 Win32Exception::ThrowFromLastError();
             }
             RTL_USER_PROCESS_PARAMETERS params;
-            if (::ReadProcessMemory(hProc, peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
+            if (::ReadProcessMemory(hProc.Get(), peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
             {
                 Win32Exception::ThrowFromLastError();
             }
             std::wstring result;
             UNICODE_STRING &targetString = stringTargetSelector(params);
             result.resize(targetString.Length / sizeof(wchar_t));
-            if (::ReadProcessMemory(hProc, targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
+            if (::ReadProcessMemory(hProc.Get(), targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
             {
                 Win32Exception::ThrowFromLastError();
             }
@@ -159,12 +179,7 @@ namespace Instalog { namespace SystemFacades {
             //This block is vista and later specific; however, this does not matter because the
             //spurious access denied errors are being injected by Vista+'s media protection
             //features.
-            NTSTATUS errorCheck = ntOpen(&hProc, PROCESS_QUERY_LIMITED_INFORMATION, &attribs, &cid);
-            ScopeExit se([hProc] () { CloseHandle(hProc); });
-            if (errorCheck != ERROR_SUCCESS)
-            {
-                Win32Exception::ThrowFromNtError(errorCheck);
-            }
+            UniqueHandle hProc(OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
             RuntimeDynamicLinker kernel32(L"Kernel32.dll");
             typedef BOOL (WINAPI *QueryFullProcessImageNameFunc)(HANDLE, DWORD, LPWSTR, PDWORD);
             QueryFullProcessImageNameFunc queryProcessFile = kernel32.GetProcAddress<QueryFullProcessImageNameFunc>("QueryFullProcessImageNameW");
@@ -174,7 +189,7 @@ namespace Instalog { namespace SystemFacades {
             do
             {
                 buffer.resize(goalSize);
-                boolCheck = queryProcessFile(hProc, 0, &buffer[0], &goalSize);
+                boolCheck = queryProcessFile(hProc.Get(), 0, &buffer[0], &goalSize);
             } while (boolCheck == 0 && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
             if (boolCheck == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             {
@@ -198,5 +213,16 @@ namespace Instalog { namespace SystemFacades {
             return params.CommandLine;
         });
     }
+
+	void Process::Terminate()
+	{
+		UniqueHandle hProc(OpenProc(id_, PROCESS_TERMINATE));
+		auto terminate = GetNtDll().GetProcAddress<NtTerminateProcessFunc>("NtTerminateProcess");
+		NTSTATUS errorCheck = terminate(hProc.Get(), -1);
+		if (errorCheck != ERROR_SUCCESS)
+		{
+			Win32Exception::ThrowFromNtError(errorCheck);
+		}
+	}
 
 }}

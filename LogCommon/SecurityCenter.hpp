@@ -3,7 +3,6 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
-#include <iosfwd>
 #include <vector>
 #include <string>
 #include <memory>

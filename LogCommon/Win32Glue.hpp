@@ -3,7 +3,9 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
+#include <cstdint>
 #include <windows.h>
+#include <boost/noncopyable.hpp>
 #include "Win32Exception.hpp"
 
 namespace Instalog {
@@ -48,5 +50,19 @@ namespace Instalog {
     ///
     /// @return    The time as a SYSTEMTIME struct
     SYSTEMTIME SystemtimeFromSecondsSince1970(DWORD seconds);
+
+	class UniqueHandle : boost::noncopyable
+	{
+		HANDLE handle;
+	public:
+		UniqueHandle(HANDLE handle_ = INVALID_HANDLE_VALUE);
+		UniqueHandle(UniqueHandle&& other);
+		UniqueHandle& operator=(UniqueHandle&& other);
+		bool IsOpen() const;
+		HANDLE Get();
+		HANDLE* Ptr();
+		void Close();
+		~UniqueHandle();
+	};
 
 }

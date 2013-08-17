@@ -3,7 +3,6 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
-#include <iostream>
 #define _WIN32_DCOM
 #include <windows.h>
 #include <comdef.h>

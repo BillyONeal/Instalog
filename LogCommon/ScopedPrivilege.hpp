@@ -4,13 +4,14 @@
 
 #pragma once
 #include <windows.h>
+#include <boost/noncopyable.hpp>
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
-    /// @brief    Scoped privilege. Takes a privilege for a scope, and relenquishes
+    /// @brief    Scoped privilege. Takes a privilege for a scope, and relinquishes
     ///         that privilege on scope exit.
-    class ScopedPrivilege
+    class ScopedPrivilege : boost::noncopyable
     {
         HANDLE hThisProcess;
         HANDLE hThisProcessToken;

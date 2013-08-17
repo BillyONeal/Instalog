@@ -36,15 +36,15 @@ namespace Instalog { namespace SystemFacades {
         /// @brief    Throws a specified error directly
         ///
         /// @param    lastError    The error code to throw (usually a captured error code)
-        static void Throw(DWORD lastError);
+        static void __declspec(noreturn) Throw(DWORD lastError);
 
         /// @brief    Throw from last error.
-        static void ThrowFromLastError() { Throw(::GetLastError()); };
+        static void __declspec(noreturn) ThrowFromLastError() { Throw(::GetLastError()); };
 
         /// @brief    Throw from a specified NT error
         ///
         /// @param    errorCode    The error code to throw (usually a captured error code)
-        static void ThrowFromNtError(NTSTATUS errorCode);
+        static void __declspec(noreturn) ThrowFromNtError(NTSTATUS errorCode);
 
         /// @brief    Gets the error code.
         ///
@@ -143,7 +143,7 @@ namespace Instalog { namespace SystemFacades {
      *             
      * @param   hRes    The hResult to check.
      */
-    void ThrowFromHResult(HRESULT hRes);
+    void __declspec(noreturn) ThrowFromHResult(HRESULT hRes);
 
     /**
      * @brief    Throws if the hResult indicated is a failure.
