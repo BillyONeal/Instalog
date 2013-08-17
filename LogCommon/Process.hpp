@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <boost/iterator/iterator_facade.hpp>
+#include "Expected.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -27,12 +28,12 @@ namespace Instalog { namespace SystemFacades {
         /// @brief    Gets the command line of the process.
         ///
         /// @return    The command line.
-        std::wstring GetCmdLine() const;
+        expected<std::wstring> GetCmdLine() const;
 
         /// @brief    Gets the executable path of the process.
         ///
         /// @return    The executable path.
-        std::wstring GetExecutablePath() const;
+        expected<std::wstring> GetExecutablePath() const;
 
         /// @brief    Terminates the process
         void Terminate();

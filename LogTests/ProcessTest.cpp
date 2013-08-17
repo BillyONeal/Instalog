@@ -60,7 +60,7 @@ TEST(Process, CanGetProcessExecutables)
     {
         try
         {
-            if (it->GetExecutablePath() == baseName) 
+            if (it->GetExecutablePath().get() == baseName) 
             {
                 couldFindMyOwnProcess = true;
             }
@@ -81,7 +81,7 @@ TEST(Process, CanGetProcessCommandLines)
     {
         try
         {
-            if (it->GetCmdLine() == baseName) 
+            if (it->GetCmdLine().get() == baseName) 
             {
                 couldFindMyOwnProcess = true;
             }
@@ -99,7 +99,7 @@ TEST(Process, NtoskrnlIsInTheBuilding)
     {
         if (it->GetProcessId() == 4) 
         {
-            ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath()));
+            ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath().get()));
         }
     }
 }

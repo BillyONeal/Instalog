@@ -44,7 +44,8 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <!-- VC's standard library has a couple of places that trigger smaller type check -->
+      <SmallerTypeCheck>false</SmallerTypeCheck>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
   </ItemDefinitionGroup>

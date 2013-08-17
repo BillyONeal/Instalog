@@ -117,97 +117,105 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    static std::wstring GetProcessStr(std::size_t processId, std::function<UNICODE_STRING&(RTL_USER_PROCESS_PARAMETERS&)> stringTargetSelector)
+    template <typename Callable>
+    static inline expected<std::wstring> GetProcessStr(std::size_t processId, Callable const& stringTargetSelector)
     {
-        if (processId == 0)
-        {
-            return L"System Idle Process";
-        }
-        if (processId == 4)
-        {
-            wchar_t target[MAX_PATH] = L"";
-            UINT len = ::GetWindowsDirectoryW(target, MAX_PATH);
-            if (len == 0)
-            {
-                Win32Exception::ThrowFromLastError();
-            }
-
-            --len;
-            if (target[len] == L'\\')
-            {
-                ::wcscat_s(target + len, MAX_PATH - len, L"System32\\Ntoskrnl.exe");
-            }
-            else
-            {
-                ::wcscat_s(target + len, MAX_PATH - len, L"\\System32\\Ntoskrnl.exe");
-            }
-            return target;
-        }
-        
         try
         {
-            UniqueHandle hProc(OpenProc(processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
-            PROCESS_BASIC_INFORMATION basicInfo;
-            NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
-            NTSTATUS errorCheck = ntQuery(hProc.Get(), ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
-            if (errorCheck != ERROR_SUCCESS)
+            if (processId == 0)
             {
-                Win32Exception::ThrowFromNtError(errorCheck);
+                return L"System Idle Process";
             }
-            PEB *pebAddr = basicInfo.PebBaseAddress;
-            PEB peb;
-            if (::ReadProcessMemory(hProc.Get(), pebAddr, &peb, sizeof(peb), nullptr) == 0)
+            if (processId == 4)
             {
-                Win32Exception::ThrowFromLastError();
+                wchar_t target[MAX_PATH] = L"";
+                UINT len = ::GetWindowsDirectoryW(target, MAX_PATH);
+                if (len == 0)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
+
+                --len;
+                if (target[len] == L'\\')
+                {
+                    ::wcscat_s(target + len, MAX_PATH - len, L"System32\\Ntoskrnl.exe");
+                }
+                else
+                {
+                    ::wcscat_s(target + len, MAX_PATH - len, L"\\System32\\Ntoskrnl.exe");
+                }
+                return target;
             }
-            RTL_USER_PROCESS_PARAMETERS params;
-            if (::ReadProcessMemory(hProc.Get(), peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
+        
+            try
             {
-                Win32Exception::ThrowFromLastError();
+                UniqueHandle hProc(OpenProc(processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
+                PROCESS_BASIC_INFORMATION basicInfo;
+                NtQueryInformationProcessFunc ntQuery = GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>("NtQueryInformationProcess");
+                NTSTATUS errorCheck = ntQuery(hProc.Get(), ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+                if (errorCheck != ERROR_SUCCESS)
+                {
+                    Win32Exception::ThrowFromNtError(errorCheck);
+                }
+                PEB *pebAddr = basicInfo.PebBaseAddress;
+                PEB peb;
+                if (::ReadProcessMemory(hProc.Get(), pebAddr, &peb, sizeof(peb), nullptr) == 0)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
+                RTL_USER_PROCESS_PARAMETERS params;
+                if (::ReadProcessMemory(hProc.Get(), peb.ProcessParameters, &params, sizeof(params), nullptr) == 0)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
+                std::wstring result;
+                UNICODE_STRING &targetString = stringTargetSelector(params);
+                result.resize(targetString.Length / sizeof(wchar_t));
+                if (::ReadProcessMemory(hProc.Get(), targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
+                return result;
             }
-            std::wstring result;
-            UNICODE_STRING &targetString = stringTargetSelector(params);
-            result.resize(targetString.Length / sizeof(wchar_t));
-            if (::ReadProcessMemory(hProc.Get(), targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
+            catch (ErrorAccessDeniedException const&)
             {
-                Win32Exception::ThrowFromLastError();
-            }
-            return result;
-        }
-        catch (ErrorAccessDeniedException const&)
-        {
-            //This block is vista and later specific; however, this does not matter because the
-            //spurious access denied errors are being injected by Vista+'s media protection
-            //features.
-            UniqueHandle hProc(OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
-            RuntimeDynamicLinker kernel32(L"Kernel32.dll");
-            typedef BOOL (WINAPI *QueryFullProcessImageNameFunc)(HANDLE, DWORD, LPWSTR, PDWORD);
-            QueryFullProcessImageNameFunc queryProcessFile = kernel32.GetProcAddress<QueryFullProcessImageNameFunc>("QueryFullProcessImageNameW");
-            BOOL boolCheck;
-            std::wstring buffer;
-            DWORD goalSize = MAX_PATH;
-            do
-            {
+                //This block is vista and later specific; however, this does not matter because the
+                //spurious access denied errors are being injected by Vista+'s media protection
+                //features.
+                UniqueHandle hProc(OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
+                RuntimeDynamicLinker kernel32(L"Kernel32.dll");
+                typedef BOOL (WINAPI *QueryFullProcessImageNameFunc)(HANDLE, DWORD, LPWSTR, PDWORD);
+                QueryFullProcessImageNameFunc queryProcessFile = kernel32.GetProcAddress<QueryFullProcessImageNameFunc>("QueryFullProcessImageNameW");
+                BOOL boolCheck;
+                std::wstring buffer;
+                DWORD goalSize = MAX_PATH;
+                do
+                {
+                    buffer.resize(goalSize);
+                    boolCheck = queryProcessFile(hProc.Get(), 0, &buffer[0], &goalSize);
+                } while (boolCheck == 0 && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+                if (boolCheck == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+                {
+                    Win32Exception::ThrowFromLastError();
+                }
                 buffer.resize(goalSize);
-                boolCheck = queryProcessFile(hProc.Get(), 0, &buffer[0], &goalSize);
-            } while (boolCheck == 0 && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
-            if (boolCheck == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-            {
-                Win32Exception::ThrowFromLastError();
+                return buffer;
             }
-            buffer.resize(goalSize);
-            return buffer;
+        }
+        catch (...)
+        {
+            return expected<std::wstring>::from_exception();
         }
     }
 
-    std::wstring Process::GetExecutablePath() const
+    expected<std::wstring> Process::GetExecutablePath() const
     {
         return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
             return params.ImagePathName;
         });
     }
 
-    std::wstring Process::GetCmdLine() const
+    expected<std::wstring> Process::GetCmdLine() const
     {
         return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
             return params.CommandLine;

@@ -45,31 +45,47 @@ namespace Instalog
         ProcessEnumerator enumerator;
         for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
         {
-            std::wstring executable = it->GetExecutablePath();
-            if (boost::starts_with(executable, L"\\??\\"))
+            auto executableTry = it->GetExecutablePath();
+            if (executableTry.is_valid())
             {
-                executable.erase(executable.begin(), executable.begin() + 4);
-            }
-            if (w.IsOnWhitelist(executable))
-            {
-                continue;
-            }
-            Path::Prettify(executable.begin(), executable.end());
-            std::wstring pathElement;
-            auto equTest = [&] (std::wstring const& str) -> bool
-            {
-                return boost::iequals(executable, str, std::locale());
-            };
-            if (std::find_if(fullPrintList.begin(), fullPrintList.end(), equTest) != fullPrintList.end())
-            {
-                pathElement = it->GetCmdLine();
+                auto executable = executableTry.get();
+                if (boost::starts_with(executable, L"\\??\\"))
+                {
+                    executable.erase(executable.begin(), executable.begin() + 4);
+                }
+                if (w.IsOnWhitelist(executable))
+                {
+                    continue;
+                }
+                Path::Prettify(executable.begin(), executable.end());
+                std::wstring pathElement;
+                auto equTest = [&] (std::wstring const& str) -> bool
+                {
+                    return boost::iequals(executable, str, std::locale());
+                };
+                if (std::find_if(fullPrintList.begin(), fullPrintList.end(), equTest) == fullPrintList.end())
+                {
+                    pathElement = std::move(executable);
+                }
+                else
+                {
+                    auto commandTry = it->GetCmdLine();
+                    if (commandTry.is_valid())
+                    {
+                        pathElement = std::move(commandTry.get());
+                    }
+                    else
+                    {
+                        pathElement = std::move(executable);
+                    }
+                }
+                GeneralEscape(pathElement);
+                logOutput << std::move(pathElement) << L"\n";
             }
             else
             {
-                pathElement = std::move(executable);
+                logOutput << L"Could not open process PID=" << it->GetProcessId() << L'\n';
             }
-            GeneralEscape(pathElement);
-            logOutput << std::move(pathElement) << L"\n";
         }
     }
 
