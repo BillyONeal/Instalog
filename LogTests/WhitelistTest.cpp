@@ -4,8 +4,8 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include "LogCommon/resource.h"
-#include "LogCommon/Whitelist.hpp"
+#include "../LogCommon/resource.h"
+#include "../LogCommon/Whitelist.hpp"
 
 using namespace testing;
 using Instalog::Whitelist;

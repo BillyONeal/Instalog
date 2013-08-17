@@ -6,7 +6,7 @@
 #include <string>
 #include <limits>
 #include <algorithm>
-#include <LogCommon/StringUtilities.hpp>
+#include "../LogCommon/StringUtilities.hpp"
 
 using namespace Instalog;
 

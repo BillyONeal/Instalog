@@ -6,9 +6,9 @@
 #include "gtest/gtest.h"
 #include <string>
 #include <vector>
-#include "LogCommon/File.hpp"
-#include "LogCommon/Library.hpp"
-#include "LogCommon/Win32Exception.hpp"
+#include "../LogCommon/File.hpp"
+#include "../LogCommon/Library.hpp"
+#include "../LogCommon/Win32Exception.hpp"
 
 using namespace Instalog::SystemFacades;
 

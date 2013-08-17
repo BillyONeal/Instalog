@@ -4,7 +4,7 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include <LogCommon/ServiceControlManager.hpp>
+#include "../LogCommon/ServiceControlManager.hpp"
 
 using Instalog::SystemFacades::ServiceControlManager;
 using Instalog::SystemFacades::Service;

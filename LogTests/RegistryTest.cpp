@@ -6,9 +6,9 @@
 #include <array>
 #include "sddl.h"
 #include "gtest/gtest.h"
-#include "LogCommon/Win32Glue.hpp"
-#include "LogCommon/Registry.hpp"
-#include "LogCommon/Win32Exception.hpp"
+#include "../LogCommon/Win32Glue.hpp"
+#include "../LogCommon/Registry.hpp"
+#include "../LogCommon/Win32Exception.hpp"
 
 using namespace Instalog::SystemFacades;
 

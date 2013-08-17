@@ -3,8 +3,8 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
-#include <LogCommon/Win32Exception.hpp>
-#include <LogCommon/ScopedPrivilege.hpp>
+#include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/ScopedPrivilege.hpp"
 
 using Instalog::SystemFacades::ScopedPrivilege;
 using Instalog::SystemFacades::Win32Exception;

@@ -5,7 +5,7 @@
 #include "pch.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include "gtest/gtest.h"
-#include "LogCommon/ScanningSections.hpp"
+#include "../LogCommon/ScanningSections.hpp"
 
 using namespace Instalog;
 

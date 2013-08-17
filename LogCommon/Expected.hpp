@@ -231,7 +231,7 @@ public:
     template <typename E>
     static expected<Ty> from_exception(E&& ex) throw()
     {
-        assert(typeid(E) == typeid(ex) && "Slicing detected.");
+        //assert(typeid(E) == typeid(ex) && "Slicing detected.");
         return from_exception(std::make_exception_ptr(std::forward<E>(ex)));
     }
 

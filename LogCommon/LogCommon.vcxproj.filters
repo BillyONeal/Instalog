@@ -71,9 +71,6 @@
     <ClCompile Include="SecurityCenter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CompiledProtocolBuffers\Whitelist.pb.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Wmi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -139,9 +136,6 @@
     <ClInclude Include="ServiceControlManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InstalogVersion.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Win32Glue.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -194,6 +188,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OptimisticBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stringize.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

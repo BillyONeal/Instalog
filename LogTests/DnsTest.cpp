@@ -4,7 +4,7 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include "LogCommon/Dns.hpp"
+#include "../LogCommon/Dns.hpp"
 
 using namespace Instalog::SystemFacades;
 

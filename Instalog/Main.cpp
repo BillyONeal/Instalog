@@ -8,13 +8,13 @@
 #define NOMINMAX
 #include <windows.h>
 
-#include "LogCommon/Wow64.hpp"
-#include "LogCommon/Win32Exception.hpp"
-#include "LogCommon/UserInterface.hpp"
-#include "LogCommon/Scripting.hpp"
-#include "LogCommon/ScanningSections.hpp"
-#include "LogCommon/PseudoHjt.hpp"
-#include "LogCommon/Com.hpp"
+#include "../LogCommon/Wow64.hpp"
+#include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/UserInterface.hpp"
+#include "../LogCommon/Scripting.hpp"
+#include "../LogCommon/ScanningSections.hpp"
+#include "../LogCommon/PseudoHjt.hpp"
+#include "../LogCommon/Com.hpp"
 
 /// @brief    Console "user interface"
 struct ConsoleInterface : public Instalog::IUserInterface

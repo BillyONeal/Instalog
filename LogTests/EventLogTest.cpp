@@ -4,7 +4,7 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include "LogCommon/EventLog.hpp"
+#include "../LogCommon/EventLog.hpp"
 
 using Instalog::SystemFacades::EventLogEntry;
 using Instalog::SystemFacades::OldEventLog;

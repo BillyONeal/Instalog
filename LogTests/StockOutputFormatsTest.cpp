@@ -5,9 +5,9 @@
 #include "pch.hpp"
 #include <sstream>
 #include "gtest/gtest.h"
-#include "LogCommon/StockOutputFormats.hpp"
-#include "LogCommon/File.hpp"
-#include "LogCommon/Win32Exception.hpp"
+#include "../LogCommon/StockOutputFormats.hpp"
+#include "../LogCommon/File.hpp"
+#include "../LogCommon/Win32Exception.hpp"
 
 using namespace testing;
 using namespace Instalog;

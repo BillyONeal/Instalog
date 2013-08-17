@@ -4,7 +4,7 @@
 #include "pch.hpp"
 #include <string>
 #include "gtest/gtest.h"
-#include "LogCommon/Expected.hpp"
+#include "../LogCommon/Expected.hpp"
 
 using namespace Instalog;
 

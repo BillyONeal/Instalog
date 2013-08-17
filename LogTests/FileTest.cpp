@@ -4,9 +4,9 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include "LogCommon/File.hpp"
-#include "LogCommon/Path.hpp"
-#include "LogCommon/Win32Exception.hpp"
+#include "../LogCommon/File.hpp"
+#include "../LogCommon/Path.hpp"
+#include "../LogCommon/Win32Exception.hpp"
 
 using Instalog::SystemFacades::File;
 using Instalog::SystemFacades::FindFiles;

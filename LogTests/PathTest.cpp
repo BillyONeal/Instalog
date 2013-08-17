@@ -6,9 +6,9 @@
 #include <string>
 #include <iterator>
 #include <boost/algorithm/string/split.hpp>
-#include "LogCommon/Win32Exception.hpp"
-#include "LogCommon/File.hpp"
-#include "LogCommon/Path.hpp"
+#include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/File.hpp"
+#include "../LogCommon/Path.hpp"
 
 using namespace Instalog::Path;
 

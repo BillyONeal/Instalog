@@ -11,8 +11,8 @@
 #include "Library.hpp"
 #include "Path.hpp"
 #include "File.hpp"
-#include "InstalogVersion.hpp"
 #include "StringUtilities.hpp"
+#include "Stringize.hpp"
 #include "StockOutputFormats.hpp"
 
 using Instalog::SystemFacades::Win32Exception;
@@ -507,7 +507,7 @@ namespace Instalog {
 
     void WriteScriptHeader( std::wostream &log, std::uint64_t startTime )
     {
-        log << L"Instalog " INSTALOG_VERSION;
+        log << L"Instalog " STRINGIZE(INSTALOG_VERSION);
         switch(GetSystemMetrics(SM_CLEANBOOT))
         {
         case 1:
@@ -598,7 +598,7 @@ namespace Instalog {
         auto duration = endTime - startTime;
         auto seconds = duration / 10000000ull;
         auto milliseconds = (duration / 10000ull) - (seconds * 1000);
-        log << L"Instalog " INSTALOG_VERSION L" finished at ";
+        log << L"Instalog " STRINGIZE(INSTALOG_VERSION) L" finished at ";
         WriteMillisecondDateFormat(log, endTime);
         log << " (Generation took " << seconds << L'.' << std::setw(4) << std::setfill(L'0') << milliseconds << L" seconds)\n";
     }

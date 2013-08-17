@@ -4,7 +4,7 @@
 
 #include "pch.hpp"
 #include "gtest/gtest.h"
-#include "LogCommon/Win32Glue.hpp"
+#include "../LogCommon/Win32Glue.hpp"
 
 using namespace Instalog;
 

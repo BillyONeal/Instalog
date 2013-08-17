@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include "gtest/gtest.h"
-#include "LogCommon/Scripting.hpp"
+#include "../LogCommon/Scripting.hpp"
 
 using namespace Instalog;
 

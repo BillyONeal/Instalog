@@ -9,8 +9,8 @@
 #define PSAPI_VERSION 1
 #include <Psapi.h>
 #include "gtest/gtest.h"
-#include <LogCommon/Win32Exception.hpp>
-#include <LogCommon/Process.hpp>
+#include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/Process.hpp"
 
 #pragma comment(lib, "psapi.lib")
 
