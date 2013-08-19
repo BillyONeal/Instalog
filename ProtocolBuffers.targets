@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <AvailableItemName Include="ProtocolBuffer" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ProtocolBuffer>
+      <ProtoPath Condition="'%(ProtocolBuffer.ProtoPath)'==''">$(ProjectDir)</ProtoPath>
+    </ProtocolBuffer>
+  </ItemDefinitionGroup>
+  <PropertyGroup>
+    <ProtoC Condition="'$(ProtoC)'==''">$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)\ThirdParty\protobuf-2.4.1\protoc.exe))</ProtoC>
+    <ProtoOutPath Condition="'$(ProtoOutPath)'==''">$(IntDir)CompiledProtocolBuffers</ProtoOutPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProtoOutPath);$(MSBuildThisFileDirectory)\ThirdParty\protobuf-2.4.1\src;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Target Name="CompileProtocolBuffers"
+          BeforeTargets="ClCompile"
+          Inputs="@(ProtocolBuffer)"
+          Outputs="@(ProtocolBuffer->'$(ProtoOutPath)\%(FileName).pb.cc');@(ProtocolBuffer->'$(ProtoOutPath)\%(FileName).pb.h')">
+    <MakeDir Directories="$(ProtoOutPath)" />
+    <Message Text="%(ProtocolBuffer.FullPath)" Importance="high" />
+    <Exec
+      Command="&quot;$(ProtoC)&quot; --proto_path=&quot;$([System.IO.Path]::GetDirectoryName(%(ProtocolBuffer.ProtoPath)))&quot; --cpp_out=&quot;$(ProtoOutPath)&quot; &quot;%(ProtocolBuffer.FullPath)&quot; --error_format=msvs"
+      UseCommandProcessor="false"
+      EchoOff="true"
+            />
+    <ItemGroup>
+      <ClInclude Include="$(ProtoOutPath)\%(ProtocolBuffer.FileName).pb.h" />
+      <ClCompile Include="$(ProtoOutPath)\%(ProtocolBuffer.FileName).pb.cc">
+        <PrecompiledHeader></PrecompiledHeader>
+        <DisableSpecificWarnings>4244;4276;4018;4355;4800;4251;4996;4146;4305</DisableSpecificWarnings>
+        <PreprocessorDefinitions>GOOGLE_PROTOBUF_NO_RTTI</PreprocessorDefinitions>
+        <WarningLevel>Level3</WarningLevel>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+</Project>

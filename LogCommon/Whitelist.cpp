@@ -14,6 +14,11 @@
 #include <windows.h>
 #include "Win32Exception.hpp"
 #include "Whitelist.hpp"
+#pragma warning(push)
+#pragma warning(disable: 4512)
+#pragma warning(disable: 4244)
+#include "Whitelist.pb.h"
+#pragma warning(pop)
 
 using Instalog::SystemFacades::Win32Exception;
 

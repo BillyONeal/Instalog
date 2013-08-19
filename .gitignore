@@ -10,3 +10,4 @@ Release
 Debug
 Build/
 ipch/*
+*.user

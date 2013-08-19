@@ -206,8 +206,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Whitelist.proto">
+    <ProtocolBuffer Include="Whitelist.proto">
       <Filter>Protocol Buffers</Filter>
-    </CustomBuild>
+    </ProtocolBuffer>
   </ItemGroup>
 </Project>
