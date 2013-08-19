@@ -83,7 +83,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="AfterBuild">
+  <Target Name="AfterBuild" Condition="'$(Configuration)'!='Debug'">
     <Exec Command="&quot;$(TargetPath)&quot;"
           IgnoreExitCode="true"
           IgnoreStandardErrorWarningFormat="true"

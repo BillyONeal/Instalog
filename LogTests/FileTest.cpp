@@ -7,6 +7,7 @@
 #include "../LogCommon/File.hpp"
 #include "../LogCommon/Path.hpp"
 #include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/Win32Glue.hpp"
 
 using Instalog::SystemFacades::File;
 using Instalog::SystemFacades::FindFiles;
@@ -362,6 +363,7 @@ TEST(FindFiles, OnlyHostsStarPreceding)
 TEST(FindFiles, HostsExistsRecursive)
 {
     bool foundHosts = false;
+    Instalog::Disable64FsRedirector disable;
     FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true);
 
     for(; foundHosts == false && files.IsValid(); files.Next())
@@ -371,7 +373,8 @@ TEST(FindFiles, HostsExistsRecursive)
             continue;
         }
 
-        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\etc\\hosts"))
+        auto const& record = files.GetData().get();
+        if (boost::iends_with(record.GetFileName(), L"\\etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -383,6 +386,7 @@ TEST(FindFiles, HostsExistsRecursive)
 TEST(FindFiles, HostsExistsRecursiveTwoLevels)
 {
     bool foundHosts = false;
+    Instalog::Disable64FsRedirector disable;
     FindFiles files(L"C:\\Windows\\System32\\*", true);
 
     for(; foundHosts == false && files.IsValid(); files.Next())
@@ -392,7 +396,8 @@ TEST(FindFiles, HostsExistsRecursiveTwoLevels)
             continue;
         }
 
-        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\drivers\\etc\\hosts"))
+        auto const& record = files.GetData().get();
+        if (boost::iends_with(record.GetFileName(), L"\\drivers\\etc\\hosts"))
         {
             foundHosts = true;
         }
@@ -405,6 +410,7 @@ TEST(FindFiles, HostsExistsRecursiveTwoLevels)
 TEST(FindFiles, HostsNotExistsNotRecursive)
 {
     bool foundHosts = false;
+    Instalog::Disable64FsRedirector disable;
     FindFiles files(L"C:\\Windows\\System32\\drivers\\*");
 
     for(; foundHosts == false && files.IsValid(); files.Next())

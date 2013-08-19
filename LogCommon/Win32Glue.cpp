@@ -3,8 +3,16 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
+#include "Library.hpp"
 #include "Win32Glue.hpp"
 #include "Win32Exception.hpp"
+
+namespace
+{
+    typedef BOOL (WINAPI *IsWow64ProcessFunc) (HANDLE, PBOOL);
+    typedef BOOL (WINAPI *Wow64DisableFsRedirectionFunc)(PVOID *OldValue);
+    typedef BOOL (WINAPI *Wow64RevertFsRedirectionFunc)(PVOID OldValue);
+}
 
 namespace Instalog {
 
@@ -88,51 +96,126 @@ namespace Instalog {
         return systemtime;
     }
 
-	UniqueHandle::UniqueHandle(HANDLE handle_)
-		: handle(handle_)
-	{
-	}
+    UniqueHandle::UniqueHandle(HANDLE handle_)
+        : handle(handle_)
+    {
+    }
 
-	UniqueHandle::UniqueHandle(UniqueHandle&& other)
-		: handle(other.handle)
-	{
-		other.handle = 0;
-	}
+    UniqueHandle::UniqueHandle(UniqueHandle&& other)
+        : handle(other.handle)
+    {
+        other.handle = 0;
+    }
 
-	UniqueHandle& UniqueHandle::operator=(UniqueHandle&& other)
-	{
-		HANDLE hTemp = other.handle; // Assignment to self.
-		other.handle = 0;
-		handle = hTemp;
-		return *this;
-	}
+    UniqueHandle& UniqueHandle::operator=(UniqueHandle&& other)
+    {
+        HANDLE hTemp = other.handle; // Assignment to self.
+        other.handle = 0;
+        handle = hTemp;
+        return *this;
+    }
 
-	bool UniqueHandle::IsOpen() const
-	{
-		return handle != 0 && handle != INVALID_HANDLE_VALUE;
-	}
+    bool UniqueHandle::IsOpen() const
+    {
+        return handle != 0 && handle != INVALID_HANDLE_VALUE;
+    }
 
-	HANDLE UniqueHandle::Get()
-	{
-		return handle;
-	}
+    HANDLE UniqueHandle::Get()
+    {
+        return handle;
+    }
 
-	HANDLE* UniqueHandle::Ptr()
-	{
-		return &handle;
-	}
+    HANDLE* UniqueHandle::Ptr()
+    {
+        return &handle;
+    }
 
-	void UniqueHandle::Close()
-	{
-		if (IsOpen())
-		{
-			::CloseHandle(handle);
-			handle = 0;
-		}
-	}
+    void UniqueHandle::Close()
+    {
+        if (IsOpen())
+        {
+            ::CloseHandle(handle);
+            handle = 0;
+        }
+    }
 
-	UniqueHandle::~UniqueHandle()
-	{
-		Close();
-	}
+    UniqueHandle::~UniqueHandle()
+    {
+        Close();
+    }
+
+    Disable64FsRedirector::Disable64FsRedirector()
+        : previousState(nullptr)
+    {
+        Disable();
+    }
+
+    void Disable64FsRedirector::Disable() throw()
+    {
+#ifndef _M_X64
+        if (previousState != nullptr)
+        {
+            return;
+        }
+
+        SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+        auto const isWow64 = kernel32.GetProcAddress<IsWow64ProcessFunc>("IsWow64Process");
+        if (isWow64 == nullptr)
+        {
+            return;
+        }
+
+        BOOL isWow64Result = FALSE;
+        isWow64(::GetCurrentProcess(), &isWow64Result);
+        if (isWow64Result != TRUE)
+        {
+            return;
+        }
+
+        auto const disableFunc = kernel32.GetProcAddress<Wow64DisableFsRedirectionFunc>("Wow64DisableWow64FsRedirection");
+        if (disableFunc == nullptr)
+        {
+            return;
+        }
+
+        disableFunc(&previousState);
+#endif
+    }
+
+    void Disable64FsRedirector::Enable() throw()
+    {
+#ifndef _M_X64
+        if (previousState == nullptr)
+        {
+            return;
+        }
+
+        SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+        auto const enableFunc = kernel32.GetProcAddress<Wow64RevertFsRedirectionFunc>("Wow64RevertWow64FsRedirection");
+        assert(enableFunc != nullptr);
+        enableFunc(previousState);
+        previousState = nullptr;
+#endif
+    }
+
+    Disable64FsRedirector::~Disable64FsRedirector() throw()
+    {
+        Enable();
+    }
+
+    bool IsWow64Process() throw()
+    {
+#ifndef _M_X64
+        SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+        auto const isWow64 = kernel32.GetProcAddress<IsWow64ProcessFunc>("IsWow64Process");
+        if (isWow64 == nullptr)
+        {
+            return false;
+        }
+
+        BOOL isWow64Result = FALSE;
+        isWow64(::GetCurrentProcess(), &isWow64Result);
+        return isWow64Result == TRUE;
+#endif
+    }
 }

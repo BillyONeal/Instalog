@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include "gtest/gtest.h"
+#include "../LogCommon/Win32Glue.hpp"
 #include "../LogCommon/ScanningSections.hpp"
 
 using namespace Instalog;
@@ -42,19 +43,29 @@ TEST_F(RunningProcessesTest, PriorityIsScanning)
     ASSERT_EQ(SCANNING, rp.GetPriority());
 }
 
-TEST_F(RunningProcessesTest, SvchostHasFullLine)
+inline bool test_icontains(std::wstring const& haystack, std::wstring const& needle)
 {
-    std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs";
-    Go();
-    bool svcHostHasFullLine = boost::algorithm::icontains<std::wstring, std::wstring>(ss.str(), svcHost);
-    ASSERT_TRUE(svcHostHasFullLine);
+    return boost::algorithm::icontains(haystack, needle);
 }
 
-TEST_F(RunningProcessesTest, ExplorerDoesNotHaveFullLine)
+TEST_F(RunningProcessesTest, SvchostHasFullLine)
 {
-    std::wstring explorer = L"C:\\Windows\\Explorer.exe\n";
+    if (Instalog::IsWow64Process())
+    {
+        // We can't open the svchost processes on wrong bitness.
+        return;
+    }
+
+    std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs";
     Go();
-    ASSERT_PRED2((boost::algorithm::contains<std::wstring, std::wstring>), ss.str(), explorer);
+    ASSERT_PRED2(&test_icontains, ss.str(), svcHost);
+}
+
+TEST_F(RunningProcessesTest, TestsDoNotHaveFullLine)
+{
+    std::wstring tests = L"Logtests.exe\n";
+    Go();
+    ASSERT_PRED2(&test_icontains, ss.str(), tests);
 }
 
 TEST_F(RunningProcessesTest, NtoskrnlNotPresent)

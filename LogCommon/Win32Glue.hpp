@@ -65,4 +65,39 @@ namespace Instalog {
 		~UniqueHandle();
 	};
 
+    /**
+     * Scoped object which disables the Wow64 file system redirector, if applicable.
+     * @sa boost::noncopyable
+     */
+    class Disable64FsRedirector : boost::noncopyable
+    {
+        void * previousState;
+    public:
+
+        /**
+         * Disables the file system redirector.
+         */
+        Disable64FsRedirector();
+
+        /**
+         * Disables the file system redirector, if it is enabled.
+         */
+        void Disable() throw();
+
+        /**
+         * Enables the file system redirector, if it is disabled.
+         */
+        void Enable() throw();
+
+        /**
+         * Enables the file system redirector.
+         */
+        ~Disable64FsRedirector() throw();
+    };
+
+    /**
+     * Query if this process is running as a WOW64 process.
+     * @return true inside WOW64; otherwise, false.
+     */
+    bool IsWow64Process() throw();
 }
