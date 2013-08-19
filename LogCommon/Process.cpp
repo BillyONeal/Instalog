@@ -14,6 +14,12 @@
 #include "Process.hpp"
 #include "DdkStructures.h"
 
+namespace
+{
+    typedef UNICODE_STRING (RTL_USER_PROCESS_PARAMETERS::* RtlUserProcessParametersSelector);
+}
+
+
 namespace Instalog { namespace SystemFacades {
     
     ProcessEnumerator::ProcessEnumerator()
@@ -117,8 +123,7 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    template <typename Callable>
-    static inline expected<std::wstring> GetProcessStr(std::size_t processId, Callable const& stringTargetSelector)
+    static expected<std::wstring> GetProcessStr(std::size_t processId, RtlUserProcessParametersSelector stringTargetSelector)
     {
         try
         {
@@ -169,7 +174,7 @@ namespace Instalog { namespace SystemFacades {
                     Win32Exception::ThrowFromLastError();
                 }
                 std::wstring result;
-                UNICODE_STRING &targetString = stringTargetSelector(params);
+                UNICODE_STRING &targetString = params.*stringTargetSelector;
                 result.resize(targetString.Length / sizeof(wchar_t));
                 if (::ReadProcessMemory(hProc.Get(), targetString.Buffer, &result[0], result.size() * sizeof(wchar_t), nullptr) == 0)
                 {
@@ -210,16 +215,12 @@ namespace Instalog { namespace SystemFacades {
 
     expected<std::wstring> Process::GetExecutablePath() const
     {
-        return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
-            return params.ImagePathName;
-        });
+        return GetProcessStr(GetProcessId(), &RTL_USER_PROCESS_PARAMETERS::ImagePathName);
     }
 
     expected<std::wstring> Process::GetCmdLine() const
     {
-        return GetProcessStr(GetProcessId(), [](RTL_USER_PROCESS_PARAMETERS& params) -> UNICODE_STRING& {
-            return params.CommandLine;
-        });
+        return GetProcessStr(GetProcessId(), &RTL_USER_PROCESS_PARAMETERS::CommandLine);
     }
 
     void Process::Terminate()
