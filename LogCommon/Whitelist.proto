@@ -6,10 +6,16 @@ package Instalog.ProtocolBuffers;
 option optimize_for = LITE_RUNTIME;
 option cc_generic_services = false;
 
+enum BlobMatchType {
+    EXACT_MATCH = 0;
+    CASE_INSENSITIVE_MATCH = 1;
+    ALWAYS_MATCH = 2;
+}
+
 message WhitelistEntryBlob {
     required uint32 index = 1;
-    optional string strData = 2;
-    optional bool alwaysAccept = 3;
+    required BlobMatchType matchType = 2;
+    optional string strData = 3;
 }
 
 message WhitelistEntry {
@@ -17,5 +23,7 @@ message WhitelistEntry {
 }
 
 message Whitelist {
-    repeated WhitelistEntry entries = 1;
+    required string whitelistName = 1;
+    repeated WhitelistEntry includeEntries = 2;
+    repeated WhitelistEntry excludeEntries = 3;
 }

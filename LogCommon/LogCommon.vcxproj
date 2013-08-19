@@ -22,6 +22,7 @@
     <ProjectGuid>{2823E2C6-D995-4944-A45D-1FEB3FDDDAE9}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>LogCommon</RootNamespace>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>

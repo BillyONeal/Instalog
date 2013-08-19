@@ -32,7 +32,7 @@
       <ClInclude Include="$(ProtoOutPath)\%(ProtocolBuffer.FileName).pb.h" />
       <ClCompile Include="$(ProtoOutPath)\%(ProtocolBuffer.FileName).pb.cc">
         <PrecompiledHeader></PrecompiledHeader>
-        <DisableSpecificWarnings>4244;4276;4018;4355;4800;4251;4996;4146;4305</DisableSpecificWarnings>
+        <DisableSpecificWarnings>4244;4276;4018;4355;4800;4251;4996;4146;4305;4267</DisableSpecificWarnings>
         <PreprocessorDefinitions>GOOGLE_PROTOBUF_NO_RTTI</PreprocessorDefinitions>
         <WarningLevel>Level3</WarningLevel>
       </ClCompile>
