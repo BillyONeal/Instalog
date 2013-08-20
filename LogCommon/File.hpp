@@ -161,62 +161,62 @@ namespace Instalog { namespace SystemFacades {
         static std::wstring GetCompany(std::wstring const& target);
     };
 
-	/// Find files record.
-	class FindFilesRecord
-	{
-		std::wstring cFileName;
-		std::uint64_t ftCreationTime;
-		std::uint64_t ftLastAccessTime;
-		std::uint64_t ftLastWriteTime;
-		std::uint64_t nFileSize;
-		DWORD dwFileAttributes;
-	public:
-		/// Initializes a new instance of the FindFilesRecord class.
-		/// @param prefix    The prefix path.
-		/// @param winSource The windows data record source.
-		FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource);
+    /// Find files record.
+    class FindFilesRecord
+    {
+        std::wstring cFileName;
+        std::uint64_t ftCreationTime;
+        std::uint64_t ftLastAccessTime;
+        std::uint64_t ftLastWriteTime;
+        std::uint64_t nFileSize;
+        DWORD dwFileAttributes;
+    public:
+        /// Initializes a new instance of the FindFilesRecord class.
+        /// @param prefix    The prefix path.
+        /// @param winSource The windows data record source.
+        FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource);
 
-		/// Initializes a new instance of the File class.
-		/// @param other The copied record.
-		FindFilesRecord(FindFilesRecord const& other);
+        /// Initializes a new instance of the File class.
+        /// @param other The copied record.
+        FindFilesRecord(FindFilesRecord const& other);
 
-		/// Initializes a moved instance of the File class.
-		/// @param other The moved record.
-		FindFilesRecord(FindFilesRecord&& other) throw();
+        /// Initializes a moved instance of the File class.
+        /// @param other The moved record.
+        FindFilesRecord(FindFilesRecord&& other) throw();
 
-		/// Assignment operator.
-		/// @param other The copied item.
-		/// @return A shallow copy of this object.
-		FindFilesRecord& operator=(FindFilesRecord other);
+        /// Assignment operator.
+        /// @param other The copied item.
+        /// @return A shallow copy of this object.
+        FindFilesRecord& operator=(FindFilesRecord other);
 
-		/// Gets file name.
-		/// @return The file name.
-		std::wstring const& GetFileName() const throw();
+        /// Gets file name.
+        /// @return The file name.
+        std::wstring const& GetFileName() const throw();
 
-		/// Gets creation time.
-		/// @return The creation time.
-		std::uint64_t GetCreationTime() const throw();
+        /// Gets creation time.
+        /// @return The creation time.
+        std::uint64_t GetCreationTime() const throw();
 
-		/// Gets the last access time.
-		/// @return The last access time.
-		std::uint64_t GetLastAccessTime() const throw();
+        /// Gets the last access time.
+        /// @return The last access time.
+        std::uint64_t GetLastAccessTime() const throw();
 
-		/// Gets the last write time.
-		/// @return The last write time.
-		std::uint64_t GetLastWriteTime() const throw();
+        /// Gets the last write time.
+        /// @return The last write time.
+        std::uint64_t GetLastWriteTime() const throw();
 
-		/// Gets the size.
-		/// @return The size.
-		std::uint64_t GetSize() const throw();
+        /// Gets the size.
+        /// @return The size.
+        std::uint64_t GetSize() const throw();
 
-		/// Gets the attributes.
-		/// @return The attributes.
-		DWORD GetAttributes() const throw();
+        /// Gets the attributes.
+        /// @return The attributes.
+        DWORD GetAttributes() const throw();
 
-		/// Swaps the given record.
-		/// @param [in,out] other The other record with which to swap.
-		void swap(FindFilesRecord &other) throw();
-	};
+        /// Swaps the given record.
+        /// @param [in,out] other The other record with which to swap.
+        void swap(FindFilesRecord &other) throw();
+    };
 
     /**
      * Tests whether or not a FindFilesRecord is a directory with the name . or ...
@@ -227,13 +227,13 @@ namespace Instalog { namespace SystemFacades {
         return (test.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && (str == L"." || str == L"..");
     }
 
-	/// Swaps a pair of FindFilesRecords.
-	/// @param [in,out] lhs The left hand side.
-	/// @param [in,out] rhs The right hand side.
-	inline void swap(FindFilesRecord &lhs, FindFilesRecord &rhs) throw()
-	{
-		lhs.swap(rhs);
-	}
+    /// Swaps a pair of FindFilesRecords.
+    /// @param [in,out] lhs The left hand side.
+    /// @param [in,out] rhs The right hand side.
+    inline void swap(FindFilesRecord &lhs, FindFilesRecord &rhs) throw()
+    {
+        lhs.swap(rhs);
+    }
 
     /// @brief    Finds files in directories.  Wrapper around FindFirstFile and FindNextFile
     class FindFiles : boost::noncopyable
@@ -252,12 +252,12 @@ namespace Instalog { namespace SystemFacades {
          */
         std::wstring GetNextSpec() const;
     public:
-		/// Gets the data record for the current index.
-		/// @return The data record for the current index.
-		expected<FindFilesRecord> const& GetData() const throw()
-		{
-			return data;
-		}
+        /// Gets the data record for the current index.
+        /// @return The data record for the current index.
+        expected<FindFilesRecord> const& GetData() const throw()
+        {
+            return data;
+        }
 
         /// @brief    Constructor
         ///
