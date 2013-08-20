@@ -28,13 +28,13 @@
   <PropertyGroup>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
-  <ImportGroup Label="PropertySheets">
-    <Import Project="$(ProjectDir)\..\InstalogCpp.props" />
-  </ImportGroup>
+  <Import Project="$(SolutionDir)InstalogCpp.props" />
+  <Import Project="$(ProjectDir)..\ProtocolBuffers.targets"/>
+  <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -121,7 +121,6 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Import Project="$(ProjectDir)..\ProtocolBuffers.targets"/>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

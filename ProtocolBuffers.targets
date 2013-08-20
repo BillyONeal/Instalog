@@ -11,12 +11,8 @@
   <PropertyGroup>
     <ProtoC Condition="'$(ProtoC)'==''">$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)\ThirdParty\protobuf-2.4.1\protoc.exe))</ProtoC>
     <ProtoOutPath Condition="'$(ProtoOutPath)'==''">$(IntDir)CompiledProtocolBuffers</ProtoOutPath>
+    <IncludePath>$(ProtoOutPath);$(MSBuildThisFileDirectory)\ThirdParty\protobuf-2.4.1\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
-  <ItemDefinitionGroup>
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(ProtoOutPath);$(MSBuildThisFileDirectory)\ThirdParty\protobuf-2.4.1\src;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <Target Name="CompileProtocolBuffers"
           BeforeTargets="ClCompile"
           Inputs="@(ProtocolBuffer)"
