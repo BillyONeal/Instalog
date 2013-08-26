@@ -285,4 +285,32 @@ namespace Instalog { namespace SystemFacades {
         }
     };
 
+    /// <summary>Low level find handle.</summary>
+    /// <seealso cref="T:boost::noncopyable"/>
+    /// <seealso cref="T:WIN32_FIND_DATAW"/>
+    class FindHandle : private boost::noncopyable, public WIN32_FIND_DATAW
+    {
+        HANDLE hFind;
+        DWORD lastError;
+        void Close() throw();
+    public:
+
+        /// <summary>Constructor. Begins a <c>FindFirstFile</c> search.</summary>
+        /// <param name="pattern">Specifies the pattern applied to FindFirstFile.</param>
+        FindHandle(wchar_t const* pattern);
+
+        /// <summary>Advances this handle to the next <c>WIN32_FIND_DATAW</c>D instance.</summary>
+        void Next() throw();
+
+        /// <summary>Queries if this instance has valid file data.</summary>
+        /// <returns>true if there is data; otherwise, false.</returns>
+        bool HasEntry() const throw();
+
+        /// <summary>Gets the last error encountered when processing files.</summary>
+        /// <returns>The last error code encountered when processing files.</returns>
+        DWORD LastError() const throw();
+
+        /// <summary>Destructor.</summary>
+        ~FindHandle() throw();
+    };
 }}

@@ -20,18 +20,18 @@ namespace Instalog { namespace SystemFacades {
         /// @param    errorCode    The error code
         Win32Exception(DWORD errorCode) : errorCode_(errorCode) {};
 
-		/// Gets from last error as an exception_ptr.
-		/// @return The last error as an exception_ptr.
-		static std::exception_ptr FromLastError() throw();
+        /// Gets from last error as an exception_ptr.
+        /// @return The last error as an exception_ptr.
+        static std::exception_ptr FromLastError() throw();
 
-		/// Gets the supplied error as an exception_ptr.
-		/// @return The supplied error as an exception_ptr.
-		static std::exception_ptr FromWinError(DWORD errorCode) throw();
+        /// Gets the supplied error as an exception_ptr.
+        /// @return The supplied error as an exception_ptr.
+        static std::exception_ptr FromWinError(DWORD errorCode) throw();
 
-		/// Initializes a Win32Exception from the from the given NT error.
-		/// @param errorCode The NT error code.
-		/// @return The supplied NT error as an exception_ptr.
-		static std::exception_ptr FromNtError(NTSTATUS errorCode) throw();
+        /// Initializes a Win32Exception from the from the given NT error.
+        /// @param errorCode The NT error code.
+        /// @return The supplied NT error as an exception_ptr.
+        static std::exception_ptr FromNtError(NTSTATUS errorCode) throw();
 
         /// @brief    Throws a specified error directly
         ///

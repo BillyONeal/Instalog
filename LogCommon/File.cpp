@@ -447,4 +447,57 @@ namespace Instalog { namespace SystemFacades {
         data = FindFilesRecord(subPaths.top(), dataBlock);
     }
 
+    FindHandle::FindHandle(wchar_t const* pattern)
+        : hFind(::FindFirstFileW(pattern, this))
+    {
+        if (this->hFind == INVALID_HANDLE_VALUE)
+        {
+            this->lastError = ::GetLastError();
+        }
+        else
+        {
+            this->lastError = ERROR_SUCCESS;
+        }
+    }
+
+    void FindHandle::Next() throw()
+    {
+        if (::FindNextFileW(this->hFind, this) == 0)
+        {
+            this->Close();
+            this->lastError = ::GetLastError();
+        }
+        else
+        {
+            this->lastError = ERROR_SUCCESS;
+        }
+    }
+
+    bool FindHandle::HasEntry() const throw()
+    {
+        return this->lastError == ERROR_SUCCESS;
+    }
+
+    DWORD FindHandle::LastError() const throw()
+    {
+        return this->lastError;
+    }
+
+    FindHandle::~FindHandle() throw()
+    {
+        this->Close();
+    }
+
+    void FindHandle::Close() throw()
+    {
+        if (this->hFind != INVALID_HANDLE_VALUE)
+        {
+            auto const closeResult = ::FindClose(this->hFind);
+            assert(closeResult != 0);
+            closeResult; // prevent unreferenced warnings
+            this->hFind = INVALID_HANDLE_VALUE;
+            this->lastError = ERROR_NO_MORE_FILES;
+        }
+    }
+
 }}
