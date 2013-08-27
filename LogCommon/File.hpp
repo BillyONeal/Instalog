@@ -13,23 +13,23 @@
 
 namespace Instalog { namespace SystemFacades {
 
-    /// @brief Represents a plain Win32 file handle.
+    /// <summary>Represents a plain Win32 file handle.</summary>
     class File : boost::noncopyable
     {
         HANDLE hFile;
     public:
-        /// @brief    Default constructor.
+        /// <summary>Default constructor.</summary>
         File();
 
-        ///
-        /// @param    filename              Filename of the file.
-        /// @param    desiredAccess          (optional) the desired access.
-        /// @param    shareMode              (optional) the share mode.
-        /// @param    securityAttributes    (optional) the security attributes.
-        /// @param    createdDisposition    (optional) the created disposition.
-        /// @param    flags                  (optional) the flags.
-        ///
-        /// @throw    Win32Exception on failure
+        /// <summary>Constructor. Calls <c>CreateFileW</c>.</summary>
+        /// <param name="filename">Filename passed to <c>CreateFileW</c>.</param>
+        /// <param name="desiredAccess">(Optional) the desired access.</param>
+        /// <param name="shareMode">(Optional) the share mode.</param>
+        /// <param name="securityAttributes">(Optional) the security attributes.</param>
+        /// <param name="createdDisposition">(Optional) the created disposition.</param>
+        /// <param name="flags">(Optional) the flags.</param>
+        /// <exception cref="Win32Exception">Thrown when the underlying <c>CreateFileW</c>
+        /// call fails.</exception>
         File(
             std::wstring const& filename,
             DWORD desiredAccess = GENERIC_READ,
@@ -38,130 +38,105 @@ namespace Instalog { namespace SystemFacades {
             DWORD createdDisposition = OPEN_EXISTING,
             DWORD flags = FILE_ATTRIBUTE_NORMAL
         );
-        
-        /// @brief    Move constructor
-        ///
-        /// @param [in,out]    other    The other.
-        File(File && other);
 
-        /// @brief    Assignment operator.
-        ///
-        /// @param    other    The other.
-        ///
-        /// @return    A shallow copy of this instance.
+        /// <summary>Move constructor.</summary>
+        /// <param name="other">[in,out] The file to move from.</param>
+        File(File && other) throw();
+
+        /// <summary>Assignment operator.</summary>
+        /// <param name="other">The other file handle.</param>
+        /// <returns>*this</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying <c>CreateFileW</c>
+        /// call fails.</exception>
         File& operator=(File other);
 
-        /// @brief    Destructor.
+        /// <summary>Destructor.</summary>
         ~File();
 
-        /// @brief    Gets the size of the file in bytes
-        ///
-        /// @return    The size.
-        ///
-        /// @throw    Win32Exception on failure
+        /// <summary>Gets the size of the file in bytes.</summary>
+        /// <returns>The size of the file in bytes.</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying
+        /// <c>GetFileInformationByHandle</c>
+        /// call fails.</exception>
         std::uint64_t GetSize() const;
 
-        /// @brief    Gets the attributes of the file as a DWORD
-        ///
-        /// @return    The attributes.
-        ///
-        /// @throw    Win32Exception on error
+        /// <summary>Gets the attributes of the file as a DWORD.</summary>
+        /// <returns>The attributes of the file as a DWORD.</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying
+        /// <c>GetFileInformationByHandle</c>
+        /// call fails.</exception>
         DWORD GetAttributes() const;
 
-        /// @brief    Gets the extended attributes of the file
-        ///
-        /// @return    The extended attributes.
-        ///
-        /// @throw    Win32Exception on error
+        /// <summary>Gets extended attributes of the file.</summary>
+        /// <returns>The extended attributes of the file.</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying
+        /// <c>GetFileInformationByHandle</c>
+        /// call fails.</exception>
         BY_HANDLE_FILE_INFORMATION GetExtendedAttributes() const;
 
-        /// @brief    Reads the the specified amount of bytes into a vector 
-        ///
-        /// @param    bytesToRead    The number of bytes to read.
-        ///
-        /// @return    The bytes as a vector of chars.
-        /// 
-        /// @throw    Win32Exception on error
+        /// <summary>Reads bytes from the file.</summary>
+        /// <param name="bytesToRead">The number of bytes to read from the file.</param>
+        /// <returns>The bytes read from the file.</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying <c>ReadFile</c> call
+        /// fails.</exception>
         std::vector<char> ReadBytes(unsigned int bytesToRead) const;
 
-        /// @brief    Writes the specified bytes to the file
-        ///
-        /// @param    bytes    The bytes.
-        ///
-        /// @return    true if all of the bytes were written
-        /// 
-        /// @throw    Win32Exception on error
+        /// <summary>Writes bytes to the file.</summary>
+        /// <param name="bytes">The number of bytes to write to the file.</param>
+        /// <returns>true if the file completely wrote.</returns>
+        /// <exception cref="Win32Exception">Thrown when the underlying <c>WriteFile</c> call
+        /// fails.</exception>
         bool WriteBytes(std::vector<char> const& bytes); 
 
-        /// @brief    Gets the size of the specified file in bytes without opening a file handle
-        ///
-        /// @return    The size.
-        ///
-        /// @throw    Win32Exception on error
+        /// <summary>Gets the size of a file without opening the file.</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>The size of the file.</returns>
+        /// <exception cref="Win32Exception" />
         static std::uint64_t GetSize(std::wstring const& filename);
 
-        /// @brief    Gets the attributes of the specified file as a DWORD without opening a file handle
-        ///
-        /// @return    The attributes.
-        ///
-        /// @throw    Win32Exception on error
+        /// <summary>Gets the attributes of the specified file as a DWORD without opening a file handle</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>The attributes.</returns>
+        /// <exception cref="Win32Exception" />
         static DWORD GetAttributes(std::wstring const& filename);
 
-        /// @brief    Gets the extended attributes of the specified file without opening a file handle
-        ///
-        /// @return    The extended attributes.
-        ///
-        /// @throw    Win32Exception on error
+        /// <summary>Gets the extended attributes of the specified file without opening a file handle</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>The extended attributes.</returns>
+        /// <exception cref="Win32Exception" />
         static WIN32_FILE_ATTRIBUTE_DATA GetExtendedAttributes(std::wstring const& filename);
 
-        /// @brief    Deletes the given file.
-        ///
-        /// @param    filename    Filename of the file.
-        /// 
-        /// @throw    Win32Exception on error
+        /// <summary>Deletes the given file.</summary>
+        /// <param name="filename">Filename of the file.</param>
         static void Delete(std::wstring const& filename);
 
-        /// @brief    Determines if the given file exists
-        ///
-        /// @param    filename    Filename of the file.
-        ///
-        /// @return    true if the file exists
+        /// <summary>Determines if the file exists.</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>true if the file appears to exist; otherwise, false.</returns>
         static bool Exists(std::wstring const& filename);
 
-        /// @brief    Query if a path is a directory.
-        ///
-        /// @param    filename    Path of the file.
-        ///
-        /// @return    true if the path is directory, false if not.
+        /// <summary>Determines if the given file is a directory without opening a file handle</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>true if the file is a directory; otherwise, false.</returns>
         static bool IsDirectory(std::wstring const& filename);
 
-        /// @brief  Query if a path is a file. (That is, exists, and is not a directory)
-        ///
-        /// @param  filename    Path of the file to check.
-        ///
-        /// @remarks Equivalent to Exists() && !IsDirectory()
-        ///
-        /// @return true if the path exists and is a file, false otherwise.
+        /// <summary>Determines if the given file is exclusively a file -- that is, it is a file, not a directory, and that it exists.</summary>
+        /// <param name="fileName">Filename of the file.</param>
+        /// <returns>true the file name is an exclusive file; otherwise, false.</returns>
         static bool IsExclusiveFile(std::wstring const& fileName);
 
-        /// @brief    Query if filename is an executable.
-        ///
-        /// @param    filename    Filename of the file.
-        ///
-        /// @return    true if it is an executable, false if not.
+        /// <summary>Queries is executable.</summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <returns>true if executable; otherwise, false.</returns>
         static bool IsExecutable(std::wstring const& filename);
 
-        /// @brief    Gets the company of the file
-        ///
-        /// @param    target    Target file
-        ///
-        /// @return    The company.
-        /// 
-        /// @throw    Win32Exception on error
+        /// <summary>Gets the company of the given file.</summary>
+        /// <param name="target">File name of the file to check.</param>
+        /// <returns>The company.</returns>
         static std::wstring GetCompany(std::wstring const& target);
     };
 
-    /// Find files record.
+    /// <summary>Find files record.</summary>
     class FindFilesRecord
     {
         std::wstring cFileName;
@@ -171,65 +146,65 @@ namespace Instalog { namespace SystemFacades {
         std::uint64_t nFileSize;
         DWORD dwFileAttributes;
     public:
-        /// Initializes a new instance of the FindFilesRecord class.
-        /// @param prefix    The prefix path.
-        /// @param winSource The windows data record source.
+        /// <summary>Initializes a new instalce of the <c>FindFilesRecord</c> class.</summary>
+        /// <param name="prefix">The prefix path.</param>
+        /// <param name="winSource">The windows data record source.</param>
         FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource);
 
-        /// Initializes a new instance of the File class.
-        /// @param other The copied record.
+        /// <summary>Copy constructor.</summary>
+        /// <param name="other">The object to copy.</param>
         FindFilesRecord(FindFilesRecord const& other);
 
-        /// Initializes a moved instance of the File class.
-        /// @param other The moved record.
+        /// <summary>Move constructor.</summary>
+        /// <param name="other">[in,out] The other.</param>
         FindFilesRecord(FindFilesRecord&& other) throw();
 
-        /// Assignment operator.
-        /// @param other The copied item.
-        /// @return A shallow copy of this object.
+        /// <summary>Assignment operator.</summary>
+        /// <param name="other">The other.</param>
+        /// <returns>*this.</returns>
         FindFilesRecord& operator=(FindFilesRecord other);
 
-        /// Gets file name.
-        /// @return The file name.
+        /// <summary>Gets file name.</summary>
+        /// <returns>The file name.</returns>
         std::wstring const& GetFileName() const throw();
 
-        /// Gets creation time.
-        /// @return The creation time.
+        /// <summary>Gets creation time.</summary>
+        /// <returns>The creation time.</returns>
         std::uint64_t GetCreationTime() const throw();
 
-        /// Gets the last access time.
-        /// @return The last access time.
+        /// <summary>Gets the last access time.</summary>
+        /// <returns>The last access time.</returns>
         std::uint64_t GetLastAccessTime() const throw();
 
-        /// Gets the last write time.
-        /// @return The last write time.
+        /// <summary>Gets the last write time.</summary>
+        /// <returns>The last write time.</returns>
         std::uint64_t GetLastWriteTime() const throw();
 
-        /// Gets the size.
-        /// @return The size.
+        /// <summary>Gets the size.</summary>
+        /// <returns>The size.</returns>
         std::uint64_t GetSize() const throw();
 
-        /// Gets the attributes.
-        /// @return The attributes.
+        /// <summary>Gets the attributes.</summary>
+        /// <returns>The attributes.</returns>
         DWORD GetAttributes() const throw();
 
-        /// Swaps the given record.
-        /// @param [in,out] other The other record with which to swap.
+        /// <summary>Swaps this instance with another <c>FindFilesRecord</c>.</summary>
+        /// <param name="other">[in,out] The instance with which this instance is swapped.</param>
         void swap(FindFilesRecord &other) throw();
     };
 
-    /**
-     * Tests whether or not a FindFilesRecord is a directory with the name . or ...
-     */
+    /// <summary>Determines if the given <c>FindFilesRecord</c> is a "dot directory".</summary>
+    /// <param name="test">The record to test.</param>
+    /// <returns>true if dot directory, false if not.</returns>
     inline bool IsDotDirectory(FindFilesRecord const& test) throw()
     {
         auto const& str = test.GetFileName();
         return (test.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && (str == L"." || str == L"..");
     }
 
-    /// Swaps a pair of FindFilesRecords.
-    /// @param [in,out] lhs The left hand side.
-    /// @param [in,out] rhs The right hand side.
+    /// <summary>Swaps a pair of <c>FindFilesRecord</c> instances.</summary>
+    /// <param name="lhs">[in,out] The left hand side.</param>
+    /// <param name="rhs">[in,out] The right hand side.</param>
     inline void swap(FindFilesRecord &lhs, FindFilesRecord &rhs) throw()
     {
         lhs.swap(rhs);
@@ -312,5 +287,22 @@ namespace Instalog { namespace SystemFacades {
 
         /// <summary>Destructor.</summary>
         ~FindHandle() throw();
+    };
+
+    class FindFilesLocal : boost::noncopyable
+    {
+        std::wstring prefix;
+        FindHandle handle;
+        bool dotSkipping;
+    public:
+        FindFilesLocal(std::wstring const& pattern);
+        FindFilesLocal(std::wstring && pattern);
+        FindFilesLocal(std::wstring const& pattern, bool skipDotDirectories);
+        FindFilesLocal(std::wstring && pattern, bool skipDotDirectories);
+
+        void Next() throw();
+        bool HasEntry() const throw();
+
+        expected<FindFilesRecord> GetRecord();
     };
 }}

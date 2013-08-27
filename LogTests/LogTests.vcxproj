@@ -76,9 +76,6 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="AfterBuild" Condition="'$(Configuration)'!='Debug'">
-    <Exec Command="&quot;$(TargetPath)&quot;"
-          IgnoreExitCode="true"
-          IgnoreStandardErrorWarningFormat="true"
-          CustomWarningRegularExpression=": error:"/>
+    <Exec Command="&quot;$(TargetPath)&quot;" IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" CustomWarningRegularExpression=": error:" />
   </Target>
 </Project>

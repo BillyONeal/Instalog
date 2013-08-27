@@ -293,231 +293,106 @@ TEST(File, ExclusiveNoMatchDir)
     ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
 }
 
-TEST(FindFiles, NonExistentFile)
+struct FindFileFixture : public ::testing::Test
 {
-    FindFiles(L"C:\\Nonexistent");
-}
+    std::wstring rootPath;
+    
+    /*
+    \---FindFilesTests
+        +---One
+        |   \---Four
+        |       \---Five
+        +---Three
+        \---Two
+            \---Six
+    */
 
-TEST(FindFiles, NonExistentDirectory)
-{
-    FindFiles(L"C:\\Nonexistent\\*");
-}
+    std::wstring one;
+    std::wstring two;
+    std::wstring three;
+    std::wstring four;
+    std::wstring five;
+    std::wstring six;
 
-TEST(FindFiles, HostsExists)
-{
-    bool foundHosts = false;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*");
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
+    virtual void SetUp() override
     {
-        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
-        {
-            foundHosts = true;
-        }
+        using Instalog::Path::Append;
+        rootPath = GetTestPath(L"FindFileTests");
+        one = Append(rootPath, L"One");
+        two = Append(rootPath, L"Two");
+        three = Append(rootPath, L"Three");
+        four = Append(one, L"Four");
+        five = Append(four, L"Five");
+        six = Append(six, L"Six");
+
+        ::CreateDirectoryW(rootPath.c_str(), nullptr);
+        ::CreateDirectoryW(one.c_str(), nullptr);
+        ::CreateDirectoryW(two.c_str(), nullptr);
+        ::CreateDirectoryW(three.c_str(), nullptr);
+        ::CreateDirectoryW(four.c_str(), nullptr);
+        ::CreateDirectoryW(five.c_str(), nullptr);
+        ::CreateDirectoryW(six.c_str(), nullptr);
     }
 
-    ASSERT_TRUE(foundHosts);
-}
-
-TEST(FindFiles, OnlyHostsStarFollowing)
-{
-    bool foundHosts = false;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\hos*");
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
+    virtual void TearDown() override
     {
-        std::wcout << files.GetData().get().GetFileName() << std::endl;
-        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
-        {
-            foundHosts = true;
-        }
-        else
-        {
-            FAIL() << "Got an entry that wasn't hosts";
-        }
-    }
-
-    ASSERT_TRUE(foundHosts);
-}
-
-TEST(FindFiles, OnlyHostsStarPreceding)
-{
-    bool foundHosts = false;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*ts");
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
-    {
-        if (boost::iends_with(files.GetData().get().GetFileName(), L"\\hosts"))
-        {
-            foundHosts = true;
-        }
-        else
-        {
-            FAIL() << "Got an entry that wasn't hosts";
-        }
-    }
-
-    ASSERT_TRUE(foundHosts);
-}
-
-TEST(FindFiles, HostsExistsRecursive)
-{
-    bool foundHosts = false;
-    Instalog::Disable64FsRedirector disable;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true);
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
-    {
-        if (!files.GetData().is_valid())
-        {
-            continue;
-        }
-
-        auto const& record = files.GetData().get();
-        if (boost::iends_with(record.GetFileName(), L"\\etc\\hosts"))
-        {
-            foundHosts = true;
-        }
-    }
-
-    ASSERT_TRUE(foundHosts);
-}
-
-TEST(FindFiles, HostsExistsRecursiveTwoLevels)
-{
-    bool foundHosts = false;
-    Instalog::Disable64FsRedirector disable;
-    FindFiles files(L"C:\\Windows\\System32\\*", true);
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
-    {
-        if (!files.GetData().is_valid())
-        {
-            continue;
-        }
-
-        auto const& record = files.GetData().get();
-        if (boost::iends_with(record.GetFileName(), L"\\drivers\\etc\\hosts"))
-        {
-            foundHosts = true;
-        }
-
-    }
-
-    ASSERT_TRUE(foundHosts);
-}
-
-TEST(FindFiles, HostsNotExistsNotRecursive)
-{
-    bool foundHosts = false;
-    Instalog::Disable64FsRedirector disable;
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\*");
-
-    for(; foundHosts == false && files.IsValid(); files.Next())
-    {
-        if (!files.GetData().is_valid())
-        {
-            continue;
-        }
-
-        if (boost::icontains(files.GetData().get().GetFileName(), L"hosts"))
-        {
-            foundHosts = true;
-        }
-
-    }
-
-    ASSERT_FALSE(foundHosts);
-}
-
-TEST(FindFiles, NoDots)
-{
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*");
-
-    for(; files.IsValid(); files.Next())
-    {
-        if (boost::ends_with(files.GetData().get().GetFileName(), L"."))
-        {
-            FAIL() << ". or .. directory mistakenly included in enumeration";
-        }
-        std::wcout << files.GetData().get().GetFileName() << std::endl;
-    } 
-}
-
-TEST(FindFiles, NoDotsRecursive)
-{
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\*", true);
-
-    for(; files.IsValid(); files.Next())
-    {
-        if (!files.GetData().is_valid())
-        {
-            continue;
-        }
-
-        if (boost::ends_with(files.GetData().get().GetFileName(), L"."))
-        {
-            FAIL() << ". or .. directory mistakenly included in enumeration";
-        }
-    }
-}
-
-TEST(FindFiles, Dots)
-{
-    FindFiles files(L"C:\\Windows\\System32\\drivers\\etc\\*", false, false);
-
-    EXPECT_EQ(L"C:\\Windows\\System32\\drivers\\etc\\.", std::wstring(files.GetData().get().GetFileName()));
-    files.Next();
-    EXPECT_EQ(L"C:\\Windows\\System32\\drivers\\etc\\..", std::wstring(files.GetData().get().GetFileName()));
-}
-
-struct FileItDirectoryFixture : public testing::Test
-{
-    std::wstring tempPath;
-
-    virtual void SetUp()
-    {
-        tempPath = L"%TEMP%\\ThisDirectoryShouldBeEmpty";
-        Instalog::Path::ResolveFromCommandLine(tempPath);
-
-        if (::CreateDirectory(tempPath.c_str(), NULL) == false)
-        {
-            DWORD lastError = ::GetLastError();
-            if (lastError != ERROR_ALREADY_EXISTS)
-            {
-                FAIL() << "Could not create directory for FileItDirectoryFixture";
-            }
-        }
-    }
-
-    virtual void TearDown()
-    {
-        if (::RemoveDirectory(tempPath.c_str()) == false)
-        {
-            FAIL() << "Could not remove directory after FileItDirectoryFixture.  Remove this manually";
-        }
+        ::RemoveDirectoryW(six.c_str());
+        ::RemoveDirectoryW(five.c_str());
+        ::RemoveDirectoryW(four.c_str());
+        ::RemoveDirectoryW(three.c_str());
+        ::RemoveDirectoryW(two.c_str());
+        ::RemoveDirectoryW(one.c_str());
+        ::RemoveDirectoryW(rootPath.c_str());
     }
 };
 
-TEST_F(FileItDirectoryFixture, EmptyDirectory)
+TEST_F(FindFileFixture, FindHandleBasic)
 {
-    FindFiles files(std::wstring(tempPath).append(L"\\*"));
+    auto const pattern = Instalog::Path::Append(rootPath, L"*");
+    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
 
-    ASSERT_FALSE(files.IsValid());
+    wchar_t const* expectedResults[] = 
+    {
+        L".",
+        L"..",
+        L"One",
+        L"Three",
+        L"Two",
+    };
+
+    for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx, handle.Next())
+    {
+        EXPECT_TRUE(handle.HasEntry());
+        EXPECT_STREQ(expectedResults[idx], handle.cFileName);
+    }
+
+    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
+    handle.Next();
+    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_EQ(ERROR_INVALID_HANDLE, handle.LastError());
 }
 
-TEST_F(FileItDirectoryFixture, EmptyDirectoryDots)
+TEST_F(FindFileFixture, FindHandleFileNonexistent)
 {
-    std::wstring workingBuffer(tempPath);
-    workingBuffer.append(L"\\*");
-    FindFiles files(workingBuffer, false, false);
-    workingBuffer.pop_back();
-    workingBuffer.push_back(L'.');
+    auto const pattern = Instalog::Path::Append(rootPath, L"nonexistent");
+    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
+    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_EQ(ERROR_FILE_NOT_FOUND, handle.LastError());
+}
 
-    EXPECT_EQ(workingBuffer, files.GetData().get().GetFileName());
-    EXPECT_TRUE(files.IsValid());
-    files.Next();
-    workingBuffer.push_back(L'.');
-    EXPECT_EQ(workingBuffer, files.GetData().get().GetFileName());
-    EXPECT_TRUE(files.IsValid());
+TEST_F(FindFileFixture, FindHandlePathNonexistent)
+{
+    auto const pattern = Instalog::Path::Append(rootPath, L"nonexistent\\nonexistent");
+    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
+    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_EQ(ERROR_PATH_NOT_FOUND, handle.LastError());
+}
+
+TEST_F(FindFileFixture, FindHandleSingle)
+{
+    auto const pattern = Instalog::Path::Append(rootPath, L"ON*");
+    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
+    EXPECT_TRUE(handle.HasEntry());
+    EXPECT_STREQ(L"One", handle.cFileName);
 }
