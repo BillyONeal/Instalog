@@ -4,6 +4,7 @@
 
 #include "pch.hpp"
 #include "File.hpp"
+#include <algorithm>
 #include "Win32Exception.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -218,9 +219,6 @@ namespace Instalog { namespace SystemFacades {
         }
     }
 
-    /// Initializes a new instance of the FindFilesRecord class.
-    /// @param prefix    The prefix path.
-    /// @param winSource The windows data record source.
     FindFilesRecord::FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource)
         : dwFileAttributes(winSource.dwFileAttributes)
     {
@@ -232,8 +230,6 @@ namespace Instalog { namespace SystemFacades {
         nFileSize = static_cast<std::uint64_t>(winSource.nFileSizeHigh) << 32 & winSource.nFileSizeLow;
     }
 
-    /// Initializes a new instance of the File class.
-    /// @param other The copied record.
     FindFilesRecord::FindFilesRecord(FindFilesRecord const& other)
         : cFileName(other.cFileName)
         , ftCreationTime(other.ftCreationTime)
@@ -243,8 +239,6 @@ namespace Instalog { namespace SystemFacades {
         , dwFileAttributes(other.dwFileAttributes)
     { }
 
-    /// Initializes a moved instance of the File class.
-    /// @param other The moved record.
     FindFilesRecord::FindFilesRecord(FindFilesRecord&& other) throw()
         : cFileName(std::move(other.cFileName))
         , ftCreationTime(other.ftCreationTime)
@@ -254,59 +248,42 @@ namespace Instalog { namespace SystemFacades {
         , dwFileAttributes(other.dwFileAttributes)
     { }
 
-    /// Assignment operator.
-    /// @param other The copied item.
-    /// @return A shallow copy of this object.
     FindFilesRecord& FindFilesRecord::operator=(FindFilesRecord other)
     {
         other.swap(*this);
         return *this;
     }
 
-    /// Gets file name.
-    /// @return The file name.
     std::wstring const& FindFilesRecord::GetFileName() const throw()
     {
         return cFileName;
     }
 
-    /// Gets creation time.
-    /// @return The creation time.
     std::uint64_t FindFilesRecord::GetCreationTime() const throw()
     {
         return ftCreationTime;
     }
 
-    /// Gets the last access time.
-    /// @return The last access time.
     std::uint64_t FindFilesRecord::GetLastAccessTime() const throw()
     {
         return ftLastAccessTime;
     }
 
-    /// Gets the last write time.
-    /// @return The last write time.
     std::uint64_t FindFilesRecord::GetLastWriteTime() const throw()
     {
         return ftLastWriteTime;
     }
 
-    /// Gets the size.
-    /// @return The size.
     std::uint64_t FindFilesRecord::GetSize() const throw()
     {
         return nFileSize;
     }
 
-    /// Gets the attributes.
-    /// @return The attributes.
     DWORD FindFilesRecord::GetAttributes() const throw()
     {
         return dwFileAttributes;
     }
 
-    /// Swaps the given record.
-    /// @param [in,out] other The other record with which to swap.
     void FindFilesRecord::swap(FindFilesRecord &other) throw()
     {
         using std::swap;
@@ -318,186 +295,216 @@ namespace Instalog { namespace SystemFacades {
         swap(dwFileAttributes, other.dwFileAttributes);
     }
 
-    std::wstring FindFiles::GetNextSpec() const
+    /// <summary>Low level find handle.</summary>
+    /// <seealso cref="T:boost::noncopyable"/>
+    class FindHandle : private boost::noncopyable
     {
-        std::wstring result;
-        result.reserve(subPaths.top().size() + pattern.size());
-        result.append(subPaths.top());
-        result.append(pattern);
-        return std::move(result);
+        HANDLE hFind;
+    public:
+        bool IsInvalid() const throw() { return this->hFind == INVALID_HANDLE_VALUE; }
+
+        FindHandle() throw() : hFind(INVALID_HANDLE_VALUE) {}
+        FindHandle(HANDLE hInit) throw() : hFind(hInit) {}
+        FindHandle(FindHandle&& other) : hFind(other.hFind)
+        {
+            other.hFind = INVALID_HANDLE_VALUE;
+        }
+
+        FindHandle& operator=(FindHandle&& toMove)
+        {
+            static_cast<FindHandle>(std::move(toMove)).Swap(*this);
+            return *this;
+        }
+
+        void Swap(FindHandle& other) throw()
+        {
+            std::swap(this->hFind, other.hFind);
+        }
+
+        HANDLE Get() const throw() { return this->hFind; }
+
+
+        ~FindHandle() throw()
+        {
+            if (!this->IsInvalid())
+            {
+                ::FindClose(this->hFind);
+            }
+        }
+    };
+
+    /// <summary>Swaps a pair of FindHandle instances.</summary>
+    /// <param name="lhs">[in,out] The left hand side.</param>
+    /// <param name="rhs">[in,out] The right hand side.</param>
+    inline void swap(FindHandle& lhs, FindHandle& rhs) throw()
+    {
+        lhs.Swap(rhs);
     }
 
-    FindFiles::FindFiles( std::wstring const& patternSpec, bool recursive /*= false*/, bool skipDotDirectories /*= true*/ )
-        : recursive(recursive)
-        , skipDotDirectories(skipDotDirectories)
+    static inline bool IsDotDirectory(wchar_t const* toCheck)
     {
-        auto patternStart = std::find(patternSpec.crbegin(), patternSpec.crend(), L'\\');
-        auto patternBase = patternStart.base();
-        if (patternStart == patternSpec.crend())
+        if (toCheck[0] == L'.')
         {
-            pattern = patternSpec;
-            subPaths.emplace(L".\\");
+            if (toCheck[1] == L'.')
+            {
+                return toCheck[2] == L'\0';
+            }
+            else if (toCheck[1] == L'\0')
+            {
+                return true;
+            }
         }
-        else if (patternStart == patternSpec.crbegin())
+
+        return false;
+    }
+
+    void FindFiles::Enter()
+    {
+        std::size_t oldSize = this->prefix.size();
+        this->prefix.append(this->pattern);
+        FindHandle hFind(::FindFirstFileW(this->prefix.c_str(), &this->findData));
+        if (hFind.IsInvalid())
         {
-            // We didn't find a pattern, default to selecting everything.
-            pattern = L"*";
-            subPaths.emplace(patternSpec);
+            this->lastError = ::GetLastError();
         }
         else
         {
-            // We found a pattern, store it
-            subPaths.emplace(patternSpec.cbegin(), patternBase);
-            pattern.assign(patternBase, patternSpec.cend());
+            this->lastError = ERROR_SUCCESS;
         }
 
-        WIN32_FIND_DATAW dataBlock;
-        HANDLE handle = ::FindFirstFileW(GetNextSpec().c_str(), &dataBlock);
+        this->prefix.resize(oldSize);
+        this->handleStack.push_back(std::move(hFind));
+    }
 
-        if (handle == INVALID_HANDLE_VALUE)
+    void FindFiles::NextImpl()
+    {
+        if (::FindNextFileW(this->handleStack.back().Get(), &this->findData) == 0)
         {
-            data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
+            this->lastError = ::GetLastError();
         }
         else
         {
-            handles.push(handle);
-            if (skipDotDirectories && (std::wcscmp(L".", dataBlock.cFileName) == 0  || std::wcscmp(L"..", dataBlock.cFileName) == 0))
-            {
-                Next();
-            }
-            else
-            {
-                data = FindFilesRecord(subPaths.top(), dataBlock);
-            }
+            this->lastError = ERROR_SUCCESS;
         }
+    }
+
+    FindFiles::FindFiles() throw()
+        : lastError(ERROR_NO_MORE_FILES)
+        , options(FindFilesOptions::LocalSearch)
+    {
+    }
+
+    FindFiles::FindFiles(std::wstring const& pattern)
+        : options(FindFilesOptions::LocalSearch)
+    {
+        this->Construct(pattern);
+    }
+
+    FindFiles::FindFiles( std::wstring const& pattern, FindFilesOptions options )
+        : options(options)
+    {
+        this->Construct(pattern);
+    }
+
+    FindFiles::FindFiles( FindFiles&& toMove ) throw()
+        : handleStack(std::move(toMove.handleStack))
+        , prefixLengthStack(std::move(toMove.prefixLengthStack))
+        , prefix(std::move(toMove.prefix))
+        , pattern(std::move(toMove.pattern))
+        , lastError(toMove.lastError)
+        , findData(toMove.findData)
+        , options(toMove.options)
+    {
+        toMove.handleStack.clear();
+        toMove.prefixLengthStack.clear();
+        toMove.prefix.clear();
+        toMove.pattern.clear();
+        toMove.lastError = ERROR_NO_MORE_FILES;
+        toMove.findData.cFileName[0] = L'\0';
+    }
+
+    FindFiles& FindFiles::operator=( FindFiles&& toMove ) throw()
+    {
+        static_cast<FindFiles>(std::move(toMove)).Swap(*this);
+        return *this;
     }
 
     FindFiles::~FindFiles() throw()
     {
-        while (handles.empty() == false)
-        {
-            ::FindClose(handles.top());
-            handles.pop();
-        }
+        // Purposely empty.
     }
 
-    void FindFiles::Next() throw()
+    void FindFiles::Swap( FindFiles& other ) throw()
     {
-        WIN32_FIND_DATAW dataBlock;
-        if (recursive && IsValid())
-        {
-            auto const& previous = data.get();
-            if ((previous.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && !IsDotDirectory(previous))
-            {
-                assert(!subPaths.empty() && "Attempted to recurse; but no root path left.");
-                auto const& previousRoot = subPaths.top();
-                std::wstring nextRoot;
-                nextRoot.reserve(previousRoot.size() + previous.GetFileName().size() + 1);
-                nextRoot.append(previousRoot);
-
-                nextRoot.append(dataBlock.cFileName);
-                nextRoot.push_back(L'\\');
-                subPaths.push(nextRoot);
-
-                HANDLE handle = ::FindFirstFileW(GetNextSpec().c_str(), &dataBlock);
-                if (handle == INVALID_HANDLE_VALUE)
-                {
-                    data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
-                }
-                else
-                {
-                    data = FindFilesRecord(subPaths.top(), dataBlock);
-                    handles.push(handle);
-
-                    if (skipDotDirectories && IsDotDirectory(data.get()))
-                    {
-                        this->Next();
-                    }
-                    return;
-                }
-            }
-        }
-
-        // Get the next file, skip . and .. if requested
-        do 
-        {
-            if (::FindNextFileW(handles.top(), &dataBlock) == false)
-            {
-                DWORD errorStatus = ::GetLastError();
-                if (errorStatus == ERROR_NO_MORE_FILES)
-                {
-                    ::FindClose(handles.top());
-                    handles.pop();
-                    subPaths.pop();
-                    data.clear();
-                    if (IsValid())
-                    {
-                        this->Next();
-                    }
-
-                    return;
-                }
-                else
-                {
-                    data = expected<FindFilesRecord>::from_exception(Win32Exception::FromLastError());
-                }
-            }
-        } while (skipDotDirectories && (wcscmp(dataBlock.cFileName, L".") == 0 || wcscmp(dataBlock.cFileName, L"..") == 0));
-
-        data = FindFilesRecord(subPaths.top(), dataBlock);
+        using std::swap;
+        swap(this->handleStack, other.handleStack);
+        swap(this->prefixLengthStack, other.prefixLengthStack);
+        swap(this->prefix, other.prefix);
+        swap(this->pattern, other.pattern);
+        swap(this->lastError, other.lastError);
+        swap(this->findData, other.findData);
+        swap(this->options, other.options);
     }
 
-    FindHandle::FindHandle(wchar_t const* pattern)
-        : hFind(::FindFirstFileW(pattern, this))
+    bool FindFiles::Next()
     {
-        if (this->hFind == INVALID_HANDLE_VALUE)
-        {
-            this->lastError = ::GetLastError();
-        }
-        else
-        {
-            this->lastError = ERROR_SUCCESS;
-        }
+        return false;
     }
 
-    void FindHandle::Next() throw()
+    bool FindFiles::NextSuccess()
     {
-        if (::FindNextFileW(this->hFind, this) == 0)
+        bool lastNextCall;
+        do
         {
-            this->Close();
-            this->lastError = ::GetLastError();
-        }
-        else
-        {
-            this->lastError = ERROR_SUCCESS;
-        }
+            lastNextCall = this->Next();
+        } while (lastNextCall == false && this->lastError != ERROR_NO_MORE_FILES);
+        
+        return lastNextCall;
     }
 
-    bool FindHandle::HasEntry() const throw()
-    {
-        return this->lastError == ERROR_SUCCESS;
-    }
-
-    DWORD FindHandle::LastError() const throw()
+    DWORD FindFiles::LastError() const throw()
     {
         return this->lastError;
     }
 
-    FindHandle::~FindHandle() throw()
+    FindFilesRecord FindFiles::GetRecord() const
     {
-        this->Close();
+        if (this->lastError == ERROR_SUCCESS)
+        {
+            return FindFilesRecord(this->prefix, this->findData);
+        }
+        else
+        {
+            Win32Exception::Throw(this->lastError);
+        }
     }
 
-    void FindHandle::Close() throw()
+    expected<FindFilesRecord> FindFiles::TryGetRecord() const throw()
     {
-        if (this->hFind != INVALID_HANDLE_VALUE)
+        if (this->lastError == ERROR_SUCCESS)
         {
-            auto const closeResult = ::FindClose(this->hFind);
-            assert(closeResult != 0);
-            closeResult; // prevent unreferenced warnings
-            this->hFind = INVALID_HANDLE_VALUE;
-            this->lastError = ERROR_NO_MORE_FILES;
+            return FindFilesRecord(this->prefix, this->findData);
         }
+        else
+        {
+            return expected<FindFilesRecord>::from_exception(Win32Exception::FromWinError(this->lastError));
+        }
+    }
+
+    void FindFiles::Construct( std::wstring const &pattern )
+    {
+        this->findData.cFileName[0] = L'\0';
+        auto const dividerPoint = std::find(pattern.crbegin(), pattern.crend(), L'\\').base();
+        this->pattern.assign(dividerPoint, pattern.cend());
+
+        if (dividerPoint == pattern.begin())
+        {
+            // Case 1: There is no prefix, completely relative path.
+            return;
+        }
+
+        this->prefix.assign(pattern.begin(), dividerPoint);
+        this->Enter();
     }
 
 }}

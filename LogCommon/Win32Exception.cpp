@@ -10,39 +10,39 @@
 #include "Win32Exception.hpp"
 
 namespace Instalog { namespace SystemFacades {
-	std::exception_ptr Win32Exception::FromLastError() throw()
-	{
-		return FromWinError(::GetLastError());
-	}
+    std::exception_ptr Win32Exception::FromLastError() throw()
+    {
+        return FromWinError(::GetLastError());
+    }
 
-	std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) throw()
-	{
+    std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) throw()
+    {
         switch(errorCode)
         {
-		case ERROR_SUCCESS: return std::make_exception_ptr(ErrorSuccessException());
-		case ERROR_FILE_NOT_FOUND: return std::make_exception_ptr(ErrorFileNotFoundException());
-		case ERROR_PATH_NOT_FOUND: return std::make_exception_ptr(ErrorPathNotFoundException());
-		case ERROR_ACCESS_DENIED: return std::make_exception_ptr(ErrorAccessDeniedException());
-		case ERROR_ALREADY_EXISTS: return std::make_exception_ptr(ErrorAlreadyExistsException());
-		case ERROR_INVALID_PARAMETER: return std::make_exception_ptr(ErrorInvalidParameterException());
-		case ERROR_MOD_NOT_FOUND: return std::make_exception_ptr(ErrorModuleNotFoundException());
-		case ERROR_PROC_NOT_FOUND: return std::make_exception_ptr(ErrorProcedureNotFoundException());
-		default: return std::make_exception_ptr(Win32Exception(errorCode));
+        case ERROR_SUCCESS: return std::make_exception_ptr(ErrorSuccessException());
+        case ERROR_FILE_NOT_FOUND: return std::make_exception_ptr(ErrorFileNotFoundException());
+        case ERROR_PATH_NOT_FOUND: return std::make_exception_ptr(ErrorPathNotFoundException());
+        case ERROR_ACCESS_DENIED: return std::make_exception_ptr(ErrorAccessDeniedException());
+        case ERROR_ALREADY_EXISTS: return std::make_exception_ptr(ErrorAlreadyExistsException());
+        case ERROR_INVALID_PARAMETER: return std::make_exception_ptr(ErrorInvalidParameterException());
+        case ERROR_MOD_NOT_FOUND: return std::make_exception_ptr(ErrorModuleNotFoundException());
+        case ERROR_PROC_NOT_FOUND: return std::make_exception_ptr(ErrorProcedureNotFoundException());
+        default: return std::make_exception_ptr(Win32Exception(errorCode));
         }
-	}
+    }
 
-	std::exception_ptr Win32Exception::FromNtError(NTSTATUS errorCode) throw()
-	{
+    std::exception_ptr Win32Exception::FromNtError(NTSTATUS errorCode) throw()
+    {
         typedef ULONG (WINAPI *RtlNtStatusToDosErrorFunc)(
             __in  NTSTATUS Status
             );
         RtlNtStatusToDosErrorFunc conv = GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>("RtlNtStatusToDosError");
         return FromWinError(conv(errorCode));
-	}
+    }
 
     void __declspec(noreturn) Win32Exception::Throw(DWORD lastError)
     {
-		std::rethrow_exception(FromWinError(lastError));
+        std::rethrow_exception(FromWinError(lastError));
     }
 
     struct LocalFreeHelper
@@ -87,7 +87,7 @@ namespace Instalog { namespace SystemFacades {
 
     void __declspec(noreturn) Win32Exception::ThrowFromNtError( NTSTATUS errorCode )
     {
-		std::rethrow_exception(FromNtError(errorCode));
+        std::rethrow_exception(FromNtError(errorCode));
     }
 
     void ThrowIfFailed( HRESULT hRes )

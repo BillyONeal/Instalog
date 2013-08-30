@@ -704,13 +704,13 @@ namespace Instalog
             std::wstring fullDirectory(directories[i]);
             fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
-            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.NextSuccess();)
             {
-                auto const& data = files.GetData();
-                std::uint64_t createdTime = data.get().GetCreationTime();
+                auto const& data = files.GetRecord();
+                std::uint64_t createdTime = data.GetCreationTime();
                 if (createdTime >= oneMonthAgo)
                 {
-                    fileData.emplace_back(data.get());
+                    fileData.emplace_back(data);
                 }
             }
         }
@@ -754,6 +754,7 @@ namespace Instalog
     std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(std::vector<SystemFacades::FindFilesRecord> &createdLast30FileData)
     {
         using SystemFacades::FindFiles;
+        using SystemFacades::FindFilesOptions;
         using SystemFacades::File;
 
         std::vector<SystemFacades::FindFilesRecord> fileData;
@@ -778,16 +779,9 @@ namespace Instalog
             std::wstring fullDirectory(directories_list1a[i]);
             fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
-            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.NextSuccess();)
             {
-                // Discard entries that are not valid.
-                auto const& curData = files.GetData();
-                if (!curData.is_valid())
-                {
-                    continue;
-                }
-
-                auto const& curRecord = curData.get();
+                auto const& curRecord = files.GetRecord();
                 // Discard entries that do not have the proper extension
                 if (ExtensionCheck(curRecord.GetFileName(), extensions_list15, sizeof(extensions_list15) / sizeof(const wchar_t *)) == false)
                 {
@@ -821,16 +815,9 @@ namespace Instalog
             std::wstring fullDirectory(directories_list1b[i]);
             fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
-            for (FindFiles files(fullDirectory); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory); files.NextSuccess(); )
             {
-                // Discard entries that are not valid.
-                auto const& curData = files.GetData();
-                if (!curData.is_valid())
-                {
-                    continue;
-                }
-
-                auto const& curRecord = curData.get();
+                auto const& curRecord = files.GetRecord();
                 if (curRecord.GetCreationTime() >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
@@ -874,16 +861,9 @@ namespace Instalog
             fullDirectory = Path::ExpandEnvStrings(fullDirectory);
 
             // Recursive
-            for (FindFiles files(fullDirectory, true); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory, FindFilesOptions::RecursiveSearch); files.NextSuccess(); )
             {
-                // Discard entries that are not valid.
-                auto const& curData = files.GetData();
-                if (!curData.is_valid())
-                {
-                    continue;
-                }
-
-                auto const& curRecord = curData.get();
+                auto const& curRecord = files.GetRecord();
                 if (curRecord.GetCreationTime() >= threeMonthsAgo)
                 {
                     // Discard entries that do not have the proper extension
@@ -925,16 +905,9 @@ namespace Instalog
             fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
 
             // List2 is recursive
-            for (FindFiles files(fullDirectory, true); files.IsValid(); files.Next())
+            for (FindFiles files(fullDirectory, FindFilesOptions::RecursiveSearch); files.NextSuccess(); )
             {
-                // Discard entries that are not valid.
-                auto const& curData = files.GetData();
-                if (!curData.is_valid())
-                {
-                    continue;
-                }
-
-                auto const& curRecord = curData.get();
+                auto const& curRecord = files.GetRecord();
                 // Discard entries that are more than three months old
                 if (curRecord.GetCreationTime() < threeMonthsAgo)
                 {
@@ -964,16 +937,9 @@ namespace Instalog
         }
 
         std::wstring directory_list3 = Path::ExpandEnvStrings(L"%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\");
-        for (FindFiles files(directory_list3, true); files.IsValid(); files.Next())
+        for (FindFiles files(directory_list3, FindFilesOptions::RecursiveSearch); files.NextSuccess(); )
         {
-            // Discard entries that are not valid.
-            auto const& curData = files.GetData();
-            if (!curData.is_valid())
-            {
-                continue;
-            }
-
-            auto const& curRecord = curData.get();
+            auto const& curRecord = files.GetRecord();
             // Discard non-executables
             if (File::IsExecutable(curRecord.GetFileName()) == false)
             {
@@ -988,16 +954,9 @@ namespace Instalog
             L"com", L"pif", L"ren", L"vir", L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"dat", L"drv"
         };
         // List6 is recursive
-        for (FindFiles files(directory_list6); files.IsValid(); files.Next())
+        for (FindFiles files(directory_list6, FindFilesOptions::RecursiveSearch); files.NextSuccess(); )
         {
-            // Discard entries that are not valid.
-            auto const& curData = files.GetData();
-            if (!curData.is_valid())
-            {
-                continue;
-            }
-
-            auto const& curRecord = curData.get();
+            auto const& curRecord = files.GetRecord();
             // Keep only those with size between 1500 and 2000 bytes 
             // or
             // greater than 1500 bytes and executable and with list6 extensions

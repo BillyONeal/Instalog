@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <stack>
 #include <boost/noncopyable.hpp>
 #include <windows.h>
 #include "Expected.hpp"
@@ -193,15 +192,6 @@ namespace Instalog { namespace SystemFacades {
         void swap(FindFilesRecord &other) throw();
     };
 
-    /// <summary>Determines if the given <c>FindFilesRecord</c> is a "dot directory".</summary>
-    /// <param name="test">The record to test.</param>
-    /// <returns>true if dot directory, false if not.</returns>
-    inline bool IsDotDirectory(FindFilesRecord const& test) throw()
-    {
-        auto const& str = test.GetFileName();
-        return (test.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) && (str == L"." || str == L"..");
-    }
-
     /// <summary>Swaps a pair of <c>FindFilesRecord</c> instances.</summary>
     /// <param name="lhs">[in,out] The left hand side.</param>
     /// <param name="rhs">[in,out] The right hand side.</param>
@@ -210,99 +200,88 @@ namespace Instalog { namespace SystemFacades {
         lhs.swap(rhs);
     }
 
-    /// @brief    Finds files in directories.  Wrapper around FindFirstFile and FindNextFile
+    class FindHandle;
+
+    /// <summary>Options controlling a search for files.</summary>
+    enum class FindFilesOptions : unsigned char
+    {
+        LocalSearch = 0,
+        RecursiveSearch = 1,
+        IncludeDotDirectories = 2
+    };
+
     class FindFiles : boost::noncopyable
     {
-        std::stack<HANDLE, std::vector<HANDLE>> handles;
-        const bool skipDotDirectories;
-        const bool recursive;
+        std::vector<FindHandle> handleStack;
+        std::vector<std::size_t> prefixLengthStack;
+        std::wstring prefix;
         std::wstring pattern;
-        std::stack<const std::wstring> subPaths;
-
-        /// @summary    The data of the next file found.
-        expected<FindFilesRecord> data;
-
-        /**
-         * Gets the next file spec for enumerating recurisively.
-         */
-        std::wstring GetNextSpec() const;
-    public:
-        /// Gets the data record for the current index.
-        /// @return The data record for the current index.
-        expected<FindFilesRecord> const& GetData() const throw()
-        {
-            return data;
-        }
-
-        /// @brief    Constructor
-        ///
-        /// @param    pattern            A pattern specifying the files of interest. Supports everything that
-        ///                              FindFirstFile supports (check MSDN docs for this)
-        /// @param    recursive          (optional) whether to recurse deeper into directories or not
-        /// @param    skipDotDirectories (optional) if this is true, the implied directories . and .. will be skipped
-        /// 
-        /// @detail This will swallow invalid path and invalid file exceptions and instead just set
-        ///         IsValid to false.
-        FindFiles(std::wstring const& patternSpec, bool recursive = false, bool skipDotDirectories = true);
-
-        /// @brief    Destructor.
-        ~FindFiles() throw();
-
-        /// @brief    Populates data with the next file (if there is one)
-        void Next() throw();
-
-        /**
-         * Checks whether or not this instance has more entries to enumerate.
-         */
-        bool IsValid() throw()
-        {
-            return !handles.empty();
-        }
-    };
-
-    /// <summary>Low level find handle.</summary>
-    /// <seealso cref="T:boost::noncopyable"/>
-    /// <seealso cref="T:WIN32_FIND_DATAW"/>
-    class FindHandle : private boost::noncopyable, public WIN32_FIND_DATAW
-    {
-        HANDLE hFind;
         DWORD lastError;
-        void Close() throw();
+        WIN32_FIND_DATAW findData;
+        FindFilesOptions options;
+        void Enter();
+        void NextImpl();
+        void Construct( std::wstring const& pattern );
     public:
+        /// <summary>Default constructor. Operates as a successful empty file search result.</summary>
+        FindFiles() throw();
 
-        /// <summary>Constructor. Begins a <c>FindFirstFile</c> search.</summary>
-        /// <param name="pattern">Specifies the pattern applied to FindFirstFile.</param>
-        FindHandle(wchar_t const* pattern);
+        /// <summary>Constructor. Initiates a file search with the default options of nonrecursive, skipping dot directories.</summary>
+        /// <param name="pattern">Specifies the pattern for which the search is conducted.</param>
+        FindFiles(std::wstring const& pattern);
 
-        /// <summary>Advances this handle to the next <c>WIN32_FIND_DATAW</c>D instance.</summary>
-        void Next() throw();
+        /// <summary>Constructor. Initiates a file search.</summary>
+        /// <param name="pattern">Specifies the pattern for which the search is conducted.</param>
+        /// <param name="options">Options for controlling the search.</param>
+        FindFiles(std::wstring const& pattern, FindFilesOptions options);
 
-        /// <summary>Queries if this instance has valid file data.</summary>
-        /// <returns>true if there is data; otherwise, false.</returns>
-        bool HasEntry() const throw();
+        /// <summary>Move constructor.</summary>
+        /// <param name="toMove">[in,out] The instance from which move construction occurs. The move-
+        /// constructed instance is placed in the default constructed state.</param>
+        FindFiles(FindFiles&& toMove) throw();
 
-        /// <summary>Gets the last error encountered when processing files.</summary>
-        /// <returns>The last error code encountered when processing files.</returns>
-        DWORD LastError() const throw();
+        /// <summary>Move assignment operator.</summary>
+        /// <param name="toMove">[in,out] The instance from which move assignment occurs. The move-
+        /// assigned instance is placed in the default constructed state.</param>
+        /// <returns>*this.</returns>
+        FindFiles& operator=(FindFiles&& toMove) throw();
 
         /// <summary>Destructor.</summary>
-        ~FindHandle() throw();
+        ~FindFiles() throw();
+
+        /// <summary>Swaps this instance with another FindFiles instance.</summary>
+        /// <param name="other">[in,out] The other.</param>
+        void Swap(FindFiles& other) throw();
+
+        /// <summary>Advances this instance to the next record.</summary>
+        /// <returns>true if it succeeds, false if it fails.</returns>
+        bool Next();
+
+        /// <summary>Advances this instance to the next successful record.</summary>
+        /// <returns>true if it succeeds, false if it fails.</returns>
+        bool NextSuccess();
+
+        /// <summary>Gets the last error encountered in a previous call to one of the advancing
+        /// functions. Typically <c>ERROR_SUCCESS</c> when the last advance was successful, or
+        /// <c>ERROR_NO_MORE_FILES</c> at the end of a search.</summary>
+        /// <returns>The last error code encountered.</returns>
+        DWORD LastError() const throw();
+
+        /// <summary>Gets the current record, or throws a <see cref="Win32Exception" /> if no successful record is available.</summary>
+        /// <returns>The current record.</returns>
+        /// <exception cref="Win32Exception" />
+        FindFilesRecord GetRecord() const;
+
+        /// <summary>Gets the current record, or an expected containing an exception if there was no successful record.</summary>
+        /// <returns>The current record.</returns>
+        expected<FindFilesRecord> TryGetRecord() const throw();
     };
 
-    class FindFilesLocal : boost::noncopyable
+    /// <summary>Swaps a pair of FindFiles instances.</summary>
+    /// <param name="lhs">[in,out] The left hand side.</param>
+    /// <param name="rhs">[in,out] The right hand side.</param>
+    inline void swap(FindFiles& lhs, FindFiles& rhs) throw()
     {
-        std::wstring prefix;
-        FindHandle handle;
-        bool dotSkipping;
-    public:
-        FindFilesLocal(std::wstring const& pattern);
-        FindFilesLocal(std::wstring && pattern);
-        FindFilesLocal(std::wstring const& pattern, bool skipDotDirectories);
-        FindFilesLocal(std::wstring && pattern, bool skipDotDirectories);
-
-        void Next() throw();
-        bool HasEntry() const throw();
-
-        expected<FindFilesRecord> GetRecord();
-    };
+        lhs.Swap(rhs);
+    }
 }}

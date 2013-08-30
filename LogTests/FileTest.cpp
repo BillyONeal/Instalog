@@ -293,6 +293,8 @@ TEST(File, ExclusiveNoMatchDir)
     ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
 }
 
+using Instalog::Path::Append;
+
 struct FindFileFixture : public ::testing::Test
 {
     std::wstring rootPath;
@@ -316,7 +318,6 @@ struct FindFileFixture : public ::testing::Test
 
     virtual void SetUp() override
     {
-        using Instalog::Path::Append;
         rootPath = GetTestPath(L"FindFileTests");
         one = Append(rootPath, L"One");
         two = Append(rootPath, L"Two");
@@ -346,10 +347,9 @@ struct FindFileFixture : public ::testing::Test
     }
 };
 
-TEST_F(FindFileFixture, FindHandleBasic)
+TEST_F(FindFileFixture, FindFilesBasic)
 {
-    auto const pattern = Instalog::Path::Append(rootPath, L"*");
-    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
+    Instalog::SystemFacades::FindFiles handle(Append(rootPath, L"*"));
 
     wchar_t const* expectedResults[] = 
     {
@@ -360,39 +360,39 @@ TEST_F(FindFileFixture, FindHandleBasic)
         L"Two",
     };
 
-    for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx, handle.Next())
+    for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
-        EXPECT_TRUE(handle.HasEntry());
-        EXPECT_STREQ(expectedResults[idx], handle.cFileName);
+        EXPECT_TRUE(handle.Next());
+        auto const expected = Append(rootPath, expectedResults[idx]);
+        EXPECT_EQ(expected, handle.GetRecord().GetFileName());
     }
 
-    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
-    handle.Next();
-    EXPECT_FALSE(handle.HasEntry());
+    EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_INVALID_HANDLE, handle.LastError());
 }
 
-TEST_F(FindFileFixture, FindHandleFileNonexistent)
+TEST_F(FindFileFixture, FindFilesFileNonexistent)
 {
-    auto const pattern = Instalog::Path::Append(rootPath, L"nonexistent");
-    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
-    EXPECT_FALSE(handle.HasEntry());
+    Instalog::SystemFacades::FindFiles handle(Append(rootPath, L"nonexistent"));
+    EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_FILE_NOT_FOUND, handle.LastError());
 }
 
-TEST_F(FindFileFixture, FindHandlePathNonexistent)
+TEST_F(FindFileFixture, FindFilesPathNonexistent)
 {
-    auto const pattern = Instalog::Path::Append(rootPath, L"nonexistent\\nonexistent");
-    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
-    EXPECT_FALSE(handle.HasEntry());
+    auto const pattern = Append(rootPath, L"nonexistent\\nonexistent");
+    Instalog::SystemFacades::FindFiles handle(pattern);
+    EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_PATH_NOT_FOUND, handle.LastError());
 }
 
-TEST_F(FindFileFixture, FindHandleSingle)
+TEST_F(FindFileFixture, FindFilesSingle)
 {
-    auto const pattern = Instalog::Path::Append(rootPath, L"ON*");
-    Instalog::SystemFacades::FindHandle handle(pattern.c_str());
-    EXPECT_TRUE(handle.HasEntry());
-    EXPECT_STREQ(L"One", handle.cFileName);
+    auto const pattern = Append(rootPath, L"ON*");
+    Instalog::SystemFacades::FindFiles handle(pattern);
+    EXPECT_TRUE(handle.Next());
+    auto const expected = Append(rootPath, L"One");
+    EXPECT_EQ(expected, handle.GetRecord().GetFileName());
 }
