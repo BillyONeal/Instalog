@@ -358,7 +358,7 @@ namespace Instalog { namespace SystemFacades {
         return false;
     }
 
-    void FindFiles::Enter()
+    void FindFiles::WinEnter()
     {
         std::size_t oldSize = this->prefix.size();
         this->prefix.append(this->pattern);
@@ -376,7 +376,7 @@ namespace Instalog { namespace SystemFacades {
         this->handleStack.push_back(std::move(hFind));
     }
 
-    void FindFiles::NextImpl()
+    void FindFiles::WinNext()
     {
         if (::FindNextFileW(this->handleStack.back().Get(), &this->findData) == 0)
         {
@@ -446,9 +446,25 @@ namespace Instalog { namespace SystemFacades {
         swap(this->options, other.options);
     }
 
+    void FindFiles::NextImpl()
+    {
+        if (this->lastError == ERROR_SUCCESS && this->handleStack.empty())
+        {
+            this->WinEnter();
+        }
+        else
+        {
+            this->WinNext();
+        }
+    }
+
     bool FindFiles::Next()
     {
-        return false;
+        do
+        {
+            this->NextImpl();
+        } while (this->lastError == ERROR_SUCCESS && IsDotDirectory(this->findData.cFileName));
+        return this->lastError == ERROR_SUCCESS;
     }
 
     bool FindFiles::NextSuccess()
@@ -458,7 +474,7 @@ namespace Instalog { namespace SystemFacades {
         {
             lastNextCall = this->Next();
         } while (lastNextCall == false && this->lastError != ERROR_NO_MORE_FILES);
-        
+
         return lastNextCall;
     }
 
@@ -504,7 +520,7 @@ namespace Instalog { namespace SystemFacades {
         }
 
         this->prefix.assign(pattern.begin(), dividerPoint);
-        this->Enter();
+        this->WinEnter();
     }
 
 }}

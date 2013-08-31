@@ -219,7 +219,8 @@ namespace Instalog { namespace SystemFacades {
         DWORD lastError;
         WIN32_FIND_DATAW findData;
         FindFilesOptions options;
-        void Enter();
+        void WinEnter();
+        void WinNext();
         void NextImpl();
         void Construct( std::wstring const& pattern );
     public:

@@ -3,6 +3,8 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
+#include <sddl.h>
+#include <aclapi.h>
 #include "gtest/gtest.h"
 #include "../LogCommon/File.hpp"
 #include "../LogCommon/Path.hpp"
@@ -297,17 +299,23 @@ using Instalog::Path::Append;
 
 struct FindFileFixture : public ::testing::Test
 {
-    std::wstring rootPath;
-    
     /*
-    \---FindFilesTests
-        +---One
-        |   \---Four
-        |       \---Five
-        +---Three
-        \---Two
-            \---Six
+    +---FindFilesTests
+    |   +---Basic
+    |   |   +---One
+    |   |   |   \---Four
+    |   |   |       \---Five
+    |   |   +---Three
+    |   |   \---Two
+    |   |       \---Six
+    |   \---Errors
+    |       \---AccessDenied
+    |           \---ShouldNotSee
     */
+
+    std::wstring rootPath;
+    std::wstring basicRootPath;
+    std::wstring errorRootPath;
 
     std::wstring one;
     std::wstring two;
@@ -316,40 +324,122 @@ struct FindFileFixture : public ::testing::Test
     std::wstring five;
     std::wstring six;
 
+    std::wstring accessDenied;
+    std::wstring shouldNotSee;
+
     virtual void SetUp() override
     {
+        // Figure out what the paths should be.
         rootPath = GetTestPath(L"FindFileTests");
-        one = Append(rootPath, L"One");
-        two = Append(rootPath, L"Two");
-        three = Append(rootPath, L"Three");
+        basicRootPath = Append(rootPath, L"Basic");
+        errorRootPath = Append(rootPath, L"Errors");
+
+        one = Append(basicRootPath, L"One");
+        two = Append(basicRootPath, L"Two");
+        three = Append(basicRootPath, L"Three");
         four = Append(one, L"Four");
         five = Append(four, L"Five");
         six = Append(six, L"Six");
 
+        accessDenied = Append(errorRootPath, L"AccessDenied");
+        shouldNotSee = Append(accessDenied, L"ShouldNotSee");
+
+        // Create the security descriptor for the Access Denied directory
+        // Grant WRITE_DAC to everyone, and nothing else
+        // (Notably, no FILE_LIST_DIRECTORY)
+        SECURITY_DESCRIPTOR sd;
+        ::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+        unsigned char aclBuffer[1024];
+        unsigned char sidBuffer[SECURITY_MAX_SID_SIZE];
+        PACL acl = reinterpret_cast<PACL>(&aclBuffer[0]);
+        PSID sid = reinterpret_cast<PSID>(&sidBuffer[0]);
+        DWORD sidLength = SECURITY_MAX_SID_SIZE;
+        ::CreateWellKnownSid(WinWorldSid, nullptr, sid, &sidLength);
+        ::InitializeAcl(acl, 1024, ACL_REVISION);
+        ::AddAccessAllowedAceEx(
+            acl,
+            ACL_REVISION,
+            OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE,
+            WRITE_DAC | FILE_ADD_SUBDIRECTORY,
+            sid
+            );
+
+        ::SetSecurityDescriptorDacl(&sd, TRUE, acl, FALSE);
+        ::SetSecurityDescriptorControl(&sd, SE_DACL_PROTECTED, SE_DACL_PROTECTED);
+
+        SECURITY_ATTRIBUTES sa = {};
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = &sd;
+
         ::CreateDirectoryW(rootPath.c_str(), nullptr);
+        ::CreateDirectoryW(basicRootPath.c_str(), nullptr);
+        ::CreateDirectoryW(errorRootPath.c_str(), nullptr);
+
         ::CreateDirectoryW(one.c_str(), nullptr);
         ::CreateDirectoryW(two.c_str(), nullptr);
         ::CreateDirectoryW(three.c_str(), nullptr);
         ::CreateDirectoryW(four.c_str(), nullptr);
         ::CreateDirectoryW(five.c_str(), nullptr);
         ::CreateDirectoryW(six.c_str(), nullptr);
+
+        ::CreateDirectoryW(accessDenied.c_str(), &sa);
+        ::CreateDirectoryW(shouldNotSee.c_str(), nullptr);
     }
 
     virtual void TearDown() override
     {
+        SECURITY_DESCRIPTOR sd;
+        ::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+        unsigned char aclBuffer[1024];
+        unsigned char sidBuffer[SECURITY_MAX_SID_SIZE];
+        PACL acl = reinterpret_cast<PACL>(&aclBuffer[0]);
+        PSID sid = reinterpret_cast<PSID>(&sidBuffer[0]);
+        DWORD sidLength = SECURITY_MAX_SID_SIZE;
+        ::CreateWellKnownSid(WinWorldSid, nullptr, sid, &sidLength);
+        ::InitializeAcl(acl, 1024, ACL_REVISION);
+        ::AddAccessAllowedAce(acl, ACL_REVISION, FILE_ALL_ACCESS, sid);
+        ::SetSecurityDescriptorDacl(&sd, TRUE, acl, FALSE);
+        ::SetSecurityDescriptorControl(&sd, SE_DACL_PROTECTED, SE_DACL_PROTECTED);
+
+        ::SetNamedSecurityInfoW(
+            &accessDenied[0],
+            SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION,
+            nullptr,
+            nullptr,
+            acl,
+            nullptr
+            );
+
+        ::SetNamedSecurityInfoW(
+            &shouldNotSee[0],
+            SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION,
+            nullptr,
+            nullptr,
+            acl,
+            nullptr
+            );
+
+        ::RemoveDirectoryW(shouldNotSee.c_str());
+        ::RemoveDirectoryW(accessDenied.c_str());
+
         ::RemoveDirectoryW(six.c_str());
         ::RemoveDirectoryW(five.c_str());
         ::RemoveDirectoryW(four.c_str());
         ::RemoveDirectoryW(three.c_str());
         ::RemoveDirectoryW(two.c_str());
         ::RemoveDirectoryW(one.c_str());
+
+        ::RemoveDirectoryW(errorRootPath.c_str());
+        ::RemoveDirectoryW(basicRootPath.c_str());
         ::RemoveDirectoryW(rootPath.c_str());
     }
 };
 
 TEST_F(FindFileFixture, FindFilesBasic)
 {
-    Instalog::SystemFacades::FindFiles handle(Append(rootPath, L"*"));
+    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, L"*"));
 
     wchar_t const* expectedResults[] = 
     {
@@ -363,7 +453,7 @@ TEST_F(FindFileFixture, FindFilesBasic)
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
         EXPECT_TRUE(handle.Next());
-        auto const expected = Append(rootPath, expectedResults[idx]);
+        auto const expected = Append(basicRootPath, expectedResults[idx]);
         EXPECT_EQ(expected, handle.GetRecord().GetFileName());
     }
 
@@ -375,14 +465,14 @@ TEST_F(FindFileFixture, FindFilesBasic)
 
 TEST_F(FindFileFixture, FindFilesFileNonexistent)
 {
-    Instalog::SystemFacades::FindFiles handle(Append(rootPath, L"nonexistent"));
+    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, L"nonexistent"));
     EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_FILE_NOT_FOUND, handle.LastError());
 }
 
 TEST_F(FindFileFixture, FindFilesPathNonexistent)
 {
-    auto const pattern = Append(rootPath, L"nonexistent\\nonexistent");
+    auto const pattern = Append(basicRootPath, L"nonexistent\\nonexistent");
     Instalog::SystemFacades::FindFiles handle(pattern);
     EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_PATH_NOT_FOUND, handle.LastError());
@@ -390,7 +480,7 @@ TEST_F(FindFileFixture, FindFilesPathNonexistent)
 
 TEST_F(FindFileFixture, FindFilesSingle)
 {
-    auto const pattern = Append(rootPath, L"ON*");
+    auto const pattern = Append(basicRootPath, L"ON*");
     Instalog::SystemFacades::FindFiles handle(pattern);
     EXPECT_TRUE(handle.Next());
     auto const expected = Append(rootPath, L"One");
