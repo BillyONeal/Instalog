@@ -339,7 +339,7 @@ struct FindFileFixture : public ::testing::Test
         three = Append(basicRootPath, L"Three");
         four = Append(one, L"Four");
         five = Append(four, L"Five");
-        six = Append(six, L"Six");
+        six = Append(two, L"Six");
 
         accessDenied = Append(errorRootPath, L"AccessDenied");
         shouldNotSee = Append(accessDenied, L"ShouldNotSee");
@@ -443,6 +443,33 @@ TEST_F(FindFileFixture, FindFilesBasic)
 
     wchar_t const* expectedResults[] = 
     {
+        L"One",
+        L"Three",
+        L"Two",
+    };
+
+    for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
+    {
+        EXPECT_TRUE(handle.Next());
+        auto const expected = Append(basicRootPath, expectedResults[idx]);
+        EXPECT_EQ(expected, handle.GetRecord().GetFileName());
+    }
+
+    EXPECT_FALSE(handle.Next());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
+    EXPECT_FALSE(handle.Next());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
+}
+
+TEST_F(FindFileFixture, FindFilesWithDots)
+{
+    using Instalog::SystemFacades::FindFiles;
+    using Instalog::SystemFacades::FindFilesOptions;
+
+    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, L"*"), FindFilesOptions::IncludeDotDirectories);
+
+    wchar_t const* expectedResults[] = 
+    {
         L".",
         L"..",
         L"One",
@@ -460,7 +487,7 @@ TEST_F(FindFileFixture, FindFilesBasic)
     EXPECT_FALSE(handle.Next());
     EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
     EXPECT_FALSE(handle.Next());
-    EXPECT_EQ(ERROR_INVALID_HANDLE, handle.LastError());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
 }
 
 TEST_F(FindFileFixture, FindFilesFileNonexistent)
@@ -483,6 +510,36 @@ TEST_F(FindFileFixture, FindFilesSingle)
     auto const pattern = Append(basicRootPath, L"ON*");
     Instalog::SystemFacades::FindFiles handle(pattern);
     EXPECT_TRUE(handle.Next());
-    auto const expected = Append(rootPath, L"One");
+    auto const expected = Append(basicRootPath, L"One");
     EXPECT_EQ(expected, handle.GetRecord().GetFileName());
+}
+
+TEST_F(FindFileFixture, FindFilesRecursive)
+{
+    using Instalog::SystemFacades::FindFiles;
+    using Instalog::SystemFacades::FindFilesOptions;
+
+    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, L"*"), FindFilesOptions::RecursiveSearch);
+
+    wchar_t const* expectedResults[] = 
+    {
+        L"One",
+        L"One\\Four",
+        L"One\\Four\\Five",
+        L"Three",
+        L"Two",
+        L"Two\\Six"
+    };
+
+    for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
+    {
+        EXPECT_TRUE(handle.Next());
+        auto const expected = Append(basicRootPath, expectedResults[idx]);
+        EXPECT_EQ(expected, handle.GetRecord().GetFileName());
+    }
+
+    EXPECT_FALSE(handle.Next());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
+    EXPECT_FALSE(handle.Next());
+    EXPECT_EQ(ERROR_NO_MORE_FILES, handle.LastError());
 }

@@ -219,9 +219,16 @@ namespace Instalog { namespace SystemFacades {
         DWORD lastError;
         WIN32_FIND_DATAW findData;
         FindFilesOptions options;
+        bool IsRecursive() const throw();
+        bool IncludingDotDirectories() const throw();
+        bool CanEnter() const throw();
+        bool LastSuccess() const throw();
+        void Leave();
         void WinEnter();
         void WinNext();
         void NextImpl();
+        bool OnEndShouldLeave() throw();
+        bool OnDotKeepGoing() throw();
         void Construct( std::wstring const& pattern );
     public:
         /// <summary>Default constructor. Operates as a successful empty file search result.</summary>

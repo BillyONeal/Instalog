@@ -358,6 +358,44 @@ namespace Instalog { namespace SystemFacades {
         return false;
     }
 
+    bool FindFiles::IsRecursive() const throw()
+    {
+        auto const bit = static_cast<unsigned char>(FindFilesOptions::RecursiveSearch);
+        return (static_cast<unsigned char>(this->options) & bit) != 0;
+    }
+
+    bool FindFiles::IncludingDotDirectories() const throw()
+    {
+        auto const bit = static_cast<unsigned char>(FindFilesOptions::IncludeDotDirectories);
+        return (static_cast<unsigned char>(this->options) & bit) != 0;
+    }
+
+    bool FindFiles::CanEnter() const throw()
+    {
+        auto const attributes = this->findData.dwFileAttributes;
+        bool const isDot = IsDotDirectory(this->findData.cFileName);
+        bool const isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        bool const isReparse = (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+        return this->LastSuccess() && isDirectory && !isReparse && !isDot;
+    }
+
+    bool FindFiles::LastSuccess() const throw()
+    {
+        return this->lastError == ERROR_SUCCESS;
+    }
+
+    void FindFiles::Leave()
+    {
+        this->handleStack.pop_back();
+
+        if (!this->prefixLengthStack.empty())
+        {
+            this->prefix.resize(this->prefixLengthStack.back());
+            this->prefixLengthStack.pop_back();
+            this->WinNext();
+        }
+    }
+
     void FindFiles::WinEnter()
     {
         std::size_t oldSize = this->prefix.size();
@@ -448,11 +486,29 @@ namespace Instalog { namespace SystemFacades {
 
     void FindFiles::NextImpl()
     {
-        if (this->lastError == ERROR_SUCCESS && this->handleStack.empty())
+        bool const noHandles = this->handleStack.empty();
+        if (this->LastSuccess() && noHandles)
         {
+            // This is the first call to NextImpl, so make the first entrance.
             this->WinEnter();
+            return;
         }
-        else
+
+        if (this->IsRecursive() && this->CanEnter())
+        {
+            // We are doing a recursive search and can enter a directory; do that.
+            this->prefixLengthStack.push_back(this->prefix.size());
+            this->prefix.append(this->findData.cFileName);
+            this->prefix.push_back(L'\\');
+            this->WinEnter();
+            return;
+        }
+
+        if (this->OnEndShouldLeave())
+        {
+            this->Leave();
+        }
+        else if (!noHandles)
         {
             this->WinNext();
         }
@@ -463,8 +519,8 @@ namespace Instalog { namespace SystemFacades {
         do
         {
             this->NextImpl();
-        } while (this->lastError == ERROR_SUCCESS && IsDotDirectory(this->findData.cFileName));
-        return this->lastError == ERROR_SUCCESS;
+        } while (this->OnDotKeepGoing() || this->OnEndShouldLeave());
+        return this->LastSuccess();
     }
 
     bool FindFiles::NextSuccess()
@@ -515,12 +571,22 @@ namespace Instalog { namespace SystemFacades {
 
         if (dividerPoint == pattern.begin())
         {
-            // Case 1: There is no prefix, completely relative path.
+            // There is no prefix, completely relative path.
             return;
         }
 
         this->prefix.assign(pattern.begin(), dividerPoint);
-        this->WinEnter();
+        this->lastError = ERROR_SUCCESS;
+    }
+
+    bool FindFiles::OnDotKeepGoing() throw()
+    {
+        return this->LastSuccess() && (!this->IncludingDotDirectories() && IsDotDirectory(this->findData.cFileName));
+    }
+
+    bool FindFiles::OnEndShouldLeave() throw()
+    {
+        return this->lastError == ERROR_NO_MORE_FILES && !this->handleStack.empty();
     }
 
 }}
