@@ -13,3 +13,9 @@ ipch/*
 *.user
 *.aps
 Drop
+*.synctex.gz
+*.aux
+*.out
+Docs/Instalog Specification/InstalogSpecification.pdf
+*.toc
+*.log

@@ -314,7 +314,7 @@ namespace Instalog {
             hives = hiveList.EnumerateValueNames();
         } //Block closes key
         hives.erase(std::remove_if(hives.begin(), hives.end(), [] (std::wstring const& str) -> bool {
-            return !boost::algorithm::istarts_with(str, L"\\Registry\\User\\S") || boost::algorithm::ends_with(str, L"_Classes");
+            return !boost::algorithm::istarts_with(str, L"\\Registry\\User\\") || boost::algorithm::ends_with(str, L"_Classes");
         }), hives.end());
         std::sort(hives.begin(), hives.end());
         return std::move(hives);
@@ -943,7 +943,6 @@ namespace Instalog {
         return domainName + userName;
     }
 
-    /*
     static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
     {
         std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
@@ -966,7 +965,6 @@ namespace Instalog {
             output << L" (" << responseIpAddress << L")\n";
         }
     }
-    */
 
     void PseudoHjt::Execute(
         std::wostream& output,
@@ -980,7 +978,7 @@ namespace Instalog {
         //SpoofedDnsCheck(output, L"google.com", L".1e100.net");
         //SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
         //SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
-        std::for_each(hives.cbegin(), hives.cend(), [&output](std::wstring const& hive) {
+        for (std::wstring const& hive : hives) {
             std::wstring head(L"User Settings");
             Header(head);
             std::wstring sid(std::find(hive.crbegin(), hive.crend(), L'\\').base(), hive.end());
@@ -988,7 +986,7 @@ namespace Instalog {
             GeneralEscape(user, L'#', L']');
             output << L'\n' << head << L"\n\nIdentity: [" << user << L"] " << sid << L'\n';
             CommonHjt(output, hive);
-        });
+        };
 
         //SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
         //SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
