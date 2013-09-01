@@ -767,6 +767,8 @@ namespace Instalog {
                     file = std::move(fileTry);
                 }
             }
+
+            name.erase(name.cbegin(), std::find(name.crbegin(), name.crend(), L'\\').base());
             GeneralEscape(name, L'#', L'-');
             GeneralEscape(clsid, L'#', L']');
             out << L"IeCom" << suffix << L": [" << name << L"->" << clsid << L"] ";
