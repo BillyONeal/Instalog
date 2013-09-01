@@ -392,7 +392,6 @@ namespace Instalog { namespace SystemFacades {
         {
             this->prefix.resize(this->prefixLengthStack.back());
             this->prefixLengthStack.pop_back();
-            this->WinNext();
         }
     }
 
@@ -401,17 +400,19 @@ namespace Instalog { namespace SystemFacades {
         std::size_t oldSize = this->prefix.size();
         this->prefix.append(this->pattern);
         FindHandle hFind(::FindFirstFileW(this->prefix.c_str(), &this->findData));
-        if (hFind.IsInvalid())
+        this->handleStack.push_back(std::move(hFind));
+        this->prefix.resize(oldSize);
+
+        if (this->handleStack.back().IsInvalid())
         {
             this->lastError = ::GetLastError();
+            this->Leave();
         }
         else
         {
             this->lastError = ERROR_SUCCESS;
         }
 
-        this->prefix.resize(oldSize);
-        this->handleStack.push_back(std::move(hFind));
     }
 
     void FindFiles::WinNext()
@@ -493,7 +494,7 @@ namespace Instalog { namespace SystemFacades {
             this->WinEnter();
             return;
         }
-
+        
         if (this->IsRecursive() && this->CanEnter())
         {
             // We are doing a recursive search and can enter a directory; do that.
@@ -507,8 +508,16 @@ namespace Instalog { namespace SystemFacades {
         if (this->OnEndShouldLeave())
         {
             this->Leave();
+            if (!this->handleStack.empty())
+            {
+                this->WinNext();
+            }
         }
-        else if (!noHandles)
+        else if (noHandles)
+        {
+            this->lastError = ERROR_NO_MORE_FILES;
+        }
+        else
         {
             this->WinNext();
         }
@@ -520,18 +529,17 @@ namespace Instalog { namespace SystemFacades {
         {
             this->NextImpl();
         } while (this->OnDotKeepGoing() || this->OnEndShouldLeave());
-        return this->LastSuccess();
+        return this->lastError != ERROR_NO_MORE_FILES;
     }
 
     bool FindFiles::NextSuccess()
     {
-        bool lastNextCall;
         do
         {
-            lastNextCall = this->Next();
-        } while (lastNextCall == false && this->lastError != ERROR_NO_MORE_FILES);
+            this->Next();
+        } while (!(this->LastSuccess() || this->lastError == ERROR_NO_MORE_FILES));
 
-        return lastNextCall;
+        return this->LastSuccess();
     }
 
     DWORD FindFiles::LastError() const throw()
@@ -541,25 +549,33 @@ namespace Instalog { namespace SystemFacades {
 
     FindFilesRecord FindFiles::GetRecord() const
     {
-        if (this->lastError == ERROR_SUCCESS)
+        if (this->lastError != ERROR_SUCCESS)
         {
-            return FindFilesRecord(this->prefix, this->findData);
+            Win32Exception::Throw(this->lastError);
+        }
+        else if (this->handleStack.empty())
+        {
+            throw std::logic_error("Tried to get a record before Next was called.");
         }
         else
         {
-            Win32Exception::Throw(this->lastError);
+            return FindFilesRecord(this->prefix, this->findData);
         }
     }
 
     expected<FindFilesRecord> FindFiles::TryGetRecord() const throw()
     {
-        if (this->lastError == ERROR_SUCCESS)
+        if (this->lastError != ERROR_SUCCESS)
         {
-            return FindFilesRecord(this->prefix, this->findData);
+            return expected<FindFilesRecord>::from_exception(Win32Exception::FromWinError(this->lastError));
+        }
+        else if (this->handleStack.empty())
+        {
+            return expected<FindFilesRecord>::from_exception(std::logic_error("Tried to get a record before Next was called."));
         }
         else
         {
-            return expected<FindFilesRecord>::from_exception(Win32Exception::FromWinError(this->lastError));
+            return FindFilesRecord(this->prefix, this->findData);
         }
     }
 
@@ -581,7 +597,11 @@ namespace Instalog { namespace SystemFacades {
 
     bool FindFiles::OnDotKeepGoing() throw()
     {
-        return this->LastSuccess() && (!this->IncludingDotDirectories() && IsDotDirectory(this->findData.cFileName));
+        return
+            this->LastSuccess() &&
+            IsDotDirectory(this->findData.cFileName) &&
+            (!this->IncludingDotDirectories() || this->handleStack.size() != 1)
+            ;
     }
 
     bool FindFiles::OnEndShouldLeave() throw()

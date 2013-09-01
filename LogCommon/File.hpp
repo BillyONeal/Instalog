@@ -210,6 +210,17 @@ namespace Instalog { namespace SystemFacades {
         IncludeDotDirectories = 2
     };
 
+    /// <summary>Bitwise 'or' operator.</summary>
+    /// <param name="lhs">A bitfield to process.</param>
+    /// <param name="rhs">One or more bits to OR into the bitfield.</param>
+    /// <returns>The result of the operation.</returns>
+    inline FindFilesOptions operator|(FindFilesOptions lhs, FindFilesOptions rhs)
+    {
+        return static_cast<FindFilesOptions>(
+            static_cast<unsigned char>(lhs) | static_cast<unsigned char>(rhs)
+            );
+    }
+
     class FindFiles : boost::noncopyable
     {
         std::vector<FindHandle> handleStack;
