@@ -224,7 +224,6 @@ namespace Instalog { namespace SystemFacades {
     class FindFiles : boost::noncopyable
     {
         std::vector<FindHandle> handleStack;
-        std::vector<std::size_t> prefixLengthStack;
         std::wstring prefix;
         std::wstring pattern;
         DWORD lastError;

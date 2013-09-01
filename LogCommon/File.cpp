@@ -300,12 +300,12 @@ namespace Instalog { namespace SystemFacades {
     class FindHandle : private boost::noncopyable
     {
         HANDLE hFind;
+        std::size_t index;
     public:
         bool IsInvalid() const throw() { return this->hFind == INVALID_HANDLE_VALUE; }
 
-        FindHandle() throw() : hFind(INVALID_HANDLE_VALUE) {}
-        FindHandle(HANDLE hInit) throw() : hFind(hInit) {}
-        FindHandle(FindHandle&& other) : hFind(other.hFind)
+        FindHandle(std::size_t index, HANDLE hInit) throw() : hFind(hInit), index(index) {}
+        FindHandle(FindHandle&& other) : hFind(other.hFind), index(other.index)
         {
             other.hFind = INVALID_HANDLE_VALUE;
         }
@@ -319,10 +319,11 @@ namespace Instalog { namespace SystemFacades {
         void Swap(FindHandle& other) throw()
         {
             std::swap(this->hFind, other.hFind);
+            std::swap(this->index, other.index);
         }
 
         HANDLE Get() const throw() { return this->hFind; }
-
+        std::size_t Index() const throw() { return this->index; }
 
         ~FindHandle() throw()
         {
@@ -386,22 +387,24 @@ namespace Instalog { namespace SystemFacades {
 
     void FindFiles::Leave()
     {
+        this->prefix.resize(this->handleStack.back().Index());
         this->handleStack.pop_back();
-
-        if (!this->prefixLengthStack.empty())
-        {
-            this->prefix.resize(this->prefixLengthStack.back());
-            this->prefixLengthStack.pop_back();
-        }
     }
 
     void FindFiles::WinEnter()
     {
-        std::size_t oldSize = this->prefix.size();
+        std::size_t previousSize = this->prefix.size();
+        this->prefix.append(this->findData.cFileName);
+        if (!this->prefix.empty())
+        {
+            this->prefix.push_back(L'\\');
+        }
+
+        std::size_t noPatternSize = this->prefix.size();
         this->prefix.append(this->pattern);
-        FindHandle hFind(::FindFirstFileW(this->prefix.c_str(), &this->findData));
+        FindHandle hFind(previousSize, ::FindFirstFileW(this->prefix.c_str(), &this->findData));
         this->handleStack.push_back(std::move(hFind));
-        this->prefix.resize(oldSize);
+        this->prefix.resize(noPatternSize);
 
         if (this->handleStack.back().IsInvalid())
         {
@@ -447,7 +450,6 @@ namespace Instalog { namespace SystemFacades {
 
     FindFiles::FindFiles( FindFiles&& toMove ) throw()
         : handleStack(std::move(toMove.handleStack))
-        , prefixLengthStack(std::move(toMove.prefixLengthStack))
         , prefix(std::move(toMove.prefix))
         , pattern(std::move(toMove.pattern))
         , lastError(toMove.lastError)
@@ -455,7 +457,6 @@ namespace Instalog { namespace SystemFacades {
         , options(toMove.options)
     {
         toMove.handleStack.clear();
-        toMove.prefixLengthStack.clear();
         toMove.prefix.clear();
         toMove.pattern.clear();
         toMove.lastError = ERROR_NO_MORE_FILES;
@@ -477,7 +478,6 @@ namespace Instalog { namespace SystemFacades {
     {
         using std::swap;
         swap(this->handleStack, other.handleStack);
-        swap(this->prefixLengthStack, other.prefixLengthStack);
         swap(this->prefix, other.prefix);
         swap(this->pattern, other.pattern);
         swap(this->lastError, other.lastError);
@@ -498,9 +498,6 @@ namespace Instalog { namespace SystemFacades {
         if (this->IsRecursive() && this->CanEnter())
         {
             // We are doing a recursive search and can enter a directory; do that.
-            this->prefixLengthStack.push_back(this->prefix.size());
-            this->prefix.append(this->findData.cFileName);
-            this->prefix.push_back(L'\\');
             this->WinEnter();
             return;
         }
@@ -582,7 +579,7 @@ namespace Instalog { namespace SystemFacades {
     void FindFiles::Construct( std::wstring const &pattern )
     {
         this->findData.cFileName[0] = L'\0';
-        auto const dividerPoint = std::find(pattern.crbegin(), pattern.crend(), L'\\').base();
+        auto dividerPoint = std::find(pattern.crbegin(), pattern.crend(), L'\\').base();
         this->pattern.assign(dividerPoint, pattern.cend());
 
         if (dividerPoint == pattern.begin())
@@ -591,7 +588,7 @@ namespace Instalog { namespace SystemFacades {
             return;
         }
 
-        this->prefix.assign(pattern.begin(), dividerPoint);
+        this->prefix.assign(pattern.begin(), --dividerPoint);
         this->lastError = ERROR_SUCCESS;
     }
 
