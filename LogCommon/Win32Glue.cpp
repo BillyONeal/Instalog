@@ -216,6 +216,8 @@ namespace Instalog {
         BOOL isWow64Result = FALSE;
         isWow64(::GetCurrentProcess(), &isWow64Result);
         return isWow64Result == TRUE;
+#else
+        return false;
 #endif
     }
 }
