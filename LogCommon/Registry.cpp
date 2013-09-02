@@ -30,9 +30,15 @@ namespace Instalog { namespace SystemFacades {
 
     RegistryKey::~RegistryKey()
     {
+        this->Close();
+    }
+
+    void RegistryKey::Close()
+    {
         if (hKey_ != INVALID_HANDLE_VALUE)
         {
             PNtClose(hKey_);
+            hKey_ = INVALID_HANDLE_VALUE;
         }
     }
 
@@ -273,7 +279,7 @@ namespace Instalog { namespace SystemFacades {
             [this, samDesired] (std::wstring const& name) -> RegistryKey {
             return Open(*this, name, samDesired);
         });
-        return std::move(result);
+        return result;
     }
 
     bool RegistryKey::Valid() const
@@ -350,7 +356,7 @@ namespace Instalog { namespace SystemFacades {
         {
             Win32Exception::ThrowFromNtError(errorCheck);
         }
-        return std::move(result);
+        return result;
     }
 
     void RegistryKey::Check() const

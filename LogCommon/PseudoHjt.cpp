@@ -134,15 +134,7 @@ namespace Instalog {
         RegistryKey key(RegistryKey::Open(root, KEY_QUERY_VALUE));
         if (key.Invalid())
         {
-            DWORD err = ::GetLastError();
-            if (err == STATUS_OBJECT_NAME_NOT_FOUND)
-            {
-                return;
-            }
-            else
-            {
-                Win32Exception::ThrowFromNtError(::GetLastError());
-            }
+            return;
         }
         auto values = key.EnumerateValues();
         std::vector<std::pair<std::wstring, std::wstring>> pods;
@@ -789,6 +781,116 @@ namespace Instalog {
         }
     }
 
+    static void TrustedZoneRecursive(std::wostream& out, std::wstring const& rootKey, std::wstring const& domainToEnter, std::wstring const& prefix)
+    {
+        RegistryKey currentDomainKey = RegistryKey::Open(rootKey, KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE);
+
+        for (auto const& value : currentDomainKey.EnumerateValues())
+        {
+            if (value.GetType() != REG_DWORD)
+            {
+                continue;
+            }
+
+            DWORD domainClass = value.GetDWordStrict();
+            if (domainClass != 2) // Trusted zone marker
+            {
+                continue;
+            }
+
+            std::wstring outputUrl(value.GetName());
+            outputUrl += L"://";
+            outputUrl += domainToEnter;
+            HttpEscape(outputUrl);
+
+            out << prefix << L": " << outputUrl << L"\n";
+        }
+
+        auto const& subKeys = currentDomainKey.EnumerateSubKeyNames();
+        currentDomainKey.Close();
+
+        for (auto const& key : subKeys)
+        {
+            std::wstring subDomain(key);
+            subDomain += L'.';
+            subDomain += domainToEnter;
+
+            TrustedZoneRecursive(out, rootKey + L"\\" + key, subDomain, prefix);
+        }
+    }
+
+    static void TrustedZone(std::wostream& out, std::wstring const& keyPath, std::wstring const& prefix)
+    {
+        RegistryKey domainsRoot = RegistryKey::Open(keyPath, KEY_ENUMERATE_SUB_KEYS);
+        if (domainsRoot.Invalid())
+        {
+            return;
+        }
+
+        auto rootDomains = domainsRoot.EnumerateSubKeyNames();
+        for (auto const& rootDomain : rootDomains)
+        {
+            TrustedZoneRecursive(out, keyPath + L"\\" + rootDomain, rootDomain, prefix);
+        }
+    }
+
+    static void TrustedDefaults(std::wostream& out, std::wstring const& keyPath, std::wstring const& prefix)
+    {
+        RegistryKey targetKey(RegistryKey::Open(keyPath, KEY_QUERY_VALUE));
+        if (targetKey.Invalid())
+        {
+            return;
+        }
+
+        for (auto const& value : targetKey.EnumerateValues())
+        {
+            if (value.GetType() != REG_DWORD)
+            {
+                continue;
+            }
+
+            if (value.GetDWordStrict() != 2)
+            {
+                continue;
+            }
+
+            out << prefix << L": " << value.GetName() << L"\n";
+        }
+    }
+
+    static void TrustedIpRange(std::wostream& out, std::wstring const& keyPath, std::wstring const& prefix)
+    {
+        RegistryKey targetKey(RegistryKey::Open(keyPath, KEY_ENUMERATE_SUB_KEYS));
+        if (targetKey.Invalid())
+        {
+            return;
+        }
+
+        for (auto const& subKey : targetKey.EnumerateSubKeyNames())
+        {
+            RegistryKey subHKey(RegistryKey::Open(keyPath + L"\\" + subKey, KEY_QUERY_VALUE));
+            std::wstring ipRange = subHKey[L":Range"].GetStringStrict();
+            GeneralEscape(ipRange);
+
+            for (auto const& value : subHKey.EnumerateValues())
+            {
+                if (value.GetType() != REG_DWORD)
+                {
+                    continue;
+                }
+
+                std::wstring name(subKey);
+                GeneralEscape(name, L'#', L']');
+
+                std::wstring range(value.GetName());
+                range += L"://";
+                range += ipRange;
+                HttpEscape(range);
+                out << prefix << L": [" << name << L"] " << range << L"\n";
+            }
+        }
+    }
+
     /**
      * Explorer extensions output.
      *
@@ -821,6 +923,22 @@ namespace Instalog {
             auto subkeys = key.EnumerateSubKeys(KEY_QUERY_VALUE);
             std::for_each(subkeys.cbegin(), subkeys.cend(), keyProcessor);
         }
+#endif
+        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone");
+#ifdef _M_X64
+        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone32");
+#endif
+        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone");
+#ifdef _M_X64
+        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone32");
+#endif
+        TrustedDefaults(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol");
+#ifdef _M_X64
+        TrustedDefaults(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol32");
+#endif
+        TrustedIpRange(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range");
+#ifdef _M_X64
+        TrustedIpRange(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range32");
 #endif
     }
 

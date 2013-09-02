@@ -305,6 +305,9 @@ namespace Instalog { namespace SystemFacades {
         /// @brief    Destructor. Closes the registry key handle contained here.
         ~RegistryKey();
 
+        /// @brief    Closes the registry key handle contained here.
+        void Close();
+
         /// @brief    Gets the raw kernel handle to the registry key.
         ///
         /// @return    The raw key kernel handle.
