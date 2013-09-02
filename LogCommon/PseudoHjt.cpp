@@ -5,6 +5,9 @@
 #include "pch.hpp"
 #include <functional>
 #include <algorithm>
+#include <vector>
+#include <set>
+#include <string>
 #include <iterator>
 #include <Sddl.h>
 #include <comdef.h>
@@ -1124,6 +1127,54 @@ namespace Instalog {
             }
         }
 #endif
+        dpfRoot.Close();
+
+        RegistryKey winsockParameters(RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Winsock2\\Parameters", KEY_QUERY_VALUE));
+        std::wstring protocolCatalog(winsockParameters[L"Current_Protocol_Catalog"].GetStringStrict());
+        std::wstring namespaceCatalog(winsockParameters[L"Current_NameSpace_Catalog"].GetStringStrict());
+
+        RegistryKey protocolCatalogKey(RegistryKey::Open(winsockParameters, protocolCatalog, KEY_QUERY_VALUE));
+        DWORD catalogEntries = protocolCatalogKey[L"Num_Catalog_Entries"].GetDWord();
+        bool chainOk = true;
+        std::set<std::wstring> catalogFiles;
+        RegistryKey catalogEntriesKey(RegistryKey::Open(protocolCatalogKey, L"CatalogEntries", KEY_ENUMERATE_SUB_KEYS));
+        auto catalogEntryNames = catalogEntriesKey.EnumerateSubKeyNames();
+        std::sort(catalogEntryNames.begin(), catalogEntryNames.end());
+        if (catalogEntries != catalogEntryNames.size())
+        {
+            chainOk = false;
+        }
+
+        for (std::size_t idx = 0; idx < catalogEntryNames.size(); ++idx)
+        {
+            std::wstring const& actualName = catalogEntryNames[idx];
+            wchar_t expectedName[9];
+            swprintf_s(expectedName, L"%08u", idx);
+            if (actualName != expectedName)
+            {
+                chainOk = false;
+            }
+
+            RegistryKey catalogEntryKey(RegistryKey::Open(catalogEntriesKey, actualName, KEY_QUERY_VALUE));
+            RegistryValue packedCatalogItem(catalogEntryKey[L"PackedCatalogItem"]);
+            auto const end = std::find(packedCatalogItem.cbegin(), packedCatalogItem.cend(), '\0');
+            catalogFiles.emplace(packedCatalogItem.cbegin(), end);
+        }
+
+        for (std::wstring catalogFile : catalogFiles)
+        {
+            GeneralEscape(catalogFile);
+            output << L"LSP: " << catalogFile << L"\n";
+        }
+
+        if (!chainOk)
+        {
+            output << L"LSP: Chain Broken\n";
+        }
+
+        RegistryKey namespaceCatalogKey(RegistryKey::Open(winsockParameters, namespaceCatalog, KEY_QUERY_VALUE));
+        winsockParameters.Close();
+
 
         for (std::wstring const& hive : hives)
         {
