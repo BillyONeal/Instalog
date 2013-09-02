@@ -146,16 +146,19 @@ namespace Instalog {
         }
         auto values = key.EnumerateValues();
         std::vector<std::pair<std::wstring, std::wstring>> pods;
-        std::for_each(values.cbegin(), values.cend(), [&](RegistryValueAndData const& val) {
-            pods.emplace_back(std::pair<std::wstring, std::wstring>(val.GetName(), val.GetString()));
-        });
+        for (RegistryValueAndData const& val : values)
+        {
+            pods.emplace_back(std::make_pair(val.GetName(), val.GetString()));
+        };
+
         std::sort(pods.begin(), pods.end());
-        std::for_each(pods.begin(), pods.end(), [&](std::pair<std::wstring, std::wstring>& current) {
+        for (auto& current : pods)
+        {
             GeneralEscape(current.first, L'#', L']');
             output << prefix << L": [" << current.first << L"] ";
             dataProcess(output, current.second);
             output << L'\n';
-        });
+        };
     }
 
 #pragma warning (push)
@@ -242,23 +245,24 @@ namespace Instalog {
         }
         auto values = key.EnumerateSubKeys(KEY_QUERY_VALUE);
         std::vector<std::pair<std::wstring, std::wstring>> pods;
-        std::for_each(values.cbegin(), values.cend(), [&](RegistryKey const& val) {
+        for (RegistryKey const& val : values) {
             try
             {
-            pods.emplace_back(std::pair<std::wstring, std::wstring>(val.GetName(), val[valueName].GetString()));
+            pods.emplace_back(val.GetName(), val[valueName].GetString());
             }
             catch (ErrorFileNotFoundException const&)
             {
                 //Expected
             }
-        });
+        };
         std::sort(pods.begin(), pods.end());
-        std::for_each(pods.begin(), pods.end(), [&](std::pair<std::wstring, std::wstring>& current) {
+        for (auto& current : pods)
+        {
             GeneralEscape(current.first, L'#', L']');
             output << prefix << L": [" << current.first << L"] ";
             dataProcess(output, current.second);
             output << L'\n';
-        });
+        };
     }
 
 #pragma warning (push)
@@ -317,7 +321,7 @@ namespace Instalog {
             return !boost::algorithm::istarts_with(str, L"\\Registry\\User\\") || boost::algorithm::ends_with(str, L"_Classes");
         }), hives.end());
         std::sort(hives.begin(), hives.end());
-        return std::move(hives);
+        return hives;
     }
 
     /**
@@ -382,18 +386,20 @@ namespace Instalog {
         auto rawValues = itemKey.EnumerateValues();
         std::vector<std::pair<std::wstring, std::wstring>> values;
         values.reserve(rawValues.size());
-        std::transform(rawValues.cbegin(), rawValues.cend(), std::back_inserter(values),
-            [source] (RegistryValueAndData const& entry) -> std::pair<std::wstring, std::wstring> {
+        for (auto const& entry : rawValues)
+        {
             if (source == VALUE)
             {
-                return std::pair<std::wstring, std::wstring>(entry.GetString(), entry.GetName());
+                values.emplace_back(entry.GetString(), entry.GetName());
             }
             else
             {
-                return std::pair<std::wstring, std::wstring>(entry.GetName(), entry.GetString());
+                values.emplace_back(entry.GetName(), entry.GetString());
             }
-        });
-        std::for_each(values.begin(), values.end(), [&](std::pair<std::wstring, std::wstring>& currentEntry) {
+        }
+
+        for (auto& currentEntry : values)
+        {
             //First try the user specific CLSID key.
             RegistryKey clsidKey(RegistryKey::Open(rootKey + clsidKey + currentEntry.first, KEY_QUERY_VALUE));
             if (clsidKey.Invalid())
@@ -432,7 +438,7 @@ namespace Instalog {
             output << prefix << L": " << currentEntry.second << L": " << currentEntry.first << L'=';
             WriteDefaultFileOutput(output, file);
             output << L'\n';
-       });
+       }
     }
 
     /**
@@ -512,8 +518,8 @@ namespace Instalog {
         auto rawValues = itemKey.EnumerateSubKeys(KEY_QUERY_VALUE);
         std::vector<std::pair<std::wstring, std::wstring>> values;
         values.reserve(rawValues.size());
-        std::transform(rawValues.cbegin(), rawValues.cend(), std::back_inserter(values),
-            [] (RegistryKey const& entry) -> std::pair<std::wstring, std::wstring> {
+        for (auto const& entry : rawValues)
+        {
             std::wstring name;
             try
             {
@@ -525,9 +531,11 @@ namespace Instalog {
             }
             std::wstring clsid(entry.GetName());
             clsid.erase(clsid.begin(), std::find(clsid.rbegin(), clsid.rend(), L'\\').base());
-            return std::pair<std::wstring, std::wstring>(std::move(clsid), std::move(name));
-        });
-        std::for_each(values.begin(), values.end(), [&](std::pair<std::wstring, std::wstring>& currentEntry) {
+            values.emplace_back(std::move(clsid), std::move(name));
+        }
+
+        for (auto& currentEntry : values)
+        {
             //First try the user specific CLSID key.
             RegistryKey clsidKey(RegistryKey::Open(rootKey + clsidKey + currentEntry.first, KEY_QUERY_VALUE));
             if (clsidKey.Invalid())
@@ -566,7 +574,7 @@ namespace Instalog {
             output << prefix << L": " << currentEntry.second << L": " << currentEntry.first << L'=';
             WriteDefaultFileOutput(output, file);
             output << L'\n';
-       });
+       }
     }
 
     /**
@@ -975,10 +983,8 @@ namespace Instalog {
         auto hives = EnumerateUserHives();
         SecurityCenterOutput(output);
         CommonHjt(output, L"\\Registry\\Machine");
-        //SpoofedDnsCheck(output, L"google.com", L".1e100.net");
-        //SpoofedDnsCheck(output, L"facebook.com", L".facebook.com");
-        //SpoofedDnsCheck(output, L"yahoo.com", L".yahoo.com");
-        for (std::wstring const& hive : hives) {
+        for (std::wstring const& hive : hives)
+        {
             std::wstring head(L"User Settings");
             Header(head);
             std::wstring sid(std::find(hive.crbegin(), hive.crend(), L'\\').base(), hive.end());
@@ -986,14 +992,7 @@ namespace Instalog {
             GeneralEscape(user, L'#', L']');
             output << L'\n' << head << L"\n\nIdentity: [" << user << L"] " << sid << L'\n';
             CommonHjt(output, hive);
-        };
-
-        //SpoofedDnsCheck(output, L"youtube.com", L".1e100.net");
-        //SpoofedDnsCheck(output, L"live.com", L"central-hotmail.us");
-        //SpoofedDnsCheck(output, L"twitter.com", L".twitter.com");
-        //SpoofedDnsCheck(output, L"wellsfargo.com", L".wellsfargo.com");
-        //SpoofedDnsCheck(output, L"citibank.com", L"citibank.com");
-        //SpoofedDnsCheck(output, L"td.com", L"td.com");
+        }
     }
 
 }
