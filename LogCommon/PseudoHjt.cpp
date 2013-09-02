@@ -45,10 +45,10 @@ namespace Instalog {
     }
 
     /**
-     * Security center output for the PseudoHJT section.
-     *
-     * @param [in,out] output The stream to receive the output.
-     */
+    * Security center output for the PseudoHJT section.
+    *
+    * @param [in,out] output The stream to receive the output.
+    */
     static void SecurityCenterOutput( std::wostream& output )
     {
         using SystemFacades::SecurityProduct;
@@ -79,12 +79,12 @@ namespace Instalog {
     }
 
     /**
-     * A processing function which writes the target string in the default escaped function,
-     * assuming that the newline is the ending delimiter.
-     *
-     * @param [in,out] out    The output stream.
-     * @param [in,out] target Target which should be written.
-     */
+    * A processing function which writes the target string in the default escaped function,
+    * assuming that the newline is the ending delimiter.
+    *
+    * @param [in,out] out    The output stream.
+    * @param [in,out] target Target which should be written.
+    */
     static void GeneralProcess(std::wostream& out, std::wstring& target)
     {
         GeneralEscape(target, L'#', L'\n');
@@ -92,22 +92,22 @@ namespace Instalog {
     }
 
     /**
-     * A processing function which writes the default file output.
-     *
-     * @param [in,out] out    The output stream.
-     * @param [in,out] target Target name of the file to print.
-     */
+    * A processing function which writes the default file output.
+    *
+    * @param [in,out] out    The output stream.
+    * @param [in,out] target Target name of the file to print.
+    */
     static void FileProcess(std::wostream& out, std::wstring& target)
     {
         WriteDefaultFileOutput(out, target);
     }
 
     /**
-     * A processing function which writes the target as a URL.
-     *
-     * @param [in,out] out    The output stream.
-     * @param [in,out] target Target to write as a URL.
-     */
+    * A processing function which writes the target as a URL.
+    *
+    * @param [in,out] out    The output stream.
+    * @param [in,out] target Target to write as a URL.
+    */
     static void HttpProcess(std::wostream& out, std::wstring& target)
     {
         HttpEscape(target, L'#', L'\n');
@@ -115,15 +115,15 @@ namespace Instalog {
     }
 
     /**
-     * Value major based enumeration; general method to enumerate a registry key, where a single
-     * log line is generated per value.
-     *
-     * @param [in,out] output The output stream.
-     * @param root            The root registry key from where the key is enumerated.
-     * @param prefix          The prefix which identifies the log line in the report.
-     * @param dataProcess     (optional) The processing function which generates the report of the
-     *                        values' data. The default writes the data as a file.
-     */
+    * Value major based enumeration; general method to enumerate a registry key, where a single
+    * log line is generated per value.
+    *
+    * @param [in,out] output The output stream.
+    * @param root            The root registry key from where the key is enumerated.
+    * @param prefix          The prefix which identifies the log line in the report.
+    * @param dataProcess     (optional) The processing function which generates the report of the
+    *                        values' data. The default writes the data as a file.
+    */
     static void ValueMajorBasedEnumeration(
         std::wostream& output,
         std::wstring const& root,
@@ -156,19 +156,19 @@ namespace Instalog {
 #pragma warning (push)
 #pragma warning (disable: 4100) //Unreferenced formal parameter. (Becomes unreferenced in 32 bit mode)
     /**
-     * Value major based enumeration, automatically specialized for 32 bit and 64 bit machines.
-     *
-     * @param [in,out] output The output stream where output will be written.
-     * @param root            The root key of the hive being searched.
-     * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
-     *                        32 bit registry view.
-     * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
-     *                        64 bit registry view. (Also the only registry view on 32 bit
-     *                        machines)
-     * @param prefix          The prefix applied to the log lines.
-     * @param dataProcess     (optional) [in,out] The process applied to the data before it is
-     *                        printed.
-     */
+    * Value major based enumeration, automatically specialized for 32 bit and 64 bit machines.
+    *
+    * @param [in,out] output The output stream where output will be written.
+    * @param root            The root key of the hive being searched.
+    * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
+    *                        32 bit registry view.
+    * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
+    *                        64 bit registry view. (Also the only registry view on 32 bit
+    *                        machines)
+    * @param prefix          The prefix applied to the log lines.
+    * @param dataProcess     (optional) [in,out] The process applied to the data before it is
+    *                        printed.
+    */
     static void ValueMajorBasedEnumerationBitless(
         std::wostream& output,
         std::wstring const& root,
@@ -188,12 +188,12 @@ namespace Instalog {
 #pragma warning(pop)
 
     /**
-     * Executes enumeration for run keys.
-     *
-     * @param [in,out] output The output stream.
-     * @param runRoot         The root of the hive where the run key is located.
-     * @param name            The name of the run key to enumerate.
-     */
+    * Executes enumeration for run keys.
+    *
+    * @param [in,out] output The output stream.
+    * @param runRoot         The root of the hive where the run key is located.
+    * @param name            The name of the run key to enumerate.
+    */
     void RunKeyOutput(std::wostream& output, std::wstring const& runRoot, std::wstring const& name)
     {
         ValueMajorBasedEnumerationBitless(output, runRoot,
@@ -204,16 +204,16 @@ namespace Instalog {
     //TODO: Make the common bits of these and ValueMajorXXX go away.
 
     /**
-     * Subkey major based enumeration; general method to enumerate a registry key, where a
-     * single log line is generated per subkey.
-     *
-     * @param [in,out] output The output stream.
-     * @param root            The root registry key from where the key is enumerated.
-     * @param prefix          The prefix which identifies the log line in the report.
-     * @param valueName       Name of the value in each subkey at which to look.
-     * @param dataProcess     (optional) The processing function which generates the report of the
-     *                        values' data. The default writes the data as a file.
-     */
+    * Subkey major based enumeration; general method to enumerate a registry key, where a
+    * single log line is generated per subkey.
+    *
+    * @param [in,out] output The output stream.
+    * @param root            The root registry key from where the key is enumerated.
+    * @param prefix          The prefix which identifies the log line in the report.
+    * @param valueName       Name of the value in each subkey at which to look.
+    * @param dataProcess     (optional) The processing function which generates the report of the
+    *                        values' data. The default writes the data as a file.
+    */
     static void SubkeyMajorBasedEnumeration(
         std::wostream& output,
         std::wstring const& root,
@@ -240,7 +240,7 @@ namespace Instalog {
         for (RegistryKey const& val : values) {
             try
             {
-            pods.emplace_back(val.GetName(), val[valueName].GetString());
+                pods.emplace_back(val.GetName(), val[valueName].GetString());
             }
             catch (ErrorFileNotFoundException const&)
             {
@@ -260,20 +260,20 @@ namespace Instalog {
 #pragma warning (push)
 #pragma warning (disable: 4100) //Unreferenced formal parameter. (Becomes unreferenced in 32 bit mode)
     /**
-     * Subkey major based enumeration, automatically specialized for 32 bit and 64 bit machines.
-     *
-     * @param [in,out] output The output stream where output will be written.
-     * @param root            The root key of the hive being searched.
-     * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
-     *                        32 bit registry view.
-     * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
-     *                        64 bit registry view. (Also the only registry view on 32 bit
-     *                        machines)
-     * @param prefix          The prefix applied to the log lines.
-     * @param valueName       Name of the value in each subkey at which to look.
-     * @param dataProcess     (optional) [in,out] The process applied to the data before it is
-     *                        printed.
-     */
+    * Subkey major based enumeration, automatically specialized for 32 bit and 64 bit machines.
+    *
+    * @param [in,out] output The output stream where output will be written.
+    * @param root            The root key of the hive being searched.
+    * @param subkey32        The subkey from the root to use on 64 bit machines when accessing the
+    *                        32 bit registry view.
+    * @param subkey64        The subkey from the root to use on 64 bit machines when accessing the
+    *                        64 bit registry view. (Also the only registry view on 32 bit
+    *                        machines)
+    * @param prefix          The prefix applied to the log lines.
+    * @param valueName       Name of the value in each subkey at which to look.
+    * @param dataProcess     (optional) [in,out] The process applied to the data before it is
+    *                        printed.
+    */
     static void SubkeyMajorBasedEnumerationBitless(
         std::wostream& output,
         std::wstring const& root,
@@ -294,10 +294,10 @@ namespace Instalog {
 #pragma warning(pop)
 
     /**
-     * Gets the user registry hive root paths.
-     *
-     * @return A list of the registry hives.
-     */
+    * Gets the user registry hive root paths.
+    *
+    * @return A list of the registry hives.
+    */
     static std::vector<std::wstring> EnumerateUserHives()
     {
         std::vector<std::wstring> hives;
@@ -317,11 +317,11 @@ namespace Instalog {
     }
 
     /**
-     * Explorer run output.
-     *
-     * @param [in,out] output The output stream.
-     * @param rootKey         The root key where the ExplorerRun entries are located.
-     */
+    * Explorer run output.
+    *
+    * @param [in,out] output The output stream.
+    * @param rootKey         The root key where the ExplorerRun entries are located.
+    */
     static void ExplorerRunOutput( std::wostream& output, std::wstring const& rootKey ) 
     {
 #ifdef _M_X64
@@ -333,8 +333,8 @@ namespace Instalog {
     }
 
     /**
-     * Values that represent possible sources of CLSIDs in ClsidValueBasedOutput queries.
-     */
+    * Values that represent possible sources of CLSIDs in ClsidValueBasedOutput queries.
+    */
     enum ClsidSource
     {
         NAME,
@@ -348,17 +348,17 @@ namespace Instalog {
     };
 
     /**
-     * Clsid value based output with the bitness things applied.
-     *
-     * @param [in,out] output The output stream.
-     * @param prefix          The prefix applied to each log line.
-     * @param rootKey         The root key.
-     * @param subKey          The sub key where the values are located.
-     * @param clsidKey        The clsid key for the current bitness.
-     * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
-     * @param source          Source for the CLSID (name or value).
-     * @param nameSource      Which name "wins" between the local name and the remote name.
-     */
+    * Clsid value based output with the bitness things applied.
+    *
+    * @param [in,out] output The output stream.
+    * @param prefix          The prefix applied to each log line.
+    * @param rootKey         The root key.
+    * @param subKey          The sub key where the values are located.
+    * @param clsidKey        The clsid key for the current bitness.
+    * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
+    * @param source          Source for the CLSID (name or value).
+    * @param nameSource      Which name "wins" between the local name and the remote name.
+    */
     static void ClsidValueBasedOutputWithBits(
         std::wostream& output,
         std::wstring const& prefix,
@@ -430,22 +430,22 @@ namespace Instalog {
             output << prefix << L": " << currentEntry.second << L": " << currentEntry.first << L'=';
             WriteDefaultFileOutput(output, file);
             output << L'\n';
-       }
+        }
     }
 
     /**
-     * CLSID value based output.
-     *
-     * @param [in,out] output The stream to write the output to.
-     * @param prefix          The prefix used to identify the type of line generated in the report.
-     * @param rootKey         The root key where the check is rooted. The CLASSES key should be
-     *                        located in \\Software\\Classes relative to this key.
-     * @param subKey          The sub key under the root key\\Software (or \\Software\\Wow6432Node
-     *                        on x64 machines) where the CLSID values are located.
-     * @param source          Where the cLSIDs themselves are located (the key or the value).
-     * @param nameSource      Which name is primary; the name stored with the CLSID, or the name
-     *                        stored with the CLASSES key.
-     */
+    * CLSID value based output.
+    *
+    * @param [in,out] output The stream to write the output to.
+    * @param prefix          The prefix used to identify the type of line generated in the report.
+    * @param rootKey         The root key where the check is rooted. The CLASSES key should be
+    *                        located in \\Software\\Classes relative to this key.
+    * @param subKey          The sub key under the root key\\Software (or \\Software\\Wow6432Node
+    *                        on x64 machines) where the CLSID values are located.
+    * @param source          Where the cLSIDs themselves are located (the key or the value).
+    * @param nameSource      Which name is primary; the name stored with the CLSID, or the name
+    *                        stored with the CLASSES key.
+    */
     static void ClsidValueBasedOutput(
         std::wostream& output,
         std::wstring const& prefix,
@@ -481,17 +481,17 @@ namespace Instalog {
 
     //TODO: Make the common bits of these two go together.
     /**
-     * Clsid subkey based output with the bitness things applied.
-     *
-     * @param [in,out] output The output stream.
-     * @param prefix          The prefix applied to each log line.
-     * @param rootKey         The root key.
-     * @param subKey          The sub key where the values are located.
-     * @param clsidKey        The clsid key for the current bitness.
-     * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
-     * @param source          Source for the CLSID (name or value).
-     * @param nameSource      Which name "wins" between the local name and the remote name.
-     */
+    * Clsid subkey based output with the bitness things applied.
+    *
+    * @param [in,out] output The output stream.
+    * @param prefix          The prefix applied to each log line.
+    * @param rootKey         The root key.
+    * @param subKey          The sub key where the values are located.
+    * @param clsidKey        The clsid key for the current bitness.
+    * @param backupClsidKey  The backup clsid key (the machine cLSID key for the right bitness)
+    * @param source          Source for the CLSID (name or value).
+    * @param nameSource      Which name "wins" between the local name and the remote name.
+    */
     static void ClsidSubkeyBasedOutputWithBits(
         std::wostream& output,
         std::wstring const& prefix,
@@ -566,22 +566,22 @@ namespace Instalog {
             output << prefix << L": " << currentEntry.second << L": " << currentEntry.first << L'=';
             WriteDefaultFileOutput(output, file);
             output << L'\n';
-       }
+        }
     }
 
     /**
-     * CLSID value based output.
-     *
-     * @param [in,out] output The stream to write the output to.
-     * @param prefix          The prefix used to identify the type of line generated in the report.
-     * @param rootKey         The root key where the check is rooted. The CLASSES key should be
-     *                        located in \\Software\\Classes relative to this key.
-     * @param subKey          The sub key under the root key\\Software (or \\Software\\Wow6432Node
-     *                        on x64 machines) where the CLSID values are located.
-     * @param source          Where the cLSIDs themselves are located (the key or the value).
-     * @param nameSource      Which name is primary; the name stored with the CLSID, or the name
-     *                        stored with the CLASSES key.
-     */
+    * CLSID value based output.
+    *
+    * @param [in,out] output The stream to write the output to.
+    * @param prefix          The prefix used to identify the type of line generated in the report.
+    * @param rootKey         The root key where the check is rooted. The CLASSES key should be
+    *                        located in \\Software\\Classes relative to this key.
+    * @param subKey          The sub key under the root key\\Software (or \\Software\\Wow6432Node
+    *                        on x64 machines) where the CLSID values are located.
+    * @param source          Where the cLSIDs themselves are located (the key or the value).
+    * @param nameSource      Which name is primary; the name stored with the CLSID, or the name
+    *                        stored with the CLASSES key.
+    */
     static void ClsidSubkeyBasedOutput(
         std::wostream& output,
         std::wstring const& prefix,
@@ -613,15 +613,15 @@ namespace Instalog {
     }
 
     /**
-     * Single registry value output.
-     *
-     * @param [in,out] output The output stream.
-     * @param key             The key where the output is rooted.
-     * @param valueName       Name of the value.
-     * @param prefix          The prefix to use in the log output.
-     * @param dataProcess     (optional) [in,out] The process by which the line data is written.
-     *                        The default escapes using the general escaping format.
-     */
+    * Single registry value output.
+    *
+    * @param [in,out] output The output stream.
+    * @param key             The key where the output is rooted.
+    * @param valueName       Name of the value.
+    * @param prefix          The prefix to use in the log output.
+    * @param dataProcess     (optional) [in,out] The process by which the line data is written.
+    *                        The default escapes using the general escaping format.
+    */
     static void SingleRegistryValueOutput(
         std::wostream& output,
         RegistryKey const& key,
@@ -649,11 +649,11 @@ namespace Instalog {
     }
 
     /**
-     * Internet explorer output.
-     *
-     * @param [in,out] output The output stream.
-     * @param rootKey         The root key where Internet Explorer is being rooted.
-     */
+    * Internet explorer output.
+    *
+    * @param [in,out] output The output stream.
+    * @param rootKey         The root key where Internet Explorer is being rooted.
+    */
     static void InternetExplorerMainOutput(std::wostream& output, std::wstring const& rootKey)
     {
         RegistryKey ieRoot(RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer", KEY_QUERY_VALUE));
@@ -716,13 +716,13 @@ namespace Instalog {
     }
 
     /**
-     * Process a single IE script entry.
-     *
-     * @param [in,out] out The output stream where the output is written.
-     * @param suffix       The suffix applied to the script entry (either "64" or nothing)
-     * @param valueName    Name of the value in question.
-     * @param subKey       The sub key to which the query of script is being posed.
-     */
+    * Process a single IE script entry.
+    *
+    * @param [in,out] out The output stream where the output is written.
+    * @param suffix       The suffix applied to the script entry (either "64" or nothing)
+    * @param valueName    Name of the value in question.
+    * @param subKey       The sub key to which the query of script is being posed.
+    */
     static void ProcessIeScript( std::wostream& out, std::wstring const& suffix, std::wstring const& valueName, RegistryKey const& subKey ) 
     {
         try
@@ -740,13 +740,13 @@ namespace Instalog {
     }
 
     /**
-     * Process a single IE COM entry.
-     *
-     * @param [in,out] out The output stream where the output is written.
-     * @param suffix       The suffix applied to the script entry (either "64" or nothing)
-     * @param valueName    Name of the value in question.
-     * @param subKey       The sub key to which the query of script is being posed.
-     */
+    * Process a single IE COM entry.
+    *
+    * @param [in,out] out The output stream where the output is written.
+    * @param suffix       The suffix applied to the script entry (either "64" or nothing)
+    * @param valueName    Name of the value in question.
+    * @param subKey       The sub key to which the query of script is being posed.
+    */
     static void ProcessIeCom( std::wostream& out, std::wstring const& suffix, std::wstring const& valueName, RegistryKey const& subKey, std::wstring const& hiveRootPath, std::wstring const& software )
     {
         try
@@ -892,12 +892,12 @@ namespace Instalog {
     }
 
     /**
-     * Explorer extensions output.
-     *
-     * @param [in,out] out The output stream.
-     * @param rootKey      The root key where the IE settings are rooted. (user or machine hive
-     *                     root)
-     */
+    * Explorer extensions output.
+    *
+    * @param [in,out] out The output stream.
+    * @param rootKey      The root key where the IE settings are rooted. (user or machine hive
+    *                     root)
+    */
     static void ExplorerExtensionsOutput(std::wostream& out, std::wstring const& rootKey)
     {
         std::wstring suffix(Get64Suffix());
@@ -924,32 +924,32 @@ namespace Instalog {
             std::for_each(subkeys.cbegin(), subkeys.cend(), keyProcessor);
         }
 #endif
-        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone");
+        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone" + Get64Suffix());
 #ifdef _M_X64
-        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone32");
+        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains", L"Trusted Zone");
 #endif
-        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone");
+        TrustedZone(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone" + Get64Suffix());
 #ifdef _M_X64
-        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone32");
+        TrustedZone(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains", L"ESC Trusted Zone");
 #endif
-        TrustedDefaults(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol");
+        TrustedDefaults(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol" + Get64Suffix());
 #ifdef _M_X64
-        TrustedDefaults(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol32");
+        TrustedDefaults(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults", L"Trusted Default Protocol");
 #endif
-        TrustedIpRange(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range");
+        TrustedIpRange(out, rootKey+L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range" + Get64Suffix());
 #ifdef _M_X64
-        TrustedIpRange(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range32");
+        TrustedIpRange(out, rootKey+L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges", L"Trusted IP Range");
 #endif
     }
 
     /**
-     * Common HJT outputs. Does all the things that are repeated for the entire machine, and for
-     * each user's registry.
-     *
-     * @param [in,out] output The output stream to which the log is written.
-     * @param rootKey         The root key to check. (e.g. \\Registry\\Machine or \\Registry\\User\\
-     *                        ${Sid}
-     */
+    * Common HJT outputs. Does all the things that are repeated for the entire machine, and for
+    * each user's registry.
+    *
+    * @param [in,out] output The output stream to which the log is written.
+    * @param rootKey         The root key to check. (e.g. \\Registry\\Machine or \\Registry\\User\\
+    *                        ${Sid}
+    */
     static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
     {
         InternetExplorerMainOutput(output, rootKey);
@@ -1022,13 +1022,13 @@ namespace Instalog {
     }
 
     /**
-     * Looks up a given SID to find its associated account name, and returns a DOMAIN\User form
-     * string matching that user's name.
-     *
-     * @param stringSid The SID of the user in string format.
-     *
-     * @return The user's name and domain in DOMAIN\USER format.
-     */
+    * Looks up a given SID to find its associated account name, and returns a DOMAIN\User form
+    * string matching that user's name.
+    *
+    * @param stringSid The SID of the user in string format.
+    *
+    * @return The user's name and domain in DOMAIN\USER format.
+    */
     static std::wstring LookupAccountNameBySid(std::wstring const& stringSid)
     {
         if (stringSid == L".DEFAULT")
@@ -1096,11 +1096,35 @@ namespace Instalog {
         std::wostream& output,
         ScriptSection const&,
         std::vector<std::wstring> const&
-    ) const
+        ) const
     {
         auto hives = EnumerateUserHives();
         SecurityCenterOutput(output);
         CommonHjt(output, L"\\Registry\\Machine");
+
+        RegistryKey dpfRoot(RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS));
+        if (dpfRoot.Valid())
+        {
+            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+            {
+                std::wstring clsidEscaped(clsid);
+                GeneralEscape(clsidEscaped);
+                output << L"DPF" << Get64Suffix() << L": " << clsidEscaped << L"\n";
+            }
+        }
+#ifdef _M_X64
+        dpfRoot = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS);
+        if (dpfRoot.Valid())
+        {
+            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+            {
+                std::wstring clsidEscaped(clsid);
+                GeneralEscape(clsidEscaped);
+                output << L"DPF: " << clsidEscaped << L"\n";
+            }
+        }
+#endif
+
         for (std::wstring const& hive : hives)
         {
             std::wstring head(L"User Settings");
