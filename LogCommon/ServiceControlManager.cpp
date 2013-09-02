@@ -81,36 +81,53 @@ namespace Instalog { namespace SystemFacades {
 
         static std::wstring svchostPath(Path::Append(Path::GetWindowsPath(), L"System32\\Svchost.exe"));
         // Set the svchost group, dll path, and damaged status if applicable
-        if (boost::iequals(filepath, svchostPath))
+        if (!boost::iequals(filepath, svchostPath))
         {
-            // Get the svchost group
-            this->svchostGroup = queryServiceConfig->lpBinaryPathName;
-            this->svchostGroup.erase(this->svchostGroup.begin(), boost::ifind_first(this->svchostGroup, L"-k").end());            
-            boost::trim(this->svchostGroup);
-            
-            std::wstring serviceKeyName = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName;
-            // Get the dll path
-            RegistryKey serviceParameters = RegistryKey::Open(
-                 serviceKeyName + L"\\Parameters", KEY_QUERY_VALUE);
-            if (serviceParameters.Invalid())
-            {
-                serviceParameters = RegistryKey::Open(serviceKeyName, KEY_QUERY_VALUE);
-            }
-            if (serviceParameters.Invalid())
-            {
-                Win32Exception::ThrowFromNtError(::GetLastError());
-            }
-            RegistryValue serviceDllValue = serviceParameters.GetValue(L"ServiceDll");
-            this->svchostDll = serviceDllValue.GetStringStrict();
-            Path::ResolveFromCommandLine(this->svchostDll);
+            return;
+        }
 
-            // Check to see if it's damaged
-            RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost", KEY_QUERY_VALUE);
-            RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
-            std::vector<std::wstring> svchostGroupRegistrationStrings = svchostGroupRegistration.GetMultiStringArray();
-            auto groupRef = std::find_if(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(),
-                [&] (std::wstring const& a) -> bool { return boost::iequals(a, serviceName, std::locale()); } );
-            svchostDamaged = groupRef == svchostGroupRegistrationStrings.end();
+        // Get the svchost group
+        this->svchostGroup = queryServiceConfig->lpBinaryPathName;
+        this->svchostGroup.erase(this->svchostGroup.begin(), boost::ifind_first(this->svchostGroup, L"-k").end());            
+        boost::trim(this->svchostGroup);
+
+        // Check to see if it's damaged
+        RegistryKey svchostGroupKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost", KEY_QUERY_VALUE);
+        RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
+        std::vector<std::wstring> svchostGroupRegistrationStrings = svchostGroupRegistration.GetMultiStringArray();
+        std::locale loc;
+        auto groupRef = std::find_if(svchostGroupRegistrationStrings.begin(), svchostGroupRegistrationStrings.end(),
+            [&] (std::wstring const& a) -> bool { return boost::iequals(a, serviceName, loc); } );
+        svchostDamaged = groupRef == svchostGroupRegistrationStrings.end();
+
+        // Get the dll path
+        std::wstring serviceKeyName = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\" + this->serviceName;
+        RegistryKey serviceParameters = RegistryKey::Open(
+            serviceKeyName + L"\\Parameters", KEY_QUERY_VALUE);
+        if (serviceParameters.Invalid())
+        {
+            serviceParameters = RegistryKey::Open(serviceKeyName, KEY_QUERY_VALUE);
+        }
+        if (serviceParameters.Invalid())
+        {
+            this->svchostDll = expected<std::wstring>::from_exception(
+                Win32Exception::FromNtError(::GetLastError()));
+            return;
+        }
+
+        try
+        {
+            expected<RegistryValue> serviceDllValue = serviceParameters.GetValue(L"ServiceDll");
+            if (serviceDllValue.is_valid())
+            {
+                std::wstring rawValue = serviceDllValue.get().GetStringStrict();
+                Path::ResolveFromCommandLine(rawValue);
+                this->svchostDll = std::move(rawValue);
+            }
+        }
+        catch (std::exception&)
+        {
+            this->svchostDll = expected<std::wstring>::from_exception();
         }
     }
 

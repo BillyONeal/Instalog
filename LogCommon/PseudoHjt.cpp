@@ -951,28 +951,28 @@ namespace Instalog {
         return domainName + userName;
     }
 
-    static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
-    {
-        std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
-        std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress, true));
+    //static void SpoofedDnsCheck(std::wostream& output, std::wstring queryHostname, std::wstring expectedHostname)
+    //{
+    //    std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
+    //    std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress, true));
 
-        if (boost::iends_with(responseHostname, expectedHostname) == false)
-        {
-            HttpEscape(queryHostname);
-            HttpEscape(responseHostname);
+    //    if (boost::iends_with(responseHostname, expectedHostname) == false)
+    //    {
+    //        HttpEscape(queryHostname);
+    //        HttpEscape(responseHostname);
 
-            output << L"SpoofedDNS: " << queryHostname << L" -> ";
-            if (responseHostname.empty())
-            {
-                output << L"not available";
-            }
-            else
-            {
-                output << responseHostname;
-            }
-            output << L" (" << responseIpAddress << L")\n";
-        }
-    }
+    //        output << L"SpoofedDNS: " << queryHostname << L" -> ";
+    //        if (responseHostname.empty())
+    //        {
+    //            output << L"not available";
+    //        }
+    //        else
+    //        {
+    //            output << responseHostname;
+    //        }
+    //        output << L" (" << responseIpAddress << L")\n";
+    //    }
+    //}
 
     void PseudoHjt::Execute(
         std::wostream& output,

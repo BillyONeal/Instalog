@@ -62,7 +62,7 @@ TEST(ServiceControlManager, TcpipService)
     EXPECT_EQ(SERVICE_BOOT_START, tcpip->GetStart()) << L"This will fail if Tcpip is not configured to auto-start";
     EXPECT_EQ(L"C:\\Windows\\System32\\Drivers\\Tcpip.sys", tcpip->GetFilepath());
     EXPECT_TRUE(tcpip->GetSvchostGroup().empty());
-    EXPECT_TRUE(tcpip->GetSvchostDll().empty());
+    EXPECT_FALSE(tcpip->GetSvchostDll().is_valid());
     EXPECT_FALSE(tcpip->IsSvchostService());
 }
 
@@ -82,7 +82,7 @@ TEST(ServiceControlManager, RpcSsSvchostService)
     EXPECT_EQ(SERVICE_AUTO_START, rcpss->GetStart()) << L"This will fail if RpcSs is not configured to auto-start";
     EXPECT_EQ(L"C:\\Windows\\System32\\Svchost.exe", rcpss->GetFilepath());
     EXPECT_EQ(L"rpcss", rcpss->GetSvchostGroup());
-    EXPECT_EQ(L"C:\\Windows\\System32\\Rpcss.dll", rcpss->GetSvchostDll());
+    EXPECT_EQ(L"C:\\Windows\\System32\\Rpcss.dll", rcpss->GetSvchostDll().get());
     EXPECT_TRUE(rcpss->IsSvchostService());
 }
 

@@ -134,10 +134,11 @@ namespace Instalog
                 currentSvcStream << L'D';
             }
             currentSvcStream << L' ' << service->GetServiceName() << L';' << service->GetDisplayName() << L';';
-            if (service->IsSvchostService())
+            auto const& svcHostDll = service->GetSvchostDll();
+            if (service->IsSvchostService() && svcHostDll.is_valid())
             {
                 currentSvcStream << service->GetSvchostGroup() << L"->";
-                WriteDefaultFileOutput(currentSvcStream, service->GetSvchostDll());
+                WriteDefaultFileOutput(currentSvcStream, svcHostDll.get());
             }
             else
             {
@@ -471,13 +472,20 @@ namespace Instalog
 
     void RestorePoints::Execute( std::wostream& logOutput, ScriptSection const& /*sectionData*/, std::vector<std::wstring> const& /*options*/ ) const
     {
-        std::vector<SystemFacades::RestorePoint> restorePoints = SystemFacades::EnumerateRestorePoints();
-
-        for (auto restorePoint = restorePoints.begin(); restorePoint != restorePoints.end(); ++restorePoint)
+        try
         {
-            logOutput << restorePoint->SequenceNumber << L" " ;
-            WriteMillisecondDateFormat(logOutput, FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(restorePoint->CreationTime)));
-            logOutput << L" " << restorePoint->Description << L'\n';
+            std::vector<SystemFacades::RestorePoint> restorePoints = SystemFacades::EnumerateRestorePoints();
+
+            for (auto const& restorePoint : restorePoints)
+            {
+                logOutput << restorePoint.SequenceNumber << L" " ;
+                WriteMillisecondDateFormat(logOutput, FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(restorePoint.CreationTime)));
+                logOutput << L" " << restorePoint.Description << L'\n';
+            }
+        }
+        catch (SystemFacades::HresultException const& ex)
+        {
+            logOutput << L"(Failed to enumerate restore points; HRESULT=" << std::hex << ex.GetErrorCode() << L")\n";
         }
     }
     

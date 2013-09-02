@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include <windows.h>
+#include "Expected.hpp"
 
 namespace Instalog { namespace SystemFacades {
 
@@ -20,7 +21,7 @@ namespace Instalog { namespace SystemFacades {
         DWORD start;
         std::wstring filepath;
         std::wstring svchostGroup;
-        std::wstring svchostDll;
+        expected<std::wstring> svchostDll;
         bool svchostDamaged;
     public:
         /// Constructor.  Opens a handle to the Service and populates the various member variables
@@ -83,12 +84,12 @@ namespace Instalog { namespace SystemFacades {
         /// Gets the svchost dll path.
         ///
         /// @return The svchost dll path.
-        std::wstring const& GetSvchostDll() const { return svchostDll; }
+        expected<std::wstring> const& GetSvchostDll() const { return svchostDll; }
 
         /// Query if this object is svchost service.
         ///
         /// @return true if svchost service, false if not.
-        bool IsSvchostService() const { return !svchostGroup.empty() || !svchostDll.empty(); }
+        bool IsSvchostService() const { return !svchostGroup.empty(); }
     };
 
     /// @brief    Wrapper around the Windows Service Control Manager
