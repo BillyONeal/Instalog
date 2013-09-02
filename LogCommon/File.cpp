@@ -224,10 +224,10 @@ namespace Instalog { namespace SystemFacades {
     {
         prefix.append(winSource.cFileName);
         cFileName = std::move(prefix);
-        ftCreationTime = static_cast<std::uint64_t>(winSource.ftCreationTime.dwHighDateTime) << 32 & winSource.ftCreationTime.dwLowDateTime;
-        ftLastAccessTime = static_cast<std::uint64_t>(winSource.ftLastAccessTime.dwHighDateTime) << 32 & winSource.ftLastAccessTime.dwLowDateTime;
-        ftLastWriteTime = static_cast<std::uint64_t>(winSource.ftLastWriteTime.dwHighDateTime) << 32 & winSource.ftLastWriteTime.dwLowDateTime;
-        nFileSize = static_cast<std::uint64_t>(winSource.nFileSizeHigh) << 32 & winSource.nFileSizeLow;
+        ftCreationTime = (static_cast<std::uint64_t>(winSource.ftCreationTime.dwHighDateTime) << 32) | winSource.ftCreationTime.dwLowDateTime;
+        ftLastAccessTime = (static_cast<std::uint64_t>(winSource.ftLastAccessTime.dwHighDateTime) << 32) | winSource.ftLastAccessTime.dwLowDateTime;
+        ftLastWriteTime = (static_cast<std::uint64_t>(winSource.ftLastWriteTime.dwHighDateTime) << 32) | winSource.ftLastWriteTime.dwLowDateTime;
+        nFileSize = (static_cast<std::uint64_t>(winSource.nFileSizeHigh) << 32) | winSource.nFileSizeLow;
     }
 
     FindFilesRecord::FindFilesRecord(FindFilesRecord const& other)
@@ -581,6 +581,11 @@ namespace Instalog { namespace SystemFacades {
         this->findData.cFileName[0] = L'\0';
         auto dividerPoint = std::find(pattern.crbegin(), pattern.crend(), L'\\').base();
         this->pattern.assign(dividerPoint, pattern.cend());
+        if (this->pattern.empty())
+        {
+            this->pattern.push_back(L'*');
+        }
+
 
         if (dividerPoint == pattern.begin())
         {

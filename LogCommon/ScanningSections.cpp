@@ -650,12 +650,12 @@ namespace Instalog
             return;
         }
 
-        auto first = fileData.begin();
-        for (; first != fileData.end(); ++first)
+        auto first = fileData.cbegin();
+        while (first != fileData.cend())
         {
             // Find the end of a run -- which is when the difference between an item and the next is
             // greater than one second.
-            auto runEnd = std::adjacent_find(first, fileData.end(),
+            auto runEnd = std::adjacent_find(first, fileData.cend(),
                 [] (FindFilesRecord const& lhs, FindFilesRecord const& rhs) { return lhs.GetCreationTime() - rhs.GetCreationTime() > 10000000; });
 
             // Get the iterator to the second adjacent element when deciding to remove or not.
@@ -667,11 +667,16 @@ namespace Instalog
             // If more than 12 files in this run, remove them from the results.
             if (std::distance(first, runEnd) >= 12)
             {
-                first = fileData.erase(first, runEnd);
+                runEnd = fileData.erase(first, runEnd);
+            }
+            
+            if (runEnd == fileData.cend())
+            {
+                first = runEnd;
             }
             else
             {
-                first = runEnd;
+                first = ++runEnd;
             }
         }
     }
@@ -727,7 +732,7 @@ namespace Instalog
 
         RemoveWindowsUpdateRuns(fileData);
         
-        return std::move(fileData);
+        return fileData;
     }
 
     /// @brief    Checks if the path has one of the given extensions
