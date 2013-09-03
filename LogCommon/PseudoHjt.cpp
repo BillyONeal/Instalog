@@ -1137,7 +1137,7 @@ namespace Instalog {
         DWORD catalogEntries = protocolCatalogKey[L"Num_Catalog_Entries"].GetDWord();
         bool chainOk = true;
         std::set<std::wstring> catalogFiles;
-        RegistryKey catalogEntriesKey(RegistryKey::Open(protocolCatalogKey, L"CatalogEntries", KEY_ENUMERATE_SUB_KEYS));
+        RegistryKey catalogEntriesKey(RegistryKey::Open(protocolCatalogKey, L"Catalog_Entries", KEY_ENUMERATE_SUB_KEYS));
         auto catalogEntryNames = catalogEntriesKey.EnumerateSubKeyNames();
         std::sort(catalogEntryNames.begin(), catalogEntryNames.end());
         if (catalogEntries != catalogEntryNames.size())
@@ -1148,8 +1148,8 @@ namespace Instalog {
         for (std::size_t idx = 0; idx < catalogEntryNames.size(); ++idx)
         {
             std::wstring const& actualName = catalogEntryNames[idx];
-            wchar_t expectedName[9];
-            swprintf_s(expectedName, L"%08u", idx);
+            wchar_t expectedName[13];
+            swprintf_s(expectedName, L"%012u", idx);
             if (actualName != expectedName)
             {
                 chainOk = false;
