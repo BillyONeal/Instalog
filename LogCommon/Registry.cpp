@@ -231,6 +231,8 @@ namespace Instalog { namespace SystemFacades {
 
     std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
     {
+        assert(this->Valid());
+
         const auto bufferLength = 32768;
         std::vector<std::wstring> subkeys;
         NTSTATUS errorCheck;
@@ -253,16 +255,15 @@ namespace Instalog { namespace SystemFacades {
                 break;
             }
             subkeys.emplace_back(
-                std::wstring(basicInformation->Name,
-                             basicInformation->NameLength / sizeof(wchar_t)
-                            )
-            );
+                basicInformation->Name,
+                basicInformation->NameLength / sizeof(wchar_t)
+                );
         }
         if (errorCheck != STATUS_NO_MORE_ENTRIES)
         {
             Win32Exception::ThrowFromNtError(errorCheck);
         }
-        return std::move(subkeys);
+        return subkeys;
     }
 
     RegistryKey& RegistryKey::operator=( RegistryKey other )

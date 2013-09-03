@@ -473,8 +473,13 @@ namespace Instalog {
 #else
         RegistryKey adobeKey = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Adobe\\Installer", KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 #endif
+        if (adobeKey.Invalid())
+        {
+            throw std::exception("Broken Adobe Reader Install");
+        }
+
         auto subkeys = adobeKey.EnumerateSubKeys(KEY_QUERY_VALUE);
-        if (!subkeys.size())
+        if (subkeys.empty())
         {
             throw std::exception("Broken Adobe Reader Install");
         }
