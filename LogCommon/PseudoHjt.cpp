@@ -1095,6 +1095,32 @@ namespace Instalog {
     //    }
     //}
 
+    static void ExecuteDpf(std::wostream& output)
+    {
+        RegistryKey dpfRoot(RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS));
+        if (dpfRoot.Valid())
+        {
+            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+            {
+                std::wstring clsidEscaped(clsid);
+                GeneralEscape(clsidEscaped);
+                output << L"DPF" << Get64Suffix() << L": " << clsidEscaped << L"\n";
+            }
+        }
+#ifdef _M_X64
+        dpfRoot = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS);
+        if (dpfRoot.Valid())
+        {
+            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+            {
+                std::wstring clsidEscaped(clsid);
+                GeneralEscape(clsidEscaped);
+                output << L"DPF: " << clsidEscaped << L"\n";
+            }
+        }
+#endif
+    }
+
     static void ExecuteLspChain(std::wostream& output, RegistryKey &protocolCatalogKey, std::wstring suffix)
     {
         DWORD catalogEntries = protocolCatalogKey[L"Num_Catalog_Entries" + suffix].GetDWord();
@@ -1175,42 +1201,10 @@ namespace Instalog {
         }
     }
 
-    void PseudoHjt::Execute(
-        std::wostream& output,
-        ScriptSection const&,
-        std::vector<std::wstring> const&
-        ) const
+    static void ExecuteWinsock2Parameters(std::wostream& output)
     {
-        auto hives = EnumerateUserHives();
-        SecurityCenterOutput(output);
-        CommonHjt(output, L"\\Registry\\Machine");
-
-        RegistryKey dpfRoot(RegistryKey::Open(L"\\Registry\\Machine\\Software\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS));
-        if (dpfRoot.Valid())
-        {
-            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
-            {
-                std::wstring clsidEscaped(clsid);
-                GeneralEscape(clsidEscaped);
-                output << L"DPF" << Get64Suffix() << L": " << clsidEscaped << L"\n";
-            }
-        }
-#ifdef _M_X64
-        dpfRoot = RegistryKey::Open(L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Code Store Database\\Distribution Units", KEY_ENUMERATE_SUB_KEYS);
-        if (dpfRoot.Valid())
-        {
-            for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
-            {
-                std::wstring clsidEscaped(clsid);
-                GeneralEscape(clsidEscaped);
-                output << L"DPF: " << clsidEscaped << L"\n";
-            }
-        }
-#endif
-        dpfRoot.Close();
-
         RegistryKey winsockParameters(RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Winsock2\\Parameters", KEY_QUERY_VALUE));
-        
+
         std::wstring protocolCatalog(winsockParameters[L"Current_Protocol_Catalog"].GetStringStrict());
         RegistryKey protocolCatalogKey(RegistryKey::Open(winsockParameters, protocolCatalog, KEY_QUERY_VALUE));
         ExecuteLspChain(output, protocolCatalogKey, L"");
@@ -1223,7 +1217,20 @@ namespace Instalog {
         ExecuteNspChain(output, namespaceCatalogKey, L"64");
         namespaceCatalogKey.Close();
         winsockParameters.Close();
+    }
 
+    void PseudoHjt::Execute(
+        std::wostream& output,
+        ScriptSection const&,
+        std::vector<std::wstring> const&
+        ) const
+    {
+        SecurityCenterOutput(output);
+        CommonHjt(output, L"\\Registry\\Machine");
+        ExecuteDpf(output);
+        ExecuteWinsock2Parameters(output);
+
+        auto hives = EnumerateUserHives();
         for (std::wstring const& hive : hives)
         {
             std::wstring head(L"User Settings");
