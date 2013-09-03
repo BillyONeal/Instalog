@@ -64,7 +64,7 @@ namespace Instalog { namespace SystemFacades {
 
     RegistryValue const RegistryKey::operator[]( std::wstring const& name ) const
     {
-        return GetValue(std::move(name));
+        return GetValue(name);
     }
 
     RegistryValue const RegistryKey::GetValue( std::wstring const& name ) const
@@ -231,7 +231,7 @@ namespace Instalog { namespace SystemFacades {
 
     std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
     {
-        assert(this->Valid());
+        this->Check();
 
         const auto bufferLength = 32768;
         std::vector<std::wstring> subkeys;
@@ -326,7 +326,7 @@ namespace Instalog { namespace SystemFacades {
                 Win32Exception::ThrowFromNtError(errorCheck);
             }
         }
-        return std::move(result);
+        return result;
     }
 
     std::vector<RegistryValueAndData> RegistryKey::EnumerateValues() const

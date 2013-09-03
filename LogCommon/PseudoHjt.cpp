@@ -1219,6 +1219,47 @@ namespace Instalog {
         winsockParameters.Close();
     }
 
+    static void TcpSettingForInterface(std::wostream& output, RegistryKey const& parametersKey, std::wstring const& interfaceName, std::wstring const& value)
+    {
+        try
+        {
+            std::wstring nameServer(parametersKey[value].GetStringStrict());
+            if (nameServer.empty())
+            {
+                return;
+            }
+
+            if (interfaceName.empty())
+            {
+                output << L"Tcp" << value << L": " << nameServer << L'\n';
+            }
+            else
+            {
+                output << L"Tcp" << value << L": [" << interfaceName << L"] " << nameServer << L'\n';
+            }
+        }
+        catch (ErrorFileNotFoundException const&) {}
+    }
+
+    static void TcpNameserversForInterface(std::wostream& output, RegistryKey const& parametersKey, std::wstring interfaceName)
+    {
+        GeneralEscape(interfaceName, L'#', L']');
+        TcpSettingForInterface(output, parametersKey, interfaceName, L"NameServer");
+        TcpSettingForInterface(output, parametersKey, interfaceName, L"DHCPNameServer");
+    }
+
+    static void TcpNameservers(std::wostream& output)
+    {
+        RegistryKey parametersKey(RegistryKey::Open(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters", KEY_QUERY_VALUE));
+        TcpNameserversForInterface(output, parametersKey, L"");
+        RegistryKey interfacesKey(RegistryKey::Open(parametersKey, L"Interfaces", KEY_ENUMERATE_SUB_KEYS));
+        for (auto const& interfaceKeyName : interfacesKey.EnumerateSubKeyNames())
+        {
+            RegistryKey interfaceKey(RegistryKey::Open(interfacesKey, interfaceKeyName, KEY_QUERY_VALUE));
+            TcpNameserversForInterface(output, interfaceKey, std::move(interfaceKeyName));
+        }
+    }
+
     void PseudoHjt::Execute(
         std::wostream& output,
         ScriptSection const&,
@@ -1229,6 +1270,7 @@ namespace Instalog {
         CommonHjt(output, L"\\Registry\\Machine");
         ExecuteDpf(output);
         ExecuteWinsock2Parameters(output);
+        TcpNameservers(output);
 
         auto hives = EnumerateUserHives();
         for (std::wstring const& hive : hives)
