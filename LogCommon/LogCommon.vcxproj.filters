@@ -160,9 +160,6 @@
     <ClInclude Include="SecurityCenter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CompiledProtocolBuffers\Whitelist.pb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Wmi.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -191,6 +188,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Stringize.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumClassOperators.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
