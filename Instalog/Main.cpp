@@ -52,12 +52,14 @@ int main()
     catch (Instalog::SystemFacades::HresultException const& hRes)
     {
         std::wcerr << "FAILURE!\n";
-        std::wcerr << L"HRESULT Error: 0x" << std::hex << hRes.GetErrorCode() << L": " << hRes.GetErrorStringW() << std::endl;
+        std::wcerr << L"HRESULT Error: 0x" << std::hex << hRes.GetErrorCode()
+                   << L": " << hRes.GetErrorStringW() << std::endl;
     }
     catch (Instalog::SystemFacades::Win32Exception const& win)
     {
         std::wcerr << "FAILURE!\n";
-        std::wcerr << L"Win32 Error: 0x" << std::hex << win.GetErrorCode() << L": " << win.GetWideMessage() << std::endl;
+        std::wcerr << L"Win32 Error: 0x" << std::hex << win.GetErrorCode()
+                   << L": " << win.GetWideMessage() << std::endl;
     }
     catch (std::exception const& stdExt)
     {
@@ -82,18 +84,25 @@ static int instalog_main()
     Instalog::SystemFacades::Com com;
     if (Instalog::SystemFacades::IsWow64())
     {
-        std::cerr << "This program is not designed to be run under WOW64 mode. Please download the x64 copy of Instalog instead.";
+        std::cerr << "This program is not designed to be run under WOW64 mode. "
+                     "Please download the x64 copy of Instalog instead.";
         return -1;
     }
     std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
     ScriptParser sd;
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RunningProcesses));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new RunningProcesses));
     sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new EventViewer));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new RestorePoints));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new EventViewer));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new RestorePoints));
+    sd.AddSectionDefinition(
+        std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
     sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new FindStarM));
     wchar_t const defaultScript[] =
         L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";

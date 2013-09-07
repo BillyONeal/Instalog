@@ -77,9 +77,6 @@
     <ClCompile Include="DnsTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SharpStreamsTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ExpectedTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

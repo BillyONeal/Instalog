@@ -14,22 +14,30 @@ using namespace Instalog::SystemFacades;
 
 TEST(RuntimeDynamicLinker, NonexistentDllThrows)
 {
-    ASSERT_THROW(RuntimeDynamicLinker ntdll(L"IDoNotExist.dll"), ErrorModuleNotFoundException);
+    ASSERT_THROW(RuntimeDynamicLinker ntdll(L"IDoNotExist.dll"),
+                 ErrorModuleNotFoundException);
 }
 
 TEST(RuntimeDynamicLinker, CanLoadFunction)
 {
-    typedef NTSTATUS (NTAPI *NtCloseT)(HANDLE);
+    typedef NTSTATUS(NTAPI * NtCloseT)(HANDLE);
     RuntimeDynamicLinker ntdll(L"ntdll.dll");
     NtCloseT ntClose = ntdll.GetProcAddress<NtCloseT>("NtClose");
-    HANDLE h = ::CreateFileW(L"DeleteMe.txt", GENERIC_WRITE, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    HANDLE h = ::CreateFileW(L"DeleteMe.txt",
+                             GENERIC_WRITE,
+                             0,
+                             0,
+                             CREATE_NEW,
+                             FILE_FLAG_DELETE_ON_CLOSE,
+                             0);
     ntClose(h);
     ASSERT_FALSE(File::Exists(L"DeleteMe.txt"));
 }
 
 TEST(FormattedMessageLoader, NonexistentDllThrows)
 {
-    ASSERT_THROW(FormattedMessageLoader ntdll(L"IDoNotExist.dll"), ErrorFileNotFoundException);
+    ASSERT_THROW(FormattedMessageLoader ntdll(L"IDoNotExist.dll"),
+                 ErrorFileNotFoundException);
 }
 
 TEST(FormattedMessageLoader, DhcpClientArguments)
@@ -40,7 +48,8 @@ TEST(FormattedMessageLoader, DhcpClientArguments)
 
     FormattedMessageLoader dhcpcore(L"C:\\Windows\\System32\\dhcpcore.dll");
     std::wstring message = dhcpcore.GetFormattedMessage(messageId, arguments);
-    ASSERT_EQ(L"DHCPv4 client service is stopped. ShutDown Flag value is 1\r\n", message);
+    ASSERT_EQ(L"DHCPv4 client service is stopped. ShutDown Flag value is 1\r\n",
+              message);
 }
 
 TEST(FormattedMessageLoader, DhcpClientNoArguments)

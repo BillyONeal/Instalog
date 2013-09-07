@@ -7,25 +7,30 @@
 #include <string>
 #include <memory>
 
-namespace Instalog { namespace SystemFacades {
+namespace Instalog
+{
+namespace SystemFacades
+{
 
-    class SecurityProduct
+class SecurityProduct
+{
+    public:
+    enum UpdateStatusValues
     {
-    public:
-        enum UpdateStatusValues
-        {
-            OutOfDate = 0,
-            UpToDate = 1,
-            UpdateNotRequired = 2
-        };
+        OutOfDate = 0,
+        UpToDate = 1,
+        UpdateNotRequired = 2
+    };
+
     private:
-        std::wstring name_;
-        std::wstring guid_;
-        bool enabled_;
-        UpdateStatusValues updateStatus_;
-        const wchar_t * letterCode_;
+    std::wstring name_;
+    std::wstring guid_;
+    bool enabled_;
+    UpdateStatusValues updateStatus_;
+    const wchar_t* letterCode_;
+
     public:
-        SecurityProduct(
+    SecurityProduct(
             const std::wstring& name,
             const std::wstring& guid,
             bool enabled,
@@ -36,40 +41,40 @@ namespace Instalog { namespace SystemFacades {
                 enabled_(enabled),
                 updateStatus_(updateStatus),
                 letterCode_(letterCode)
-        {}
-        const wchar_t* GetTwoLetterPrefix() const
-        {
-            return letterCode_;
-        }
-        bool IsEnabled() const
-        {
-            return enabled_;
-        }
-        const std::wstring& GetInstanceGuid() const
-        {
-            return guid_;
-        }
-        const std::wstring& GetName() const
-        {
-            return name_;
-        }
-        UpdateStatusValues GetUpdateStatus() const
-        {
-            return updateStatus_;
-        }
-        void Delete();
-    };
-
-    inline bool operator==(const SecurityProduct& lhs, const SecurityProduct& rhs)
     {
-        return lhs.GetInstanceGuid() == rhs.GetInstanceGuid();
     }
-    inline bool operator<(const SecurityProduct& lhs, const SecurityProduct& rhs)
+    const wchar_t* GetTwoLetterPrefix() const
     {
-        return lhs.GetInstanceGuid() < rhs.GetInstanceGuid();
+        return letterCode_;
     }
+    bool IsEnabled() const
+    {
+        return enabled_;
+    }
+    const std::wstring& GetInstanceGuid() const
+    {
+        return guid_;
+    }
+    const std::wstring& GetName() const
+    {
+        return name_;
+    }
+    UpdateStatusValues GetUpdateStatus() const
+    {
+        return updateStatus_;
+    }
+    void Delete();
+};
 
-    std::vector<SecurityProduct> EnumerateSecurityProducts();
+inline bool operator==(const SecurityProduct& lhs, const SecurityProduct& rhs)
+{
+    return lhs.GetInstanceGuid() == rhs.GetInstanceGuid();
+}
+inline bool operator<(const SecurityProduct& lhs, const SecurityProduct& rhs)
+{
+    return lhs.GetInstanceGuid() < rhs.GetInstanceGuid();
+}
 
-}}
-
+std::vector<SecurityProduct> EnumerateSecurityProducts();
+}
+}

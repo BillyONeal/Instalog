@@ -28,7 +28,8 @@ TEST(ExpectedOfT, DefaultConstructedIsNotValid)
 
 TEST(ExpectedOfT, IfNoExceptionInFlightFromExceptionIsUninitialized)
 {
-    ASSERT_THROW(expected<std::wstring>::from_exception().rethrow(), uninitalized_expected);
+    ASSERT_THROW(expected<std::wstring>::from_exception().rethrow(),
+                 uninitalized_expected);
 }
 
 TEST(ExpectedOfT, CanContainCopiedT)
@@ -75,7 +76,8 @@ TEST(ExpectedOfT, CanMoveT)
 
 TEST(ExpectedOfT, CanCopyConstruct)
 {
-    expected<std::wstring> uut(expected<std::wstring>::from_exception(std::bad_alloc()));
+    expected<std::wstring> uut(
+        expected<std::wstring>::from_exception(std::bad_alloc()));
     expected<std::wstring> copy(uut);
     ASSERT_THROW(uut.rethrow(), std::bad_alloc);
 }
@@ -92,7 +94,8 @@ TEST(ExpectedOfT, SwapValids)
 TEST(ExpectedOfT, SwapLeftValidRightInvalid)
 {
     expected<std::wstring> uutOne(L"Foo");
-    expected<std::wstring> uutTwo(expected<std::wstring>::from_exception(std::bad_alloc()));
+    expected<std::wstring> uutTwo(
+        expected<std::wstring>::from_exception(std::bad_alloc()));
     uutOne.swap(uutTwo);
     ASSERT_STREQ(L"Foo", uutTwo.get().c_str());
     ASSERT_THROW(uutOne.rethrow(), std::bad_alloc);
@@ -101,7 +104,8 @@ TEST(ExpectedOfT, SwapLeftValidRightInvalid)
 TEST(ExpectedOfT, SwapLeftInvalidRightValid)
 {
     expected<std::wstring> uutOne(L"Foo");
-    expected<std::wstring> uutTwo(expected<std::wstring>::from_exception(std::bad_alloc()));
+    expected<std::wstring> uutTwo(
+        expected<std::wstring>::from_exception(std::bad_alloc()));
     uutTwo.swap(uutOne);
     ASSERT_STREQ(L"Foo", uutTwo.get().c_str());
     ASSERT_THROW(uutOne.rethrow(), std::bad_alloc);

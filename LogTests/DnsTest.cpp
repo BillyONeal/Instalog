@@ -52,14 +52,18 @@ TEST(DnsIpReverse, RealIpReverse)
 
 TEST(DnsHostnameFromAddress, DefaultServers)
 {
-    ASSERT_TRUE(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com")), L".1e100.net"));
+    ASSERT_TRUE(boost::ends_with(
+        HostnameFromIpAddress(IpAddressFromHostname(L"google.com")),
+        L".1e100.net"));
 }
 
 /* This needs reworked; see issue 13
 TEST_METHOD(DnsHostnameFromAddressSafeServers)
 {
     std::wcout << IpAddressFromHostname(L"google.com", true) << std::endl;
-    std::wcout << HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true) << std::endl;
-    Assert::IsTrue(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com", true), true), L".1e100.net"));
+    std::wcout << HostnameFromIpAddress(IpAddressFromHostname(L"google.com",
+true), true) << std::endl;
+    Assert::IsTrue(boost::ends_with(HostnameFromIpAddress(IpAddressFromHostname(L"google.com",
+true), true), L".1e100.net"));
 }
 */

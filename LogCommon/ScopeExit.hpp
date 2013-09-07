@@ -4,14 +4,15 @@
 
 namespace Instalog
 {
-    struct ScopeExit : boost::noncopyable
+struct ScopeExit : boost::noncopyable
+{
+    std::function<void()> func_;
+    ScopeExit(std::function<void()> func) : func_(func)
     {
-        std::function<void()> func_;
-        ScopeExit(std::function<void()> func) : func_(func)
-        { }
-        ~ScopeExit()
-        {
-            func_();
-        }
-    };
+    }
+    ~ScopeExit()
+    {
+        func_();
+    }
+};
 }

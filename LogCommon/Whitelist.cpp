@@ -15,73 +15,87 @@
 #include "Win32Exception.hpp"
 #include "Whitelist.hpp"
 #pragma warning(push)
-#pragma warning(disable: 4512)
-#pragma warning(disable: 4244)
+#pragma warning(disable : 4512)
+#pragma warning(disable : 4244)
 #include "Whitelist.pb.h"
 #pragma warning(pop)
 
 using Instalog::SystemFacades::Win32Exception;
 
-namespace Instalog {
-    static HMODULE GetCurrentModule()
+namespace Instalog
+{
+static HMODULE GetCurrentModule()
+{
+    HMODULE hModule = NULL;
+    BOOL errorCheck =
+        ::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                            (LPCTSTR)GetCurrentModule,
+                            &hModule);
+    if (errorCheck == 0)
     {
-        HMODULE hModule = NULL;
-        BOOL errorCheck = ::GetModuleHandleEx(
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            (LPCTSTR)GetCurrentModule,
-            &hModule);
-        if (errorCheck == 0)
-        {
-            Win32Exception::ThrowFromLastError();
-        }
-        return hModule;
+        Win32Exception::ThrowFromLastError();
     }
+    return hModule;
+}
 
-    Whitelist::Whitelist( std::int32_t whitelistId , std::vector<std::pair<std::wstring, std::wstring>> const& replacements )
+Whitelist::Whitelist(
+    std::int32_t whitelistId,
+    std::vector<std::pair<std::wstring, std::wstring>> const& replacements)
+{
+    using namespace std::placeholders;
+    HMODULE hMod = GetCurrentModule();
+    HRSRC resourceHandle =
+        ::FindResource(hMod, MAKEINTRESOURCEW(whitelistId), L"WHITELIST");
+    if (resourceHandle == 0)
     {
-        using namespace std::placeholders;
-        HMODULE hMod = GetCurrentModule();
-        HRSRC resourceHandle = ::FindResource(hMod, MAKEINTRESOURCEW(whitelistId), L"WHITELIST");
-        if (resourceHandle == 0)
-        {
-            Win32Exception::ThrowFromLastError();
-        }
-        HGLOBAL resourceGlobal = ::LoadResource(hMod, resourceHandle);
-        if (resourceGlobal == 0)
-        {
-            Win32Exception::ThrowFromLastError();
-        }
-        void * resourceData = ::LockResource(resourceGlobal);
-        if (resourceData == 0)
-        {
-            Win32Exception::ThrowFromLastError();
-        }
-        wchar_t const* resourceDataCasted = static_cast<wchar_t const*>(resourceData);
-        DWORD resourceLen = ::SizeofResource(hMod, resourceHandle);
-        auto sourceRange = boost::make_iterator_range(resourceDataCasted, resourceDataCasted + (resourceLen / sizeof(wchar_t)));
-        boost::algorithm::split(innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
-        std::locale loc;
-        std::for_each(innards.begin(), innards.end(), [&] (std::wstring &x) { boost::algorithm::to_lower(x, loc); });
-        std::for_each(innards.begin(), innards.end(), [&] (std::wstring &a) {
-            std::for_each(replacements.begin(), replacements.end(), [&] (std::pair<std::wstring, std::wstring> const&b) {
-                if (boost::algorithm::istarts_with(a, b.first, loc))
-                {
-                    a.replace(a.begin(), a.begin() + b.first.size(), b.second);
-                }
-            });
+        Win32Exception::ThrowFromLastError();
+    }
+    HGLOBAL resourceGlobal = ::LoadResource(hMod, resourceHandle);
+    if (resourceGlobal == 0)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+    void* resourceData = ::LockResource(resourceGlobal);
+    if (resourceData == 0)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+    wchar_t const* resourceDataCasted =
+        static_cast<wchar_t const*>(resourceData);
+    DWORD resourceLen = ::SizeofResource(hMod, resourceHandle);
+    auto sourceRange = boost::make_iterator_range(
+        resourceDataCasted,
+        resourceDataCasted + (resourceLen / sizeof(wchar_t)));
+    boost::algorithm::split(
+        innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
+    std::locale loc;
+    std::for_each(innards.begin(), innards.end(), [&](std::wstring & x) {
+        boost::algorithm::to_lower(x, loc);
+    });
+    std::for_each(innards.begin(), innards.end(), [&](std::wstring & a) {
+        std::for_each(replacements.begin(),
+                      replacements.end(),
+                      [&](std::pair<std::wstring, std::wstring> const & b) {
+            if (boost::algorithm::istarts_with(a, b.first, loc))
+            {
+                a.replace(a.begin(), a.begin() + b.first.size(), b.second);
+            }
         });
-        std::sort(innards.begin(), innards.end());
-    }
+    });
+    std::sort(innards.begin(), innards.end());
+}
 
-    bool Whitelist::IsOnWhitelist( std::wstring checked ) const
-    {
-        boost::algorithm::to_lower(checked);
-        return std::binary_search(innards.begin(), innards.end(), checked);
-    }
+bool Whitelist::IsOnWhitelist(std::wstring checked) const
+{
+    boost::algorithm::to_lower(checked);
+    return std::binary_search(innards.begin(), innards.end(), checked);
+}
 
-    void Whitelist::PrintAll( std::wostream & str ) const
-    {
-        std::copy(innards.begin(), innards.end(), std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
-    }
-
+void Whitelist::PrintAll(std::wostream& str) const
+{
+    std::copy(innards.begin(),
+              innards.end(),
+              std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
+}
 }

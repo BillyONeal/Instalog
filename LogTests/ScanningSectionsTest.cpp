@@ -25,7 +25,10 @@ struct BaseSectionsTest : public testing::Test
 struct RunningProcessesTest : public BaseSectionsTest
 {
     RunningProcesses rp;
-    RunningProcessesTest() { def = &rp; }
+    RunningProcessesTest()
+    {
+        def = &rp;
+    }
 };
 
 TEST_F(RunningProcessesTest, CommandIsrunningprocesses)
@@ -43,7 +46,8 @@ TEST_F(RunningProcessesTest, PriorityIsScanning)
     ASSERT_EQ(SCANNING, rp.GetPriority());
 }
 
-inline bool test_icontains(std::wstring const& haystack, std::wstring const& needle)
+inline bool test_icontains(std::wstring const& haystack,
+                           std::wstring const& needle)
 {
     return boost::algorithm::icontains(haystack, needle);
 }
@@ -71,13 +75,17 @@ TEST_F(RunningProcessesTest, TestsDoNotHaveFullLine)
 TEST_F(RunningProcessesTest, NtoskrnlNotPresent)
 {
     Go();
-    ASSERT_FALSE(boost::algorithm::contains(ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
+    ASSERT_FALSE(boost::algorithm::contains(
+        ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
 }
 
 struct ServicesDriversTest : public BaseSectionsTest
 {
     ServicesDrivers sd;
-    ServicesDriversTest() { def = &sd; }
+    ServicesDriversTest()
+    {
+        def = &sd;
+    }
 };
 
 TEST_F(ServicesDriversTest, ScriptCommandIsCorrect)
@@ -99,20 +107,27 @@ TEST_F(ServicesDriversTest, ActuallyGotOutput)
 TEST_F(ServicesDriversTest, TcpipWhitelisted)
 {
     Go();
-    ASSERT_FALSE(boost::algorithm::contains(ss.str(),
+    ASSERT_FALSE(boost::algorithm::contains(
+        ss.str(),
         L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
 }
 
-TEST_F(ServicesDriversTest, RpcSsSvchost) 
+TEST_F(ServicesDriversTest, RpcSsSvchost)
 {
     Go();
-    ASSERT_TRUE(boost::algorithm::contains(ss.str(), L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll")) << L"This will fail if RpcSs is not configured to auto-start or is not running";
+    ASSERT_TRUE(boost::algorithm::contains(
+        ss.str(),
+        L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"))
+        << L"This will fail if RpcSs is not configured to auto-start or is not running";
 }
 
 struct EventViewerTest : public BaseSectionsTest
 {
     EventViewer ev;
-    EventViewerTest() { def = &ev; }
+    EventViewerTest()
+    {
+        def = &ev;
+    }
 };
 
 TEST_F(EventViewerTest, ScriptCommandIsCorrect)

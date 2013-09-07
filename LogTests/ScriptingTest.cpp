@@ -12,7 +12,9 @@ using namespace Instalog;
 
 struct TestingSectionDefinition : public ISectionDefinition
 {
-    virtual void Execute(std::wostream& logOutput, ScriptSection const& section, std::vector<std::wstring> const& vect) const
+    virtual void Execute(std::wostream& logOutput,
+                         ScriptSection const& section,
+                         std::vector<std::wstring> const& vect) const
     {
         std::wstring vectWritten;
         if (vect.size())
@@ -32,7 +34,9 @@ struct TestingSectionDefinition : public ISectionDefinition
             vectWritten.append(L"}");
         }
 
-        logOutput << section.GetDefinition().GetName() << L" section has.GetArgument() \"" << section.GetArgument() << L"\" and options \n" << vectWritten << std::endl;
+        logOutput << section.GetDefinition().GetName()
+                  << L" section has.GetArgument() \"" << section.GetArgument()
+                  << L"\" and options \n" << vectWritten << std::endl;
     }
 };
 
@@ -71,8 +75,8 @@ struct TwoSectionDefinition : public TestingSectionDefinition
 struct ScriptFactoryTest : public ::testing::Test
 {
     ScriptParser dispatcher;
-    ISectionDefinition *one;
-    ISectionDefinition *two;
+    ISectionDefinition* one;
+    ISectionDefinition* two;
     virtual void SetUp()
     {
         std::unique_ptr<ISectionDefinition> oneTemp(new OneSectionDefinition);
@@ -82,7 +86,6 @@ struct ScriptFactoryTest : public ::testing::Test
         dispatcher.AddSectionDefinition(std::move(oneTemp));
         dispatcher.AddSectionDefinition(std::move(twoTemp));
     }
-
 };
 
 TEST_F(ScriptFactoryTest, StartingWhitespace)
@@ -226,30 +229,31 @@ TEST_F(ScriptFactoryTest, Merges)
 
 TEST_F(ScriptFactoryTest, UnknownThrows)
 {
-    const wchar_t example[] =
-        L":unknown";
-    EXPECT_THROW(Script s(dispatcher.Parse(example)), UnknownScriptSectionException);
+    const wchar_t example[] = L":unknown";
+    EXPECT_THROW(Script s(dispatcher.Parse(example)),
+                 UnknownScriptSectionException);
 }
 
 TEST_F(ScriptFactoryTest, EmptyThrows)
 {
-    const wchar_t example[] =
-        L":";
-    EXPECT_THROW(Script s(dispatcher.Parse(example)), UnknownScriptSectionException);
+    const wchar_t example[] = L":";
+    EXPECT_THROW(Script s(dispatcher.Parse(example)),
+                 UnknownScriptSectionException);
 }
 
 TEST(ScriptTest, CanExecute)
 {
     ScriptParser dispatcher;
-    ISectionDefinition *one;
-    ISectionDefinition *two;
+    ISectionDefinition* one;
+    ISectionDefinition* two;
     std::unique_ptr<ISectionDefinition> oneTemp(new OneSectionDefinition);
     one = oneTemp.get();
     std::unique_ptr<ISectionDefinition> twoTemp(new TwoSectionDefinition);
     two = twoTemp.get();
     dispatcher.AddSectionDefinition(std::move(oneTemp));
     dispatcher.AddSectionDefinition(std::move(twoTemp));
-    Script s(dispatcher.Parse(L":one argArg\nOptionOne\n:TwOsIeS\nOptionTwo\nOptionThree"));
+    Script s(dispatcher.Parse(
+        L":one argArg\nOptionOne\n:TwOsIeS\nOptionTwo\nOptionThree"));
     std::unique_ptr<IUserInterface> ui(new DoNothingUserInterface);
     std::wostringstream logOutput;
     s.Run(logOutput, ui.get());

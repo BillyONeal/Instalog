@@ -13,39 +13,40 @@
 #include "IlTrace.hpp"
 #include "Com.hpp"
 
-namespace Instalog { namespace SystemFacades {
+namespace Instalog
+{
+namespace SystemFacades
+{
 
 static const wchar_t avCode[] = L"AV";
 static const wchar_t fwCode[] = L"FW";
 static const wchar_t asCode[] = L"AS";
 
-static void SecCenterProductCheck( 
-    UniqueComPtr<IWbemServices>& securityCenter, 
-    BSTR productToCheck, 
-    std::vector<SecurityProduct> &result, 
-    wchar_t const* twoCode,
-    wchar_t const* enabledPropertyName,
-    wchar_t const* upToDatePropertyName = nullptr) 
+static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
+                                  BSTR productToCheck,
+                                  std::vector<SecurityProduct>& result,
+                                  wchar_t const* twoCode,
+                                  wchar_t const* enabledPropertyName,
+                                  wchar_t const* upToDatePropertyName = nullptr)
 {
     HRESULT hr;
     UniqueComPtr<IEnumWbemClassObject> objEnumerator;
-    hr = securityCenter->CreateInstanceEnum(
-        productToCheck,
-        WBEM_FLAG_FORWARD_ONLY,
-        0,
-        objEnumerator.PassAsOutParameter()
-        );
+    hr = securityCenter->CreateInstanceEnum(productToCheck,
+                                            WBEM_FLAG_FORWARD_ONLY,
+                                            0,
+                                            objEnumerator.PassAsOutParameter());
     if (hr == WBEM_E_INVALID_CLASS)
     {
-        return; //Expected error on XP x64 machines
+        return; // Expected error on XP x64 machines
     }
     ThrowIfFailed(hr);
     ULONG returnCount = 0;
     INSTALOG_TRACE(L"Enumerating...");
-    for(;;)
+    for (;;)
     {
         UniqueComPtr<IWbemClassObject> obj;
-        hr = objEnumerator->Next(WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
+        hr = objEnumerator->Next(
+            WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
         INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
         if (hr == WBEM_S_FALSE)
         {
@@ -61,21 +62,26 @@ static void SecCenterProductCheck(
         }
         INSTALOG_TRACE(L"Getting instanceGuid");
         UniqueVariant variant;
-        ThrowIfFailed(obj->Get(L"instanceGuid",0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(
+            obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring guid(variant.AsString());
         INSTALOG_TRACE(L"Getting displayName");
-        ThrowIfFailed(obj->Get(L"displayName",0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(
+            obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring name(variant.AsString());
         INSTALOG_TRACE(name);
 
         INSTALOG_TRACE(L"Getting " << enabledPropertyName);
-        ThrowIfFailed(obj->Get(enabledPropertyName,0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(obj->Get(
+            enabledPropertyName, 0, variant.PassAsOutParameter(), 0, 0));
         bool productEnabled = variant.AsBool();
-        SecurityProduct::UpdateStatusValues updateStatus = SecurityProduct::UpdateNotRequired;
+        SecurityProduct::UpdateStatusValues updateStatus =
+            SecurityProduct::UpdateNotRequired;
         if (upToDatePropertyName != nullptr)
         {
             INSTALOG_TRACE(L"Getting " << upToDatePropertyName);
-            ThrowIfFailed(obj->Get(upToDatePropertyName, 0, variant.PassAsOutParameter(), 0, 0));
+            ThrowIfFailed(obj->Get(
+                upToDatePropertyName, 0, variant.PassAsOutParameter(), 0, 0));
             if (variant.AsBool())
             {
                 updateStatus = SecurityProduct::UpToDate;
@@ -85,34 +91,32 @@ static void SecCenterProductCheck(
                 updateStatus = SecurityProduct::OutOfDate;
             }
         }
-        result.push_back(SecurityProduct(
-            std::move(name),
-            std::move(guid),
-            productEnabled,
-            updateStatus,
-            twoCode));
+        result.push_back(SecurityProduct(std::move(name),
+                                         std::move(guid),
+                                         productEnabled,
+                                         updateStatus,
+                                         twoCode));
     }
 }
 
-static void SecCenter2ProductCheck( 
-    UniqueComPtr<IWbemServices>& securityCenter2, 
-    BSTR productToCheck, 
-    std::vector<SecurityProduct> &result, 
-    const wchar_t * twoCode ) 
+static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
+                                   BSTR productToCheck,
+                                   std::vector<SecurityProduct>& result,
+                                   const wchar_t* twoCode)
 {
     UniqueComPtr<IEnumWbemClassObject> objEnumerator;
     ThrowIfFailed(securityCenter2->CreateInstanceEnum(
         productToCheck,
         WBEM_FLAG_FORWARD_ONLY,
         0,
-        objEnumerator.PassAsOutParameter()
-        ));
+        objEnumerator.PassAsOutParameter()));
     ULONG returnCount = 0;
-    for(;;)
+    for (;;)
     {
         HRESULT hr;
         UniqueComPtr<IWbemClassObject> obj;
-        hr = objEnumerator->Next(WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
+        hr = objEnumerator->Next(
+            WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
         INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
         if (hr == WBEM_S_FALSE)
         {
@@ -128,25 +132,29 @@ static void SecCenter2ProductCheck(
         }
         UniqueVariant variant;
         INSTALOG_TRACE(L"Getting instanceGuid");
-        ThrowIfFailed(obj->Get(L"instanceGuid",0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(
+            obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring guid(variant.AsString());
         INSTALOG_TRACE(L"Getting displayName");
-        ThrowIfFailed(obj->Get(L"displayName",0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(
+            obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring name(variant.AsString());
         INSTALOG_TRACE(name);
         INSTALOG_TRACE(L"Getting productState");
-        ThrowIfFailed(obj->Get(L"productState",0,variant.PassAsOutParameter(),0,0));
+        ThrowIfFailed(
+            obj->Get(L"productState", 0, variant.PassAsOutParameter(), 0, 0));
         UINT productState = variant.AsUint();
-        INSTALOG_TRACE(L"ProductState is 0x" << std::hex << productState << std::dec);
-        char productType = static_cast<char>(
-            (productState & 0x00FF0000ul) >> 16);
-        char enabledBits = static_cast<char>(
-            (productState & 0x0000FF00ul) >> 8);
+        INSTALOG_TRACE(L"ProductState is 0x" << std::hex << productState
+                                             << std::dec);
+        char productType =
+            static_cast<char>((productState & 0x00FF0000ul) >> 16);
+        char enabledBits =
+            static_cast<char>((productState & 0x0000FF00ul) >> 8);
         char updateBits = productState & 0x000000FFul;
         SecurityProduct::UpdateStatusValues updateStatus;
         if ((productType & 2ul) == 0)
         {
-            updateStatus =  SecurityProduct::UpdateNotRequired;
+            updateStatus = SecurityProduct::UpdateNotRequired;
         }
         else
         {
@@ -159,54 +167,69 @@ static void SecCenter2ProductCheck(
                 updateStatus = SecurityProduct::OutOfDate;
             }
         }
-        result.push_back(SecurityProduct(
-            std::move(name),
-            std::move(guid),
-            enabledBits == 16,
-            updateStatus,
-            twoCode));
+        result.push_back(SecurityProduct(std::move(name),
+                                         std::move(guid),
+                                         enabledBits == 16,
+                                         updateStatus,
+                                         twoCode));
     }
 }
 
-static void CheckSecurityCenter( UniqueComPtr<IWbemServices>& wbemServices, std::vector<SecurityProduct>& result )
+static void CheckSecurityCenter(UniqueComPtr<IWbemServices>& wbemServices,
+                                std::vector<SecurityProduct>& result)
 {
     UniqueComPtr<IWbemServices> securityCenter;
     HRESULT errorCheck = wbemServices->OpenNamespace(
-        BSTR(L"SecurityCenter"),0,0,securityCenter.PassAsOutParameter(),0);
-    //On versions of Windows prior to XP SP2, there is no security center to query; so this would be
-    //an expected failure.
+        BSTR(L"SecurityCenter"), 0, 0, securityCenter.PassAsOutParameter(), 0);
+    // On versions of Windows prior to XP SP2, there is no security center to
+    // query; so this would be
+    // an expected failure.
     if (errorCheck == WBEM_E_INVALID_NAMESPACE)
     {
         return;
     }
     ThrowIfFailed(errorCheck);
     INSTALOG_TRACE(L"AntiVirusProduct");
-    SecCenterProductCheck(securityCenter, BSTR(L"AntiVirusProduct"), result, 
-        avCode, BSTR(L"onAccessScanningEnabled"), BSTR(L"productUpToDate"));
+    SecCenterProductCheck(securityCenter,
+                          BSTR(L"AntiVirusProduct"),
+                          result,
+                          avCode,
+                          BSTR(L"onAccessScanningEnabled"),
+                          BSTR(L"productUpToDate"));
     INSTALOG_TRACE(L"FireWallProduct");
-    SecCenterProductCheck(securityCenter, BSTR(L"FireWallProduct"), result,
-        fwCode, BSTR(L"enabled"));
+    SecCenterProductCheck(securityCenter,
+                          BSTR(L"FireWallProduct"),
+                          result,
+                          fwCode,
+                          BSTR(L"enabled"));
     INSTALOG_TRACE(L"AntiSpywareProduct");
-    SecCenterProductCheck(securityCenter, BSTR(L"AntiSpywareProduct"), result, 
-        asCode, BSTR(L"productEnabled"), BSTR(L"productUpToDate"));
+    SecCenterProductCheck(securityCenter,
+                          BSTR(L"AntiSpywareProduct"),
+                          result,
+                          asCode,
+                          BSTR(L"productEnabled"),
+                          BSTR(L"productUpToDate"));
 }
-static void CheckSecurityCenter2( UniqueComPtr<IWbemServices>& wbemServices,
-    std::vector<SecurityProduct>& result )
+static void CheckSecurityCenter2(UniqueComPtr<IWbemServices>& wbemServices,
+                                 std::vector<SecurityProduct>& result)
 {
     UniqueComPtr<IWbemServices> securityCenter2;
-    ThrowIfFailed(wbemServices->OpenNamespace(
-        BSTR(L"SecurityCenter2"),0,0,securityCenter2.PassAsOutParameter(),0));
+    ThrowIfFailed(
+        wbemServices->OpenNamespace(BSTR(L"SecurityCenter2"),
+                                    0,
+                                    0,
+                                    securityCenter2.PassAsOutParameter(),
+                                    0));
     INSTALOG_TRACE(L"AntiVirusProduct");
-    SecCenter2ProductCheck(securityCenter2, BSTR(L"AntiVirusProduct"), result, 
-        avCode);
+    SecCenter2ProductCheck(
+        securityCenter2, BSTR(L"AntiVirusProduct"), result, avCode);
     INSTALOG_TRACE(L"FireWallProduct");
-    SecCenter2ProductCheck(securityCenter2, BSTR(L"FireWallProduct"), result,
-        fwCode);
+    SecCenter2ProductCheck(
+        securityCenter2, BSTR(L"FireWallProduct"), result, fwCode);
     INSTALOG_TRACE(L"AntiSpywareProduct");
-    SecCenter2ProductCheck(securityCenter2, BSTR(L"AntiSpywareProduct"), result, 
-        asCode);
+    SecCenter2ProductCheck(
+        securityCenter2, BSTR(L"AntiSpywareProduct"), result, asCode);
 }
-
 
 std::vector<SecurityProduct> EnumerateSecurityProducts()
 {
@@ -225,7 +248,7 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
     CheckSecurityCenter(wbemServices, result);
     return result;
 }
-std::wostream& operator<<( std::wostream& lhs, const SecurityProduct& rhs )
+std::wostream& operator<<(std::wostream& lhs, const SecurityProduct& rhs)
 {
     lhs << rhs.GetTwoLetterPrefix() << L": " << rhs.GetName();
     if (rhs.IsEnabled())
@@ -256,8 +279,12 @@ void SecurityProduct::Delete()
 {
     UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
     UniqueComPtr<IWbemServices> securityCenter2;
-    ThrowIfFailed(wbemServices->OpenNamespace(
-        BSTR(L"SecurityCenter2"),0,0,securityCenter2.PassAsOutParameter(),0));
+    ThrowIfFailed(
+        wbemServices->OpenNamespace(BSTR(L"SecurityCenter2"),
+                                    0,
+                                    0,
+                                    securityCenter2.PassAsOutParameter(),
+                                    0));
     std::wstring path;
     if (wcscmp(GetTwoLetterPrefix(), avCode) == 0)
     {
@@ -280,8 +307,8 @@ void SecurityProduct::Delete()
     path.append(guid_);
     path.push_back(L'"');
     UniqueBstr guid(path);
-    ThrowIfFailed(securityCenter2->DeleteInstance(guid.AsInput(), 0, nullptr, nullptr));
+    ThrowIfFailed(
+        securityCenter2->DeleteInstance(guid.AsInput(), 0, nullptr, nullptr));
 }
-
-}}
-
+}
+}

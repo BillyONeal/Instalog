@@ -29,7 +29,7 @@
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #pragma warning(push)
-#pragma warning(disable: 4512)
+#pragma warning(disable : 4512)
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/algorithm/string.hpp>

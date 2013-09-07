@@ -83,9 +83,6 @@
     <ClCompile Include="Com.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SharpStreams.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
@@ -173,9 +170,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IlTrace.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SharpStreams.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MakeUnique.hpp">

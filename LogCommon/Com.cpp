@@ -1,21 +1,24 @@
 #include "pch.hpp"
 #include "Com.hpp"
 
-namespace Instalog { namespace SystemFacades {
+namespace Instalog
+{
+namespace SystemFacades
+{
 
 Com::Com(DWORD threadingType /* = COINIT_APARTMENTTHREADED */)
 {
     ThrowIfFailed(::CoInitializeEx(nullptr, threadingType));
     ThrowIfFailed(::CoInitializeSecurity(
-        NULL,     
-        -1,      // COM negotiates service                  
-        NULL,    // Authentication services
-        NULL,    // Reserved
-        RPC_C_AUTHN_LEVEL_DEFAULT,    // authentication
-        RPC_C_IMP_LEVEL_IMPERSONATE,  // Impersonation
-        NULL,             // Authentication info 
-        EOAC_NONE,        // Additional capabilities
-        NULL              // Reserved
+        NULL,
+        -1,                          // COM negotiates service
+        NULL,                        // Authentication services
+        NULL,                        // Reserved
+        RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication
+        RPC_C_IMP_LEVEL_IMPERSONATE, // Impersonation
+        NULL,                        // Authentication info
+        EOAC_NONE,                   // Additional capabilities
+        NULL                         // Reserved
         ));
 }
 
@@ -25,9 +28,10 @@ Com::~Com()
 }
 
 UniqueBstr::UniqueBstr() : wrapped(nullptr)
-{ }
+{
+}
 
-UniqueBstr::UniqueBstr( std::wstring const& source )
+UniqueBstr::UniqueBstr(std::wstring const& source)
 {
     if (source.empty())
     {
@@ -44,7 +48,7 @@ UniqueBstr::UniqueBstr( std::wstring const& source )
     }
 }
 
-UniqueBstr::UniqueBstr( UniqueBstr && other ) : wrapped(other.wrapped)
+UniqueBstr::UniqueBstr(UniqueBstr&& other) : wrapped(other.wrapped)
 {
     other.wrapped = nullptr;
 }
@@ -77,8 +81,10 @@ UniqueBstr::~UniqueBstr()
 }
 
 #pragma warning(push)
-#pragma warning(disable: 4189) // local variable is initialized but not referenced
-// (The assert gets compiled out in release mode leading to the spurrious warning)
+#pragma warning(disable                                                        \
+                : 4189) // local variable is initialized but not referenced
+// (The assert gets compiled out in release mode leading to the spurrious
+// warning)
 void UniqueVariant::Destroy()
 {
     HRESULT result = ::VariantClear(&wrappedVariant);
@@ -111,7 +117,8 @@ VARIANT const& UniqueVariant::Get() const
 std::wstring UniqueVariant::AsString() const
 {
     UniqueVariant bstrVariant;
-    ThrowIfFailed(::VariantChangeType(bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR));
+    ThrowIfFailed(::VariantChangeType(
+        bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR));
     BSTR asBstr = bstrVariant.Get().bstrVal;
     return std::wstring(asBstr, ::SysStringLen(asBstr));
 }
@@ -119,28 +126,34 @@ std::wstring UniqueVariant::AsString() const
 UINT UniqueVariant::AsUint() const
 {
     UniqueVariant uintVariant;
-    ThrowIfFailed(::VariantChangeType(uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT));
+    ThrowIfFailed(::VariantChangeType(
+        uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT));
     return uintVariant.Get().uintVal;
 }
 
 ULONG UniqueVariant::AsUlong() const
 {
     UniqueVariant ulongVariant;
-    ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4));
+    ThrowIfFailed(::VariantChangeType(
+        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4));
     return ulongVariant.Get().ulVal;
 }
 
 ULONGLONG UniqueVariant::AsUlonglong() const
 {
     UniqueVariant ulongVariant;
-    ThrowIfFailed(::VariantChangeType(ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8));
+    ThrowIfFailed(::VariantChangeType(
+        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8));
     return ulongVariant.Get().ullVal;
 }
 
 bool UniqueVariant::AsBool() const
 {
     UniqueVariant booleanVariant;
-    ThrowIfFailed(::VariantChangeType(booleanVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BOOL));
+    ThrowIfFailed(::VariantChangeType(booleanVariant.PassAsOutParameter(),
+                                      &this->wrappedVariant,
+                                      0,
+                                      VT_BOOL));
     return booleanVariant.Get().boolVal != 0;
 }
 
@@ -153,5 +166,5 @@ UniqueVariant::~UniqueVariant()
 {
     this->Destroy();
 }
-
-}} // namespace Instalog::SystemFacades
+}
+} // namespace Instalog::SystemFacades

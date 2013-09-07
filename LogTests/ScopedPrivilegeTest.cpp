@@ -16,10 +16,15 @@ static bool HasPrivilege(LPCWSTR privilegeName)
     DWORD bufferLength = 1024;
     std::vector<unsigned char> buff;
     DWORD lastError = ERROR_INSUFFICIENT_BUFFER;
-    while(lastError == ERROR_INSUFFICIENT_BUFFER)
+    while (lastError == ERROR_INSUFFICIENT_BUFFER)
     {
-        buff.resize(static_cast<std::vector<unsigned char>::size_type>(bufferLength));
-        if (::GetTokenInformation(procToken, TokenPrivileges, &buff[0], bufferLength, &bufferLength) == 0)
+        buff.resize(
+            static_cast<std::vector<unsigned char>::size_type>(bufferLength));
+        if (::GetTokenInformation(procToken,
+                                  TokenPrivileges,
+                                  &buff[0],
+                                  bufferLength,
+                                  &bufferLength) == 0)
         {
             lastError = ::GetLastError();
         }
@@ -32,7 +37,8 @@ static bool HasPrivilege(LPCWSTR privilegeName)
     {
         Win32Exception::Throw(lastError);
     }
-    TOKEN_PRIVILEGES const* privStruct = reinterpret_cast<TOKEN_PRIVILEGES*>(&buff[0]);
+    TOKEN_PRIVILEGES const* privStruct =
+        reinterpret_cast<TOKEN_PRIVILEGES*>(&buff[0]);
     LUID privValue;
     if (::LookupPrivilegeValueW(nullptr, privilegeName, &privValue) == 0)
     {
@@ -40,8 +46,10 @@ static bool HasPrivilege(LPCWSTR privilegeName)
     }
     for (std::size_t idx = 0; idx < privStruct->PrivilegeCount; ++idx)
     {
-        LUID_AND_ATTRIBUTES const& currentPrivilege = privStruct->Privileges[idx];
-        if (currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED && currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED_BY_DEFAULT)
+        LUID_AND_ATTRIBUTES const& currentPrivilege =
+            privStruct->Privileges[idx];
+        if (currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED &&
+            currentPrivilege.Attributes != SE_PRIVILEGE_ENABLED_BY_DEFAULT)
         {
             continue;
         }

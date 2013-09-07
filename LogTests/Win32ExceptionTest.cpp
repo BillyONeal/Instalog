@@ -5,7 +5,7 @@
 #include "pch.hpp"
 #include "../LogCommon/Win32Exception.hpp"
 
-#pragma warning(disable:4702) // Unreachable code
+#pragma warning(disable : 4702) // Unreachable code
 
 using namespace Instalog::SystemFacades;
 
@@ -48,18 +48,21 @@ TEST(Win32Exception, CanGetErrorCode)
 
 TEST(Win32Exception, CanThrowFromErrorCode)
 {
-    ASSERT_THROW(Win32Exception::Throw(ERROR_ACCESS_DENIED), ErrorAccessDeniedException);
+    ASSERT_THROW(Win32Exception::Throw(ERROR_ACCESS_DENIED),
+                 ErrorAccessDeniedException);
 }
 
 TEST(Win32Exception, CanThrowFromLastError)
 {
     ::SetLastError(ERROR_ACCESS_DENIED);
-    ASSERT_THROW(Win32Exception::ThrowFromLastError(), ErrorAccessDeniedException);
+    ASSERT_THROW(Win32Exception::ThrowFromLastError(),
+                 ErrorAccessDeniedException);
 }
 
 TEST(Win32Exception, CanThrowFromNtError)
 {
-    ASSERT_THROW(Win32Exception::ThrowFromNtError(0xC0000022), ErrorAccessDeniedException);
+    ASSERT_THROW(Win32Exception::ThrowFromNtError(0xC0000022),
+                 ErrorAccessDeniedException);
 }
 
 TEST(Win32Exception, CanThrowGenericException)

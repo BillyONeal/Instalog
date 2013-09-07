@@ -22,7 +22,8 @@ TEST(Process, CanEnumerateAndCompareToProcessIds)
 {
     std::size_t currentProcess = ::GetCurrentProcessId();
     ProcessEnumerator enumerator;
-    ASSERT_NE(std::find(enumerator.begin(), enumerator.end(), currentProcess), enumerator.end());
+    ASSERT_NE(std::find(enumerator.begin(), enumerator.end(), currentProcess),
+              enumerator.end());
 }
 
 TEST(Process, CanRunConcurrentSearches)
@@ -31,7 +32,9 @@ TEST(Process, CanRunConcurrentSearches)
     std::vector<Process> processesA;
     std::vector<Process> processesB;
     ProcessEnumerator::iterator itDoubled = enumerator.begin();
-    for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+    for (ProcessEnumerator::iterator it = enumerator.begin();
+         it != enumerator.end();
+         ++it)
     {
         processesA.push_back(*it);
         if (itDoubled != enumerator.end())
@@ -56,17 +59,20 @@ TEST(Process, CanGetProcessExecutables)
     std::wstring baseName = currentProcessExecutable;
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
-    for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+    for (ProcessEnumerator::iterator it = enumerator.begin();
+         it != enumerator.end();
+         ++it)
     {
         try
         {
-            if (it->GetExecutablePath().get() == baseName) 
+            if (it->GetExecutablePath().get() == baseName)
             {
                 couldFindMyOwnProcess = true;
             }
         }
         catch (ErrorAccessDeniedException const&)
-        { } //Not much we can really do about these.
+        {
+        } // Not much we can really do about these.
     }
     ASSERT_TRUE(couldFindMyOwnProcess);
 }
@@ -77,17 +83,20 @@ TEST(Process, CanGetProcessCommandLines)
     std::wstring baseName = currentProcessCmdLine;
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
-    for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+    for (ProcessEnumerator::iterator it = enumerator.begin();
+         it != enumerator.end();
+         ++it)
     {
         try
         {
-            if (it->GetCmdLine().get() == baseName) 
+            if (it->GetCmdLine().get() == baseName)
             {
                 couldFindMyOwnProcess = true;
             }
         }
         catch (ErrorAccessDeniedException const&)
-        { } //Not much we can really do about these.
+        {
+        } // Not much we can really do about these.
     }
     ASSERT_TRUE(couldFindMyOwnProcess);
 }
@@ -95,11 +104,14 @@ TEST(Process, CanGetProcessCommandLines)
 TEST(Process, NtoskrnlIsInTheBuilding)
 {
     ProcessEnumerator enumerator;
-    for (ProcessEnumerator::iterator it = enumerator.begin(); it != enumerator.end(); ++it)
+    for (ProcessEnumerator::iterator it = enumerator.begin();
+         it != enumerator.end();
+         ++it)
     {
-        if (it->GetProcessId() == 4) 
+        if (it->GetProcessId() == 4)
         {
-            ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe", it->GetExecutablePath().get()));
+            ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe",
+                                       it->GetExecutablePath().get()));
         }
     }
 }
