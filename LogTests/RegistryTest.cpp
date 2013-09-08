@@ -223,16 +223,14 @@ TEST(Registry, CanGetSubKeysOpened)
         GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
     std::vector<RegistryKey> subkeys(
         systemKey.EnumerateSubKeys(KEY_QUERY_VALUE));
-    std::vector<std::wstring> names(subkeys.size());
-    std::transform(subkeys.cbegin(),
-                   subkeys.cend(),
-                   names.begin(),
-                       [](RegistryKey const & p)->std::wstring {
+    std::vector<std::wstring> names;
+    for (RegistryKey const& p : subkeys)
+    {
         std::wstring name(p.GetName());
-        name.erase(name.begin(),
-                   std::find(name.rbegin(), name.rend(), L'\\').base());
-        return std::move(name);
-    });
+        names.emplace_back(std::find(name.rbegin(), name.rend(), L'\\').base(),
+                           name.end());
+    }
+
     std::sort(names.begin(), names.end());
     CheckVectorContainsUserSubkeys(names);
 }
@@ -533,14 +531,21 @@ TEST_F(RegistryValueTest, StringizeWorks)
     EXPECT_TRUE(
         std::equal(stringized[0].cbegin(), stringized[0].cend(), exampleData));
     EXPECT_EQ(
-        stringized[1],
-        L"hex:65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20" L",00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00" L",6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65" L",00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00" L",00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
+        stringized[1], L"hex:65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
+        L",00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00"
+        L",6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65"
+        L",00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00"
+        L",00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
     ASSERT_LE(stringized[2].size(), _countof(exampleData));
     EXPECT_TRUE(
         std::equal(stringized[2].cbegin(), stringized[2].cend(), exampleData));
     EXPECT_EQ(
-        stringized[3],
-        L"hex(0):65,00,78,00,61,00,6D,00,70,00,6C,00,65,00" L",20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61" L",00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00" L",65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20" L",00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
+        stringized[3], L"hex(0):65,00,78,00,61,00,6D,00,70,00,6C,00,65,00"
+        L",20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61"
+        L",00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00"
+        L",65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
+        L",00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00"
+        );
     EXPECT_EQ(stringized[4], L"dword:DEADBEEF");
     EXPECT_EQ(stringized[5], L"dword-be:DEADBEEF");
     ASSERT_LE(stringized[6].size(), _countof(exampleLongData));
