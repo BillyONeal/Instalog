@@ -877,7 +877,7 @@ static void ProcessIeScript(std::wostream& out,
         GeneralEscape(name, L'#', L']');
         GeneralEscape(command);
         out << L"IeScript" << suffix << L": [" << std::move(name) << L"] "
-            << std::move(command) << L'\n';
+            << command << L'\n';
     }
     catch (ErrorFileNotFoundException const&)
     {

@@ -681,7 +681,7 @@ void InstalledPrograms::Enumerate(std::wostream& logOutput,
         {
             currentEntry.push_back(L'\n');
         }
-        entries.emplace_back(std::move(currentEntry));
+        entries.push_back(std::move(currentEntry));
     }
     std::sort(entries.begin(),
               entries.end(),

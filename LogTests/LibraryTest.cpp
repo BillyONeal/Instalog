@@ -44,7 +44,7 @@ TEST(FormattedMessageLoader, DhcpClientArguments)
 {
     DWORD messageId = 50037;
     std::vector<std::wstring> arguments;
-    arguments.push_back(L"1");
+    arguments.emplace_back(L"1");
 
     FormattedMessageLoader dhcpcore(L"C:\\Windows\\System32\\dhcpcore.dll");
     std::wstring message = dhcpcore.GetFormattedMessage(messageId, arguments);

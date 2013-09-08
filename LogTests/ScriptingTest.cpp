@@ -138,8 +138,8 @@ TEST_F(ScriptFactoryTest, ContainedWhitespace)
     ASSERT_NE(s.GetSections().end(), it);
     ASSERT_EQ(L"", it->first.GetArgument());
     std::vector<std::wstring> answer;
-    answer.push_back(L"example");
-    answer.push_back(L"example2");
+    answer.emplace_back(L"example");
+    answer.emplace_back(L"example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
@@ -160,7 +160,7 @@ TEST_F(ScriptFactoryTest, ArgumentsParsed)
     ASSERT_NE(s.GetSections().end(), it);
     ASSERT_EQ(L"example", it->first.GetArgument());
     std::vector<std::wstring> answer;
-    answer.push_back(L"example2");
+    answer.emplace_back(L"example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
@@ -181,7 +181,7 @@ TEST_F(ScriptFactoryTest, ArgumentsWhitespaceSignificant)
     ASSERT_NE(s.GetSections().end(), it);
     ASSERT_EQ(L"   example", it->first.GetArgument());
     std::vector<std::wstring> answer;
-    answer.push_back(L"example2");
+    answer.emplace_back(L"example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
@@ -214,11 +214,11 @@ TEST_F(ScriptFactoryTest, Merges)
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
     std::vector<std::wstring> answer;
-    answer.push_back(L"example");
-    answer.push_back(L"example2");
-    answer.push_back(L"merged");
-    answer.push_back(L"merged");
-    answer.push_back(L"merged2");
+    answer.emplace_back(L"example");
+    answer.emplace_back(L"example2");
+    answer.emplace_back(L"merged");
+    answer.emplace_back(L"merged");
+    answer.emplace_back(L"merged2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);

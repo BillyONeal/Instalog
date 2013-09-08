@@ -25,7 +25,7 @@ static std::wstring GenerateTestDirectory()
     result = Instalog::Path::Append(std::move(result), L"InstalogTesting");
     ::CreateDirectoryW(result.c_str(), 0);
     result.push_back(L'\\');
-    return std::move(result);
+    return result;
 }
 
 static std::wstring GetTestPath(std::wstring const& suffix)
@@ -33,7 +33,7 @@ static std::wstring GetTestPath(std::wstring const& suffix)
     static auto startingDirectory = ::GenerateTestDirectory();
     auto result = startingDirectory;
     result.append(suffix);
-    return std::move(result);
+    return result;
 }
 
 TEST(File, CanOpenDefault)

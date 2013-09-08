@@ -49,7 +49,7 @@ OldEventLogEntry::OldEventLogEntry(PEVENTLOGRECORD pRecord)
          strings.size() < pRecord->NumStrings;
          stringPtr += strings.back().length() + 1)
     {
-        strings.push_back(std::wstring(stringPtr));
+        strings.emplace_back(stringPtr);
     }
 }
 
@@ -514,7 +514,7 @@ std::wstring XmlEventLogEntry::GetSource()
         {
             response.erase(response.begin(), response.begin() + 18);
         }
-        return std::move(response);
+        return response;
     }
 }
 
@@ -561,7 +561,7 @@ std::vector<std::unique_ptr<EventLogEntry>> XmlEventLog::ReadEvents()
         Win32Exception::Throw(errorStatus);
     }
 
-    return std::move(eventLogEntries);
+    return eventLogEntries;
 }
 
 EventLogEntry::EventLogEntry( EventLogEntry && e )

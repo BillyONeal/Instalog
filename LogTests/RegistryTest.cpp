@@ -32,7 +32,7 @@ static std::wstring GetCurrentUserRelativeKeyPath(wchar_t const* other)
     resultStr.append(result);
     ::LocalFree(result);
     resultStr.append(other);
-    return std::move(resultStr);
+    return resultStr;
 }
 
 TEST(Registry, IsDefaultConstructable)
@@ -161,11 +161,11 @@ TEST(Registry, GetsRightSizeInformation)
 static std::vector<std::wstring> GetDefaultUserKeySubkeys()
 {
     std::vector<std::wstring> defaultItems;
-    defaultItems.push_back(L"Console");
-    defaultItems.push_back(L"Environment");
-    defaultItems.push_back(L"Software");
+    defaultItems.emplace_back(L"Console");
+    defaultItems.emplace_back(L"Environment");
+    defaultItems.emplace_back(L"Software");
     std::sort(defaultItems.begin(), defaultItems.end());
-    return std::move(defaultItems);
+    return defaultItems;
 }
 
 static void CheckVectorContainsUserSubkeys(std::vector<std::wstring> const& vec)
@@ -426,7 +426,7 @@ struct RegistryValueTest : public testing::Test
             keyUnderTest.EnumerateValues());
         std::random_shuffle(resultValues.begin(), resultValues.end());
         std::sort(resultValues.begin(), resultValues.end());
-        return std::move(resultValues);
+        return resultValues;
     }
 };
 

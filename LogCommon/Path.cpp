@@ -23,7 +23,7 @@ std::wstring Append(std::wstring path, std::wstring const& more)
     }
     else if (path.size() > 0 && more.size() == 0)
     {
-        return std::move(path);
+        return path;
     }
     else if (path.size() == 0 && more.size() > 0)
     {
@@ -37,18 +37,18 @@ std::wstring Append(std::wstring path, std::wstring const& more)
         if (*pathend == L'\\' && *morebegin == L'\\')
         {
             path.append(++morebegin, more.end());
-            return std::move(path);
+            return path;
         }
         else if (*pathend == L'\\' || *morebegin == L'\\')
         {
             path.append(more);
-            return std::move(path);
+            return path;
         }
         else
         {
             path.push_back(L'\\');
             path.append(more);
-            return std::move(path);
+            return path;
         }
     }
 }
@@ -112,7 +112,7 @@ getSplitEnvironmentVariable(wchar_t const* variable)
     UINT len = ::GetEnvironmentVariableW(variable, buf, 32767);
     auto range = boost::make_iterator_range(buf, buf + len);
     boost::split(splitVar, range, std::bind1st(std::equal_to<wchar_t>(), L';'));
-    return std::move(splitVar);
+    return splitVar;
 }
 
 static std::vector<std::wstring> getSplitPath()
@@ -368,7 +368,7 @@ std::wstring ExpandEnvStrings(std::wstring const& input)
         Win32Exception::ThrowFromLastError();
     }
     result.resize(static_cast<std::size_t>(errorCheck) - 1);
-    return std::move(result);
+    return result;
 }
 
 __declspec(noreturn) static inline void throw_length_error()

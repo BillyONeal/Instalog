@@ -251,7 +251,7 @@ std::vector<Service> ServiceControlManager::GetServices() const
         }
     } while (status == false && error == ERROR_MORE_DATA);
 
-    return std::move(services);
+    return services;
 }
 }
 }

@@ -91,11 +91,11 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
                 updateStatus = SecurityProduct::OutOfDate;
             }
         }
-        result.push_back(SecurityProduct(std::move(name),
-                                         std::move(guid),
-                                         productEnabled,
-                                         updateStatus,
-                                         twoCode));
+        result.emplace_back(std::move(name),
+                            std::move(guid),
+                            productEnabled,
+                            updateStatus,
+                            twoCode);
     }
 }
 
@@ -167,11 +167,11 @@ static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
                 updateStatus = SecurityProduct::OutOfDate;
             }
         }
-        result.push_back(SecurityProduct(std::move(name),
-                                         std::move(guid),
-                                         enabledBits == 16,
-                                         updateStatus,
-                                         twoCode));
+        result.emplace_back(std::move(name),
+                            std::move(guid),
+                            enabledBits == 16,
+                            updateStatus,
+                            twoCode);
     }
 }
 

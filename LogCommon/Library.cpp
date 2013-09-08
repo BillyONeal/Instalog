@@ -91,7 +91,7 @@ std::wstring FormattedMessageLoader::GetFormattedMessage(
     }
     std::wstring answer(messagePtr);
     LocalFree(messagePtr);
-    return std::move(answer);
+    return answer;
 }
 }
 }

@@ -394,7 +394,7 @@ std::vector<RegistryValueAndData> RegistryKey::EnumerateValues() const
                  errorCheck == STATUS_BUFFER_TOO_SMALL);
         if (NT_SUCCESS(errorCheck))
         {
-            result.emplace_back(RegistryValueAndData(std::move(buff)));
+            result.emplace_back(std::move(buff));
         }
     }
     if (errorCheck != STATUS_NO_MORE_ENTRIES)
@@ -787,7 +787,7 @@ std::wstring BasicRegistryValue::GetString() const
         }
     }
 
-    return std::move(result);
+    return result;
 }
 
 std::vector<std::wstring> BasicRegistryValue::GetMultiStringArray() const
@@ -807,7 +807,7 @@ std::vector<std::wstring> BasicRegistryValue::GetMultiStringArray() const
             answers.emplace_back(std::wstring(first, middle));
         first = middle + 1;
     }
-    return std::move(answers);
+    return answers;
 }
 
 wchar_t const* BasicRegistryValue::wcbegin() const
@@ -826,10 +826,11 @@ std::vector<std::wstring> BasicRegistryValue::GetCommaStringArray() const
     std::wstring contents(GetStringStrict());
     boost::algorithm::split(
         answer, contents, std::bind1st(std::equal_to<wchar_t>(), L','));
-    std::for_each(answer.begin(), answer.end(), [](std::wstring & a) {
-        boost::algorithm::trim_left(a, std::locale());
-    });
-    return std::move(answer);
+    for (auto& a : answer)
+    {
+        boost::algorithm::trim_left(a);
+    }
+    return answer;
 }
 }
 }
