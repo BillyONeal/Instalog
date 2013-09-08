@@ -252,6 +252,7 @@ static wchar_t exampleLongData[] =
     L"example example example test test example \0 embedded"
     L"example example example test test example \0 embedded"
     L"example example example test test example \0 embedded";
+static auto exampleLongDataCasted =
     reinterpret_cast<BYTE const*>(exampleLongData);
 static wchar_t exampleMultiSz[] = L"Foo\0bar\0baz\0\0";
 static auto exampleMultiSzCasted =
