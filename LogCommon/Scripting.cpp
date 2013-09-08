@@ -147,18 +147,16 @@ void Script::Run(std::wostream& logOutput, IUserInterface* ui) const
     ;
     std::vector<contained> sectionVec(sections.cbegin(), sections.cend());
     std::stable_sort(sectionVec.begin(), sectionVec.end(), cmp);
-    for (auto begin = sectionVec.cbegin(), end = sectionVec.cend();
-         begin != end;
-         ++begin)
+    for (auto& entry : sectionVec)
     {
-        auto header = begin->first.GetDefinition().GetName();
-        std::wstring message(L"Executing " + header);
-        ui->LogMessage(message);
+        auto header = entry.first.GetDefinition().GetName();
+        ui->LogMessage(L"Executing " + header);
         Instalog::Header(header);
         logOutput << L"\n" << header << L"\n\n";
-        begin->first.GetDefinition().Execute(
-            logOutput, begin->first, begin->second);
+        entry.first.GetDefinition().Execute(
+            logOutput, entry.first, entry.second);
     }
+
     logOutput << L'\n';
     WriteScriptFooter(logOutput, startTime);
     ui->ReportFinished();

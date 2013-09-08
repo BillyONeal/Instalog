@@ -59,21 +59,15 @@ TEST(Process, CanGetProcessExecutables)
     std::wstring baseName = currentProcessExecutable;
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
-    for (ProcessEnumerator::iterator it = enumerator.begin();
-         it != enumerator.end();
-         ++it)
+    for (Process p : enumerator)
     {
-        try
+        auto const path = p.GetExecutablePath();
+        if (path.is_valid() && path.get() == baseName)
         {
-            if (it->GetExecutablePath().get() == baseName)
-            {
-                couldFindMyOwnProcess = true;
-            }
+            couldFindMyOwnProcess = true;
         }
-        catch (ErrorAccessDeniedException const&)
-        {
-        } // Not much we can really do about these.
     }
+
     ASSERT_TRUE(couldFindMyOwnProcess);
 }
 
@@ -83,35 +77,25 @@ TEST(Process, CanGetProcessCommandLines)
     std::wstring baseName = currentProcessCmdLine;
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
-    for (ProcessEnumerator::iterator it = enumerator.begin();
-         it != enumerator.end();
-         ++it)
+    for (Process p : enumerator)
     {
-        try
+        auto const path = p.GetCmdLine();
+        if (path.is_valid() && path.get() == baseName)
         {
-            if (it->GetCmdLine().get() == baseName)
-            {
-                couldFindMyOwnProcess = true;
-            }
+            couldFindMyOwnProcess = true;
         }
-        catch (ErrorAccessDeniedException const&)
-        {
-        } // Not much we can really do about these.
     }
+
     ASSERT_TRUE(couldFindMyOwnProcess);
 }
 
 TEST(Process, NtoskrnlIsInTheBuilding)
 {
+    std::wstring ntoskrnl(L"C:\\Windows\\System32\\Ntoskrnl.exe");
     ProcessEnumerator enumerator;
-    for (ProcessEnumerator::iterator it = enumerator.begin();
-         it != enumerator.end();
-         ++it)
+    for (Process p : enumerator)
     {
-        if (it->GetProcessId() == 4)
-        {
-            ASSERT_TRUE(boost::iequals(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                                       it->GetExecutablePath().get()));
-        }
+        ASSERT_TRUE(p.GetProcessId() != 4 || boost::iequals(ntoskrnl,
+            p.GetExecutablePath().get()));
     }
 }
