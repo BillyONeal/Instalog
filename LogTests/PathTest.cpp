@@ -9,6 +9,8 @@
 #include "../LogCommon/Win32Exception.hpp"
 #include "../LogCommon/File.hpp"
 #include "../LogCommon/Path.hpp"
+#include "../LogCommon/Wow64.hpp"
+#include "TestSupport.hpp"
 
 using namespace Instalog::Path;
 
@@ -134,12 +136,14 @@ TEST(PathExpanding, NonExistantFileExpansion)
     TestExpansion(L"zzzzzz~1", L"zzzzzz~1", false);
 }
 
-static void TestResolve(std::wstring const& expected,
+static void TestResolve(std::wstring expected,
                         std::wstring source,
                         bool expectedReturn = true)
 {
+    Instalog::SystemFacades::NativeFilePathScope scope;
     EXPECT_EQ(expectedReturn, ResolveFromCommandLine(source));
-    EXPECT_EQ(expected, source);
+    EXPECT_TRUE(boost::algorithm::iequals(expected, source))
+        << "Expected file name\n" << expected << "\nbut got\n" << source;
 }
 
 TEST(PathResolution, EmptyGivesEmpty)
@@ -241,7 +245,8 @@ TEST(PathResolution, QuotedPath)
 
 TEST(PathResolution, QuotedPathRundll)
 {
-    HANDLE hFile = ::CreateFileW(L"C:\\ExampleTestingFile.exe",
+    std::wstring testPath(GetTestFilePath(L"ExampleTestingFile.exe"));
+    HANDLE hFile = ::CreateFileW(testPath.c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
@@ -249,8 +254,8 @@ TEST(PathResolution, QuotedPathRundll)
                                  FILE_FLAG_DELETE_ON_CLOSE,
                                  0);
     TestResolve(
-        L"C:\\Exampletestingfile.exe",
-        L"\"C:\\Windows\\System32\\Rundll32.exe\" \"C:\\ExampleTestingFile.exe,Argument arg arg\"");
+        testPath,
+        L"\"C:\\Windows\\System32\\Rundll32.exe\" \"" + testPath + L",Argument arg arg\"");
     ::CloseHandle(hFile);
 }
 
