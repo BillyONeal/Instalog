@@ -62,6 +62,13 @@
   <ItemGroup>
     <ClInclude Include="gtest\gtest.h" />
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="TestSupport.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\TestData\TestVerInfoApp.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestData\TestVerInfoApp.exe</Link>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogCommon\LogCommon.vcxproj">

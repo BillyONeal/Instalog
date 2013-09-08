@@ -5,8 +5,10 @@
 #include "pch.hpp"
 #include <sstream>
 #include "gtest/gtest.h"
+#include "TestSupport.hpp"
 #include "../LogCommon/StockOutputFormats.hpp"
 #include "../LogCommon/File.hpp"
+#include "../LogCommon/Path.hpp"
 #include "../LogCommon/Win32Exception.hpp"
 
 using namespace testing;
@@ -117,17 +119,19 @@ TEST(StockFormats, DefaultFileNonexistent)
 TEST(StockFormats, DefaultFileWithCompany)
 {
     using Instalog::SystemFacades::File;
+    std::wstring inputFile(GetTestFilePath(L"TestVerInfoApp.exe"));
+    Instalog::Path::Prettify(inputFile.begin(), inputFile.end());
     std::wstringstream ss;
-    WriteDefaultFileOutput(ss, L"Explorer");
+    WriteDefaultFileOutput(ss, inputFile);
     WIN32_FILE_ATTRIBUTE_DATA fad =
-        File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
+        File::GetExtendedAttributes(inputFile);
     std::wstringstream expected;
-    expected << L"C:\\Windows\\Explorer.exe [" << fad.nFileSizeLow << L' ';
+    expected << inputFile << L" [" << fad.nFileSizeLow << L' ';
     std::uint64_t ctime =
         static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32 |
         fad.ftCreationTime.dwLowDateTime;
     WriteDefaultDateFormat(expected, ctime);
-    expected << L" Microsoft Corporation]";
+    expected << L" Expected Company Name]";
     EXPECT_EQ(expected.str(), ss.str());
 }
 

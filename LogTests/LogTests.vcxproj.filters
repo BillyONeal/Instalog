@@ -88,6 +88,9 @@
     <ClInclude Include="pch.hpp">
       <Filter>Precompiled</Filter>
     </ClInclude>
+    <ClInclude Include="TestSupport.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc" />
