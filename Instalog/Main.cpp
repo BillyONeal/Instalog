@@ -37,6 +37,8 @@ using namespace Instalog;
 
 static int instalog_main();
 
+// For the moment, we want these to crash.
+#undef NDEBUG
 #ifndef NDEBUG
 int main()
 {
@@ -91,6 +93,7 @@ static int instalog_main()
         return -1;
     }
     std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
+    outFile.exceptions(std::ios::failbit | std::ios::badbit);
     ScriptParser sd;
     sd.AddSectionDefinition(
         std::unique_ptr<ISectionDefinition>(new RunningProcesses));
