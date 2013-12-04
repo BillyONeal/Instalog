@@ -33,6 +33,11 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <Link>
+      <MinimumRequiredVersion Condition="'$(Platform)'=='Win32'">5.01</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition="'$(Platform)'=='x64'">5.02</MinimumRequiredVersion>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DnsTest.cpp" />

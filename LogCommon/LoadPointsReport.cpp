@@ -1500,7 +1500,9 @@ static void ExecuteWinsock2Parameters(std::wostream& output)
     RegistryKey protocolCatalogKey(
         RegistryKey::Open(winsockParameters, protocolCatalog, KEY_QUERY_VALUE));
     ExecuteLspChain(output, protocolCatalogKey, L"");
+#ifdef _M_X64
     ExecuteLspChain(output, protocolCatalogKey, L"64");
+#endif
     protocolCatalogKey.Close();
 
     std::wstring namespaceCatalog(
@@ -1508,7 +1510,9 @@ static void ExecuteWinsock2Parameters(std::wostream& output)
     RegistryKey namespaceCatalogKey(RegistryKey::Open(
         winsockParameters, namespaceCatalog, KEY_QUERY_VALUE));
     ExecuteNspChain(output, namespaceCatalogKey, L"");
+#ifdef _M_X64
     ExecuteNspChain(output, namespaceCatalogKey, L"64");
+#endif
     namespaceCatalogKey.Close();
     winsockParameters.Close();
 }

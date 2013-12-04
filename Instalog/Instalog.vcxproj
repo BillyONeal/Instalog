@@ -28,6 +28,13 @@
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(SolutionDir)InstalogCpp.props" />
+  <ItemDefinitionGroup>
+    <Link>
+      <MinimumRequiredVersion Condition="'$(Platform)'=='Win32'">5.01</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition="'$(Platform)'=='x64'">5.02</MinimumRequiredVersion>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <DropFileName>Instalog_$(InstalogVersion).exe</DropFileName>
   </PropertyGroup>
@@ -52,6 +59,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\LogCommon\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="OlderWindows.obj">
+      <ExcludedFromBuild Condition="'$(Platform)'!='Win32'">true</ExcludedFromBuild>
+    </Object>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
