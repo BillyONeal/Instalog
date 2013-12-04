@@ -49,34 +49,34 @@ main module should then be moved into quarantine.
 \end{description}
 \end{description}
 
-\subsection{PseudoHJT Report (\texttt{:PsuedoHJT})} \label{hjtgeneral}
-The information in the PseudoHJT report must closely match the information
+\subsection{Load Points Report (\texttt{:Loadpoints})} \label{hjtgeneral}
+The information in the Load Points report must closely match the information
 displayed by the original HJT tool. The format must closely match the syntax of
 a similar predecessor, DDS, so that forum volunteers need not learn
 significantly different syntax to that which they know. This format is
 sparse and human readable. 
 
-Generally speaking, the PseudoHJT report shall attempt to list all relevant
+Generally speaking, the Load Points report shall attempt to list all relevant
 loading points on a Windows machine, as well as user settings for the Internet
 Explorer browser; such as home page, search provider, and title settings. The
 report shall be heavily whitelisted. Items which are defaults on Windows shall
 not be emitted, unless whitelisting has been disabled. Specific whitelisting
-schemes are given per type of line shown in the PseudoHJT report. Instalog shall
-implement the PseudoHJT report as defined in this section (\ref{hjtgeneral}).
+schemes are given per type of line shown in the Load Points report. Instalog shall
+implement the Load Points report as defined in this section (\ref{hjtgeneral}).
 
-Each line in the PseudoHJT report is given a unique prefix, which is not shared
+Each line in the Load Points report is given a unique prefix, which is not shared
 by other line types. This allows the line to be unambiguously understood by the
 Instalog GUI, and other kinds of inspection tools.
 
-For either PseudoHJT section in the Instalog GUI, two checkboxes are available
+For either Load Points section in the Instalog GUI, two checkboxes are available
 if defined by the lines below: \textbf{Move} and \textbf{Fix} (in that
 order).  Move, generally speaking, will generate script to quarantine a file
 associated with an entry, and Fix will generate script to reset settings to a
 default state, or delete loading points.
 
-The PseudoHJT machine report contains settings which affect the entire machine.
+The Load Points machine report contains settings which affect the entire machine.
 
-The PseudoHJT user report is specific to a given user on the target machine.
+The Load Points user report is specific to a given user on the target machine.
 There will be a separate such section for each user that is loaded into the
 registry at the time Instalog is run (that is, loaded into \verb|HKEY_USERS|).
 
@@ -1678,7 +1678,7 @@ file completely if need be.
 \end{description}
 
 \subsubsection{User Only Line Types}
-The following lines are displayed in user PseudoHJT reports only.
+The following lines are displayed in user Load Points reports only.
 
 \subsubsection{Internet Connection Wizard Shell Next}
 \begin{description}

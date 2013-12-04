@@ -8,7 +8,7 @@ namespace Instalog
 {
 
 /// @brief    Pseudo HijackThis report generator.
-class PseudoHjt : public ISectionDefinition
+class LoadPointsReport : public ISectionDefinition
 {
     virtual std::wstring GetScriptCommand() const;
     virtual std::wstring GetName() const;

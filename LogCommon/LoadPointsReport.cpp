@@ -16,7 +16,7 @@
 #include "SecurityCenter.hpp"
 #include "StockOutputFormats.hpp"
 #include "Registry.hpp"
-#include "PseudoHjt.hpp"
+#include "LoadPointsReport.hpp"
 #include "ScopeExit.hpp"
 #include "Dns.hpp"
 
@@ -24,17 +24,17 @@ namespace Instalog
 {
 using namespace SystemFacades;
 
-std::wstring PseudoHjt::GetScriptCommand() const
+std::wstring LoadPointsReport::GetScriptCommand() const
 {
-    return L"pseudohijackthis";
+    return L"loadpoints";
 }
 
-std::wstring PseudoHjt::GetName() const
+std::wstring LoadPointsReport::GetName() const
 {
-    return L"Pseudo HijackThis";
+    return L"Load Points";
 }
 
-LogSectionPriorities PseudoHjt::GetPriority() const
+LogSectionPriorities LoadPointsReport::GetPriority() const
 {
     return SCANNING;
 }
@@ -49,7 +49,7 @@ static std::wstring Get64Suffix()
 }
 
 /**
-* Security center output for the PseudoHJT section.
+* Security center output for the Loading Points section.
 *
 * @param [in,out] output The stream to receive the output.
 */
@@ -1568,7 +1568,7 @@ static void TcpNameservers(std::wostream& output)
     }
 }
 
-void PseudoHjt::Execute(std::wostream& output,
+void LoadPointsReport::Execute(std::wostream& output,
                         ScriptSection const&,
                         std::vector<std::wstring> const&) const
 {

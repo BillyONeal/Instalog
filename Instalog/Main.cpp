@@ -13,7 +13,7 @@
 #include "../LogCommon/UserInterface.hpp"
 #include "../LogCommon/Scripting.hpp"
 #include "../LogCommon/ScanningSections.hpp"
-#include "../LogCommon/PseudoHjt.hpp"
+#include "../LogCommon/LoadPointsReport.hpp"
 #include "../LogCommon/Com.hpp"
 
 /// @brief    Console "user interface"
@@ -92,7 +92,7 @@ static int instalog_main()
     ScriptParser sd;
     sd.AddSectionDefinition(
         std::unique_ptr<ISectionDefinition>(new RunningProcesses));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new PseudoHjt));
+    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new LoadPointsReport));
     sd.AddSectionDefinition(
         std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
     sd.AddSectionDefinition(
@@ -105,7 +105,7 @@ static int instalog_main()
         std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
     sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new FindStarM));
     wchar_t const defaultScript[] =
-        L":RunningProcesses\n:PseudoHijackThis\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
+        L":RunningProcesses\n:Loadpoints\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
     Script s = sd.Parse(defaultScript);
     std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
     s.Run(outFile, ui.get());

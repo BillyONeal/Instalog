@@ -76,7 +76,7 @@
     <ClInclude Include="OptimisticBuffer.hpp" />
     <ClInclude Include="Path.hpp" />
     <ClInclude Include="pch.hpp" />
-    <ClInclude Include="PseudoHjt.hpp" />
+    <ClInclude Include="LoadPointsReport.hpp" />
     <ClInclude Include="Registry.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RestorePoints.hpp" />
@@ -109,7 +109,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PseudoHjt.cpp" />
+    <ClCompile Include="LoadPointsReport.cpp" />
     <None Include="Running Processes.txt" />
     <None Include="Services Drivers.txt" />
     <ProtocolBuffer Include="Whitelist.proto" />
