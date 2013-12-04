@@ -178,9 +178,6 @@
     <ClInclude Include="OptimisticBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Stringize.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="EnumClassOperators.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

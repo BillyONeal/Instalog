@@ -5,6 +5,7 @@
 
 #include "pch.hpp"
 #include <iomanip>
+#include <boost/config.hpp>
 #include <boost/io/ios_state.hpp>
 #include <windows.h>
 #include "Registry.hpp"
@@ -13,7 +14,6 @@
 #include "Path.hpp"
 #include "File.hpp"
 #include "StringUtilities.hpp"
-#include "Stringize.hpp"
 #include "StockOutputFormats.hpp"
 
 using Instalog::SystemFacades::RegistryKey;
@@ -589,7 +589,7 @@ static void WriteFlashData(std::wostream& log)
 
 void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
 {
-    log << L"Instalog " STRINGIZE(INSTALOG_VERSION);
+    log << L"Instalog " << BOOST_STRINGIZE(INSTALOG_VERSION);
     switch (GetSystemMetrics(SM_CLEANBOOT))
     {
     case 1:
@@ -665,7 +665,7 @@ void WriteScriptFooter(std::wostream& log, std::uint64_t startTime)
     auto duration = endTime - startTime;
     auto seconds = duration / 10000000ull;
     auto milliseconds = (duration / 10000ull) - (seconds * 1000);
-    log << L"Instalog " STRINGIZE(INSTALOG_VERSION)L" finished at ";
+    log << L"Instalog " << BOOST_STRINGIZE(INSTALOG_VERSION) << L" finished at ";
     WriteMillisecondDateFormat(log, endTime);
     log << " (Generation took " << seconds << L'.' << std::setw(4)
         << std::setfill(L'0') << milliseconds << L" seconds)\n";

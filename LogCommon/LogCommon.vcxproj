@@ -89,7 +89,6 @@
     <ClInclude Include="SecurityCenter.hpp" />
     <ClInclude Include="ServiceControlManager.hpp" />
     <ClInclude Include="StockOutputFormats.hpp" />
-    <ClInclude Include="Stringize.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />
     <ClInclude Include="Whitelist.hpp" />
