@@ -928,13 +928,13 @@ script extensions because they are native code.
 @="${File}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|IeCom: [${Name}->${Clsid}] ${File}| \\
-\verb|IeCom64: [${Name}->${Clsid}] ${File}|
+\verb|IeCom: [${Name} ${Clsid}] ${File}| \\
+\verb|IeCom64: [${Name} ${Clsid}] ${File}|
 \item[Output Description] \hfill \\
 \var{Name} is escaped using the default escaping convention defined in
 \ref{generalescape} with an escape character of \verb|#| and a right delimiter
-of \verb|-|. \var{Clsid} is also escaped using the default escape function,
-using an escape character of \verb|#| and a right delimiter of \verb|]|.
+of a space character. \var{Clsid} is also escaped using the default escape
+function, using an escape character of \verb|#| and a right delimiter of \verb|]|.
 \var{File} is displayed using the default file format as defined in
 \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
