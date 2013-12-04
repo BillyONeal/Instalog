@@ -15,7 +15,9 @@
 #include "StringUtilities.hpp"
 #include "Stringize.hpp"
 #include "StockOutputFormats.hpp"
-    using Instalog::SystemFacades::Win32Exception;
+
+using Instalog::SystemFacades::RegistryKey;
+using Instalog::SystemFacades::Win32Exception;
 using Instalog::SystemFacades::File;
 
 namespace Instalog
@@ -526,6 +528,65 @@ std::uint64_t GetLocalTime()
     return FiletimeToInteger(ft);
 }
 
+static void WriteFlashData(std::wostream& log)
+{
+#ifdef _M_X64
+    RegistryKey flashPluginKey = RegistryKey::Open(
+        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayerPlugin",
+        KEY_QUERY_VALUE);
+#else
+    RegistryKey flashPluginKey = RegistryKey::Open(
+        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayerPlugin",
+        KEY_QUERY_VALUE);
+#endif
+
+#ifdef _M_X64
+    RegistryKey flashKey = RegistryKey::Open(
+        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer",
+        KEY_QUERY_VALUE);
+#else
+    RegistryKey flashKey = RegistryKey::Open(
+        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer",
+        KEY_QUERY_VALUE);
+#endif
+
+    log << L" Flash: ";
+    if (flashPluginKey.Valid())
+    {
+        try
+        {
+            std::wstring flashVer(flashPluginKey[L"Version"].GetStringStrict());
+            log << flashVer;
+            return;
+        }
+        catch (SystemFacades::ErrorFileNotFoundException const&)
+        {
+            // No output if this value isn't found.
+        }
+    }
+
+    if (flashKey.Valid())
+    {
+        try
+        {
+            std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
+            std::transform(flashVer.begin(),
+                           flashVer.end(),
+                           flashVer.begin(),
+                           [](wchar_t x) { return x == L',' ? L'.' : x; });
+            log << flashVer;
+            return;
+        }
+        catch (SystemFacades::ErrorFileNotFoundException const&)
+        {
+            // No output if this value wasn't found either.
+        }
+    }
+
+    // Base case, does not appear to be installed (at least not correctly).
+    log << L"Not Installed";
+}
+
 void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
 {
     log << L"Instalog " STRINGIZE(INSTALOG_VERSION);
@@ -552,7 +613,6 @@ void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
         << std::noshowpos << std::setw(2) << std::setfill(L'0')
         << (-timeZoneBias % 60) << L"]\n";
 
-    using SystemFacades::RegistryKey;
     RegistryKey ieKey = RegistryKey::Open(
         L"\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
         KEY_QUERY_VALUE);
@@ -581,39 +641,7 @@ void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
         }
     }
 
-#ifdef _M_X64
-    RegistryKey flashPluginKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayerPlugin",
-        KEY_QUERY_VALUE);
-#else
-    RegistryKey flashPluginKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayerPlugin",
-        KEY_QUERY_VALUE);
-#endif
-
-#ifdef _M_X64
-    RegistryKey flashKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer",
-        KEY_QUERY_VALUE);
-#else
-    RegistryKey flashKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer",
-        KEY_QUERY_VALUE);
-#endif
-    if (flashPluginKey.Valid())
-    {
-        std::wstring flashVer(flashPluginKey[L"Version"].GetStringStrict());
-        log << L" Flash: " << flashVer;
-    }
-    else if (flashKey.Valid())
-    {
-        std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
-        std::transform(flashVer.begin(),
-                       flashVer.end(),
-                       flashVer.begin(),
-                       [](wchar_t x) { return x == L',' ? L'.' : x; });
-        log << L" Flash: " << flashVer;
-    }
+    WriteFlashData(log);
 
     try
     {
