@@ -84,8 +84,10 @@ static int instalog_main()
     Instalog::SystemFacades::Com com;
     if (Instalog::SystemFacades::IsWow64())
     {
-        std::cerr << "This program is not designed to be run under WOW64 mode. "
-                     "Please download the x64 copy of Instalog instead.";
+        std::cerr << "This program is not designed to be run under WOW64 mode.\n"
+                     "Please download the x64 copy of Instalog instead.\n"
+                     "Press enter to terminate.";
+        std::cin.get();
         return -1;
     }
     std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
