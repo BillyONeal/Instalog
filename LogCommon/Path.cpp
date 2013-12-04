@@ -425,7 +425,7 @@ void path::uppercase_range(path::size_type length,
     }
 }
 
-path::path() throw()
+path::path() BOOST_NOEXCEPT_OR_NOTHROW
         : base_(nullptr)
         , size_(0)
         , capacity_(0)
@@ -444,7 +444,7 @@ path::path(path const& other)
         uppercaseBegin, uppercaseBegin + other.size_ + 1, this->upperBase());
 }
 
-path::path(path && other) throw()
+path::path(path && other) BOOST_NOEXCEPT_OR_NOTHROW
         : base_(other.base_)
         , size_(other.size_)
         , capacity_(other.capacity_)
@@ -460,37 +460,37 @@ path& path::operator=(path other)
     return *this;
 }
 
-path::iterator path::begin() throw()
+path::iterator path::begin() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::const_iterator path::begin() const throw()
+path::const_iterator path::begin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::const_iterator path::cbegin() const throw()
+path::const_iterator path::cbegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::iterator path::end() throw()
+path::iterator path::end() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_ + this->size();
 }
 
-path::const_iterator path::end() const throw()
+path::const_iterator path::end() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_ + this->size();
 }
 
-path::const_iterator path::cend() const throw()
+path::const_iterator path::cend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_ + this->size();
 }
 
-void path::swap(path& other) throw()
+void path::swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW
 {
     using std::swap;
     swap(this->base_, other.base_);
@@ -498,17 +498,17 @@ void path::swap(path& other) throw()
     swap(this->capacity_, other.capacity_);
 }
 
-path::size_type path::size() const throw()
+path::size_type path::size() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->size_;
 }
 
-path::size_type path::capacity() const throw()
+path::size_type path::capacity() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->capacity_;
 }
 
-path::size_type path::max_size() const throw()
+path::size_type path::max_size() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
     // The Windows API has many functions that also have Unicode versions to
@@ -531,12 +531,12 @@ path::size_type path::max_size() const throw()
     return 32767;
 }
 
-bool path::empty() const throw()
+bool path::empty() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->size() == 0;
 }
 
-path::~path() throw()
+path::~path() BOOST_NOEXCEPT_OR_NOTHROW
 {
     if (this->base_ != nullptr)
     {
@@ -544,115 +544,115 @@ path::~path() throw()
     }
 }
 
-path::reverse_iterator path::rbegin() throw()
+path::reverse_iterator path::rbegin() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_iterator(this->end());
 }
 
-path::reverse_const_iterator path::rbegin() const throw()
+path::reverse_const_iterator path::rbegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->end());
 }
 
-path::reverse_const_iterator path::crbegin() const throw()
+path::reverse_const_iterator path::crbegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->end());
 }
 
-path::reverse_iterator path::rend() throw()
+path::reverse_iterator path::rend() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_iterator(this->begin());
 }
 
-path::reverse_const_iterator path::rend() const throw()
+path::reverse_const_iterator path::rend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->begin());
 }
 
-path::reverse_const_iterator path::crend() const throw()
+path::reverse_const_iterator path::crend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->begin());
 }
 
-path::iterator path::ubegin() throw()
+path::iterator path::ubegin() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase();
 }
 
-path::const_iterator path::ubegin() const throw()
+path::const_iterator path::ubegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase();
 }
 
-path::const_iterator path::cubegin() const throw()
+path::const_iterator path::cubegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase();
 }
 
-path::iterator path::uend() throw()
+path::iterator path::uend() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase() + this->size();
 }
 
-path::const_iterator path::uend() const throw()
+path::const_iterator path::uend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase() + this->size();
 }
 
-path::const_iterator path::cuend() const throw()
+path::const_iterator path::cuend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase() + this->size();
 }
 
-path::reverse_iterator path::rubegin() throw()
+path::reverse_iterator path::rubegin() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_iterator(this->uend());
 }
 
-path::reverse_const_iterator path::rubegin() const throw()
+path::reverse_const_iterator path::rubegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->uend());
 }
 
-path::reverse_const_iterator path::crubegin() const throw()
+path::reverse_const_iterator path::crubegin() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->uend());
 }
 
-path::reverse_iterator path::ruend() throw()
+path::reverse_iterator path::ruend() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_iterator(this->ubegin());
 }
 
-path::reverse_const_iterator path::ruend() const throw()
+path::reverse_const_iterator path::ruend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->ubegin());
 }
 
-path::reverse_const_iterator path::cruend() const throw()
+path::reverse_const_iterator path::cruend() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return path::reverse_const_iterator(this->ubegin());
 }
 
-path::reference_type path::ufront() throw()
+path::reference_type path::ufront() BOOST_NOEXCEPT_OR_NOTHROW
 {
     assert(!this->empty());
     return *this->ubegin();
 }
 
-path::const_reference_type path::ufront() const throw()
+path::const_reference_type path::ufront() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     assert(!this->empty());
     return *this->ubegin();
 }
 
-path::reference_type path::uback() throw()
+path::reference_type path::uback() BOOST_NOEXCEPT_OR_NOTHROW
 {
     assert(!this->empty());
     return *(this->uend() - 1);
 }
 
-path::const_reference_type path::uback() const throw()
+path::const_reference_type path::uback() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     assert(!this->empty());
     return *(this->uend() - 1);
@@ -705,32 +705,32 @@ void path::reserve(size_type count)
     this->capacity_ = count;
 }
 
-path::pointer path::upperBase() throw()
+path::pointer path::upperBase() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_ + this->capacity_ + 1;
 }
 
-path::const_pointer path::upperBase() const throw()
+path::const_pointer path::upperBase() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_ + this->capacity_ + 1;
 }
 
-path::pointer path::data() throw()
+path::pointer path::data() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::const_pointer path::data() const throw()
+path::const_pointer path::data() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::const_pointer path::c_str() const throw()
+path::const_pointer path::c_str() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_;
 }
 
-path::const_pointer path::uc_str() const throw()
+path::const_pointer path::uc_str() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->upperBase();
 }
@@ -775,7 +775,7 @@ void path::push_back(wchar_t character)
     upper[this->size()] = L'\0';
 }
 
-void path::pop_back() throw()
+void path::pop_back() BOOST_NOEXCEPT_OR_NOTHROW
 {
     if (!this->empty())
     {
@@ -785,7 +785,7 @@ void path::pop_back() throw()
     }
 }
 
-path::const_reference_type path::operator[](path::size_type index) const throw()
+path::const_reference_type path::operator[](path::size_type index) const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->base_[index];
 }

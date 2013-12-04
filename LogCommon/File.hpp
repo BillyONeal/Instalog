@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <boost/config.hpp>
 #include <boost/noncopyable.hpp>
 #include <windows.h>
 #include "Expected.hpp"
@@ -45,7 +46,7 @@ class File : boost::noncopyable
 
     /// <summary>Move constructor.</summary>
     /// <param name="other">[in,out] The file to move from.</param>
-    File(File&& other) throw();
+    File(File&& other) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Assignment operator.</summary>
     /// <param name="other">The other file handle.</param>
@@ -173,7 +174,7 @@ class FindFilesRecord
 
     /// <summary>Move constructor.</summary>
     /// <param name="other">[in,out] The other.</param>
-    FindFilesRecord(FindFilesRecord&& other) throw();
+    FindFilesRecord(FindFilesRecord&& other) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Assignment operator.</summary>
     /// <param name="other">The other.</param>
@@ -182,39 +183,39 @@ class FindFilesRecord
 
     /// <summary>Gets file name.</summary>
     /// <returns>The file name.</returns>
-    std::wstring const& GetFileName() const throw();
+    std::wstring const& GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets creation time.</summary>
     /// <returns>The creation time.</returns>
-    std::uint64_t GetCreationTime() const throw();
+    std::uint64_t GetCreationTime() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets the last access time.</summary>
     /// <returns>The last access time.</returns>
-    std::uint64_t GetLastAccessTime() const throw();
+    std::uint64_t GetLastAccessTime() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets the last write time.</summary>
     /// <returns>The last write time.</returns>
-    std::uint64_t GetLastWriteTime() const throw();
+    std::uint64_t GetLastWriteTime() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets the size.</summary>
     /// <returns>The size.</returns>
-    std::uint64_t GetSize() const throw();
+    std::uint64_t GetSize() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets the attributes.</summary>
     /// <returns>The attributes.</returns>
-    DWORD GetAttributes() const throw();
+    DWORD GetAttributes() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Swaps this instance with another
     /// <c>FindFilesRecord</c>.</summary>
     /// <param name="other">[in,out] The instance with which this instance is
     /// swapped.</param>
-    void swap(FindFilesRecord& other) throw();
+    void swap(FindFilesRecord& other) BOOST_NOEXCEPT_OR_NOTHROW;
 };
 
 /// <summary>Swaps a pair of <c>FindFilesRecord</c> instances.</summary>
 /// <param name="lhs">[in,out] The left hand side.</param>
 /// <param name="rhs">[in,out] The right hand side.</param>
-inline void swap(FindFilesRecord& lhs, FindFilesRecord& rhs) throw()
+inline void swap(FindFilesRecord& lhs, FindFilesRecord& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     lhs.swap(rhs);
 }
@@ -247,22 +248,22 @@ class FindFiles : boost::noncopyable
     DWORD lastError;
     WIN32_FIND_DATAW findData;
     FindFilesOptions options;
-    bool IsRecursive() const throw();
-    bool IncludingDotDirectories() const throw();
-    bool CanEnter() const throw();
-    bool LastSuccess() const throw();
+    bool IsRecursive() const BOOST_NOEXCEPT_OR_NOTHROW;
+    bool IncludingDotDirectories() const BOOST_NOEXCEPT_OR_NOTHROW;
+    bool CanEnter() const BOOST_NOEXCEPT_OR_NOTHROW;
+    bool LastSuccess() const BOOST_NOEXCEPT_OR_NOTHROW;
     void Leave();
     void WinEnter();
     void WinNext();
     void NextImpl();
-    bool OnEndShouldLeave() throw();
-    bool OnDotKeepGoing() throw();
+    bool OnEndShouldLeave() BOOST_NOEXCEPT_OR_NOTHROW;
+    bool OnDotKeepGoing() BOOST_NOEXCEPT_OR_NOTHROW;
     void Construct(std::wstring const& pattern);
 
     public:
     /// <summary>Default constructor. Operates as a successful empty file search
     /// result.</summary>
-    FindFiles() throw();
+    FindFiles() BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Constructor. Initiates a file search with the default options
     /// of nonrecursive, skipping dot directories.</summary>
@@ -280,21 +281,21 @@ class FindFiles : boost::noncopyable
     /// <param name="toMove">[in,out] The instance from which move construction
     /// occurs. The move-
     /// constructed instance is placed in the default constructed state.</param>
-    FindFiles(FindFiles&& toMove) throw();
+    FindFiles(FindFiles&& toMove) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Move assignment operator.</summary>
     /// <param name="toMove">[in,out] The instance from which move assignment
     /// occurs. The move-
     /// assigned instance is placed in the default constructed state.</param>
     /// <returns>*this.</returns>
-    FindFiles& operator=(FindFiles&& toMove) throw();
+    FindFiles& operator=(FindFiles&& toMove) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Destructor.</summary>
-    ~FindFiles() throw();
+    ~FindFiles() BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Swaps this instance with another FindFiles instance.</summary>
     /// <param name="other">[in,out] The other.</param>
-    void Swap(FindFiles& other) throw();
+    void Swap(FindFiles& other) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Advances this instance to the next record.</summary>
     /// <returns>true if it succeeds, false if it fails.</returns>
@@ -310,7 +311,7 @@ class FindFiles : boost::noncopyable
     /// successful, or
     /// <c>ERROR_NO_MORE_FILES</c> at the end of a search.</summary>
     /// <returns>The last error code encountered.</returns>
-    DWORD LastError() const throw();
+    DWORD LastError() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets the current record, or throws a <see cref="Win32Exception"
     /// /> if no successful record is available.</summary>
@@ -321,13 +322,13 @@ class FindFiles : boost::noncopyable
     /// <summary>Gets the current record, or an expected containing an exception
     /// if there was no successful record.</summary>
     /// <returns>The current record.</returns>
-    expected<FindFilesRecord> TryGetRecord() const throw();
+    expected<FindFilesRecord> TryGetRecord() const BOOST_NOEXCEPT_OR_NOTHROW;
 };
 
 /// <summary>Swaps a pair of FindFiles instances.</summary>
 /// <param name="lhs">[in,out] The left hand side.</param>
 /// <param name="rhs">[in,out] The right hand side.</param>
-inline void swap(FindFiles& lhs, FindFiles& rhs) throw()
+inline void swap(FindFiles& lhs, FindFiles& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     lhs.Swap(rhs);
 }

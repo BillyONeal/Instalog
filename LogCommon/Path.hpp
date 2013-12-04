@@ -8,6 +8,7 @@
 #include <iterator>
 #include <algorithm>
 #include <type_traits>
+#include <boost/config.hpp>
 
 namespace Instalog
 {
@@ -91,32 +92,32 @@ class path
     typedef const_pointer const_iterator;
     typedef std::ptrdiff_t difference_type;
     typedef std::size_t size_type;
-    path() throw();
+    path() BOOST_NOEXCEPT_OR_NOTHROW;
     path(path const& other);
-    path(path&& other) throw();
+    path(path&& other) BOOST_NOEXCEPT_OR_NOTHROW;
     path& operator=(path other);
-    iterator begin() throw();
-    const_iterator begin() const throw();
-    const_iterator cbegin() const throw();
-    iterator end() throw();
-    const_iterator end() const throw();
-    const_iterator cend() const throw();
-    void swap(path& other) throw();
-    size_type size() const throw();
-    size_type max_size() const throw();
-    bool empty() const throw();
-    ~path() throw();
+    iterator begin() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator begin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator cbegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    iterator end() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator end() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator cend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    void swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW;
+    size_type size() const BOOST_NOEXCEPT_OR_NOTHROW;
+    size_type max_size() const BOOST_NOEXCEPT_OR_NOTHROW;
+    bool empty() const BOOST_NOEXCEPT_OR_NOTHROW;
+    ~path() BOOST_NOEXCEPT_OR_NOTHROW;
 
     // 23.2.1 [container.requirements.general]/9
     // Reversible container requirements
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> reverse_const_iterator;
-    reverse_iterator rbegin() throw();
-    reverse_const_iterator rbegin() const throw();
-    reverse_const_iterator crbegin() const throw();
-    reverse_iterator rend() throw();
-    reverse_const_iterator rend() const throw();
-    reverse_const_iterator crend() const throw();
+    reverse_iterator rbegin() BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator rbegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator crbegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_iterator rend() BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator rend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator crend() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     // 23.2.3 [sequence.reqmts]/4
     // Sequence container requirements. path meets most of these. Exceptions are
@@ -138,10 +139,10 @@ class path
                     InputIterator finish);
     // Initializer list based insert not defined because MSVC++ doesn't support
     // initializer list
-    iterator erase(const_iterator removalPoint) throw();
+    iterator erase(const_iterator removalPoint) BOOST_NOEXCEPT_OR_NOTHROW;
     iterator erase(const_iterator removalBegin,
-                   const_iterator removalEnd) throw();
-    void clear() throw();
+                   const_iterator removalEnd) BOOST_NOEXCEPT_OR_NOTHROW;
+    void clear() BOOST_NOEXCEPT_OR_NOTHROW;
     template <typename InputIterator>
     void assign(InputIterator start, InputIterator finish);
     // Initializer list based assign not defined because MSVC++ doesn't support
@@ -150,46 +151,46 @@ class path
 
     // 23.2.3 [sequence.reqmts]/16
     // Sequence container optional requirements
-    reference_type front() throw();
-    const_reference_type front() const throw();
-    reference_type back() throw();
-    const_reference_type back() const throw();
+    reference_type front() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_reference_type front() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reference_type back() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_reference_type back() const BOOST_NOEXCEPT_OR_NOTHROW;
     // Emplace front omitted because it is inefficient in this container
     // Emplace back omitted because MSVC++ doesn't support variadic templates
     void push_back(wchar_t character);
     // push front omitted because it is inefficient in this container.
     // pop front omitted because it is inefficient in this container.
-    void pop_back() throw();
-    const_reference_type operator[](size_type index) const throw();
+    void pop_back() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_reference_type operator[](size_type index) const BOOST_NOEXCEPT_OR_NOTHROW;
     const_reference_type at(size_type index) const;
 
     // Additional members
-    size_type capacity() const throw();
+    size_type capacity() const BOOST_NOEXCEPT_OR_NOTHROW;
     void reserve(size_type count);
-    pointer data() throw();
-    const_pointer data() const throw();
-    const_pointer c_str() const throw();
-    const_pointer uc_str() const throw();
+    pointer data() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_pointer data() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_pointer c_str() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_pointer uc_str() const BOOST_NOEXCEPT_OR_NOTHROW;
     path(wchar_t const* string);
     path(std::wstring const& string);
 
     // Uppercase range inteface.
-    iterator ubegin() throw();
-    const_iterator ubegin() const throw();
-    const_iterator cubegin() const throw();
-    iterator uend() throw();
-    const_iterator uend() const throw();
-    const_iterator cuend() const throw();
-    reverse_iterator rubegin() throw();
-    reverse_const_iterator rubegin() const throw();
-    reverse_const_iterator crubegin() const throw();
-    reverse_iterator ruend() throw();
-    reverse_const_iterator ruend() const throw();
-    reverse_const_iterator cruend() const throw();
-    reference_type ufront() throw();
-    const_reference_type ufront() const throw();
-    reference_type uback() throw();
-    const_reference_type uback() const throw();
+    iterator ubegin() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator ubegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator cubegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    iterator uend() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator uend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    const_iterator cuend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_iterator rubegin() BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator rubegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator crubegin() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_iterator ruend() BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator ruend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reverse_const_iterator cruend() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reference_type ufront() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_reference_type ufront() const BOOST_NOEXCEPT_OR_NOTHROW;
+    reference_type uback() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_reference_type uback() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     private:
     static size_type get_next_geometric_size(size_type currentSize,
@@ -216,8 +217,8 @@ class path
                       ForwardIterator last,
                       std::forward_iterator_tag);
     void ensure_capacity(size_type desiredCapacity);
-    pointer upperBase() throw();
-    const_pointer upperBase() const throw();
+    pointer upperBase() BOOST_NOEXCEPT_OR_NOTHROW;
+    const_pointer upperBase() const BOOST_NOEXCEPT_OR_NOTHROW;
     size_type size_;
     size_type capacity_;
     pointer base_;
@@ -381,7 +382,7 @@ void path::range_assign(path::const_iterator position,
 {
 }
 
-inline bool operator==(path const& lhs, path const& rhs) throw()
+inline bool operator==(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     if (lhs.size() != rhs.size())
     {
@@ -393,33 +394,33 @@ inline bool operator==(path const& lhs, path const& rhs) throw()
     }
 }
 
-inline bool operator!=(path const& lhs, path const& rhs) throw()
+inline bool operator!=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return !(lhs == rhs);
 }
 
-inline bool operator<(path const& lhs, path const& rhs) throw()
+inline bool operator<(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return std::lexicographical_compare(
         lhs.ubegin(), lhs.uend(), rhs.ubegin(), rhs.uend());
 }
 
-inline bool operator>(path const& lhs, path const& rhs) throw()
+inline bool operator>(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return rhs < lhs;
 }
 
-inline bool operator<=(path const& lhs, path const& rhs) throw()
+inline bool operator<=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return !(lhs > rhs);
 }
 
-inline bool operator>=(path const& lhs, path const& rhs) throw()
+inline bool operator>=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return !(lhs < rhs);
 }
 
-inline void swap(path& lhs, path& rhs) throw()
+inline void swap(path& lhs, path& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return lhs.swap(rhs);
 }

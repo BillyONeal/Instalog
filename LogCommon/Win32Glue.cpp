@@ -161,7 +161,7 @@ Disable64FsRedirector::Disable64FsRedirector() : previousState(nullptr)
     Disable();
 }
 
-void Disable64FsRedirector::Disable() throw()
+void Disable64FsRedirector::Disable() BOOST_NOEXCEPT_OR_NOTHROW
 {
 #ifndef _M_X64
     if (previousState != nullptr)
@@ -196,7 +196,7 @@ void Disable64FsRedirector::Disable() throw()
 #endif
 }
 
-void Disable64FsRedirector::Enable() throw()
+void Disable64FsRedirector::Enable() BOOST_NOEXCEPT_OR_NOTHROW
 {
 #ifndef _M_X64
     if (previousState == nullptr)
@@ -214,12 +214,12 @@ void Disable64FsRedirector::Enable() throw()
 #endif
 }
 
-Disable64FsRedirector::~Disable64FsRedirector() throw()
+Disable64FsRedirector::~Disable64FsRedirector() BOOST_NOEXCEPT_OR_NOTHROW
 {
     Enable();
 }
 
-bool IsWow64Process() throw()
+bool IsWow64Process() BOOST_NOEXCEPT_OR_NOTHROW
 {
 #ifndef _M_X64
     SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");

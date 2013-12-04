@@ -10,6 +10,7 @@
 #pragma once
 #include <type_traits>
 #include <algorithm>
+#include <boost/config.hpp>
 
 namespace Instalog
 {
@@ -66,13 +67,13 @@ class OptimisticBuffer
     };
 
     // True if this instance is using dynamic storage; otherwise, false.
-    bool IsUsingDynamicMemory() const throw()
+    bool IsUsingDynamicMemory() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return currentSize > SizeType::value;
     }
 
     // Gets a pointer to the logical allocation.
-    PointerConstType GetPointer() const throw()
+    PointerConstType GetPointer() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         if (IsUsingDynamicMemory())
         {
@@ -85,7 +86,7 @@ class OptimisticBuffer
     }
 
     // Gets a pointer to the logical allocation.
-    PointerType GetPointer() throw()
+    PointerType GetPointer() BOOST_NOEXCEPT_OR_NOTHROW
     {
         if (IsUsingDynamicMemory())
         {
@@ -98,7 +99,7 @@ class OptimisticBuffer
     }
 
     // Deallocates memory.
-    void Destroy() throw()
+    void Destroy() BOOST_NOEXCEPT_OR_NOTHROW
     {
         if (IsUsingDynamicMemory())
         {

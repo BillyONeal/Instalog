@@ -5,6 +5,7 @@
 #pragma once
 #include <cstdint>
 #include <windows.h>
+#include <boost/config.hpp>
 #include <boost/noncopyable.hpp>
 #include "Win32Exception.hpp"
 
@@ -86,22 +87,22 @@ class Disable64FsRedirector : boost::noncopyable
     /**
      * Disables the file system redirector, if it is enabled.
      */
-    void Disable() throw();
+    void Disable() BOOST_NOEXCEPT_OR_NOTHROW;
 
     /**
      * Enables the file system redirector, if it is disabled.
      */
-    void Enable() throw();
+    void Enable() BOOST_NOEXCEPT_OR_NOTHROW;
 
     /**
      * Enables the file system redirector.
      */
-    ~Disable64FsRedirector() throw();
+    ~Disable64FsRedirector() BOOST_NOEXCEPT_OR_NOTHROW;
 };
 
 /**
  * Query if this process is running as a WOW64 process.
  * @return true inside WOW64; otherwise, false.
  */
-bool IsWow64Process() throw();
+bool IsWow64Process() BOOST_NOEXCEPT_OR_NOTHROW;
 }

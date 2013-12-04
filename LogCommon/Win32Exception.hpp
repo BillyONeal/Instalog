@@ -7,6 +7,7 @@
 #include <exception>
 #include <windows.h>
 #include <comdef.h>
+#include <boost/config.hpp>
 
 namespace Instalog
 {
@@ -26,16 +27,16 @@ class Win32Exception : public std::exception
 
     /// Gets from last error as an exception_ptr.
     /// @return The last error as an exception_ptr.
-    static std::exception_ptr FromLastError() throw();
+    static std::exception_ptr FromLastError() BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// Gets the supplied error as an exception_ptr.
     /// @return The supplied error as an exception_ptr.
-    static std::exception_ptr FromWinError(DWORD errorCode) throw();
+    static std::exception_ptr FromWinError(DWORD errorCode) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// Initializes a Win32Exception from the from the given NT error.
     /// @param errorCode The NT error code.
     /// @return The supplied NT error as an exception_ptr.
-    static std::exception_ptr FromNtError(NTSTATUS errorCode) throw();
+    static std::exception_ptr FromNtError(NTSTATUS errorCode) BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// @brief    Throws a specified error directly
     ///

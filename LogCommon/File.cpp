@@ -271,7 +271,7 @@ FindFilesRecord::FindFilesRecord(FindFilesRecord const& other)
 {
 }
 
-FindFilesRecord::FindFilesRecord(FindFilesRecord&& other) throw()
+FindFilesRecord::FindFilesRecord(FindFilesRecord&& other) BOOST_NOEXCEPT_OR_NOTHROW
         : cFileName(std::move(other.cFileName))
         , ftCreationTime(other.ftCreationTime)
         , ftLastAccessTime(other.ftLastAccessTime)
@@ -287,37 +287,37 @@ FindFilesRecord& FindFilesRecord::operator=(FindFilesRecord other)
     return *this;
 }
 
-std::wstring const& FindFilesRecord::GetFileName() const throw()
+std::wstring const& FindFilesRecord::GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return cFileName;
 }
 
-std::uint64_t FindFilesRecord::GetCreationTime() const throw()
+std::uint64_t FindFilesRecord::GetCreationTime() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return ftCreationTime;
 }
 
-std::uint64_t FindFilesRecord::GetLastAccessTime() const throw()
+std::uint64_t FindFilesRecord::GetLastAccessTime() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return ftLastAccessTime;
 }
 
-std::uint64_t FindFilesRecord::GetLastWriteTime() const throw()
+std::uint64_t FindFilesRecord::GetLastWriteTime() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return ftLastWriteTime;
 }
 
-std::uint64_t FindFilesRecord::GetSize() const throw()
+std::uint64_t FindFilesRecord::GetSize() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return nFileSize;
 }
 
-DWORD FindFilesRecord::GetAttributes() const throw()
+DWORD FindFilesRecord::GetAttributes() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return dwFileAttributes;
 }
 
-void FindFilesRecord::swap(FindFilesRecord& other) throw()
+void FindFilesRecord::swap(FindFilesRecord& other) BOOST_NOEXCEPT_OR_NOTHROW
 {
     using std::swap;
     swap(cFileName, other.cFileName);
@@ -336,12 +336,12 @@ class FindHandle : private boost::noncopyable
     std::size_t index;
 
     public:
-    bool IsInvalid() const throw()
+    bool IsInvalid() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return this->hFind == INVALID_HANDLE_VALUE;
     }
 
-    FindHandle(std::size_t index, HANDLE hInit) throw()
+    FindHandle(std::size_t index, HANDLE hInit) BOOST_NOEXCEPT_OR_NOTHROW
         : hFind(hInit)
         , index(index)
     {
@@ -359,22 +359,22 @@ class FindHandle : private boost::noncopyable
         return *this;
     }
 
-    void Swap(FindHandle& other) throw()
+    void Swap(FindHandle& other) BOOST_NOEXCEPT_OR_NOTHROW
     {
         std::swap(this->hFind, other.hFind);
         std::swap(this->index, other.index);
     }
 
-    HANDLE Get() const throw()
+    HANDLE Get() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return this->hFind;
     }
-    std::size_t Index() const throw()
+    std::size_t Index() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return this->index;
     }
 
-    ~FindHandle() throw()
+    ~FindHandle() BOOST_NOEXCEPT_OR_NOTHROW
     {
         if (!this->IsInvalid())
         {
@@ -386,7 +386,7 @@ class FindHandle : private boost::noncopyable
 /// <summary>Swaps a pair of FindHandle instances.</summary>
 /// <param name="lhs">[in,out] The left hand side.</param>
 /// <param name="rhs">[in,out] The right hand side.</param>
-inline void swap(FindHandle& lhs, FindHandle& rhs) throw()
+inline void swap(FindHandle& lhs, FindHandle& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     lhs.Swap(rhs);
 }
@@ -408,21 +408,21 @@ static inline bool IsDotDirectory(wchar_t const* toCheck)
     return false;
 }
 
-bool FindFiles::IsRecursive() const throw()
+bool FindFiles::IsRecursive() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     auto const bit =
         static_cast<unsigned char>(FindFilesOptions::RecursiveSearch);
     return (static_cast<unsigned char>(this->options) & bit) != 0;
 }
 
-bool FindFiles::IncludingDotDirectories() const throw()
+bool FindFiles::IncludingDotDirectories() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     auto const bit =
         static_cast<unsigned char>(FindFilesOptions::IncludeDotDirectories);
     return (static_cast<unsigned char>(this->options) & bit) != 0;
 }
 
-bool FindFiles::CanEnter() const throw()
+bool FindFiles::CanEnter() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     auto const attributes = this->findData.dwFileAttributes;
     bool const isDot = IsDotDirectory(this->findData.cFileName);
@@ -431,7 +431,7 @@ bool FindFiles::CanEnter() const throw()
     return this->LastSuccess() && isDirectory && !isReparse && !isDot;
 }
 
-bool FindFiles::LastSuccess() const throw()
+bool FindFiles::LastSuccess() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->lastError == ERROR_SUCCESS;
 }
@@ -481,7 +481,7 @@ void FindFiles::WinNext()
     }
 }
 
-FindFiles::FindFiles() throw()
+FindFiles::FindFiles() BOOST_NOEXCEPT_OR_NOTHROW
     : lastError(ERROR_NO_MORE_FILES)
     , options(FindFilesOptions::LocalSearch)
 {
@@ -499,7 +499,7 @@ FindFiles::FindFiles(std::wstring const& pattern, FindFilesOptions options)
     this->Construct(pattern);
 }
 
-FindFiles::FindFiles( FindFiles&& toMove ) throw()
+FindFiles::FindFiles( FindFiles&& toMove ) BOOST_NOEXCEPT_OR_NOTHROW
         : handleStack(std::move(toMove.handleStack))
         , prefix(std::move(toMove.prefix))
         , pattern(std::move(toMove.pattern))
@@ -514,18 +514,18 @@ FindFiles::FindFiles( FindFiles&& toMove ) throw()
     toMove.findData.cFileName[0] = L'\0';
 }
 
-FindFiles& FindFiles::operator=(FindFiles&& toMove) throw()
+FindFiles& FindFiles::operator=(FindFiles&& toMove) BOOST_NOEXCEPT_OR_NOTHROW
 {
     static_cast<FindFiles>(std::move(toMove)).Swap(*this);
     return *this;
 }
 
-FindFiles::~FindFiles() throw()
+FindFiles::~FindFiles() BOOST_NOEXCEPT_OR_NOTHROW
 {
     // Purposely empty.
 }
 
-void FindFiles::Swap(FindFiles& other) throw()
+void FindFiles::Swap(FindFiles& other) BOOST_NOEXCEPT_OR_NOTHROW
 {
     using std::swap;
     swap(this->handleStack, other.handleStack);
@@ -590,7 +590,7 @@ bool FindFiles::NextSuccess()
     return this->LastSuccess();
 }
 
-DWORD FindFiles::LastError() const throw()
+DWORD FindFiles::LastError() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->lastError;
 }
@@ -611,7 +611,7 @@ FindFilesRecord FindFiles::GetRecord() const
     }
 }
 
-expected<FindFilesRecord> FindFiles::TryGetRecord() const throw()
+expected<FindFilesRecord> FindFiles::TryGetRecord() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     if (this->lastError != ERROR_SUCCESS)
     {
@@ -650,13 +650,13 @@ void FindFiles::Construct(std::wstring const& pattern)
     this->lastError = ERROR_SUCCESS;
 }
 
-bool FindFiles::OnDotKeepGoing() throw()
+bool FindFiles::OnDotKeepGoing() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->LastSuccess() && IsDotDirectory(this->findData.cFileName) &&
            (!this->IncludingDotDirectories() || this->handleStack.size() != 1);
 }
 
-bool FindFiles::OnEndShouldLeave() throw()
+bool FindFiles::OnEndShouldLeave() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return this->lastError == ERROR_NO_MORE_FILES && !this->handleStack.empty();
 }

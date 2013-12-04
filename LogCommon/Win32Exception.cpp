@@ -13,12 +13,12 @@ namespace Instalog
 {
 namespace SystemFacades
 {
-std::exception_ptr Win32Exception::FromLastError() throw()
+std::exception_ptr Win32Exception::FromLastError() BOOST_NOEXCEPT_OR_NOTHROW
 {
     return FromWinError(::GetLastError());
 }
 
-std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) throw()
+std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) BOOST_NOEXCEPT_OR_NOTHROW
 {
     switch (errorCode)
     {
@@ -43,7 +43,7 @@ std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) throw()
     }
 }
 
-std::exception_ptr Win32Exception::FromNtError(NTSTATUS errorCode) throw()
+std::exception_ptr Win32Exception::FromNtError(NTSTATUS errorCode) BOOST_NOEXCEPT_OR_NOTHROW
 {
     typedef ULONG(WINAPI * RtlNtStatusToDosErrorFunc)(__in NTSTATUS Status);
     RtlNtStatusToDosErrorFunc conv =

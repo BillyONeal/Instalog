@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <exception>
 #include <memory>
+#include <boost/config.hpp>
 
 namespace Instalog
 {
@@ -76,7 +77,7 @@ template <typename Ty> class expected
      * 
      * @return The exception storage reference.
      */
-    std::exception_ptr& get_exception_storage() throw()
+    std::exception_ptr& get_exception_storage() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return *reinterpret_cast<std::exception_ptr*>(&eStorage);
     }
@@ -86,7 +87,7 @@ template <typename Ty> class expected
      * 
      * @return The exception storage reference.
      */
-    std::exception_ptr const& get_exception_storage() const throw()
+    std::exception_ptr const& get_exception_storage() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return *reinterpret_cast<std::exception_ptr const*>(&eStorage);
     }
@@ -96,7 +97,7 @@ template <typename Ty> class expected
      * 
      * @return The value storage reference.
      */
-    reference get_value_storage() throw()
+    reference get_value_storage() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return *reinterpret_cast<pointer>(&tStorage);
     }
@@ -106,7 +107,7 @@ template <typename Ty> class expected
      * 
      * @return The value storage reference.
      */
-    const_reference get_value_storage() const throw()
+    const_reference get_value_storage() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return *reinterpret_cast<const_pointer>(&tStorage);
     }
@@ -114,7 +115,7 @@ template <typename Ty> class expected
     /**
      * Destorys the contents of this expected<T>.
      */
-    void destroy() throw()
+    void destroy() BOOST_NOEXCEPT_OR_NOTHROW
     {
         if (isValid)
         {
@@ -130,7 +131,7 @@ template <typename Ty> class expected
     /**
      * Constructs an empty exception_ptr as this instance's default state.
      */
-    void default_initialize() throw()
+    void default_initialize() BOOST_NOEXCEPT_OR_NOTHROW
     {
         new (&get_exception_storage()) std::exception_ptr();
     }
@@ -219,7 +220,7 @@ template <typename Ty> class expected
      * initialized.
      * @return An expected<T> containing ptr.
      */
-    static expected<Ty> from_exception(std::exception_ptr ptr) throw()
+    static expected<Ty> from_exception(std::exception_ptr ptr) BOOST_NOEXCEPT_OR_NOTHROW
     {
         expected<Ty> result;
         new (&result.get_exception_storage()) std::exception_ptr(
@@ -231,7 +232,7 @@ template <typename Ty> class expected
      * Initializes this instance from the exception in flight.
      * @return An expected<T> containing the exception in flight.
      */
-    static expected<Ty> from_exception() throw()
+    static expected<Ty> from_exception() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return from_exception(std::current_exception());
     }
@@ -244,7 +245,7 @@ template <typename Ty> class expected
      * constructed.
      * @return A expected<T> containing ex.
      */
-    template <typename E> static expected<Ty> from_exception(E&& ex) throw()
+    template <typename E> static expected<Ty> from_exception(E&& ex) BOOST_NOEXCEPT_OR_NOTHROW
     {
         // assert(typeid(E) == typeid(ex) && "Slicing detected.");
         return from_exception(std::make_exception_ptr(std::forward<E>(ex)));
@@ -253,7 +254,7 @@ template <typename Ty> class expected
     /**
      * Destroys an expected<t>.
      */
-    ~expected() throw()
+    ~expected() BOOST_NOEXCEPT_OR_NOTHROW
     {
         destroy();
     }
@@ -262,7 +263,7 @@ template <typename Ty> class expected
      * Clears the contents of this expected<t>, and reverts it to a
      * default-initalzied state.
      */
-    void clear() throw()
+    void clear() BOOST_NOEXCEPT_OR_NOTHROW
     {
         destroy();
         isValid = false;
@@ -275,7 +276,7 @@ template <typename Ty> class expected
      * 
      * @return true if valid, false if not.
      */
-    bool is_valid() const throw()
+    bool is_valid() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return this->isValid;
     }
