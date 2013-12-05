@@ -35,7 +35,7 @@ class BasicRegistryValue
     BasicRegistryValue()
     {
     } // Not intended for client construction.
-    ~BasicRegistryValue()
+    ~BasicRegistryValue() BOOST_NOEXCEPT_OR_NOTHROW
     {
     }
 
