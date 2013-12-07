@@ -193,7 +193,7 @@ class OptimisticBuffer
      * Gets the size of the allocated region.
      * @return The allocated size.
      */
-    std::size_t Size() const
+    std::size_t Size() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return currentSize;
     }
@@ -213,15 +213,15 @@ class OptimisticBuffer
      * @param index Zero-based index of this buffer to retrieve.
      * @return The indexed value.
      */
-    unsigned char& operator[](std::size_t index) { return GetPointer()[index]; }
+    unsigned char& operator[](std::size_t index) BOOST_NOEXCEPT_OR_NOTHROW { return GetPointer()[index]; }
 
-        /**
-         * Array indexer operator.
-         * @param index Zero-based index of this buffer to retrieve.
-         * @return The indexed value.
-         */
-        unsigned char const&
-    operator[](std::size_t index) const
+    /**
+     * Array indexer operator.
+     * @param index Zero-based index of this buffer to retrieve.
+     * @return The indexed value.
+     */
+    unsigned char const&
+    operator[](std::size_t index) const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return GetPointer()[index];
     }
@@ -230,7 +230,7 @@ class OptimisticBuffer
      * Gets the pointer for this buffer.
      * @return The pointer for this buffer.
      */
-    PointerBackingType* Get()
+    PointerBackingType* Get() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return GetPointer();
     }
@@ -239,7 +239,7 @@ class OptimisticBuffer
      * Gets the pointer for this buffer.
      * @return The pointer for this buffer.
      */
-    PointerBackingType const* Get() const
+    PointerBackingType const* Get() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return GetPointer();
     }
@@ -249,7 +249,7 @@ class OptimisticBuffer
      * @tparam typename T The type as which this buffer is retrieved.
      * @return The pointer for this buffer.
      */
-    template <typename T> T* GetAs()
+    template <typename T> T* GetAs() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return reinterpret_cast<T*>(GetPointer());
     }
@@ -259,7 +259,7 @@ class OptimisticBuffer
      * @tparam typename T The type as which this buffer is retrieved.
      * @return The pointer for this buffer.
      */
-    template <typename T> T const* GetAs() const
+    template <typename T> T const* GetAs() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return reinterpret_cast<T const*>(GetPointer());
     }
@@ -267,7 +267,7 @@ class OptimisticBuffer
     /**
      * Destroys this instance of OptimisticBuffer.
      */
-    ~OptimisticBuffer()
+    ~OptimisticBuffer() BOOST_NOEXCEPT_OR_NOTHROW
     {
         Destroy();
     }
