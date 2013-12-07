@@ -53,3 +53,23 @@ TEST(WriteFormat, SanityConcat)
     write(sink, "Hello", " ", "world!");
     ASSERT_EQ(static_cast<std::string>("Hello world!"), sink.get());
 }
+
+TEST(WriteFormat, Integer)
+{
+    std::string sink;
+    write(sink, "Value is: ", 1729);
+    ASSERT_STREQ("Value is: 1729", sink.c_str());
+}
+
+TEST(WriteFormat, WithNewline)
+{
+    std::string sink;
+    writeln(sink, "What follows is a newline:");
+    write(sink, sink.size(), " bytes written so far");
+#ifdef BOOST_WINDOWS
+    char const* expected = "What follows is a newline:\r\n28 bytes written so far";
+#else
+    char const* expected = "What follows is a newline:\n27 bytes written so far";
+#endif
+    ASSERT_STREQ(expected, sink.c_str());
+}

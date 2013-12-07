@@ -91,11 +91,6 @@ namespace Instalog
         return format_intrusive_result(ptr, std::strlen(ptr));
     }
 
-    std::string format_value(double example)
-    {
-        return std::to_string(example);
-    }
-
     template <typename IntegralType, typename>
     struct stack_result_for_digits_impl
     {};
@@ -121,21 +116,14 @@ namespace Instalog
     }
 
 #ifdef BOOST_WINDOWS
-    format_stack_result<2> get_newline()
+    format_intrusive_result get_newline()
     {
-        format_stack_result<2> result;
-        result.data()[0] = '\r';
-        result.data()[1] = '\n';
-        result.set_size(2);
-        return result;
+        return format_intrusive_result("\r\n", 2);
     }
 #else
     format_stack_result<1> get_newline()
     {
-        format_stack_result<1> result;
-        result.data()[0] = '\n';
-        result.set_size(1);
-        return result;
+        return format_intrusive_result("\n", 1);
     }
 #endif
 
