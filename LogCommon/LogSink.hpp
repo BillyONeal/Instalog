@@ -132,32 +132,23 @@ namespace Instalog
         return 0;
     }
 
-    template <typename Slice, typename... Slices>
-    std::size_t sum_sizes(Slice const& slice, Slices const& ...slices)
+    template <typename... Integral>
+    std::size_t sum_sizes(std::size_t size, Integral ...sizes)
     {
-        return slice.size() + sum_sizes(slices...);
-    }
-
-    char const* format_buffer(char const* ptr, std::size_t)
-    {
-        return ptr;
-    }
-
-    template <typename Slice, typename... Slices>
-    char const* format_buffer(char* ptr, std::size_t length, Slice const& slice, Slices const& ...slices)
-    {
-        std::size_t const size = slice.size();
-        std::copy_n(slice.data(), size, ptr);
-        return format_buffer(ptr + size, length - size, slices...);
+        return size + sum_sizes(sizes...);
     }
 
     template <typename Sink, typename... Slices>
     Sink& write_impl(Sink& target, Slices &&...slices)
     {
-        std::size_t const length = sum_sizes(slices...);
+        // Special thanks to Nawaz for his help here.
+        // See: http://stackoverflow.com/a/20440197/82320
+        std::size_t const length = sum_sizes(slices.size()...);
         OptimisticBuffer<256> buff(length);
         char* ptr = buff.GetAs<char>();
-        char const* endPtr = format_buffer(ptr, length, slices...);
+        char* endPtr = ptr;
+        char* expand[] = {(endPtr = std::copy_n(slices.data(), slices.size(), endPtr))...};
+        (void)expand; // silence unreferenced parameter warning.
         target.append(ptr, endPtr - ptr);
         return target;
     }
