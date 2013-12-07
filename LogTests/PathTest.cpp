@@ -309,23 +309,44 @@ TEST_F(PathResolutionPathOrderFixture, SeesLastPathItem)
 
 TEST_F(PathResolutionPathOrderFixture, RespectsPathOrder)
 {
-    HANDLE hFile = ::CreateFileW(pathItems[1].c_str(),
-                                 GENERIC_WRITE,
-                                 0,
-                                 0,
-                                 CREATE_ALWAYS,
-                                 FILE_FLAG_DELETE_ON_CLOSE,
-                                 0);
-    HANDLE hFile2 = ::CreateFileW(pathItems[2].c_str(),
-                                  GENERIC_WRITE,
-                                  0,
-                                  0,
-                                  CREATE_ALWAYS,
-                                  FILE_FLAG_DELETE_ON_CLOSE,
-                                  0);
-    TestResolve(pathItems[1], fileName);
-    ::CloseHandle(hFile);
-    ::CloseHandle(hFile2);
+    // Create 2 temporary files at the first parts of %PATH% which succeed.
+    HANDLE files[2];
+    std::size_t idx = 0;
+    std::size_t firstFileIdx = 0;
+    std::size_t foundFiles = 0;
+    for (; idx < pathItems.size() && foundFiles < _countof(files); ++idx)
+    {
+        HANDLE hCurrent = ::CreateFileW(pathItems[idx].c_str(),
+                                        GENERIC_WRITE,
+                                        0,
+                                        0,
+                                        CREATE_ALWAYS,
+                                        FILE_FLAG_DELETE_ON_CLOSE,
+                                        0);
+
+        if (hCurrent == INVALID_HANDLE_VALUE)
+        {
+            continue;
+        }
+
+        if (foundFiles == 0)
+        {
+            firstFileIdx = idx;
+        }
+
+        files[foundFiles++] = hCurrent;
+    }
+
+    ASSERT_EQ(2, foundFiles);
+
+    // Verify that the first file in %PATH% is resolved, not the second.
+    TestResolve(pathItems[firstFileIdx], fileName);
+
+    // Teardown / close temporary bits
+    for (HANDLE hFile : files)
+    {
+        ::CloseHandle(hFile);
+    }
 }
 
 struct PathResolutionPathExtOrderFixture : public testing::Test
