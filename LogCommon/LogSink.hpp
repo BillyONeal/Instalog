@@ -10,13 +10,13 @@
 #include <type_traits>
 #include <memory>
 #include <boost/config.hpp>
+#include <boost/spirit/include/karma.hpp>
 #include "OptimisticBuffer.hpp"
 
 namespace Instalog
 {
-    class log_sink
+    struct log_sink
     {
-    public:
         virtual void append(char const* data, std::size_t dataLength) = 0;
         virtual ~log_sink()
         {}
@@ -98,22 +98,36 @@ namespace Instalog
     template <typename IntegralType>
     struct stack_result_for_digits_impl<IntegralType, std::true_type>
     {
-        typedef format_stack_result<std::numeric_limits<IntegralType>::digits10 + 3> type;
+        typedef format_stack_result<std::numeric_limits<IntegralType>::digits10 + 2> type;
     };
 
     template<typename IntegralType>
-    struct stack_result_for_digits : public stack_result_for_digits_impl<IntegralType, typename std::is_integral<IntegralType>::type>
+    struct stack_result_for_digits : public stack_result_for_digits_impl<IntegralType, typename std::is_arithmetic<IntegralType>::type>
     {};
 
-    template <typename IntegralType>
-    typename typename stack_result_for_digits<IntegralType>::type format_value(IntegralType value)
-    {
-        typedef typename stack_result_for_digits<IntegralType>::type result_type;
-        result_type result;
-        long long tempValue = value;
-        result.set_size(sprintf_s(result.data(), "%lld", tempValue));
-        return result;
+#define GENERATE_KARMA_GENERATOR(t, parser) \
+    stack_result_for_digits<t>::type format_value(t value) \
+    { \
+        using namespace boost::spirit::karma; \
+        stack_result_for_digits<t>::type result; \
+        char *begin = result.data(); \
+        char *end = begin; \
+        generate(end, parser, value); \
+        result.set_size(end - begin); \
+        return result; \
     }
+
+    GENERATE_KARMA_GENERATOR(short, short_);
+    GENERATE_KARMA_GENERATOR(int, int_);
+    GENERATE_KARMA_GENERATOR(long, long_);
+    GENERATE_KARMA_GENERATOR(long long, long_long);
+    GENERATE_KARMA_GENERATOR(unsigned short, ushort_);
+    GENERATE_KARMA_GENERATOR(unsigned long, ulong_);
+    GENERATE_KARMA_GENERATOR(unsigned int, uint_);
+    GENERATE_KARMA_GENERATOR(unsigned long long, ulong_long);
+    GENERATE_KARMA_GENERATOR(double, double_);
+
+#undef GENERATE_KARMA_GENERATOR
 
 #ifdef BOOST_WINDOWS
     format_intrusive_result get_newline()
