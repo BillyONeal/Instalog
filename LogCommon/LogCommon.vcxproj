@@ -71,6 +71,7 @@
     <ClInclude Include="Expected.hpp" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="IlTrace.hpp" />
+    <ClInclude Include="LogSink.hpp" />
     <ClInclude Include="MakeUnique.hpp" />
     <ClInclude Include="ntstatus.h" />
     <ClInclude Include="OptimisticBuffer.hpp" />

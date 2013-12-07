@@ -184,6 +184,9 @@
     <ClInclude Include="LoadPointsReport.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LogSink.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
