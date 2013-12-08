@@ -53,7 +53,7 @@ TEST(ValueFormatters, CanFormatBigIntegers)
 TEST(WriteFormat, SanityConcat)
 {
     string_sink sink;
-    write(sink, "Hello", " ", "world!");
+    write(sink, "Hello", ' ', "world!");
     ASSERT_EQ(static_cast<std::string>("Hello world!"), sink.get());
 }
 

@@ -10,11 +10,13 @@
 #include <type_traits>
 #include <memory>
 #include <boost/config.hpp>
-#include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/karma_generate.hpp>
+#include <boost/spirit/include/karma_numeric.hpp>
 #include "OptimisticBuffer.hpp"
 
 namespace Instalog
 {
+    // Log sinks recieve the results of logging.
     struct log_sink
     {
         virtual void append(char const* data, std::size_t dataLength) = 0;
@@ -22,6 +24,7 @@ namespace Instalog
         {}
     };
 
+    // Log sink which writes the results into a std::string.
     class string_sink final : public log_sink
     {
         std::string target;
@@ -36,6 +39,20 @@ namespace Instalog
         }
     };
 
+    // Format results types.
+    // When formatting a value (e.g. a single number), these types are where given
+    // value formatters store the result.
+    // The code that calls the value formatters is designed to accept any of these types;
+    // they are seperate this way so that each formatter can do the most performant thing
+    // for their specific formatted type.
+    // 
+    // Format results types have a member function "data" which returns a pointer to the data
+    // to write, and a member function "size" which returns the length of the valid region
+    // pointed to by data().
+    
+    // Intrusive results: For objects which contain a string representation as part of
+    // themselves, e.g. std::string. Contains a pointer to the string data to write, and
+    // a length.
     class format_intrusive_result
     {
         char const* ptr;
@@ -56,11 +73,15 @@ namespace Instalog
         }
     };
 
+    // Stack results. For things like integers and similar where the value is formatted into a
+    // stack buffer.
     template <std::size_t allocLength>
     class format_stack_result
     {
+        typedef std::uint16_t size_type; // assume that stack buffers won't be bigger than 64k
+        static_assert(allocLength < UINT16_MAX, "Length limit exceeded in format_stack_result");
+        size_type length;
         char array[allocLength];
-        std::size_t length;
     public:
         static const std::size_t declared_size = allocLength;
         decltype(array)& data()
@@ -73,7 +94,7 @@ namespace Instalog
         }
         void set_size(std::size_t size_)
         {
-            this->length = size_;
+            this->length = static_cast<size_type>(size_);
         }
         std::size_t size() const
         {
@@ -81,16 +102,9 @@ namespace Instalog
         }
     };
 
-    format_intrusive_result format_value(std::string const& value)
-    {
-        return format_intrusive_result(value.c_str(), value.size());
-    }
-
-    format_intrusive_result format_value(char const* ptr)
-    {
-        return format_intrusive_result(ptr, std::strlen(ptr));
-    }
-
+    // Template metafunction: stack_result_for_digits. Generates the correct
+    // format_stack_result type with enough space to format a number written
+    // of the supplied type.
     template <typename IntegralType, typename>
     struct stack_result_for_digits_impl
     {};
@@ -105,6 +119,53 @@ namespace Instalog
     struct stack_result_for_digits : public stack_result_for_digits_impl<IntegralType, typename std::is_arithmetic<IntegralType>::type>
     {};
 
+    // Character result. For cases where one character is required.
+    struct format_character_result
+    {
+        char result;
+    public:
+        format_character_result() = default;
+        format_character_result(char value)
+            : result(value)
+        { }
+        std::size_t size() const
+        {
+            return 1;
+        }
+        char const* data() const
+        {
+            return &this->result;
+        }
+    };
+
+    // format_value shim functions.
+    // The format_value shims accept a single value, and produce a format result type
+    // containing that type formatted as a string.
+    //
+    // Users who wish to add their types to this formatting mechanism can do so
+    // by defining a format_value that gets selected via argument dependant lookup.
+    // 
+    
+    // Format std::string
+    format_intrusive_result format_value(std::string const& value)
+    {
+        return format_intrusive_result(value.c_str(), value.size());
+    }
+    
+    // Format character pointers. (Assume null terminated)
+    format_intrusive_result format_value(char const* ptr)
+    {
+        return format_intrusive_result(ptr, std::strlen(ptr));
+    }
+
+    // Format single characters
+    format_character_result format_value(char value)
+    {
+        return format_character_result(value);
+    }
+
+    // boost::spirit::karma numeric generators. These perform default
+    // formatting of numbers.
 #define GENERATE_KARMA_GENERATOR(t, parser) \
     stack_result_for_digits<t>::type format_value(t value) \
     { \
@@ -117,6 +178,7 @@ namespace Instalog
         return result; \
     }
 
+    // Stamp out for each of the numeric types with macros.
     GENERATE_KARMA_GENERATOR(short, short_);
     GENERATE_KARMA_GENERATOR(int, int_);
     GENERATE_KARMA_GENERATOR(long, long_);
@@ -125,10 +187,12 @@ namespace Instalog
     GENERATE_KARMA_GENERATOR(unsigned long, ulong_);
     GENERATE_KARMA_GENERATOR(unsigned int, uint_);
     GENERATE_KARMA_GENERATOR(unsigned long long, ulong_long);
+    /* floats will call the double overload. */
     GENERATE_KARMA_GENERATOR(double, double_);
 
 #undef GENERATE_KARMA_GENERATOR
 
+    // Platform newline selection.
 #ifdef BOOST_WINDOWS
     format_intrusive_result get_newline()
     {
@@ -141,6 +205,8 @@ namespace Instalog
     }
 #endif
 
+    // sum_sizes function basis case. Returns the sum of all std::size_t instances
+    // passed in as arguments.
     std::size_t sum_sizes()
     {
         return 0;
@@ -152,6 +218,7 @@ namespace Instalog
         return size + sum_sizes(sizes...);
     }
 
+    // Helper function implementing the write formatting API.
     template <typename Sink, typename... Slices>
     Sink& write_impl(Sink& target, Slices &&...slices)
     {
@@ -167,12 +234,14 @@ namespace Instalog
         return target;
     }
 
+    // Writes a set of values to the given sink.
     template <typename Sink, typename... Values>
     Sink& write(Sink& target, Values &&...values)
     {
         return write_impl(target, format_value(std::forward<Values>(values))...);
     }
 
+    // Writes a set of values to the given sink, followed by a newline.
     template <typename Sink, typename... Values>
     Sink& writeln(Sink& target, Values &&...values)
     {
