@@ -19,19 +19,20 @@
 #include "LoadPointsReport.hpp"
 #include "ScopeExit.hpp"
 #include "Dns.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
 using namespace SystemFacades;
 
-std::wstring LoadPointsReport::GetScriptCommand() const
+std::string LoadPointsReport::GetScriptCommand() const
 {
-    return L"loadpoints";
+    return "loadpoints";
 }
 
-std::wstring LoadPointsReport::GetName() const
+std::string LoadPointsReport::GetName() const
 {
-    return L"Load Points";
+    return "Load Points";
 }
 
 LogSectionPriorities LoadPointsReport::GetPriority() const
@@ -39,12 +40,12 @@ LogSectionPriorities LoadPointsReport::GetPriority() const
     return SCANNING;
 }
 
-static std::wstring Get64Suffix()
+static std::string Get64Suffix()
 {
 #ifdef _M_X64
-    return L"64";
+    return "64";
 #else
-    return std::wstring();
+    return std::string();
 #endif
 }
 
@@ -53,32 +54,23 @@ static std::wstring Get64Suffix()
 *
 * @param [in,out] output The stream to receive the output.
 */
-static void SecurityCenterOutput(std::wostream& output)
+static void SecurityCenterOutput(log_sink& output)
 {
     using SystemFacades::SecurityProduct;
     auto products = SystemFacades::EnumerateSecurityProducts();
     for (auto it = products.cbegin(); it != products.cend(); ++it)
     {
-        output << it->GetTwoLetterPrefix() << L": [" << it->GetInstanceGuid()
-               << L"] ";
-        if (it->IsEnabled())
-        {
-            output << L'E';
-        }
-        else
-        {
-            output << L'D';
-        }
+        write(output, it->GetTwoLetterPrefix(), ": [", it->GetInstanceGuid(), "] ", it->IsEnabled() ? 'E' : 'D');
         switch (it->GetUpdateStatus())
         {
         case SecurityProduct::OutOfDate:
-            output << L'O';
+            write(output, 'O');
             break;
         case SecurityProduct::UpToDate:
-            output << L'U';
+            write(output, 'U');
             break;
         }
-        output << L' ' << it->GetName() << L'\n';
+        writeln(output, ' ', it->GetName());
     }
 }
 
@@ -90,10 +82,10 @@ static void SecurityCenterOutput(std::wostream& output)
 * @param [in,out] out    The output stream.
 * @param [in,out] target Target which should be written.
 */
-static void GeneralProcess(std::wostream& out, std::wstring& target)
+static void GeneralProcess(log_sink& out, std::string& target)
 {
-    GeneralEscape(target, L'#', L'\n');
-    out << target;
+    GeneralEscape(target, '#', '\r');
+    write(out, target);
 }
 
 /**
@@ -102,7 +94,7 @@ static void GeneralProcess(std::wostream& out, std::wstring& target)
 * @param [in,out] out    The output stream.
 * @param [in,out] target Target name of the file to print.
 */
-static void FileProcess(std::wostream& out, std::wstring& target)
+static void FileProcess(log_sink& out, std::string& target)
 {
     WriteDefaultFileOutput(out, target);
 }
@@ -113,10 +105,10 @@ static void FileProcess(std::wostream& out, std::wstring& target)
 * @param [in,out] out    The output stream.
 * @param [in,out] target Target to write as a URL.
 */
-static void HttpProcess(std::wostream& out, std::wstring& target)
+static void HttpProcess(log_sink& out, std::string& target)
 {
-    HttpEscape(target, L'#', L'\n');
-    out << target;
+    HttpEscape(target, '#', '\r');
+    write(out, target);
 }
 
 /**
@@ -134,10 +126,10 @@ static void HttpProcess(std::wostream& out, std::wstring& target)
 *                        values' data. The default writes the data as a file.
 */
 static void ValueMajorBasedEnumeration(
-    std::wostream& output,
-    std::wstring const& root,
-    std::wstring const& prefix,
-    std::function<void(std::wostream& out, std::wstring& source)> dataProcess =
+    log_sink& output,
+    std::string const& root,
+    std::string const& prefix,
+    std::function<void(log_sink& out, std::string& source)> dataProcess =
         FileProcess)
 {
     RegistryKey key(RegistryKey::Open(root, KEY_QUERY_VALUE));
@@ -146,7 +138,7 @@ static void ValueMajorBasedEnumeration(
         return;
     }
     auto values = key.EnumerateValues();
-    std::vector<std::pair<std::wstring, std::wstring>> pods;
+    std::vector<std::pair<std::string, std::string>> pods;
     for (RegistryValueAndData const& val : values)
     {
         pods.emplace_back(std::make_pair(val.GetName(), val.GetString()));
@@ -156,10 +148,10 @@ static void ValueMajorBasedEnumeration(
     std::sort(pods.begin(), pods.end());
     for (auto& current : pods)
     {
-        GeneralEscape(current.first, L'#', L']');
-        output << prefix << L": [" << current.first << L"] ";
+        GeneralEscape(current.first, '#', ']');
+        write(output, prefix, ": [", current.first, "] ");
         dataProcess(output, current.second);
-        output << L'\n';
+        writeln(output);
     }
     ;
 }
@@ -187,17 +179,17 @@ static void ValueMajorBasedEnumeration(
 *                        printed.
 */
 static void ValueMajorBasedEnumerationBitless(
-    std::wostream& output,
-    std::wstring const& root,
-    std::wstring const& subkey32,
-    std::wstring const& subkey64,
-    std::wstring const& prefix,
-    std::function<void(std::wostream& out, std::wstring& source)> dataProcess =
+    log_sink& output,
+    std::string const& root,
+    std::string const& subkey32,
+    std::string const& subkey64,
+    std::string const& prefix,
+    std::function<void(log_sink& out, std::string& source)> dataProcess =
         FileProcess)
 {
 #ifdef _M_X64
     ValueMajorBasedEnumeration(
-        output, root + subkey64, prefix + L"64", dataProcess);
+        output, root + subkey64, prefix + "64", dataProcess);
     ValueMajorBasedEnumeration(output, root + subkey32, prefix, dataProcess);
 #else
     ValueMajorBasedEnumeration(output, root + subkey64, prefix, dataProcess);
@@ -212,15 +204,15 @@ static void ValueMajorBasedEnumerationBitless(
 * @param runRoot         The root of the hive where the run key is located.
 * @param name            The name of the run key to enumerate.
 */
-void RunKeyOutput(std::wostream& output,
-                  std::wstring const& runRoot,
-                  std::wstring const& name)
+void RunKeyOutput(log_sink& output,
+                  std::string const& runRoot,
+                  std::string const& name)
 {
     ValueMajorBasedEnumerationBitless(
         output,
         runRoot,
-        L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name,
-        L"\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name,
+        "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\" + name,
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\" + name,
         name);
 }
 
@@ -242,11 +234,11 @@ void RunKeyOutput(std::wostream& output,
 *                        values' data. The default writes the data as a file.
 */
 static void SubkeyMajorBasedEnumeration(
-    std::wostream& output,
-    std::wstring const& root,
-    std::wstring const& prefix,
-    std::wstring const& valueName,
-    std::function<void(std::wostream& out, std::wstring& source)> dataProcess =
+    log_sink& output,
+    std::string const& root,
+    std::string const& prefix,
+    std::string const& valueName,
+    std::function<void(log_sink& out, std::string& source)> dataProcess =
         FileProcess)
 {
     RegistryKey key(RegistryKey::Open(root, KEY_ENUMERATE_SUB_KEYS));
@@ -263,7 +255,7 @@ static void SubkeyMajorBasedEnumeration(
         }
     }
     auto values = key.EnumerateSubKeys(KEY_QUERY_VALUE);
-    std::vector<std::pair<std::wstring, std::wstring>> pods;
+    std::vector<std::pair<std::string, std::string>> pods;
     for (RegistryKey const& val : values)
     {
         try
@@ -279,10 +271,10 @@ static void SubkeyMajorBasedEnumeration(
     std::sort(pods.begin(), pods.end());
     for (auto& current : pods)
     {
-        GeneralEscape(current.first, L'#', L']');
-        output << prefix << L": [" << current.first << L"] ";
+        GeneralEscape(current.first, '#', ']');
+        write(output, prefix, ": [", current.first, "] ");
         dataProcess(output, current.second);
-        output << L'\n';
+        writeln(output);
     }
     ;
 }
@@ -311,18 +303,18 @@ static void SubkeyMajorBasedEnumeration(
 *                        printed.
 */
 static void SubkeyMajorBasedEnumerationBitless(
-    std::wostream& output,
-    std::wstring const& root,
-    std::wstring const& subkey32,
-    std::wstring const& subkey64,
-    std::wstring const& valueName,
-    std::wstring const& prefix,
-    std::function<void(std::wostream& out, std::wstring& source)> dataProcess =
+    log_sink& output,
+    std::string const& root,
+    std::string const& subkey32,
+    std::string const& subkey64,
+    std::string const& valueName,
+    std::string const& prefix,
+    std::function<void(log_sink& out, std::string& source)> dataProcess =
         FileProcess)
 {
 #ifdef _M_X64
     SubkeyMajorBasedEnumeration(
-        output, root + subkey64, valueName, prefix + L"64", dataProcess);
+        output, root + subkey64, valueName, prefix + "64", dataProcess);
     SubkeyMajorBasedEnumeration(
         output, root + subkey32, valueName, prefix, dataProcess);
 #else
@@ -337,12 +329,12 @@ static void SubkeyMajorBasedEnumerationBitless(
 *
 * @return A list of the registry hives.
 */
-static std::vector<std::wstring> EnumerateUserHives()
+static std::vector<std::string> EnumerateUserHives()
 {
-    std::vector<std::wstring> hives;
+    std::vector<std::string> hives;
     {
         RegistryKey hiveList(RegistryKey::Open(
-            L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\hivelist",
+            "\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\hivelist",
             KEY_QUERY_VALUE));
         if (hiveList.Invalid())
         {
@@ -352,10 +344,10 @@ static std::vector<std::wstring> EnumerateUserHives()
     } // Block closes key
     hives.erase(
         std::remove_if(
-            hives.begin(), hives.end(), [](std::wstring const & str)->bool {
+            hives.begin(), hives.end(), [](std::string const & str)->bool {
                 return !boost::algorithm::istarts_with(str,
-                                                       L"\\Registry\\User\\") ||
-                       boost::algorithm::ends_with(str, L"_Classes");
+                                                       "\\Registry\\User\\") ||
+                       boost::algorithm::ends_with(str, "_Classes");
             }),
         hives.end());
     std::sort(hives.begin(), hives.end());
@@ -369,26 +361,26 @@ static std::vector<std::wstring> EnumerateUserHives()
 * @param rootKey         The root key where the ExplorerRun entries are
 *located.
 */
-static void ExplorerRunOutput(std::wostream& output,
-                              std::wstring const& rootKey)
+static void ExplorerRunOutput(log_sink& output,
+                              std::string const& rootKey)
 {
 #ifdef _M_X64
     ValueMajorBasedEnumeration(
         output,
         rootKey +
-            L"Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
-        L"ExplorerRun");
+            "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
+        "ExplorerRun");
     ValueMajorBasedEnumeration(
         output,
         rootKey +
-            L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
-        L"ExplorerRun64");
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
+        "ExplorerRun64");
 #else
     ValueMajorBasedEnumeration(
         output,
         rootKey +
-            L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
-        L"ExplorerRun");
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
+        "ExplorerRun");
 #endif
 }
 
@@ -422,12 +414,12 @@ enum MasterName
 * @param nameSource      Which name "wins" between the local name and the remote
 *name.
 */
-static void ClsidValueBasedOutputWithBits(std::wostream& output,
-                                          std::wstring const& prefix,
-                                          std::wstring const& rootKey,
-                                          std::wstring const& subKey,
-                                          std::wstring const& clsidKey,
-                                          std::wstring const& backupClsidKey,
+static void ClsidValueBasedOutputWithBits(log_sink& output,
+                                          std::string const& prefix,
+                                          std::string const& rootKey,
+                                          std::string const& subKey,
+                                          std::string const& clsidKey,
+                                          std::string const& backupClsidKey,
                                           ClsidSource source,
                                           MasterName nameSource)
 {
@@ -437,7 +429,7 @@ static void ClsidValueBasedOutputWithBits(std::wostream& output,
         return;
     }
     auto rawValues = itemKey.EnumerateValues();
-    std::vector<std::pair<std::wstring, std::wstring>> values;
+    std::vector<std::pair<std::string, std::string>> values;
     values.reserve(rawValues.size());
     for (auto const& entry : rawValues)
     {
@@ -467,7 +459,7 @@ static void ClsidValueBasedOutputWithBits(std::wostream& output,
         {
             // Open the InProcServer32 subkey of that.
             inProcKey =
-                RegistryKey::Open(clsidKey, L"InProcServer32", KEY_QUERY_VALUE);
+                RegistryKey::Open(clsidKey, "InProcServer32", KEY_QUERY_VALUE);
         }
         // The CLSID key's name is used if the remote name is the "boss", or if
         // the current try
@@ -475,7 +467,7 @@ static void ClsidValueBasedOutputWithBits(std::wostream& output,
         if (clsidKey.Valid() &&
             (nameSource == CLASS_ROOT_DEFAULT || currentEntry.second.empty()))
         {
-            std::wstring remoteName(clsidKey[L""].GetString());
+            std::string remoteName(clsidKey[""].GetString());
             // Don't clobber the existing name in the event the actual name in
             // the key is empty.
             if (!remoteName.empty())
@@ -483,21 +475,20 @@ static void ClsidValueBasedOutputWithBits(std::wostream& output,
                 currentEntry.second = std::move(remoteName);
             }
         }
-        std::wstring file;
+        std::string file;
         if (inProcKey.Valid())
         {
-            file = inProcKey[L""].GetString();
+            file = inProcKey[""].GetString();
         }
         if (currentEntry.second.empty())
         {
-            currentEntry.second = L"N/A";
+            currentEntry.second = "N/A";
         }
-        GeneralEscape(currentEntry.first, L'#', L'=');
-        GeneralEscape(currentEntry.second, L'#', L':');
-        output << prefix << L": " << currentEntry.second << L": "
-               << currentEntry.first << L'=';
+        GeneralEscape(currentEntry.first, '#', '=');
+        GeneralEscape(currentEntry.second, '#', ':');
+        write(output, prefix, ": ", currentEntry.second, ": ", currentEntry.first, '=');
         WriteDefaultFileOutput(output, file);
-        output << L'\n';
+        writeln(output);
     }
 }
 
@@ -519,10 +510,10 @@ static void ClsidValueBasedOutputWithBits(std::wostream& output,
 *or the name
 *                        stored with the CLASSES key.
 */
-static void ClsidValueBasedOutput(std::wostream& output,
-                                  std::wstring const& prefix,
-                                  std::wstring const& rootKey,
-                                  std::wstring const& subKey,
+static void ClsidValueBasedOutput(log_sink& output,
+                                  std::string const& prefix,
+                                  std::string const& rootKey,
+                                  std::string const& subKey,
                                   ClsidSource source,
                                   MasterName nameSource)
 {
@@ -531,9 +522,9 @@ static void ClsidValueBasedOutput(std::wostream& output,
         output,
         prefix,
         rootKey,
-        L"\\Software\\Wow6432Node" + subKey,
-        L"\\Software\\Wow6432Node\\Classes\\CLSID\\",
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Classes\\CLSID\\",
+        "\\Software\\Wow6432Node" + subKey,
+        "\\Software\\Wow6432Node\\Classes\\CLSID\\",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Classes\\CLSID\\",
         source,
         nameSource);
 #endif
@@ -541,9 +532,9 @@ static void ClsidValueBasedOutput(std::wostream& output,
         output,
         prefix + Get64Suffix(),
         rootKey,
-        L"\\Software" + subKey,
-        L"\\Software\\Classes\\CLSID\\",
-        L"\\Registry\\Machine\\Software\\Classes\\CLSID\\",
+        "\\Software" + subKey,
+        "\\Software\\Classes\\CLSID\\",
+        "\\Registry\\Machine\\Software\\Classes\\CLSID\\",
         source,
         nameSource);
 }
@@ -563,12 +554,12 @@ static void ClsidValueBasedOutput(std::wostream& output,
 * @param nameSource      Which name "wins" between the local name and the remote
 *name.
 */
-static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
-                                           std::wstring const& prefix,
-                                           std::wstring const& rootKey,
-                                           std::wstring const& subKey,
-                                           std::wstring const& clsidKey,
-                                           std::wstring const& backupClsidKey,
+static void ClsidSubkeyBasedOutputWithBits(log_sink& output,
+                                           std::string const& prefix,
+                                           std::string const& rootKey,
+                                           std::string const& subKey,
+                                           std::string const& clsidKey,
+                                           std::string const& backupClsidKey,
                                            MasterName nameSource)
 {
     RegistryKey itemKey(
@@ -578,22 +569,22 @@ static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
         return;
     }
     auto rawValues = itemKey.EnumerateSubKeys(KEY_QUERY_VALUE);
-    std::vector<std::pair<std::wstring, std::wstring>> values;
+    std::vector<std::pair<std::string, std::string>> values;
     values.reserve(rawValues.size());
     for (auto const& entry : rawValues)
     {
-        std::wstring name;
+        std::string name;
         try
         {
-            name = entry[L""].GetString();
+            name = entry[""].GetString();
         }
         catch (ErrorFileNotFoundException const&)
         {
             // Expected
         }
-        std::wstring clsid(entry.GetName());
+        std::string clsid(entry.GetName());
         clsid.erase(clsid.begin(),
-                    std::find(clsid.rbegin(), clsid.rend(), L'\\').base());
+                    std::find(clsid.rbegin(), clsid.rend(), '\\').base());
         values.emplace_back(std::move(clsid), std::move(name));
     }
 
@@ -613,7 +604,7 @@ static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
         {
             // Open the InProcServer32 subkey of that.
             inProcKey =
-                RegistryKey::Open(clsidKey, L"InProcServer32", KEY_QUERY_VALUE);
+                RegistryKey::Open(clsidKey, "InProcServer32", KEY_QUERY_VALUE);
         }
         // The CLSID key's name is used if the remote name is the "boss", or if
         // the current try
@@ -621,7 +612,7 @@ static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
         if (clsidKey.Valid() &&
             (nameSource == CLASS_ROOT_DEFAULT || currentEntry.second.empty()))
         {
-            std::wstring remoteName(clsidKey[L""].GetString());
+            std::string remoteName(clsidKey[""].GetString());
             // Don't clobber the existing name in the event the actual name in
             // the key is empty.
             if (!remoteName.empty())
@@ -629,21 +620,20 @@ static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
                 currentEntry.second = std::move(remoteName);
             }
         }
-        std::wstring file;
+        std::string file;
         if (inProcKey.Valid())
         {
-            file = inProcKey[L""].GetString();
+            file = inProcKey[""].GetString();
         }
         if (currentEntry.second.empty())
         {
-            currentEntry.second = L"N/A";
+            currentEntry.second = "N/A";
         }
-        GeneralEscape(currentEntry.first, L'#', L'=');
-        GeneralEscape(currentEntry.second, L'#', L':');
-        output << prefix << L": " << currentEntry.second << L": "
-               << currentEntry.first << L'=';
+        GeneralEscape(currentEntry.first, '#', '=');
+        GeneralEscape(currentEntry.second, '#', ':');
+        write(output, prefix, ": ", currentEntry.second, ": ", currentEntry.first, '=');
         WriteDefaultFileOutput(output, file);
-        output << L'\n';
+        writeln(output);
     }
 }
 
@@ -664,10 +654,10 @@ static void ClsidSubkeyBasedOutputWithBits(std::wostream& output,
 * @param nameSource      Which name is primary; the name stored with the CLSID,
 * or the name stored with the CLASSES key.
 */
-static void ClsidSubkeyBasedOutput(std::wostream& output,
-                                   std::wstring const& prefix,
-                                   std::wstring const& rootKey,
-                                   std::wstring const& subKey,
+static void ClsidSubkeyBasedOutput(log_sink& output,
+                                   std::string const& prefix,
+                                   std::string const& rootKey,
+                                   std::string const& subKey,
                                    MasterName nameSource)
 {
 #ifdef _M_X64
@@ -675,18 +665,18 @@ static void ClsidSubkeyBasedOutput(std::wostream& output,
         output,
         prefix,
         rootKey,
-        L"\\Software\\Wow6432Node" + subKey,
-        L"\\Software\\Wow6432Node\\Classes\\CLSID\\",
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Classes\\CLSID\\",
+        "\\Software\\Wow6432Node" + subKey,
+        "\\Software\\Wow6432Node\\Classes\\CLSID\\",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Classes\\CLSID\\",
         nameSource);
 #endif
     ClsidSubkeyBasedOutputWithBits(
         output,
         prefix + Get64Suffix(),
         rootKey,
-        L"\\Software" + subKey,
-        L"\\Software\\Classes\\CLSID\\",
-        L"\\Registry\\Machine\\Software\\Classes\\CLSID\\",
+        "\\Software" + subKey,
+        "\\Software\\Classes\\CLSID\\",
+        "\\Registry\\Machine\\Software\\Classes\\CLSID\\",
         nameSource);
 }
 
@@ -702,11 +692,11 @@ static void ClsidSubkeyBasedOutput(std::wostream& output,
 *                        The default escapes using the general escaping format.
 */
 static void SingleRegistryValueOutput(
-    std::wostream& output,
+    log_sink& output,
     RegistryKey const& key,
-    std::wstring const& valueName,
-    std::wstring const& prefix,
-    std::function<void(std::wostream& out, std::wstring& source)> dataProcess =
+    std::string const& valueName,
+    std::string const& prefix,
+    std::function<void(log_sink& out, std::string& source)> dataProcess =
         GeneralProcess)
 {
     if (key.Invalid())
@@ -716,10 +706,10 @@ static void SingleRegistryValueOutput(
     try
     {
         auto value = key[valueName];
-        output << prefix << L": ";
-        std::wstring val(value.GetString());
+        write(output, prefix, ": ");
+        std::string val(value.GetString());
         dataProcess(output, val);
-        output << L'\n';
+        writeln(output);
     }
     catch (ErrorFileNotFoundException const&)
     {
@@ -733,125 +723,125 @@ static void SingleRegistryValueOutput(
 * @param [in,out] output The output stream.
 * @param rootKey         The root key where Internet Explorer is being rooted.
 */
-static void InternetExplorerMainOutput(std::wostream& output,
-                                       std::wstring const& rootKey)
+static void InternetExplorerMainOutput(log_sink& output,
+                                       std::string const& rootKey)
 {
     RegistryKey ieRoot(
-        RegistryKey::Open(rootKey + L"\\Software\\Microsoft\\Internet Explorer",
+        RegistryKey::Open(rootKey + "\\Software\\Microsoft\\Internet Explorer",
                           KEY_QUERY_VALUE));
-    RegistryKey ieMain(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
-    RegistryKey ieSearch(RegistryKey::Open(ieRoot, L"Search", KEY_QUERY_VALUE));
-    std::wstring suffix64(Get64Suffix());
+    RegistryKey ieMain(RegistryKey::Open(ieRoot, "Main", KEY_QUERY_VALUE));
+    RegistryKey ieSearch(RegistryKey::Open(ieRoot, "Search", KEY_QUERY_VALUE));
+    std::string suffix64(Get64Suffix());
 #ifdef _M_X64
     RegistryKey ieRoot32(RegistryKey::Open(
-        rootKey + L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer",
+        rootKey + "\\Software\\Wow6432Node\\Microsoft\\Internet Explorer",
         KEY_QUERY_VALUE));
-    RegistryKey ieMain32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
-    RegistryKey ieSearch32(RegistryKey::Open(ieRoot, L"Main", KEY_QUERY_VALUE));
+    RegistryKey ieMain32(RegistryKey::Open(ieRoot, "Main", KEY_QUERY_VALUE));
+    RegistryKey ieSearch32(RegistryKey::Open(ieRoot, "Main", KEY_QUERY_VALUE));
 #endif
     SingleRegistryValueOutput(output,
                               ieMain,
-                              L"Default_Page_Url",
-                              L"DefaultPageUrl" + suffix64,
+                              "Default_Page_Url",
+                              "DefaultPageUrl" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Default_Page_Url", L"DefaultPageUrl", HttpProcess);
+        output, ieMain32, "Default_Page_Url", "DefaultPageUrl", HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieMain,
-                              L"Default_Search_Url",
-                              L"DefaultSearchUrl" + suffix64,
+                              "Default_Search_Url",
+                              "DefaultSearchUrl" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(output,
                               ieMain32,
-                              L"Default_Search_Url",
-                              L"DefaultSearchUrl",
+                              "Default_Search_Url",
+                              "DefaultSearchUrl",
                               HttpProcess);
 #endif
     SingleRegistryValueOutput(
-        output, ieMain, L"Local Page", L"LocalPage" + suffix64, HttpProcess);
+        output, ieMain, "Local Page", "LocalPage" + suffix64, HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Local Page", L"LocalPage", HttpProcess);
+        output, ieMain32, "Local Page", "LocalPage", HttpProcess);
 #endif
     SingleRegistryValueOutput(
-        output, ieMain, L"Start Page", L"StartPage" + suffix64, HttpProcess);
+        output, ieMain, "Start Page", "StartPage" + suffix64, HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Start Page", L"StartPage", HttpProcess);
+        output, ieMain32, "Start Page", "StartPage", HttpProcess);
 #endif
     SingleRegistryValueOutput(
-        output, ieMain, L"Search Page", L"SearchPage" + suffix64, HttpProcess);
+        output, ieMain, "Search Page", "SearchPage" + suffix64, HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Search Page", L"SearchPage", HttpProcess);
+        output, ieMain32, "Search Page", "SearchPage", HttpProcess);
 #endif
     SingleRegistryValueOutput(
-        output, ieMain, L"Search Bar", L"SearchBar" + suffix64, HttpProcess);
+        output, ieMain, "Search Bar", "SearchBar" + suffix64, HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Search Bar", L"SearchBar", HttpProcess);
+        output, ieMain32, "Search Bar", "SearchBar", HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieMain,
-                              L"SearchMigratedDefaultUrl",
-                              L"SearchMigratedDefaultUrl" + suffix64,
+                              "SearchMigratedDefaultUrl",
+                              "SearchMigratedDefaultUrl" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(output,
                               ieMain32,
-                              L"SearchMigratedDefaultUrl",
-                              L"SearchMigratedDefaultUrl",
+                              "SearchMigratedDefaultUrl",
+                              "SearchMigratedDefaultUrl",
                               HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieMain,
-                              L"Security Risk Page",
-                              L"SecurityPage" + suffix64,
+                              "Security Risk Page",
+                              "SecurityPage" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Security Risk Page", L"SecurityPage", HttpProcess);
+        output, ieMain32, "Security Risk Page", "SecurityPage", HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieMain,
-                              L"Window Title",
-                              L"WindowTitle" + suffix64,
+                              "Window Title",
+                              "WindowTitle" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"Window Title", L"WindowTitle", HttpProcess);
+        output, ieMain32, "Window Title", "WindowTitle", HttpProcess);
 #endif
     SingleRegistryValueOutput(
-        output, ieMain, L"SearchURL", L"SearchUrl" + suffix64, HttpProcess);
+        output, ieMain, "SearchURL", "SearchUrl" + suffix64, HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(
-        output, ieMain32, L"SearchURL", L"SearchUrl", HttpProcess);
+        output, ieMain32, "SearchURL", "SearchUrl", HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieSearch,
-                              L"SearchAssistant",
-                              L"SearchAssistant" + suffix64,
+                              "SearchAssistant",
+                              "SearchAssistant" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(output,
                               ieSearch32,
-                              L"SearchAssistant",
-                              L"SearchAssistant",
+                              "SearchAssistant",
+                              "SearchAssistant",
                               HttpProcess);
 #endif
     SingleRegistryValueOutput(output,
                               ieSearch,
-                              L"CustomizeSearch",
-                              L"CustomizeSearch" + suffix64,
+                              "CustomizeSearch",
+                              "CustomizeSearch" + suffix64,
                               HttpProcess);
 #ifdef _M_X64
     SingleRegistryValueOutput(output,
                               ieSearch32,
-                              L"CustomizeSearch",
-                              L"CustomizeSearch",
+                              "CustomizeSearch",
+                              "CustomizeSearch",
                               HttpProcess);
 #endif
 }
@@ -865,19 +855,18 @@ static void InternetExplorerMainOutput(std::wostream& output,
 * @param valueName    Name of the value in question.
 * @param subKey       The sub key to which the query of script is being posed.
 */
-static void ProcessIeScript(std::wostream& out,
-                            std::wstring const& suffix,
-                            std::wstring const& valueName,
+static void ProcessIeScript(log_sink& out,
+                            std::string const& suffix,
+                            std::string const& valueName,
                             RegistryKey const& subKey)
 {
     try
     {
-        std::wstring name(subKey.GetName());
-        std::wstring command(subKey[valueName].GetString());
-        GeneralEscape(name, L'#', L']');
+        std::string name(subKey.GetName());
+        std::string command(subKey[valueName].GetString());
+        GeneralEscape(name, '#', ']');
         GeneralEscape(command);
-        out << L"IeScript" << suffix << L": [" << std::move(name) << L"] "
-            << command << L'\n';
+        writeln(out, "IeScript", suffix, ": [", std::move(name), "] ", command);
     }
     catch (ErrorFileNotFoundException const&)
     {
@@ -894,32 +883,32 @@ static void ProcessIeScript(std::wostream& out,
 * @param valueName    Name of the value in question.
 * @param subKey       The sub key to which the query of script is being posed.
 */
-static void ProcessIeCom(std::wostream& out,
-                         std::wstring const& suffix,
-                         std::wstring const& valueName,
+static void ProcessIeCom(log_sink& out,
+                         std::string const& suffix,
+                         std::string const& valueName,
                          RegistryKey const& subKey,
-                         std::wstring const& hiveRootPath,
-                         std::wstring const& software)
+                         std::string const& hiveRootPath,
+                         std::string const& software)
 {
     try
     {
-        std::wstring name(subKey.GetName());
-        std::wstring clsid(subKey[valueName].GetString());
-        std::wstring file(L"N/A");
-        RegistryKey clsidKey(RegistryKey::Open(hiveRootPath + L"\\" + software +
-                                                   L"\\Classes\\CLSID\\" +
-                                                   clsid + L"\\InProcServer32",
+        std::string name(subKey.GetName());
+        std::string clsid(subKey[valueName].GetString());
+        std::string file("N/A");
+        RegistryKey clsidKey(RegistryKey::Open(hiveRootPath + "\\" + software +
+                                                   "\\Classes\\CLSID\\" +
+                                                   clsid + "\\InProcServer32",
                                                KEY_QUERY_VALUE));
         if (clsidKey.Invalid())
         {
-            clsidKey = RegistryKey::Open(L"\\Registry\\Machine\\" + software +
-                                             L"\\Classes\\CLSID\\" + clsid +
-                                             L"\\InProcServer32",
+            clsidKey = RegistryKey::Open("\\Registry\\Machine\\" + software +
+                                             "\\Classes\\CLSID\\" + clsid +
+                                             "\\InProcServer32",
                                          KEY_QUERY_VALUE);
         }
         if (clsidKey.Valid())
         {
-            std::wstring fileTry(clsidKey[L""].GetString());
+            std::string fileTry(clsidKey[""].GetString());
             if (!fileTry.empty())
             {
                 file = std::move(fileTry);
@@ -927,12 +916,12 @@ static void ProcessIeCom(std::wostream& out,
         }
 
         name.erase(name.cbegin(),
-                   std::find(name.crbegin(), name.crend(), L'\\').base());
-        GeneralEscape(name, L'#', L' ');
-        GeneralEscape(clsid, L'#', L']');
-        out << L"IeCom" << suffix << L": [" << name << L' ' << clsid << L"] ";
+                   std::find(name.crbegin(), name.crend(), '\\').base());
+        GeneralEscape(name, '#', ' ');
+        GeneralEscape(clsid, '#', ']');
+        write(out, "IeCom", suffix , ": [", name, ' ', clsid, "] ");
         WriteDefaultFileOutput(out, file);
-        out << L'\n';
+        writeln(out);
     }
     catch (ErrorFileNotFoundException const&)
     {
@@ -940,10 +929,10 @@ static void ProcessIeCom(std::wostream& out,
     }
 }
 
-static void TrustedZoneRecursive(std::wostream& out,
-                                 std::wstring const& rootKey,
-                                 std::wstring const& domainToEnter,
-                                 std::wstring const& prefix)
+static void TrustedZoneRecursive(log_sink& out,
+                                 std::string const& rootKey,
+                                 std::string const& domainToEnter,
+                                 std::string const& prefix)
 {
     RegistryKey currentDomainKey =
         RegistryKey::Open(rootKey, KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE);
@@ -961,12 +950,12 @@ static void TrustedZoneRecursive(std::wostream& out,
             continue;
         }
 
-        std::wstring outputUrl(value.GetName());
-        outputUrl += L"://";
+        std::string outputUrl(value.GetName());
+        outputUrl += "://";
         outputUrl += domainToEnter;
         HttpEscape(outputUrl);
 
-        out << prefix << L": " << outputUrl << L"\n";
+        writeln(out, prefix, ": ", outputUrl);
     }
 
     auto const& subKeys = currentDomainKey.EnumerateSubKeyNames();
@@ -974,17 +963,17 @@ static void TrustedZoneRecursive(std::wostream& out,
 
     for (auto const& key : subKeys)
     {
-        std::wstring subDomain(key);
-        subDomain += L'.';
+        std::string subDomain(key);
+        subDomain += '.';
         subDomain += domainToEnter;
 
-        TrustedZoneRecursive(out, rootKey + L"\\" + key, subDomain, prefix);
+        TrustedZoneRecursive(out, rootKey + "\\" + key, subDomain, prefix);
     }
 }
 
-static void TrustedZone(std::wostream& out,
-                        std::wstring const& keyPath,
-                        std::wstring const& prefix)
+static void TrustedZone(log_sink& out,
+                        std::string const& keyPath,
+                        std::string const& prefix)
 {
     RegistryKey domainsRoot =
         RegistryKey::Open(keyPath, KEY_ENUMERATE_SUB_KEYS);
@@ -997,13 +986,13 @@ static void TrustedZone(std::wostream& out,
     for (auto const& rootDomain : rootDomains)
     {
         TrustedZoneRecursive(
-            out, keyPath + L"\\" + rootDomain, rootDomain, prefix);
+            out, keyPath + "\\" + rootDomain, rootDomain, prefix);
     }
 }
 
-static void TrustedDefaults(std::wostream& out,
-                            std::wstring const& keyPath,
-                            std::wstring const& prefix)
+static void TrustedDefaults(log_sink& out,
+                            std::string const& keyPath,
+                            std::string const& prefix)
 {
     RegistryKey targetKey(RegistryKey::Open(keyPath, KEY_QUERY_VALUE));
     if (targetKey.Invalid())
@@ -1023,13 +1012,13 @@ static void TrustedDefaults(std::wostream& out,
             continue;
         }
 
-        out << prefix << L": " << value.GetName() << L"\n";
+        writeln(out, prefix, ": ", value.GetName());
     }
 }
 
-static void TrustedIpRange(std::wostream& out,
-                           std::wstring const& keyPath,
-                           std::wstring const& prefix)
+static void TrustedIpRange(log_sink& out,
+                           std::string const& keyPath,
+                           std::string const& prefix)
 {
     RegistryKey targetKey(RegistryKey::Open(keyPath, KEY_ENUMERATE_SUB_KEYS));
     if (targetKey.Invalid())
@@ -1040,8 +1029,8 @@ static void TrustedIpRange(std::wostream& out,
     for (auto const& subKey : targetKey.EnumerateSubKeyNames())
     {
         RegistryKey subHKey(
-            RegistryKey::Open(keyPath + L"\\" + subKey, KEY_QUERY_VALUE));
-        std::wstring ipRange = subHKey[L":Range"].GetStringStrict();
+            RegistryKey::Open(keyPath + "\\" + subKey, KEY_QUERY_VALUE));
+        std::string ipRange = subHKey[":Range"].GetStringStrict();
         GeneralEscape(ipRange);
 
         for (auto const& value : subHKey.EnumerateValues())
@@ -1051,14 +1040,14 @@ static void TrustedIpRange(std::wostream& out,
                 continue;
             }
 
-            std::wstring name(subKey);
-            GeneralEscape(name, L'#', L']');
+            std::string name(subKey);
+            GeneralEscape(name, '#', ']');
 
-            std::wstring range(value.GetName());
-            range += L"://";
+            std::string range(value.GetName());
+            range += "://";
             range += ipRange;
             HttpEscape(range);
-            out << prefix << L": [" << name << L"] " << range << L"\n";
+            writeln(out, prefix, ": [", name, "] ", range);
         }
     }
 }
@@ -1071,19 +1060,19 @@ static void TrustedIpRange(std::wostream& out,
 *machine hive
 *                     root)
 */
-static void ExplorerExtensionsOutput(std::wostream& out,
-                                     std::wstring const& rootKey)
+static void ExplorerExtensionsOutput(log_sink& out,
+                                     std::string const& rootKey)
 {
-    std::wstring suffix(Get64Suffix());
-    std::wstring software(L"Software");
+    std::string suffix(Get64Suffix());
+    std::string software("Software");
     auto keyProcessor = [&](RegistryKey const & subKey) {
-        ProcessIeScript(out, suffix, L"Exec", subKey);
-        ProcessIeScript(out, suffix, L"Script", subKey);
-        ProcessIeCom(out, suffix, L"clsidextension", subKey, rootKey, software);
-        ProcessIeCom(out, suffix, L"bandclsid", subKey, rootKey, software);
+        ProcessIeScript(out, suffix, "Exec", subKey);
+        ProcessIeScript(out, suffix, "Script", subKey);
+        ProcessIeCom(out, suffix, "clsidextension", subKey, rootKey, software);
+        ProcessIeCom(out, suffix, "bandclsid", subKey, rootKey, software);
     };
     RegistryKey key(RegistryKey::Open(
-        rootKey + L"\\Software\\Microsoft\\Internet Explorer\\Extensions",
+        rootKey + "\\Software\\Microsoft\\Internet Explorer\\Extensions",
         KEY_ENUMERATE_SUB_KEYS));
     if (key.Valid())
     {
@@ -1093,10 +1082,10 @@ static void ExplorerExtensionsOutput(std::wostream& out,
 #ifdef _M_X64
     key = RegistryKey::Open(
         rootKey +
-            L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\Extensions",
+            "\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\Extensions",
         KEY_ENUMERATE_SUB_KEYS);
-    suffix = std::wstring();
-    software = L"Software\\Wow6432Node";
+    suffix = std::string();
+    software = "Software\\Wow6432Node";
     if (key.Valid())
     {
         auto subkeys = key.EnumerateSubKeys(KEY_QUERY_VALUE);
@@ -1106,50 +1095,50 @@ static void ExplorerExtensionsOutput(std::wostream& out,
     TrustedZone(
         out,
         rootKey +
-            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains",
-        L"Trusted Zone" + Get64Suffix());
+            "\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains",
+        "Trusted Zone" + Get64Suffix());
 #ifdef _M_X64
     TrustedZone(
         out,
         rootKey +
-            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains",
-        L"Trusted Zone");
+            "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains",
+        "Trusted Zone");
 #endif
     TrustedZone(
         out,
         rootKey +
-            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains",
-        L"ESC Trusted Zone" + Get64Suffix());
+            "\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains",
+        "ESC Trusted Zone" + Get64Suffix());
 #ifdef _M_X64
     TrustedZone(
         out,
         rootKey +
-            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains",
-        L"ESC Trusted Zone");
+            "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\EscDomains",
+        "ESC Trusted Zone");
 #endif
     TrustedDefaults(
         out,
         rootKey +
-            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults",
-        L"Trusted Default Protocol" + Get64Suffix());
+            "\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults",
+        "Trusted Default Protocol" + Get64Suffix());
 #ifdef _M_X64
     TrustedDefaults(
         out,
         rootKey +
-            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults",
-        L"Trusted Default Protocol");
+            "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults",
+        "Trusted Default Protocol");
 #endif
     TrustedIpRange(
         out,
         rootKey +
-            L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges",
-        L"Trusted IP Range" + Get64Suffix());
+            "\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges",
+        "Trusted IP Range" + Get64Suffix());
 #ifdef _M_X64
     TrustedIpRange(
         out,
         rootKey +
-            L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges",
-        L"Trusted IP Range");
+            "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Ranges",
+        "Trusted IP Range");
 #endif
 }
 
@@ -1163,48 +1152,48 @@ static void ExplorerExtensionsOutput(std::wostream& out,
 *\\Registry\\User\\
 *                        ${Sid}
 */
-static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
+static void CommonHjt(log_sink& output, std::string const& rootKey)
 {
     InternetExplorerMainOutput(output, rootKey);
     ClsidValueBasedOutput(output,
-                          L"UrlSearchHook",
+                          "UrlSearchHook",
                           rootKey,
-                          L"\\Microsoft\\Internet Explorer\\URLSearchHooks",
+                          "\\Microsoft\\Internet Explorer\\URLSearchHooks",
                           NAME,
                           CLASS_ROOT_DEFAULT);
     RegistryKey winlogon(RegistryKey::Open(
         rootKey +
-            L"\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+            "\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
         KEY_QUERY_VALUE));
     SingleRegistryValueOutput(
-        output, winlogon, L"Shell", L"Shell", FileProcess);
+        output, winlogon, "Shell", "Shell", FileProcess);
     SingleRegistryValueOutput(output,
                               winlogon,
-                              L"Userinit",
-                              L"Userinit",
-                              [](std::wostream & out, std::wstring & src) {
-        if (src.back() == L',')
+                              "Userinit",
+                              "Userinit",
+                              [](log_sink & out, std::string & src) {
+        if (src.back() == ',')
         {
             src.pop_back();
         }
         FileProcess(out, src);
     });
     SingleRegistryValueOutput(
-        output, winlogon, L"UIHost", L"UIHost", FileProcess);
+        output, winlogon, "UIHost", "UIHost", FileProcess);
     SingleRegistryValueOutput(
-        output, winlogon, L"TaskMan", L"TaskMan", FileProcess);
+        output, winlogon, "TaskMan", "TaskMan", FileProcess);
     if (winlogon.Valid())
     {
         try
         {
-            DWORD sfc = winlogon[L"SFCDisable"].GetDWord();
+            DWORD sfc = winlogon["SFCDisable"].GetDWord();
             if (sfc)
             {
-                output << L"SFC: Disabled\n";
+                writeln(output, "SFC: Disabled");
             }
             else
             {
-                output << L"SFC: Enabled\n";
+                writeln(output, "SFC: Enabled");
             }
         }
         catch (ErrorFileNotFoundException const&)
@@ -1214,62 +1203,62 @@ static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
     }
     ClsidSubkeyBasedOutput(
         output,
-        L"BHO",
+        "BHO",
         rootKey,
-        L"\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects",
+        "\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects",
         CLASS_ROOT_DEFAULT);
     ClsidValueBasedOutput(output,
-                          L"TB",
+                          "TB",
                           rootKey,
-                          L"\\Microsoft\\Internet Explorer\\Toolbar",
+                          "\\Microsoft\\Internet Explorer\\Toolbar",
                           NAME,
                           CLASS_ROOT_DEFAULT);
     ClsidValueBasedOutput(
         output,
-        L"TB",
+        "TB",
         rootKey,
-        L"\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser",
+        "\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser",
         NAME,
         CLASS_ROOT_DEFAULT);
     ClsidValueBasedOutput(output,
-                          L"EB",
+                          "EB",
                           rootKey,
-                          L"\\Microsoft\\Internet Explorer\\Explorer Bars",
+                          "\\Microsoft\\Internet Explorer\\Explorer Bars",
                           NAME,
                           CLASS_ROOT_DEFAULT);
-    RunKeyOutput(output, rootKey, L"Run");
-    RunKeyOutput(output, rootKey, L"RunOnce");
-    RunKeyOutput(output, rootKey, L"RunServices");
-    RunKeyOutput(output, rootKey, L"RunServicesOnce");
+    RunKeyOutput(output, rootKey, "Run");
+    RunKeyOutput(output, rootKey, "RunOnce");
+    RunKeyOutput(output, rootKey, "RunServices");
+    RunKeyOutput(output, rootKey, "RunServicesOnce");
     ExplorerRunOutput(output, rootKey);
     ValueMajorBasedEnumerationBitless(
         output,
         rootKey,
-        L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
-        L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
-        L"PoliciesExplorer",
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+        "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+        "PoliciesExplorer",
         GeneralProcess);
     ValueMajorBasedEnumerationBitless(
         output,
         rootKey,
-        L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
-        L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
-        L"PoliciesSystem",
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+        "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+        "PoliciesSystem",
         GeneralProcess);
     ValueMajorBasedEnumerationBitless(
         output,
         rootKey,
-        L"\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
-        L"\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
-        L"PoliciesDisallowRun",
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
+        "\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun",
+        "PoliciesDisallowRun",
         GeneralProcess);
     SubkeyMajorBasedEnumerationBitless(
         output,
         rootKey,
-        L"\\Software\\Microsoft\\Internet Explorer\\MenuExt",
-        L"\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\MenuExt",
-        L"",
-        L"IeMenu",
+        "\\Software\\Microsoft\\Internet Explorer\\MenuExt",
+        "\\Software\\Wow6432Node\\Microsoft\\Internet Explorer\\MenuExt",
+        "",
+        "IeMenu",
         GeneralProcess);
     ExplorerExtensionsOutput(output, rootKey);
 }
@@ -1283,11 +1272,12 @@ static void CommonHjt(std::wostream& output, std::wstring const& rootKey)
 *
 * @return The user's name and domain in DOMAIN\USER format.
 */
-static std::wstring LookupAccountNameBySid(std::wstring const& stringSid)
+static std::string LookupAccountNameBySid(std::string const& stringSid)
 {
-    if (stringSid == L".DEFAULT")
+    std::wstring stringSideWide(utf8::ToUtf16(stringSid));
+    if (stringSid == ".DEFAULT")
     {
-        return L"Default User";
+        return "Default User";
     }
     PSID sidPtr = nullptr;
     ScopeExit killSidPtr([sidPtr]() {
@@ -1296,7 +1286,7 @@ static std::wstring LookupAccountNameBySid(std::wstring const& stringSid)
             ::LocalFree(sidPtr);
         }
     });
-    if (::ConvertStringSidToSidW(stringSid.c_str(), &sidPtr) == 0)
+    if (::ConvertStringSidToSidW(stringSideWide.c_str(), &sidPtr) == 0)
     {
         Win32Exception::ThrowFromLastError();
     }
@@ -1337,75 +1327,50 @@ static std::wstring LookupAccountNameBySid(std::wstring const& stringSid)
     }
     userName.resize(userNameCount);
     domainName.resize(domainNameCount);
-    domainName.push_back(L'\\');
-    return domainName + userName;
+    domainName.push_back('\\');
+    return utf8::ToUtf8(domainName + userName);
 }
 
-// static void SpoofedDnsCheck(std::wostream& output, std::wstring
-// queryHostname, std::wstring expectedHostname)
-//{
-//    std::wstring responseIpAddress(IpAddressFromHostname(queryHostname));
-//    std::wstring responseHostname(HostnameFromIpAddress(responseIpAddress,
-// true));
-
-//    if (boost::iends_with(responseHostname, expectedHostname) == false)
-//    {
-//        HttpEscape(queryHostname);
-//        HttpEscape(responseHostname);
-
-//        output << L"SpoofedDNS: " << queryHostname << L" -> ";
-//        if (responseHostname.empty())
-//        {
-//            output << L"not available";
-//        }
-//        else
-//        {
-//            output << responseHostname;
-//        }
-//        output << L" (" << responseIpAddress << L")\n";
-//    }
-//}
-
-static void ExecuteDpf(std::wostream& output)
+static void ExecuteDpf(log_sink& output)
 {
     RegistryKey dpfRoot(RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Microsoft\\Code Store Database\\Distribution Units",
+        "\\Registry\\Machine\\Software\\Microsoft\\Code Store Database\\Distribution Units",
         KEY_ENUMERATE_SUB_KEYS));
     if (dpfRoot.Valid())
     {
-        for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+        for (std::string const& clsid : dpfRoot.EnumerateSubKeyNames())
         {
-            std::wstring clsidEscaped(clsid);
+            std::string clsidEscaped(clsid);
             GeneralEscape(clsidEscaped);
-            output << L"DPF" << Get64Suffix() << L": " << clsidEscaped << L"\n";
+            writeln(output, "DPF", Get64Suffix(), ": ", clsidEscaped);
         }
     }
 #ifdef _M_X64
     dpfRoot = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Code Store Database\\Distribution Units",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Code Store Database\\Distribution Units",
         KEY_ENUMERATE_SUB_KEYS);
     if (dpfRoot.Valid())
     {
-        for (std::wstring const& clsid : dpfRoot.EnumerateSubKeyNames())
+        for (std::string const& clsid : dpfRoot.EnumerateSubKeyNames())
         {
-            std::wstring clsidEscaped(clsid);
+            std::string clsidEscaped(clsid);
             GeneralEscape(clsidEscaped);
-            output << L"DPF: " << clsidEscaped << L"\n";
+            writeln(output, "DPF: ", clsidEscaped);
         }
     }
 #endif
 }
 
-static void ExecuteLspChain(std::wostream& output,
+static void ExecuteLspChain(log_sink& output,
                             RegistryKey& protocolCatalogKey,
-                            std::wstring suffix)
+                            std::string suffix)
 {
     DWORD catalogEntries =
-        protocolCatalogKey[L"Num_Catalog_Entries" + suffix].GetDWord();
+        protocolCatalogKey["Num_Catalog_Entries" + suffix].GetDWord();
     bool chainOk = true;
-    std::set<std::wstring> catalogFiles;
+    std::set<std::string> catalogFiles;
     RegistryKey catalogEntriesKey(RegistryKey::Open(protocolCatalogKey,
-                                                    L"Catalog_Entries" + suffix,
+                                                    "Catalog_Entries" + suffix,
                                                     KEY_ENUMERATE_SUB_KEYS));
     auto catalogEntryNames = catalogEntriesKey.EnumerateSubKeyNames();
     std::sort(catalogEntryNames.begin(), catalogEntryNames.end());
@@ -1416,9 +1381,9 @@ static void ExecuteLspChain(std::wostream& output,
 
     for (std::size_t idx = 0; idx < catalogEntryNames.size(); ++idx)
     {
-        std::wstring const& actualName = catalogEntryNames[idx];
-        wchar_t expectedName[13];
-        swprintf_s(expectedName, L"%012u", idx + 1);
+        std::string const& actualName = catalogEntryNames[idx];
+        char expectedName[13];
+        sprintf_s(expectedName, "%012u", idx + 1);
         if (actualName != expectedName)
         {
             chainOk = false;
@@ -1426,34 +1391,34 @@ static void ExecuteLspChain(std::wostream& output,
 
         RegistryKey catalogEntryKey(
             RegistryKey::Open(catalogEntriesKey, actualName, KEY_QUERY_VALUE));
-        RegistryValue packedCatalogItem(catalogEntryKey[L"PackedCatalogItem"]);
+        RegistryValue packedCatalogItem(catalogEntryKey["PackedCatalogItem"]);
         auto const end = std::find(
             packedCatalogItem.cbegin(), packedCatalogItem.cend(), '\0');
         catalogFiles.emplace(packedCatalogItem.cbegin(), end);
     }
 
-    for (std::wstring catalogFile : catalogFiles)
+    for (std::string catalogFile : catalogFiles)
     {
         GeneralEscape(catalogFile);
-        output << L"LSP" << suffix << L": " << catalogFile << L"\n";
+        writeln(output, "LSP", suffix, ": ", catalogFile);
     }
 
     if (!chainOk)
     {
-        output << L"LSP" << suffix << L": Chain Broken\n";
+        writeln(output, "LSP", suffix, ": Chain Broken");
     }
 }
 
-static void ExecuteNspChain(std::wostream& output,
+static void ExecuteNspChain(log_sink& output,
                             RegistryKey& namespaceCatalogKey,
-                            std::wstring suffix)
+                            std::string suffix)
 {
     DWORD catalogEntries =
-        namespaceCatalogKey[L"Num_Catalog_Entries" + suffix].GetDWord();
+        namespaceCatalogKey["Num_Catalog_Entries" + suffix].GetDWord();
     bool chainOk = true;
-    std::set<std::wstring> catalogFiles;
+    std::set<std::string> catalogFiles;
     RegistryKey catalogEntriesKey(RegistryKey::Open(namespaceCatalogKey,
-                                                    L"Catalog_Entries" + suffix,
+                                                    "Catalog_Entries" + suffix,
                                                     KEY_ENUMERATE_SUB_KEYS));
     auto catalogEntryNames = catalogEntriesKey.EnumerateSubKeyNames();
     std::sort(catalogEntryNames.begin(), catalogEntryNames.end());
@@ -1464,9 +1429,9 @@ static void ExecuteNspChain(std::wostream& output,
 
     for (std::size_t idx = 0; idx < catalogEntryNames.size(); ++idx)
     {
-        std::wstring const& actualName = catalogEntryNames[idx];
-        wchar_t expectedName[13];
-        swprintf_s(expectedName, L"%012u", idx + 1);
+        std::string const& actualName = catalogEntryNames[idx];
+        char expectedName[13];
+        sprintf_s(expectedName, "%012u", idx + 1);
         if (actualName != expectedName)
         {
             chainOk = false;
@@ -1474,57 +1439,57 @@ static void ExecuteNspChain(std::wostream& output,
 
         RegistryKey catalogEntryKey(
             RegistryKey::Open(catalogEntriesKey, actualName, KEY_QUERY_VALUE));
-        catalogFiles.emplace(catalogEntryKey[L"LibraryPath"].GetString());
+        catalogFiles.emplace(catalogEntryKey["LibraryPath"].GetString());
     }
 
-    for (std::wstring catalogFile : catalogFiles)
+    for (std::string catalogFile : catalogFiles)
     {
         GeneralEscape(catalogFile);
-        output << L"NSP" << suffix << L": " << catalogFile << L"\n";
+        writeln(output, "NSP", suffix, ": ", catalogFile);
     }
 
     if (!chainOk)
     {
-        output << L"NSP" << suffix << L": Chain Broken\n";
+        writeln(output, "NSP", suffix, ": Chain Broken");
     }
 }
 
-static void ExecuteWinsock2Parameters(std::wostream& output)
+static void ExecuteWinsock2Parameters(log_sink& output)
 {
     RegistryKey winsockParameters(RegistryKey::Open(
-        L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Winsock2\\Parameters",
+        "\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Winsock2\\Parameters",
         KEY_QUERY_VALUE));
 
-    std::wstring protocolCatalog(
-        winsockParameters[L"Current_Protocol_Catalog"].GetStringStrict());
+    std::string protocolCatalog(
+        winsockParameters["Current_Protocol_Catalog"].GetStringStrict());
     RegistryKey protocolCatalogKey(
         RegistryKey::Open(winsockParameters, protocolCatalog, KEY_QUERY_VALUE));
-    ExecuteLspChain(output, protocolCatalogKey, L"");
+    ExecuteLspChain(output, protocolCatalogKey, "");
 #ifdef _M_X64
-    ExecuteLspChain(output, protocolCatalogKey, L"64");
+    ExecuteLspChain(output, protocolCatalogKey, "64");
 #endif
     protocolCatalogKey.Close();
 
-    std::wstring namespaceCatalog(
-        winsockParameters[L"Current_NameSpace_Catalog"].GetStringStrict());
+    std::string namespaceCatalog(
+        winsockParameters["Current_NameSpace_Catalog"].GetStringStrict());
     RegistryKey namespaceCatalogKey(RegistryKey::Open(
         winsockParameters, namespaceCatalog, KEY_QUERY_VALUE));
-    ExecuteNspChain(output, namespaceCatalogKey, L"");
+    ExecuteNspChain(output, namespaceCatalogKey, "");
 #ifdef _M_X64
-    ExecuteNspChain(output, namespaceCatalogKey, L"64");
+    ExecuteNspChain(output, namespaceCatalogKey, "64");
 #endif
     namespaceCatalogKey.Close();
     winsockParameters.Close();
 }
 
-static void TcpSettingForInterface(std::wostream& output,
+static void TcpSettingForInterface(log_sink& output,
                                    RegistryKey const& parametersKey,
-                                   std::wstring const& interfaceName,
-                                   std::wstring const& value)
+                                   std::string const& interfaceName,
+                                   std::string const& value)
 {
     try
     {
-        std::wstring nameServer(parametersKey[value].GetStringStrict());
+        std::string nameServer(parametersKey[value].GetStringStrict());
         if (nameServer.empty())
         {
             return;
@@ -1532,12 +1497,11 @@ static void TcpSettingForInterface(std::wostream& output,
 
         if (interfaceName.empty())
         {
-            output << L"Tcp" << value << L": " << nameServer << L'\n';
+            writeln(output, "Tcp", value, ": ", nameServer);
         }
         else
         {
-            output << L"Tcp" << value << L": [" << interfaceName << L"] "
-                   << nameServer << L'\n';
+            writeln(output, "Tcp", value, ": [", interfaceName, "] ", nameServer);
         }
     }
     catch (ErrorFileNotFoundException const&)
@@ -1545,24 +1509,24 @@ static void TcpSettingForInterface(std::wostream& output,
     }
 }
 
-static void TcpNameserversForInterface(std::wostream& output,
+static void TcpNameserversForInterface(log_sink& output,
                                        RegistryKey const& parametersKey,
-                                       std::wstring interfaceName)
+                                       std::string interfaceName)
 {
-    GeneralEscape(interfaceName, L'#', L']');
-    TcpSettingForInterface(output, parametersKey, interfaceName, L"NameServer");
+    GeneralEscape(interfaceName, '#', ']');
+    TcpSettingForInterface(output, parametersKey, interfaceName, "NameServer");
     TcpSettingForInterface(
-        output, parametersKey, interfaceName, L"DHCPNameServer");
+        output, parametersKey, interfaceName, "DHCPNameServer");
 }
 
-static void TcpNameservers(std::wostream& output)
+static void TcpNameservers(log_sink& output)
 {
     RegistryKey parametersKey(RegistryKey::Open(
-        L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+        "\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
         KEY_QUERY_VALUE));
-    TcpNameserversForInterface(output, parametersKey, L"");
+    TcpNameserversForInterface(output, parametersKey, "");
     RegistryKey interfacesKey(RegistryKey::Open(
-        parametersKey, L"Interfaces", KEY_ENUMERATE_SUB_KEYS));
+        parametersKey, "Interfaces", KEY_ENUMERATE_SUB_KEYS));
     for (auto const& interfaceKeyName : interfacesKey.EnumerateSubKeyNames())
     {
         RegistryKey interfaceKey(RegistryKey::Open(
@@ -1572,27 +1536,29 @@ static void TcpNameservers(std::wostream& output)
     }
 }
 
-void LoadPointsReport::Execute(std::wostream& output,
+void LoadPointsReport::Execute(log_sink& output,
                         ScriptSection const&,
-                        std::vector<std::wstring> const&) const
+                        std::vector<std::string> const&) const
 {
     SecurityCenterOutput(output);
-    CommonHjt(output, L"\\Registry\\Machine");
+    CommonHjt(output, "\\Registry\\Machine");
     ExecuteDpf(output);
     ExecuteWinsock2Parameters(output);
     TcpNameservers(output);
 
     auto hives = EnumerateUserHives();
-    for (std::wstring const& hive : hives)
+    for (std::string const& hive : hives)
     {
-        std::wstring head(L"User Settings");
+        std::string head("User Settings");
         Header(head);
-        std::wstring sid(std::find(hive.crbegin(), hive.crend(), L'\\').base(),
+        std::string sid(std::find(hive.crbegin(), hive.crend(), '\\').base(),
                          hive.end());
-        std::wstring user(LookupAccountNameBySid(sid));
-        GeneralEscape(user, L'#', L']');
-        output << L'\n' << head << L"\n\nIdentity: [" << user << L"] " << sid
-               << L'\n';
+        std::string user(LookupAccountNameBySid(sid));
+        GeneralEscape(user, '#', ']');
+        writeln(output);
+        writeln(output, head);
+        writeln(output);
+        writeln(output, "Identity: [", user, "] ", sid);
         CommonHjt(output, hive);
     }
 }

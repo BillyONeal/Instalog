@@ -5,8 +5,10 @@
 #include "pch.hpp"
 #include "File.hpp"
 #include <algorithm>
-#include "Win32Exception.hpp"
+#include <iterator>
 #include <boost/algorithm/string/predicate.hpp>
+#include "Utf8.hpp"
+#include "Win32Exception.hpp"
 
 #pragma comment(lib, "Version.lib")
 
@@ -15,13 +17,13 @@ namespace Instalog
 namespace SystemFacades
 {
 
-File::File(std::wstring const& filename,
+File::File(std::string const& filename,
            DWORD desiredAccess,
            DWORD shareMode,
            LPSECURITY_ATTRIBUTES securityAttributes,
            DWORD createdDisposition,
            DWORD flags)
-    : hFile(::CreateFileW(filename.c_str(),
+    : hFile(::CreateFileW(utf8::ToUtf16(filename).c_str(),
                           desiredAccess,
                           shareMode,
                           securityAttributes,
@@ -117,30 +119,30 @@ bool File::WriteBytes(std::vector<char> const& bytes)
         return false;
 }
 
-void File::Delete(std::wstring const& filename)
+void File::Delete(std::string const& filename)
 {
-    if (::DeleteFileW(filename.c_str()) == 0)
+    if (::DeleteFileW(utf8::ToUtf16(filename).c_str()) == 0)
     {
         Win32Exception::ThrowFromLastError();
     }
 }
 
-bool File::Exists(std::wstring const& filename)
+bool File::Exists(std::string const& filename)
 {
-    DWORD attributes = ::GetFileAttributesW(filename.c_str());
+    DWORD attributes = ::GetFileAttributesW(utf8::ToUtf16(filename).c_str());
 
     return attributes != INVALID_FILE_ATTRIBUTES;
 }
 
-bool File::IsDirectory(std::wstring const& filename)
+bool File::IsDirectory(std::string const& filename)
 {
-    DWORD attributes = ::GetFileAttributesW(filename.c_str());
+    DWORD attributes = ::GetFileAttributesW(utf8::ToUtf16(filename).c_str());
 
     return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0 &&
            (attributes != INVALID_FILE_ATTRIBUTES);
 }
 
-bool File::IsExecutable(std::wstring const& filename)
+bool File::IsExecutable(std::string const& filename)
 {
     if (Exists(filename) == false)
         return false;
@@ -156,8 +158,9 @@ bool File::IsExecutable(std::wstring const& filename)
     return bytes.size() >= 2 && bytes[0] == 'M' && bytes[1] == 'Z';
 }
 
-std::wstring File::GetCompany(std::wstring const& filename)
+std::string File::GetCompany(std::string const& filenameUtf8)
 {
+    std::wstring filename(utf8::ToUtf16(filenameUtf8));
     DWORD infoSize = ::GetFileVersionInfoSizeW(filename.c_str(), 0);
     if (infoSize == 0)
     {
@@ -178,17 +181,17 @@ std::wstring File::GetCompany(std::wstring const& filename)
     {
         Win32Exception::ThrowFromLastError();
     }
-    if (len == 0)
+    
+    std::wstring wideResult;
+    if (len != 0)
     {
-        return std::wstring();
+        wideResult.assign(static_cast<wchar_t*>(companyData), len - 1);
     }
-    else
-    {
-        return std::wstring(static_cast<wchar_t*>(companyData), len - 1);
-    }
+
+    return utf8::ToUtf8(wideResult);
 }
 
-std::uint64_t File::GetSize(std::wstring const& filename)
+std::uint64_t File::GetSize(std::string const& filename)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(filename);
     std::uint64_t size = fad.nFileSizeHigh;
@@ -197,9 +200,9 @@ std::uint64_t File::GetSize(std::wstring const& filename)
     return size;
 }
 
-DWORD File::GetAttributes(std::wstring const& filename)
+DWORD File::GetAttributes(std::string const& filename)
 {
-    DWORD answer = ::GetFileAttributesW(filename.c_str());
+    DWORD answer = ::GetFileAttributesW(utf8::ToUtf16(filename).c_str());
     if (answer == INVALID_FILE_ATTRIBUTES)
     {
         Win32Exception::ThrowFromLastError();
@@ -208,10 +211,10 @@ DWORD File::GetAttributes(std::wstring const& filename)
 }
 
 WIN32_FILE_ATTRIBUTE_DATA
-File::GetExtendedAttributes(std::wstring const& filename)
+File::GetExtendedAttributes(std::string const& filename)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad;
-    if (::GetFileAttributesExW(filename.c_str(), GetFileExInfoStandard, &fad) ==
+    if (::GetFileAttributesExW(utf8::ToUtf16(filename).c_str(), GetFileExInfoStandard, &fad) ==
         0)
     {
         Win32Exception::ThrowFromLastError();
@@ -226,9 +229,9 @@ File& File::operator=(File other)
     return *this;
 }
 
-bool File::IsExclusiveFile(std::wstring const& fileName)
+bool File::IsExclusiveFile(std::string const& fileName)
 {
-    DWORD attribs = ::GetFileAttributesW(fileName.c_str());
+    DWORD attribs = ::GetFileAttributesW(utf8::ToUtf16(fileName).c_str());
     if (attribs == INVALID_FILE_ATTRIBUTES)
     {
         return false;
@@ -239,11 +242,11 @@ bool File::IsExclusiveFile(std::wstring const& fileName)
     }
 }
 
-FindFilesRecord::FindFilesRecord(std::wstring prefix,
+FindFilesRecord::FindFilesRecord(std::string prefix,
                                  WIN32_FIND_DATAW const& winSource)
     : dwFileAttributes(winSource.dwFileAttributes)
 {
-    prefix.append(winSource.cFileName);
+    prefix.append(utf8::ToUtf8(winSource.cFileName));
     cFileName = std::move(prefix);
     ftCreationTime =
         (static_cast<std::uint64_t>(winSource.ftCreationTime.dwHighDateTime)
@@ -287,7 +290,7 @@ FindFilesRecord& FindFilesRecord::operator=(FindFilesRecord other)
     return *this;
 }
 
-std::wstring const& FindFilesRecord::GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW
+std::string const& FindFilesRecord::GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return cFileName;
 }
@@ -445,7 +448,9 @@ void FindFiles::Leave()
 void FindFiles::WinEnter()
 {
     std::size_t previousSize = this->prefix.size();
-    this->prefix.append(this->findData.cFileName);
+    wchar_t const* beginName = this->findData.cFileName;
+    auto endName = beginName + std::wcslen(beginName);
+    utf8::utf16to8(beginName, endName, std::back_inserter(this->prefix));
     if (!this->prefix.empty())
     {
         this->prefix.push_back(L'\\');
@@ -454,7 +459,7 @@ void FindFiles::WinEnter()
     std::size_t noPatternSize = this->prefix.size();
     this->prefix.append(this->pattern);
     FindHandle hFind(previousSize,
-                     ::FindFirstFileW(this->prefix.c_str(), &this->findData));
+                     ::FindFirstFileW(utf8::ToUtf16(this->prefix).c_str(), &this->findData));
     this->handleStack.push_back(std::move(hFind));
     this->prefix.resize(noPatternSize);
 
@@ -487,13 +492,13 @@ FindFiles::FindFiles() BOOST_NOEXCEPT_OR_NOTHROW
 {
 }
 
-FindFiles::FindFiles(std::wstring const& pattern)
+FindFiles::FindFiles(std::string const& pattern)
     : options(FindFilesOptions::LocalSearch)
 {
     this->Construct(pattern);
 }
 
-FindFiles::FindFiles(std::wstring const& pattern, FindFilesOptions options)
+FindFiles::FindFiles(std::string const& pattern, FindFilesOptions options)
     : options(options)
 {
     this->Construct(pattern);
@@ -629,15 +634,15 @@ expected<FindFilesRecord> FindFiles::TryGetRecord() const BOOST_NOEXCEPT_OR_NOTH
     }
 }
 
-void FindFiles::Construct(std::wstring const& pattern)
+void FindFiles::Construct(std::string const& pattern)
 {
     this->findData.cFileName[0] = L'\0';
     auto dividerPoint =
-        std::find(pattern.crbegin(), pattern.crend(), L'\\').base();
+        std::find(pattern.crbegin(), pattern.crend(), '\\').base();
     this->pattern.assign(dividerPoint, pattern.cend());
     if (this->pattern.empty())
     {
-        this->pattern.push_back(L'*');
+        this->pattern.push_back('*');
     }
 
     if (dividerPoint == pattern.begin())

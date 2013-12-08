@@ -24,24 +24,24 @@
 
 namespace Instalog
 {
-void RunningProcesses::Execute(std::wostream& logOutput,
+void RunningProcesses::Execute(log_sink& logOutput,
                                ScriptSection const&,
-                               std::vector<std::wstring> const&) const
+                               std::vector<std::string> const&) const
 {
     using Instalog::SystemFacades::ProcessEnumerator;
     using Instalog::SystemFacades::ErrorAccessDeniedException;
     using Instalog::SystemFacades::ScopedPrivilege;
 
-    std::vector<std::wstring> fullPrintList;
-    std::wstring winDir = Path::GetWindowsPath();
-    fullPrintList.push_back(Path::Append(winDir, L"System32\\Svchost.exe"));
-    fullPrintList.push_back(Path::Append(winDir, L"System32\\Svchost"));
-    fullPrintList.push_back(Path::Append(winDir, L"System32\\Rundll32.exe"));
-    fullPrintList.push_back(Path::Append(winDir, L"Syswow64\\Rundll32.exe"));
+    std::vector<std::string> fullPrintList;
+    std::string winDir = Path::GetWindowsPath();
+    fullPrintList.push_back(Path::Append(winDir, "System32\\Svchost.exe"));
+    fullPrintList.push_back(Path::Append(winDir, "System32\\Svchost"));
+    fullPrintList.push_back(Path::Append(winDir, "System32\\Rundll32.exe"));
+    fullPrintList.push_back(Path::Append(winDir, "Syswow64\\Rundll32.exe"));
     boost::algorithm::to_lower(winDir);
-    std::vector<std::pair<std::wstring, std::wstring>> replacements;
+    std::vector<std::pair<std::string, std::string>> replacements;
     replacements.emplace_back(
-        std::pair<std::wstring, std::wstring>(L"c:\\windows\\", winDir));
+        std::pair<std::string, std::string>("c:\\windows\\", winDir));
     Whitelist w(IDR_RUNNINGPROCESSESWHITELIST, replacements);
 
     ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
@@ -54,7 +54,7 @@ void RunningProcesses::Execute(std::wostream& logOutput,
         if (executableTry.is_valid())
         {
             auto executable = executableTry.get();
-            if (boost::starts_with(executable, L"\\??\\"))
+            if (boost::starts_with(executable, "\\??\\"))
             {
                 executable.erase(executable.begin(), executable.begin() + 4);
             }
@@ -63,8 +63,8 @@ void RunningProcesses::Execute(std::wostream& logOutput,
                 continue;
             }
             Path::Prettify(executable.begin(), executable.end());
-            std::wstring pathElement;
-            auto equTest = [&](std::wstring const & str)->bool
+            std::string pathElement;
+            auto equTest = [&](std::string const & str)->bool
             {
                 return boost::iequals(executable, str, std::locale());
             }
@@ -88,12 +88,11 @@ void RunningProcesses::Execute(std::wostream& logOutput,
                 }
             }
             GeneralEscape(pathElement);
-            logOutput << std::move(pathElement) << L"\n";
+            writeln(logOutput, pathElement);
         }
         else
         {
-            logOutput << L"Could not open process PID=" << it->GetProcessId()
-                      << L'\n';
+            writeln(logOutput, "Could not open process PID=", it->GetProcessId());
         }
     }
 }
@@ -105,31 +104,31 @@ static bool IsOnServicesWhitelist(Instalog::SystemFacades::Service const& svc)
     {
         return false;
     }
-    std::wstring whitelistcheck;
+    std::string whitelistcheck;
     whitelistcheck.reserve(
         3 + svc.GetSvchostGroup().size() + svc.GetFilepath().size() +
         svc.GetServiceName().size() + svc.GetDisplayName().size());
     whitelistcheck.append(svc.GetSvchostGroup());
-    whitelistcheck.push_back(L';');
+    whitelistcheck.push_back(';');
     whitelistcheck.append(svc.GetFilepath());
-    whitelistcheck.push_back(L';');
+    whitelistcheck.push_back(';');
     whitelistcheck.append(svc.GetServiceName());
-    whitelistcheck.push_back(L';');
+    whitelistcheck.push_back(';');
     whitelistcheck.append(svc.GetDisplayName());
     return wht.IsOnWhitelist(whitelistcheck);
 }
 
 void
-ServicesDrivers::Execute(std::wostream& logOutput,
+ServicesDrivers::Execute(log_sink& logOutput,
                          ScriptSection const& /*sectionData*/,
-                         std::vector<std::wstring> const& /*options*/) const
+                         std::vector<std::string> const& /*options*/) const
 {
     using Instalog::SystemFacades::ServiceControlManager;
     using Instalog::SystemFacades::Service;
 
     ServiceControlManager scm;
     std::vector<Service> services = scm.GetServices();
-    std::vector<std::wstring> serviceStrings;
+    std::vector<std::string> serviceStrings;
 
     for (auto service = services.begin(); service != services.end(); ++service)
     {
@@ -138,40 +137,45 @@ ServicesDrivers::Execute(std::wostream& logOutput,
             continue;
         }
 
-        std::wostringstream currentSvcStream;
-        currentSvcStream << service->GetState() << service->GetStart();
+        std::string currentServiceString;
+        write(currentServiceString, service->GetState(), service->GetStart());
         if (service->IsDamagedSvchost())
         {
-            currentSvcStream << L'D';
+            currentServiceString.push_back('D');
         }
-        currentSvcStream << L' ' << service->GetServiceName() << L';'
-                         << service->GetDisplayName() << L';';
+
+        write(currentServiceString, ' ', service->GetServiceName(), ';', service->GetDisplayName(), ';');
         auto const& svcHostDll = service->GetSvchostDll();
+        string_sink tempSink;
         if (service->IsSvchostService() && svcHostDll.is_valid())
         {
-            currentSvcStream << service->GetSvchostGroup() << L"->";
-            WriteDefaultFileOutput(currentSvcStream, svcHostDll.get());
+            write(currentServiceString, service->GetSvchostGroup(), '->');
+            WriteDefaultFileOutput(tempSink, svcHostDll.get());
+            currentServiceString.append(tempSink.get());
         }
         else
         {
-            WriteDefaultFileOutput(currentSvcStream, service->GetFilepath());
+            WriteDefaultFileOutput(tempSink, service->GetFilepath());
         }
-        serviceStrings.emplace_back(currentSvcStream.str());
+        currentServiceString.append(tempSink.get());
+        serviceStrings.emplace_back(std::move(currentServiceString));
     }
 
     std::sort(serviceStrings.begin(),
               serviceStrings.end(),
-              [](std::wstring const & a, std::wstring const & b) {
+              [](std::string const & a, std::string const & b) {
         return boost::ilexicographical_compare(a, b);
     });
-    std::copy(serviceStrings.cbegin(),
-              serviceStrings.cend(),
-              std::ostream_iterator<std::wstring, wchar_t>(logOutput, L"\n"));
+
+    for (auto const& serviceString : serviceStrings)
+    {
+        writeln(logOutput, serviceString);
+    }
 }
 
-void EventViewer::Execute(std::wostream& logOutput,
+void EventViewer::Execute(log_sink& logOutput,
                           ScriptSection const& /*sectionData*/,
-                          std::vector<std::wstring> const& /*options*/) const
+                          std::vector<std::string> const& /*options*/) const
 {
     using Instalog::SystemFacades::OldEventLog;
     using Instalog::SystemFacades::XmlEventLog;
@@ -181,7 +185,7 @@ void EventViewer::Execute(std::wostream& logOutput,
     std::vector<std::unique_ptr<EventLogEntry>> eventLogEntries;
     try
     {
-        XmlEventLog xmlEventLog(L"System", L"Event/System[Level=1 or Level=2]");
+        XmlEventLog xmlEventLog("System", "Event/System[Level=1 or Level=2]");
         eventLogEntries = xmlEventLog.ReadEvents();
     }
     catch (Instalog::SystemFacades::Win32Exception const&)
@@ -235,32 +239,32 @@ void EventViewer::Execute(std::wostream& logOutput,
         switch ((*eventLogEntry)->level)
         {
         case EventLogEntry::EvtLevelCritical:
-            logOutput << L", Critical: ";
+            write(logOutput, ", Critical: ");
             break;
         case EventLogEntry::EvtLevelError:
-            logOutput << L", Error: ";
+            write(logOutput, ", Error: ");
             break;
         }
 
         // Print the Source
         auto const& source = (*eventLogEntry)->GetSource();
-        logOutput << source << L" [";
+        write(logOutput, source, " [");
 
         // Print the EventID
-        logOutput << eventId << L"] ";
+        write(logOutput, eventId, "] ");
 
         // Print the description
-        std::wstring description = (*eventLogEntry)->GetDescription();
+        std::string description = (*eventLogEntry)->GetDescription();
         GeneralEscape(description);
         if (boost::algorithm::ends_with(description, "#r#n"))
         {
             description.erase(description.end() - 4, description.end());
         }
-        logOutput << description << L'\n';
+        writeln(logOutput, description);
     }
 }
 
-void MachineSpecifications::OperatingSystem(std::wostream& logOutput) const
+void MachineSpecifications::OperatingSystem(log_sink& logOutput) const
 {
     using namespace SystemFacades;
 
@@ -299,15 +303,15 @@ void MachineSpecifications::OperatingSystem(std::wostream& logOutput) const
 
     ThrowIfFailed(response->Get(
         L"SystemDrive", 0, variant.PassAsOutParameter(), NULL, NULL));
-    logOutput << L"Boot Device: " << variant.AsString() << L'\n';
+    writeln(logOutput, "Boot Device: ", variant.AsString());
 
     ThrowIfFailed(response->Get(
         L"InstallDate", 0, variant.PassAsOutParameter(), NULL, NULL));
-    logOutput << L"Install Date: ";
+    write(logOutput, "Install Date: ");
     WriteMillisecondDateFormat(
         logOutput,
         FiletimeToInteger(WmiDateStringToFiletime(variant.AsString())));
-    logOutput << L'\n';
+    writeln(logOutput);
 }
 
 struct SystemTimeInformation
@@ -325,7 +329,7 @@ struct SystemTimeInformation
 };
 
 void MachineSpecifications::PerfFormattedData_PerfOS_System(
-    std::wostream& logOutput) const
+    log_sink& logOutput) const
 {
     NtQuerySystemInformationFunc ntQuerySysInfo =
         SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>(
@@ -344,27 +348,27 @@ void MachineSpecifications::PerfFormattedData_PerfOS_System(
         SystemFacades::Win32Exception::ThrowFromNtError(errorCheck);
     }
     uint64_t uptime = timeData.currentTime - timeData.bootTime;
-    logOutput << L"Booted at: ";
+    write(logOutput, "Booted at: ");
     WriteDefaultDateFormat(
         logOutput, timeData.bootTime - (GetTimeZoneBias() * ticksPerMinute));
-    logOutput << L" (Up ";
+    write(logOutput, " (Up ");
     if (uptime > ticksPerDay)
     {
-        logOutput << uptime / ticksPerDay << L" Days ";
+        write(logOutput, uptime / ticksPerDay, " Days ");
         uptime = uptime % ticksPerDay;
     }
     if (uptime > ticksPerHour)
     {
-        logOutput << uptime / ticksPerHour << L" Hours ";
+        write(logOutput, uptime / ticksPerHour, " Hours ");
         uptime = uptime % ticksPerHour;
     }
-    logOutput << uptime / ticksPerMinute << L" Minutes)\n";
+    writeln(logOutput, uptime / ticksPerMinute, " Minutes)");
 }
 
 void MachineSpecifications::Execute(
-    std::wostream& logOutput,
+    log_sink& logOutput,
     ScriptSection const& /*sectionData*/,
-    std::vector<std::wstring> const& /*options*/) const
+    std::vector<std::string> const& /*options*/) const
 {
     OperatingSystem(logOutput);
     PerfFormattedData_PerfOS_System(logOutput);
@@ -373,7 +377,7 @@ void MachineSpecifications::Execute(
     LogicalDisk(logOutput);
 }
 
-void MachineSpecifications::BaseBoard(std::wostream& logOutput) const
+void MachineSpecifications::BaseBoard(log_sink& logOutput) const
 {
     using namespace SystemFacades;
 
@@ -412,13 +416,13 @@ void MachineSpecifications::BaseBoard(std::wostream& logOutput) const
 
     ThrowIfFailed(response->Get(
         L"Manufacturer", 0, variant.PassAsOutParameter(), NULL, NULL));
-    logOutput << L"Motherboard: " << variant.AsString();
+    write(logOutput, "Motherboard: ", variant.AsString());
     ThrowIfFailed(
         response->Get(L"Product", 0, variant.PassAsOutParameter(), NULL, NULL));
-    logOutput << L" " << variant.AsString() << L'\n';
+    writeln(logOutput, ' ', variant.AsString());
 }
 
-void MachineSpecifications::Processor(std::wostream& logOutput) const
+void MachineSpecifications::Processor(log_sink& logOutput) const
 {
     using namespace SystemFacades;
 
@@ -457,10 +461,10 @@ void MachineSpecifications::Processor(std::wostream& logOutput) const
 
     ThrowIfFailed(
         response->Get(L"Name", 0, variant.PassAsOutParameter(), NULL, NULL));
-    logOutput << L"Processor: " << variant.AsString() << L'\n';
+    writeln(logOutput, "Processor: ", variant.AsString());
 }
 
-void MachineSpecifications::LogicalDisk(std::wostream& logOutput) const
+void MachineSpecifications::LogicalDisk(log_sink& logOutput) const
 {
     using namespace SystemFacades;
 
@@ -501,32 +505,32 @@ void MachineSpecifications::LogicalDisk(std::wostream& logOutput) const
 
         ThrowIfFailed(response->Get(
             L"DeviceID", 0, variant.PassAsOutParameter(), NULL, NULL));
-        logOutput << variant.AsString() << L" is ";
+        write(logOutput, variant.AsString(), " is ");
 
         ThrowIfFailed(response->Get(
             L"DriveType", 0, variant.PassAsOutParameter(), NULL, NULL));
         switch (variant.AsUlong())
         {
         case 0:
-            logOutput << L"UNKNOWN";
+            write(logOutput, "UNKNOWN");
             break;
         case 1:
-            logOutput << L"NOROOT";
+            write(logOutput, "NOROOT");
             break;
         case 2:
-            logOutput << L"REMOVABLE";
+            write(logOutput, "REMOVABLE");
             break;
         case 3:
-            logOutput << L"LOCAL";
+            write(logOutput, "LOCAL");
             break;
         case 4:
-            logOutput << L"NETWORK";
+            write(logOutput, "NETWORK");
             break;
         case 5:
-            logOutput << L"CDROM";
+            write(logOutput, "CDROM");
             break;
         case 6:
-            logOutput << L"RAM";
+            write(logOutput, "RAM");
             break;
         default:
             assert(false);
@@ -537,7 +541,7 @@ void MachineSpecifications::LogicalDisk(std::wostream& logOutput) const
 
         if (variant.IsNull())
         {
-            logOutput << L'\n';
+            writeln(logOutput);
         }
         else
         {
@@ -549,15 +553,14 @@ void MachineSpecifications::LogicalDisk(std::wostream& logOutput) const
             totalSize /= 1073741824;
             freeSpace /= 1073741824;
 
-            logOutput << L" - " << totalSize << L" GiB total, " << freeSpace
-                      << L" GiB free\n";
+            writeln(logOutput, " - ", totalSize, " GiB total, ", freeSpace, " GiB free");
         }
     }
 }
 
-void RestorePoints::Execute(std::wostream& logOutput,
+void RestorePoints::Execute(log_sink& logOutput,
                             ScriptSection const& /*sectionData*/,
-                            std::vector<std::wstring> const& /*options*/) const
+                            std::vector<std::string> const& /*options*/) const
 {
     try
     {
@@ -566,38 +569,37 @@ void RestorePoints::Execute(std::wostream& logOutput,
 
         for (auto const& restorePoint : restorePoints)
         {
-            logOutput << restorePoint.SequenceNumber << L" ";
+            write(logOutput, restorePoint.SequenceNumber, ' ');
             WriteMillisecondDateFormat(
                 logOutput,
                 FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(
                     restorePoint.CreationTime)));
-            logOutput << L" " << restorePoint.Description << L'\n';
+            writeln(logOutput, ' ', restorePoint.Description);
         }
     }
     catch (SystemFacades::HresultException const& ex)
     {
-        logOutput << L"(Failed to enumerate restore points; HRESULT="
-                  << std::hex << ex.GetErrorCode() << L")\n";
+        writeln(logOutput, "(Failed to enumerate restore points; HRESULT=", hex(ex.GetErrorCode()), ')');
     }
 }
 
 void
-InstalledPrograms::Execute(std::wostream& logOutput,
+InstalledPrograms::Execute(log_sink& logOutput,
                            ScriptSection const& /*sectionData*/,
-                           std::vector<std::wstring> const& /*options*/) const
+                           std::vector<std::string> const& /*options*/) const
 {
     Enumerate(
         logOutput,
-        L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+        "\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #ifdef _M_X64
     Enumerate(
         logOutput,
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #endif
 }
 
-void InstalledPrograms::Enumerate(std::wostream& logOutput,
-                                  std::wstring const& rootKeyPath) const
+void InstalledPrograms::Enumerate(log_sink& logOutput,
+                                  std::string const& rootKeyPath) const
 {
     using namespace SystemFacades;
 
@@ -608,16 +610,16 @@ void InstalledPrograms::Enumerate(std::wostream& logOutput,
     }
 
     std::vector<RegistryKey> uninstallKeys(rootKey.EnumerateSubKeys());
-    std::vector<std::wstring> entries;
+    std::vector<std::string> entries;
 
     for (auto uninstallKey = uninstallKeys.begin();
          uninstallKey != uninstallKeys.end();
          ++uninstallKey)
     {
-        std::wstring currentEntry;
+        std::string currentEntry;
         try
         {
-            uninstallKey->GetValue(L"ParentKeyName");
+            uninstallKey->GetValue("ParentKeyName");
             continue;
         }
         catch (ErrorFileNotFoundException const&)
@@ -626,7 +628,7 @@ void InstalledPrograms::Enumerate(std::wostream& logOutput,
         }
         try
         {
-            if (uninstallKey->GetValue(L"SystemComponent").GetDWord() == 1)
+            if (uninstallKey->GetValue("SystemComponent").GetDWord() == 1)
             {
                 continue;
             }
@@ -641,7 +643,7 @@ void InstalledPrograms::Enumerate(std::wostream& logOutput,
         }
         try
         {
-            RegistryValue displayName(uninstallKey->GetValue(L"DisplayName"));
+            RegistryValue displayName(uninstallKey->GetValue("DisplayName"));
             currentEntry = displayName.GetString();
             GeneralEscape(currentEntry);
         }
@@ -652,45 +654,45 @@ void InstalledPrograms::Enumerate(std::wostream& logOutput,
 
         try
         {
-            RegistryValue versionMajor(uninstallKey->GetValue(L"VersionMajor"));
-            RegistryValue versionMinor(uninstallKey->GetValue(L"VersionMinor"));
+            RegistryValue versionMajor(uninstallKey->GetValue("VersionMajor"));
+            RegistryValue versionMinor(uninstallKey->GetValue("VersionMinor"));
 
-            currentEntry += L" (version ";
+            currentEntry += " (version ";
             if (versionMajor.GetType() == REG_DWORD)
             {
-                currentEntry +=
-                    boost::lexical_cast<std::wstring>(versionMajor.GetDWord());
+                write(currentEntry, versionMajor.GetDWord());
             }
             else
             {
                 currentEntry += versionMajor.GetString();
             }
-            currentEntry.push_back(L'.');
+            currentEntry.push_back('.');
             if (versionMinor.GetType() == REG_DWORD)
             {
-                currentEntry +=
-                    boost::lexical_cast<std::wstring>(versionMinor.GetDWord());
+                write(currentEntry, versionMinor.GetDWord());
             }
             else
             {
                 currentEntry += versionMinor.GetString();
             }
-            currentEntry += L")\n";
+            currentEntry.push_back(')');
         }
         catch (ErrorFileNotFoundException const&)
         {
-            currentEntry.push_back(L'\n');
         }
+
         entries.push_back(std::move(currentEntry));
     }
     std::sort(entries.begin(),
               entries.end(),
-              [](std::wstring const & a, std::wstring const & b) {
+              [](std::string const & a, std::string const & b) {
         return boost::ilexicographical_compare(a, b);
     });
-    std::copy(entries.cbegin(),
-              entries.cend(),
-              std::ostream_iterator<std::wstring, wchar_t>(logOutput, L""));
+
+    for (auto const& str : entries)
+    {
+        write(logOutput, str);
+    }
 }
 
 /// @brief    Sort SystemFacades::FindFilesRecord structs.
@@ -723,11 +725,9 @@ bool SortWin32FindDataW(const SystemFacades::FindFilesRecord& d1,
         return d1.GetSize() > d2.GetSize();
     }
 
-    std::wstringstream attributes1ss, attributes2ss;
-    WriteFileAttributes(attributes1ss, d1.GetAttributes());
-    WriteFileAttributes(attributes2ss, d2.GetAttributes());
-    std::wstring attributes1(attributes1ss.str());
-    std::wstring attributes2(attributes2ss.str());
+    string_sink attributes1, attributes2;
+    WriteFileAttributes(attributes1, d1.GetAttributes());
+    WriteFileAttributes(attributes2, d2.GetAttributes());
     if (attributes1 != attributes2)
     {
         return attributes1 > attributes2;
@@ -811,16 +811,16 @@ std::vector<SystemFacades::FindFilesRecord> GetCreatedLast30FileData()
 {
     using SystemFacades::FindFiles;
 
-    static const wchar_t* directories[] = {
-        L"%SystemRoot%\\System32\\drivers\\", L"%SystemRoot%\\System32\\wbem\\",
-        L"%SystemRoot%\\System32\\",          L"%SystemRoot%\\system\\",
-        L"%SystemRoot%\\",                    L"%Systemdrive%\\",
-        L"%Systemdrive%\\temp\\",             L"%userprofile%\\",
-        L"%commonprogramfiles%\\",            L"%programfiles%\\",
-        L"%AppData%\\",                       L"%AllUsersprofile%\\",
+    static const char* directories[] = {
+        "%SystemRoot%\\System32\\drivers\\", "%SystemRoot%\\System32\\wbem\\",
+        "%SystemRoot%\\System32\\",          "%SystemRoot%\\system\\",
+        "%SystemRoot%\\",                    "%Systemdrive%\\",
+        "%Systemdrive%\\temp\\",             "%userprofile%\\",
+        "%commonprogramfiles%\\",            "%programfiles%\\",
+        "%AppData%\\",                       "%AllUsersprofile%\\",
 #ifdef _M_X64
-        L"%SystemRoot%\\SysWow64\\",          L"%ProgramFiles(x86)%\\",
-        L"%CommonProgramFiles(x86)%\\"
+        "%SystemRoot%\\SysWow64\\",          "%ProgramFiles(x86)%\\",
+        "%CommonProgramFiles(x86)%\\"
 #endif
     };
 
@@ -828,12 +828,9 @@ std::vector<SystemFacades::FindFilesRecord> GetCreatedLast30FileData()
 
     std::vector<SystemFacades::FindFilesRecord> fileData;
 
-    for (size_t i = 0; i < sizeof(directories) / sizeof(const wchar_t*); ++i)
+    for (char const* directory : directories)
     {
-        std::wstring fullDirectory(directories[i]);
-        fullDirectory = Path::ExpandEnvStrings(fullDirectory);
-
-        for (FindFiles files(fullDirectory); files.NextSuccess();)
+        for (FindFiles files(Path::ExpandEnvStrings(directory)); files.NextSuccess();)
         {
             auto const& data = files.GetRecord();
             std::uint64_t createdTime = data.GetCreationTime();
@@ -860,7 +857,7 @@ std::vector<SystemFacades::FindFilesRecord> GetCreatedLast30FileData()
 /// @return    true if a matching extension is found, false otherwise
 template <typename StringType>
 bool ExtensionCheck(StringType&& path,
-                    const wchar_t** extensions,
+                    const char** extensions,
                     size_t numextensions)
 {
     std::locale loc;
@@ -897,29 +894,24 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
     std::uint64_t threeMonthsAgo = MonthsAgo(3);
 
     // The first part of list1 is generated the same as list5
-    static const wchar_t* extensions_list15[] = {
-        L"bat", L"reg", L"vbs", L"wsf", L"vbe", L"msi", L"msp", L"com", L"pif",
-        L"ren", L"vir", L"tmp", L"dll", L"scr", L"sys", L"exe", L"bin", L"drv"};
-    static const wchar_t* directories_list1a[] = {
-        L"%PROGRAMFILES%\\",      L"%COMMONPROGRAMFILES%\\",
+    static const char* extensions_list15[] = {
+        "bat", "reg", "vbs", "wsf", "vbe", "msi", "msp", "com", "pif",
+        "ren", "vir", "tmp", "dll", "scr", "sys", "exe", "bin", "drv"};
+    static const char* directories_list1a[] = {
+        "%PROGRAMFILES%\\",      "%COMMONPROGRAMFILES%\\",
 #ifdef _M_X64
-        L"%PROGRAMFILES(x86)%\\", L"%COMMONPROGRAMFILES(x86)%\\",
+        "%PROGRAMFILES(x86)%\\", "%COMMONPROGRAMFILES(x86)%\\",
 #endif
     };
-    for (size_t i = 0; i < sizeof(directories_list1a) / sizeof(const wchar_t*);
-         ++i)
+    for (char const* directory : directories_list1a)
     {
-        std::wstring fullDirectory(directories_list1a[i]);
-        fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
-
-        for (FindFiles files(fullDirectory); files.NextSuccess();)
+        for (FindFiles files(Path::ExpandEnvStrings(directory)); files.NextSuccess();)
         {
             auto const& curRecord = files.GetRecord();
             // Discard entries that do not have the proper extension
             if (ExtensionCheck(curRecord.GetFileName(),
                                extensions_list15,
-                               sizeof(extensions_list15) /
-                                   sizeof(const wchar_t*)) == false)
+                               _countof(extensions_list15)) == false)
             {
                 continue;
             }
@@ -935,20 +927,16 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
     }
 
     // The second part of list1 also has 3M filtering
-    static const wchar_t* directories_list1b[] = {
-        L"%APPDATA%\\",              L"%SYSTEMDRIVE%\\", L"%SYSTEMROOT%\\",
-        L"%SYSTEMROOT%\\system32\\", L"%USERPROFILE%\\", L"%ALLUSERSPROFILE%\\",
+    static const char* directories_list1b[] = {
+        "%APPDATA%\\",              "%SYSTEMDRIVE%\\", "%SYSTEMROOT%\\",
+        "%SYSTEMROOT%\\system32\\", "%USERPROFILE%\\", "%ALLUSERSPROFILE%\\",
 #ifdef _M_X64
-        L"%SYSTEMROOT%\\Syswow64\\",
+        "%SYSTEMROOT%\\Syswow64\\",
 #endif
     };
-    for (size_t i = 0; i < sizeof(directories_list1b) / sizeof(const wchar_t*);
-         ++i)
+    for (char const* directory : directories_list1b)
     {
-        std::wstring fullDirectory(directories_list1b[i]);
-        fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
-
-        for (FindFiles files(fullDirectory); files.NextSuccess();)
+        for (FindFiles files(Path::ExpandEnvStrings(directory)); files.NextSuccess();)
         {
             auto const& curRecord = files.GetRecord();
             if (curRecord.GetCreationTime() >= threeMonthsAgo)
@@ -956,8 +944,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
                 // Discard entries that do not have the proper extension
                 if (ExtensionCheck(curRecord.GetFileName(),
                                    extensions_list15,
-                                   sizeof(extensions_list15) /
-                                       sizeof(const wchar_t*)) == false)
+                                   _countof(extensions_list15)) == false)
                 {
                     continue;
                 }
@@ -974,23 +961,19 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
     }
 
     // list5 is basically list1b (3M filtering) but also has recursive
-    static const wchar_t* directories_list5[] = {
-        L"%SYSTEMROOT%\\java\\",          L"%SYSTEMROOT%\\msapps\\",
-        L"%SYSTEMROOT%\\pif\\",           L"%SYSTEMROOT%\\Registration\\",
-        L"%SYSTEMROOT%\\help\\",          L"%SYSTEMROOT%\\web\\",
-        L"%SYSTEMROOT%\\pchealth\\",      L"%SYSTEMROOT%\\srchasst\\",
-        L"%SYSTEMROOT%\\tasks\\",         L"%SYSTEMROOT%\\apppatch\\",
-        L"%SYSTEMROOT%\\Internet Logs\\", L"%SYSTEMROOT%\\Media\\",
-        L"%SYSTEMROOT%\\prefetch\\",      L"%SYSTEMROOT%\\cursors\\",
-        L"%SYSTEMROOT%\\inf\\", };
-    for (size_t i = 0; i < sizeof(directories_list5) / sizeof(const wchar_t*);
-         ++i)
+    static const char* directories_list5[] = {
+        "%SYSTEMROOT%\\java\\",          "%SYSTEMROOT%\\msapps\\",
+        "%SYSTEMROOT%\\pif\\",           "%SYSTEMROOT%\\Registration\\",
+        "%SYSTEMROOT%\\help\\",          "%SYSTEMROOT%\\web\\",
+        "%SYSTEMROOT%\\pchealth\\",      "%SYSTEMROOT%\\srchasst\\",
+        "%SYSTEMROOT%\\tasks\\",         "%SYSTEMROOT%\\apppatch\\",
+        "%SYSTEMROOT%\\Internet Logs\\", "%SYSTEMROOT%\\Media\\",
+        "%SYSTEMROOT%\\prefetch\\",      "%SYSTEMROOT%\\cursors\\",
+        "%SYSTEMROOT%\\inf\\", };
+    for (char const* directory : directories_list5)
     {
-        std::wstring fullDirectory(directories_list5[i]);
-        fullDirectory = Path::ExpandEnvStrings(fullDirectory);
-
         // Recursive
-        for (FindFiles files(fullDirectory, FindFilesOptions::RecursiveSearch);
+        for (FindFiles files(Path::ExpandEnvStrings(directory), FindFilesOptions::RecursiveSearch);
              files.NextSuccess();)
         {
             auto const& curRecord = files.GetRecord();
@@ -999,8 +982,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
                 // Discard entries that do not have the proper extension
                 if (ExtensionCheck(curRecord.GetFileName(),
                                    extensions_list15,
-                                   sizeof(extensions_list15) /
-                                       sizeof(const wchar_t*)) == false)
+                                   _countof(extensions_list15)) == false)
                 {
                     continue;
                 }
@@ -1016,29 +998,25 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
         }
     }
 
-    static const wchar_t* directories_list2[] = {
-        L"%SYSTEMROOT%\\System\\",
-        L"%SYSTEMROOT%\\System32\\Wbem\\",
-        L"%SYSTEMROOT%\\System32\\GroupPolicy\\Machine\\Scripts\\Shutdown\\",
-        L"%SYSTEMROOT%\\System32\\GroupPolicy\\User\\Scripts\\Logoff\\",
+    static const char* directories_list2[] = {
+        "%SYSTEMROOT%\\System\\",
+        "%SYSTEMROOT%\\System32\\Wbem\\",
+        "%SYSTEMROOT%\\System32\\GroupPolicy\\Machine\\Scripts\\Shutdown\\",
+        "%SYSTEMROOT%\\System32\\GroupPolicy\\User\\Scripts\\Logoff\\",
 #ifdef _M_X64
-        L"%SYSTEMROOT%\\Syswow64\\Drivers\\",
-        L"%SYSTEMROOT%\\Syswow64\\Wbem\\",
+        "%SYSTEMROOT%\\Syswow64\\Drivers\\",
+        "%SYSTEMROOT%\\Syswow64\\Wbem\\",
 #endif
     };
-    static const wchar_t* extensions_list2_notExecutable[] = {
-        L"com", L"pif", L"ren", L"vir", L"tmp", L"dll",
-        L"scr", L"sys", L"exe", L"bin", L"dat", L"drv"};
-    static const wchar_t* extensions_list2_notDirectory[] = {
-        L"bat", L"cmd", L"reg", L"vbs", L"wsf", L"vbe", L"msi", L"msp"};
-    for (size_t i = 0; i < sizeof(directories_list2) / sizeof(const wchar_t*);
-         ++i)
+    static const char* extensions_list2_notExecutable[] = {
+        "com", "pif", "ren", "vir", "tmp", "dll",
+        "scr", "sys", "exe", "bin", "dat", "drv"};
+    static const char* extensions_list2_notDirectory[] = {
+        "bat", "cmd", "reg", "vbs", "wsf", "vbe", "msi", "msp"};
+    for (char const* directory : directories_list2)
     {
-        std::wstring fullDirectory(directories_list2[i]);
-        fullDirectory = Path::ExpandEnvStrings(std::move(fullDirectory));
-
         // List2 is recursive
-        for (FindFiles files(fullDirectory, FindFilesOptions::RecursiveSearch);
+        for (FindFiles files(Path::ExpandEnvStrings(directory), FindFilesOptions::RecursiveSearch);
              files.NextSuccess();)
         {
             auto const& curRecord = files.GetRecord();
@@ -1052,8 +1030,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
             // not executable
             if (ExtensionCheck(curRecord.GetFileName(),
                                extensions_list2_notExecutable,
-                               sizeof(extensions_list2_notExecutable) /
-                                   sizeof(const wchar_t*)))
+                               _countof(extensions_list2_notExecutable)))
             {
                 if (File::IsExecutable(curRecord.GetFileName()) == false)
                 {
@@ -1065,8 +1042,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
             // not directories
             if (ExtensionCheck(curRecord.GetFileName(),
                                extensions_list2_notDirectory,
-                               sizeof(extensions_list2_notDirectory) /
-                                   sizeof(const wchar_t*)))
+                               _countof(extensions_list2_notDirectory)))
             {
                 if ((curRecord.GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) ==
                     false)
@@ -1079,8 +1055,8 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
         }
     }
 
-    std::wstring directory_list3 = Path::ExpandEnvStrings(
-        L"%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\");
+    std::string directory_list3 = Path::ExpandEnvStrings(
+        "%SYSTEMROOT%\\System32\\Spool\\prtprocs\\w32x86\\");
     for (FindFiles files(directory_list3, FindFilesOptions::RecursiveSearch);
          files.NextSuccess();)
     {
@@ -1094,11 +1070,11 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
         fileData.emplace_back(curRecord);
     }
 
-    std::wstring directory_list6 =
-        Path::ExpandEnvStrings(L"%SYSTEMROOT%\\Fonts\\");
-    static const wchar_t* extensions_list6[] = {L"com", L"pif", L"ren", L"vir",
-                                                L"tmp", L"dll", L"scr", L"sys",
-                                                L"exe", L"bin", L"dat", L"drv"};
+    std::string directory_list6 =
+        Path::ExpandEnvStrings("%SYSTEMROOT%\\Fonts\\");
+    static const char* extensions_list6[] = {"com", "pif", "ren", "vir",
+                                             "tmp", "dll", "scr", "sys",
+                                             "exe", "bin", "dat", "drv"};
     // List6 is recursive
     for (FindFiles files(directory_list6, FindFilesOptions::RecursiveSearch);
          files.NextSuccess();)
@@ -1111,7 +1087,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
             (ExtensionCheck(
                  curRecord.GetFileName(),
                  extensions_list6,
-                 sizeof(extensions_list6) / sizeof(const wchar_t*)) &&
+                 _countof(extensions_list6)) &&
              curRecord.GetSize() >= 1500 &&
              File::IsExecutable(curRecord.GetFileName())))
         {
@@ -1145,34 +1121,36 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
 ///
 /// @param [in,out]    logOutput    The log output stream.
 /// @param    fileData             The fileData to output
-void PrintFileData(std::wostream& logOutput,
+void PrintFileData(log_sink& logOutput,
                    std::vector<SystemFacades::FindFilesRecord> const& fileData)
 {
     for (size_t i = 0; i < 100 && i < fileData.size(); ++i)
     {
         WriteFileListingFromFindData(logOutput, fileData[i]);
-        logOutput << L'\n';
+        writeln(logOutput);
     }
 
     if (fileData.size() > 100)
     {
-        logOutput
-            << L"\nToo many files to show.  Most recent 100 files shown above.\n";
+        writeln(logOutput);
+        writeln(logOutput, "Too many files to show.  Most recent 100 files shown above.");
     }
 }
 
-void FindStarM::Execute(std::wostream& logOutput,
+void FindStarM::Execute(log_sink& logOutput,
                         ScriptSection const& /*sectionData*/,
-                        std::vector<std::wstring> const& /*options*/) const
+                        std::vector<std::string> const& /*options*/) const
 {
     std::vector<SystemFacades::FindFilesRecord> createdLast30FileData(
         GetCreatedLast30FileData());
 
     PrintFileData(logOutput, createdLast30FileData);
 
-    std::wstring head(L"Find3M");
+    std::string head("Find3M");
     Header(head);
-    logOutput << L'\n' << head << L'\n' << L'\n';
+    writeln(logOutput);
+    writeln(logOutput, head);
+    writeln(logOutput);
 
     std::vector<SystemFacades::FindFilesRecord> find3MFileData(
         GetFind3MFileData(createdLast30FileData));

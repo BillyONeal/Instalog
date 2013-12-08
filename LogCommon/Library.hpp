@@ -25,7 +25,7 @@ class Library : boost::noncopyable
     ///
     /// @param    filename    Path of the library.
     /// @param    flags       The flags.
-    Library(std::wstring const& filename, DWORD flags);
+    Library(std::string const& filename, DWORD flags);
 
     /// @brief    Destructor, frees the library.
     ~Library();
@@ -38,7 +38,7 @@ class RuntimeDynamicLinker : public Library
     /// @brief    Constructor.
     ///
     /// @param    filename    Filename of the library.
-    RuntimeDynamicLinker(std::wstring const& filename);
+    RuntimeDynamicLinker(std::string const& filename);
 
     /// @brief    Gets a function pointer to the specified function
     ///
@@ -68,7 +68,9 @@ class FormattedMessageLoader : public Library
     /// @brief    Constructor.
     ///
     /// @param    filename    Filename of the library containing the messages.
-    FormattedMessageLoader(std::wstring const& filename);
+    FormattedMessageLoader(std::string const& filename);
+
+    std::string GetFormattedMessage(DWORD messageId);
 
     /// @brief    Gets a formatted message with the given id and arguments to
     /// replace
@@ -77,10 +79,20 @@ class FormattedMessageLoader : public Library
     /// @param    arguments    (optional) the arguments.
     ///
     /// @return    The formatted message.
-    std::wstring
-    GetFormattedMessage(DWORD const& messageId,
-                        std::vector<std::wstring> const& arguments =
-                            std::vector<std::wstring>());
+    std::string
+        GetFormattedMessage(DWORD messageId,
+        std::vector<std::wstring> const& arguments);
+
+    /// @brief    Gets a formatted message with the given id and arguments to
+    /// replace
+    ///
+    /// @param    messageId    Identifier for the message.
+    /// @param    arguments    (optional) the arguments.
+    ///
+    /// @return    The formatted message.
+    std::string
+    GetFormattedMessage(DWORD messageId,
+                        std::vector<std::string> const& arguments);
 };
 }
 }

@@ -12,6 +12,7 @@
 #include <boost/noncopyable.hpp>
 #include "StringUtilities.hpp"
 #include "UserInterface.hpp"
+#include "LogSink.hpp"
 
 namespace Instalog
 {
@@ -31,7 +32,7 @@ struct ISectionDefinition;
 class ScriptSection
 {
     ISectionDefinition const* targetSection;
-    std::wstring argument;
+    std::string argument;
     std::size_t parseIndex;
 
     public:
@@ -50,7 +51,7 @@ class ScriptSection
      *
      * @return The argument.
      */
-    std::wstring const& GetArgument() const
+    std::string const& GetArgument() const
     {
         return argument;
     }
@@ -72,7 +73,7 @@ class ScriptSection
      * @param arg     The argument to this section definition.
      * @param index   Index of this script section in the source script.
      */
-    ScriptSection(ISectionDefinition const* section, std::wstring arg = std::wstring(), std::size_t index = 0)
+    ScriptSection(ISectionDefinition const* section, std::string arg = std::string(), std::size_t index = 0)
             : targetSection(section)
             , argument(std::move(arg))
             , parseIndex(index)
@@ -100,21 +101,21 @@ struct ISectionDefinition
     /// @brief    Gets the script command that is used in a script
     ///
     /// @return    The script command.
-    virtual std::wstring GetScriptCommand() const = 0;
+    virtual std::string GetScriptCommand() const = 0;
 
     /// @brief    Gets the human-friendly name of the script section.
     ///
     /// @return    The name.
-    virtual std::wstring GetName() const = 0;
+    virtual std::string GetName() const = 0;
 
     /// @brief    Gets the priority.
     ///
     /// @return    The priority.
     virtual LogSectionPriorities GetPriority() const = 0;
 
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const = 0;
+                         std::vector<std::string> const& options) const = 0;
 };
 
 class Script;
@@ -122,7 +123,7 @@ class Script;
 /// @brief    Handles script sections and parses scripts
 class ScriptParser : boost::noncopyable
 {
-    std::map<std::wstring, std::unique_ptr<ISectionDefinition>> sectionTypes;
+    std::map<std::string, std::unique_ptr<ISectionDefinition>> sectionTypes;
 
     public:
     /// @brief    Adds a section type.
@@ -139,14 +140,14 @@ class ScriptParser : boost::noncopyable
     ///
     /// @exception UnknownScriptSectionException Thrown if an unknown script
     /// section is supplied
-    Script Parse(std::wstring const& script) const;
+    Script Parse(std::string const& script) const;
 };
 
 /// @brief    Script that can be run
 class Script
 {
     ScriptParser const* parent_;
-    std::map<ScriptSection, std::vector<std::wstring>> sections;
+    std::map<ScriptSection, std::vector<std::string>> sections;
 
     public:
     /// @brief    Constructor.
@@ -157,7 +158,7 @@ class Script
     /// @brief    Gets the sections.
     ///
     /// @return    The sections.
-    std::map<ScriptSection, std::vector<std::wstring>> const&
+    std::map<ScriptSection, std::vector<std::string>> const&
     GetSections() const;
 
     /// @brief    Adds a ISectionDefinition with given arguments and options
@@ -166,26 +167,24 @@ class Script
     /// @param    arg           The arguments to the section.
     /// @param    options    Options (lines) supplied to the section
     void Add(ISectionDefinition const* def,
-             std::wstring const& arg,
-             std::vector<std::wstring> const& options,
+             std::string const& arg,
+             std::vector<std::string> const& options,
              std::size_t index);
 
     /// @brief    Runs the script
     ///
     /// @param [out]    logOutput    Stream to output log to
     /// @param [out]    ui             The UI to send messages to
-    void Run(std::wostream& logOutput, IUserInterface* ui) const;
+    void Run(log_sink& logOutput, IUserInterface* ui) const;
 };
 
 /// @brief    Thrown when an unknown script section is encountered
 class UnknownScriptSectionException : public std::exception
 {
     std::string unknown;
-
     public:
-    UnknownScriptSectionException(std::wstring& sectionTitle)
-        : unknown(ConvertUnicode(sectionTitle) +
-                  " is not a known script section type.")
+    UnknownScriptSectionException(std::string& sectionTitle)
+        : unknown(sectionTitle + " is not a known script section type.")
     {
     }
     virtual char const* what() const

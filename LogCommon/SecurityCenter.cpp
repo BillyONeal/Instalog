@@ -18,14 +18,14 @@ namespace Instalog
 namespace SystemFacades
 {
 
-static const wchar_t avCode[] = L"AV";
-static const wchar_t fwCode[] = L"FW";
-static const wchar_t asCode[] = L"AS";
+static const char avCode[] = "AV";
+static const char fwCode[] = "FW";
+static const char asCode[] = "AS";
 
 static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
                                   BSTR productToCheck,
                                   std::vector<SecurityProduct>& result,
-                                  wchar_t const* twoCode,
+                                  char const* twoCode,
                                   wchar_t const* enabledPropertyName,
                                   wchar_t const* upToDatePropertyName = nullptr)
 {
@@ -102,7 +102,7 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
 static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
                                    BSTR productToCheck,
                                    std::vector<SecurityProduct>& result,
-                                   const wchar_t* twoCode)
+                                   const char* twoCode)
 {
     UniqueComPtr<IEnumWbemClassObject> objEnumerator;
     ThrowIfFailed(securityCenter2->CreateInstanceEnum(
@@ -248,32 +248,6 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
     CheckSecurityCenter(wbemServices, result);
     return result;
 }
-std::wostream& operator<<(std::wostream& lhs, const SecurityProduct& rhs)
-{
-    lhs << rhs.GetTwoLetterPrefix() << L": " << rhs.GetName();
-    if (rhs.IsEnabled())
-    {
-        lhs << L" (Enabled";
-    }
-    else
-    {
-        lhs << L" (Disabled";
-    }
-    switch (rhs.GetUpdateStatus())
-    {
-    case SecurityProduct::OutOfDate:
-        lhs << L"/Out Of Date) ";
-        break;
-    case SecurityProduct::UpToDate:
-        lhs << L"/Up To Date) ";
-        break;
-    case SecurityProduct::UpdateNotRequired:
-        lhs << L") ";
-        break;
-    }
-    lhs << rhs.GetInstanceGuid() << std::endl;
-    return lhs;
-}
 
 void SecurityProduct::Delete()
 {
@@ -286,15 +260,15 @@ void SecurityProduct::Delete()
                                     securityCenter2.PassAsOutParameter(),
                                     0));
     std::wstring path;
-    if (wcscmp(GetTwoLetterPrefix(), avCode) == 0)
+    if (strcmp(GetTwoLetterPrefix(), avCode) == 0)
     {
         path = L"AntiVirusProduct";
     }
-    else if (wcscmp(GetTwoLetterPrefix(), fwCode) == 0)
+    else if (strcmp(GetTwoLetterPrefix(), fwCode) == 0)
     {
         path = L"FirewallProduct";
     }
-    else if (wcscmp(GetTwoLetterPrefix(), asCode) == 0)
+    else if (strcmp(GetTwoLetterPrefix(), asCode) == 0)
     {
         path = L"AntiSpywareProduct";
     }

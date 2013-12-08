@@ -9,131 +9,126 @@
 #include "StringUtilities.hpp"
 #include "Win32Exception.hpp"
 #include "Path.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
 namespace Path
 {
 
-std::wstring Append(std::wstring path, std::wstring const& more)
+std::string Append(std::string path, std::string const& more)
 {
-    if (path.size() == 0 && more.size() == 0)
+    if (more.size() != 0)
     {
-        return L"";
-    }
-    else if (path.size() > 0 && more.size() == 0)
-    {
-        return path;
-    }
-    else if (path.size() == 0 && more.size() > 0)
-    {
-        return more;
-    }
-    else
-    {
-        std::wstring::const_iterator pathend = path.end() - 1;
-        std::wstring::const_iterator morebegin = more.begin();
-
-        if (*pathend == L'\\' && *morebegin == L'\\')
+        if (path.size() == 0)
         {
-            path.append(++morebegin, more.end());
-            return path;
-        }
-        else if (*pathend == L'\\' || *morebegin == L'\\')
-        {
-            path.append(more);
-            return path;
+            path.assign(more);
         }
         else
         {
-            path.push_back(L'\\');
-            path.append(more);
-            return path;
+            std::string::const_iterator pathend = path.end() - 1;
+            std::string::const_iterator morebegin = more.begin();
+
+            if (*pathend == '\\' && *morebegin == '\\')
+            {
+                path.append(++morebegin, more.end());
+            }
+            else if (*pathend == '\\' || *morebegin == '\\')
+            {
+                path.append(more);
+            }
+            else
+            {
+                path.push_back('\\');
+                path.append(more);
+            }
         }
     }
+
+    return path;
 }
 
-std::wstring GetWindowsPath()
+std::string GetWindowsPath()
 {
     wchar_t windir[MAX_PATH];
     UINT len = ::GetWindowsDirectoryW(windir, MAX_PATH);
     windir[len++] = L'\\';
-    return std::wstring(windir, len);
+    return utf8::ToUtf8(windir, windir + len);
 }
 
-static void NativePathToWin32Path(std::wstring& path)
+static void NativePathToWin32Path(std::string& path)
 {
     // Remove \, ??\, \?\, and globalroot\ 
-        std::wstring::iterator chop = path.begin();
-    if (boost::starts_with(boost::make_iterator_range(chop, path.end()), L"\\"))
+    std::string::iterator chop = path.begin();
+    if (boost::starts_with(boost::make_iterator_range(chop, path.end()), "\\"))
     {
         chop += 1;
     }
     if (boost::starts_with(boost::make_iterator_range(chop, path.end()),
-                           L"??\\"))
+                           "??\\"))
     {
         chop += 3;
     }
     if (boost::starts_with(boost::make_iterator_range(chop, path.end()),
-                           L"\\?\\"))
+                           "\\?\\"))
     {
         chop += 3;
     }
     if (boost::istarts_with(boost::make_iterator_range(chop, path.end()),
-                            L"globalroot\\"))
+                            "globalroot\\"))
     {
         chop += 11;
     }
     path.erase(path.begin(), chop);
 
-    static std::wstring windowsDirectory = GetWindowsPath();
-    if (boost::istarts_with(path, L"system32\\"))
+    static std::string windowsDirectory = GetWindowsPath();
+    if (boost::istarts_with(path, "system32\\"))
     {
         path.insert(0, windowsDirectory);
     }
-    else if (boost::istarts_with(path, L"systemroot\\"))
+    else if (boost::istarts_with(path, "systemroot\\"))
     {
         path.replace(0, 11, windowsDirectory);
     }
-    else if (boost::istarts_with(path, L"%systemroot%\\")) // TODO: Move this
-                                                           // somewhere else
-                                                           // eventually
+    else if (boost::istarts_with(path, "%systemroot%\\")) // TODO: Move this
+                                                          // somewhere else
+                                                          // eventually
     {
         path.replace(0, 13, windowsDirectory);
     }
 }
 
-static std::vector<std::wstring>
+static std::vector<std::string>
 getSplitEnvironmentVariable(wchar_t const* variable)
 {
     using namespace std::placeholders;
-    std::vector<std::wstring> splitVar;
+    std::vector<std::string> splitVar;
     wchar_t buf[32767] = L""; // 32767 is max size of environment variable
     UINT len = ::GetEnvironmentVariableW(variable, buf, 32767);
-    auto range = boost::make_iterator_range(buf, buf + len);
-    boost::split(splitVar, range, std::bind1st(std::equal_to<wchar_t>(), L';'));
+    std::string asUtf8(utf8::ToUtf8(buf, buf + len));
+    boost::split(splitVar, asUtf8, std::bind1st(std::equal_to<char>(), ';'));
     return splitVar;
 }
 
-static std::vector<std::wstring> getSplitPath()
+static std::vector<std::string> getSplitPath()
 {
     return getSplitEnvironmentVariable(L"PATH");
 }
 
-static std::vector<std::wstring> getSplitPathExt()
+static std::vector<std::string> getSplitPathExt()
 {
     return getSplitEnvironmentVariable(L"PATHEXT");
 }
 
-static bool RundllCheck(std::wstring& path)
+static bool RundllCheck(std::string& path)
 {
-    static std::wstring rundllpath =
-        GetWindowsPath().append(L"System32\\rundll32");
+    static std::string rundllpath =
+        GetWindowsPath().append("System32\\rundll32");
 
     if (boost::istarts_with(path, rundllpath))
     {
-        std::wstring::iterator firstComma =
-            std::find(path.begin() + rundllpath.size(), path.end(), L',');
+        std::string::iterator firstComma =
+            std::find(path.begin() + rundllpath.size(), path.end(), ',');
         if (firstComma == path.end())
         {
             return false;
@@ -156,9 +151,9 @@ static bool RundllCheck(std::wstring& path)
     return false;
 }
 
-static bool IsExclusiveFileCached(std::wstring const& testPath)
+static bool IsExclusiveFileCached(std::string const& testPath)
 {
-    static std::unordered_set<std::wstring> nonexistentCache;
+    static std::unordered_set<std::string> nonexistentCache;
     auto cacheValue = nonexistentCache.find(testPath);
     if (cacheValue == nonexistentCache.end())
     {
@@ -178,10 +173,10 @@ static bool IsExclusiveFileCached(std::wstring const& testPath)
     }
 }
 
-static bool TryExtensions(std::wstring& searchpath,
-                          std::wstring::iterator extensionat)
+static bool TryExtensions(std::string& searchpath,
+                          std::string::iterator extensionat)
 {
-    static std::vector<std::wstring> splitPathExt = getSplitPathExt();
+    static std::vector<std::string> splitPathExt = getSplitPathExt();
 
     // Try rundll32 check first
     if (RundllCheck(searchpath))
@@ -190,8 +185,8 @@ static bool TryExtensions(std::wstring& searchpath,
     }
 
     // Search with no path extension
-    std::wstring pathNoPathExtension =
-        std::wstring(searchpath.begin(), extensionat);
+    std::string pathNoPathExtension =
+        std::string(searchpath.begin(), extensionat);
     if (IsExclusiveFileCached(pathNoPathExtension))
     {
         searchpath = pathNoPathExtension;
@@ -216,26 +211,26 @@ static bool TryExtensions(std::wstring& searchpath,
     return false;
 }
 
-static bool TryExtensionsAndPaths(std::wstring& path,
-                                  std::wstring::iterator spacelocation)
+static bool TryExtensionsAndPaths(std::string& path,
+                                  std::string::iterator spacelocation)
 {
     // First, try all of the available extensions
     if (TryExtensions(path, spacelocation))
         return true;
 
     // Second, don't bother trying path prefixes if we start with a drive
-    if (path.size() >= 2 && iswalpha(path[0]) && path[1] == L':')
+    if (path.size() >= 2 && iswalpha(path[0]) && path[1] == ':')
         return false;
 
     // Third, try to prepend it with each path in %PATH% and try each extension
-    static std::vector<std::wstring> splitPath = getSplitPath();
-    for (std::vector<std::wstring>::iterator splitPathIt = splitPath.begin();
+    static std::vector<std::string> splitPath = getSplitPath();
+    for (std::vector<std::string>::iterator splitPathIt = splitPath.begin();
          splitPathIt != splitPath.end();
          ++splitPathIt)
     {
-        std::wstring longpath =
-            Path::Append(*splitPathIt, std::wstring(path.begin(), path.end()));
-        std::wstring::iterator longpathspacelocation =
+        std::string longpath =
+            Path::Append(*splitPathIt, std::string(path));
+        std::string::iterator longpathspacelocation =
             longpath.end() - std::distance(spacelocation, path.end());
         if (TryExtensions(longpath, longpathspacelocation))
         {
@@ -247,13 +242,13 @@ static bool TryExtensionsAndPaths(std::wstring& path,
     return false;
 }
 
-static bool StripArgumentsFromPath(std::wstring& path)
+static bool StripArgumentsFromPath(std::string& path)
 {
     auto subpath = path.begin();
     // For each spot where there's a space, try all available extensions
     do
     {
-        subpath = std::find(subpath + 1, path.end(), L' ');
+        subpath = std::find(subpath + 1, path.end(), ' ');
         if (TryExtensionsAndPaths(path, subpath))
         {
             return true;
@@ -263,12 +258,12 @@ static bool StripArgumentsFromPath(std::wstring& path)
     return false;
 }
 
-static std::wstring GetRundll32Path()
+static std::string GetRundll32Path()
 {
-    return Path::Append(GetWindowsPath(), L"System32\\Rundll32.exe");
+    return Path::Append(GetWindowsPath(), "System32\\Rundll32.exe");
 }
 
-bool ResolveFromCommandLine(std::wstring& path)
+bool ResolveFromCommandLine(std::string& path)
 {
     if (path.empty())
     {
@@ -276,16 +271,16 @@ bool ResolveFromCommandLine(std::wstring& path)
     }
     path = Path::ExpandEnvStrings(path);
 
-    if (path[0] == L'\"')
+    if (path[0] == '\"')
     {
-        std::wstring unescaped;
+        std::string unescaped;
         unescaped.reserve(path.size());
-        std::wstring::iterator endOfUnescape = CmdLineToArgvWUnescape(
+        std::string::iterator endOfUnescape = CmdLineToArgvWUnescape(
             path.begin(), path.end(), std::back_inserter(unescaped));
         if (boost::istarts_with(unescaped, GetRundll32Path()))
         {
-            std::wstring::iterator startOfArgument =
-                std::find(endOfUnescape, path.end(), L'\"');
+            std::string::iterator startOfArgument =
+                std::find(endOfUnescape, path.end(), '\"');
             if (startOfArgument != path.end())
             {
                 unescaped.push_back(L' ');
@@ -315,52 +310,54 @@ bool ResolveFromCommandLine(std::wstring& path)
     }
 }
 
-void Prettify(std::wstring::iterator first, std::wstring::iterator last)
+void Prettify(std::string::iterator first, std::string::iterator last)
 {
     bool upperCase = true;
     for (; first != last; ++first)
     {
         if (upperCase)
         {
-            *first = towupper(*first);
+            *first = static_cast<char>(toupper(*first));
             upperCase = false;
         }
         else
         {
-            if (*first == L'\\')
+            if (*first == '\\')
             {
                 upperCase = true;
             }
             else
             {
-                *first = towlower(*first);
+                *first = static_cast<char>(tolower(*first));
             }
         }
     }
 }
 
-bool ExpandShortPath(std::wstring& path)
+bool ExpandShortPath(std::string& path)
 {
-    if (SystemFacades::File::Exists(path))
+    std::wstring widePath(utf8::ToUtf16(path));
+    wchar_t buffer[MAX_PATH];
+    if (::GetLongPathNameW(widePath.c_str(), buffer, MAX_PATH) == 0)
     {
-        wchar_t buffer[MAX_PATH];
-        ::GetLongPathNameW(path.c_str(), buffer, MAX_PATH);
-        path = std::wstring(buffer);
-
+        return false;
+    }
+    else
+    {
+        path = utf8::ToUtf8(buffer);
         return true;
     }
-
-    return false;
 }
-std::wstring ExpandEnvStrings(std::wstring const& input)
+std::string ExpandEnvStrings(std::string const& input)
 {
+    std::wstring wideInput(utf8::ToUtf16(input));
     std::wstring result;
     DWORD errorCheck = static_cast<DWORD>(input.size());
     do
     {
         result.resize(static_cast<std::size_t>(errorCheck));
         errorCheck = ::ExpandEnvironmentStringsW(
-            input.c_str(), &result[0], static_cast<DWORD>(result.size()));
+            wideInput.c_str(), &result[0], static_cast<DWORD>(result.size()));
     } while (errorCheck != 0 && errorCheck != result.size());
     if (errorCheck == 0)
     {
@@ -368,437 +365,8 @@ std::wstring ExpandEnvStrings(std::wstring const& input)
         Win32Exception::ThrowFromLastError();
     }
     result.resize(static_cast<std::size_t>(errorCheck) - 1);
-    return result;
+    return utf8::ToUtf8(result);
 }
 
-__declspec(noreturn) static inline void throw_length_error()
-{
-    throw std::length_error("Path maximum length exceeded.");
-}
-
-//
-// Path uses a memory block like the following:
-// +---------------------+----+-------+-----------------------+----+-------+
-// | Display path string | \0 | Empty | Uppercase path string | \0 | Empty |
-// +---------------------+----+-------+-----------------------+----+-------+
-//  | <-    size()   -> |  1
-//  | <-        capacity() + 1       |
-//                                     | <-    size()     -> |  1
-//                                     | <-        capacity() + 1      -> |
-//  | <-                   capacity() * 2 + 2                          -> |
-
-/**
- * Converts a given size of a path into the size of the memory block required to
- * hold a path of that size.
- */
-static inline std::size_t capacity_to_memory_capacity(std::size_t capacity)
-{
-    return 2 * capacity + 2;
-}
-
-/*
- * Converts a memory buffer to upper case.
- *
- * @remarks Right now this is Win32 specific.
- */
-void path::uppercase_range(path::size_type length,
-                           path::const_pointer start,
-                           path::pointer target)
-{
-    if (length == 0)
-    {
-        return;
-    }
-    else if (length >=
-             static_cast<path::size_type>(std::numeric_limits<INT>::max()))
-    {
-        // Can't happen. But in case it does....
-        std::terminate();
-    }
-
-    int asInt = static_cast<int>(length);
-    auto result = ::LCMapStringW(
-        LOCALE_INVARIANT, LCMAP_UPPERCASE, start, asInt, target, asInt);
-    if (!result)
-    {
-        SystemFacades::Win32Exception::ThrowFromLastError();
-    }
-}
-
-path::path() BOOST_NOEXCEPT_OR_NOTHROW
-        : base_(nullptr)
-        , size_(0)
-        , capacity_(0)
-{
-}
-
-path::path(path const& other)
-        : capacity_(other.size())
-        , size_(other.size())
-        , base_(new wchar_t[capacity_to_memory_capacity(this->capacity_)])
-{
-    auto uppercaseBegin = other.upperBase();
-    // +1 for null terminator
-    std::copy(other.base_, other.base_ + other.size_ + 1, this->base_);
-    std::copy(
-        uppercaseBegin, uppercaseBegin + other.size_ + 1, this->upperBase());
-}
-
-path::path(path && other) BOOST_NOEXCEPT_OR_NOTHROW
-        : base_(other.base_)
-        , size_(other.size_)
-        , capacity_(other.capacity_)
-{
-    other.base_ = nullptr;
-    other.size_ = 0;
-    other.capacity_ = 0;
-}
-
-path& path::operator=(path other)
-{
-    other.swap(*this);
-    return *this;
-}
-
-path::iterator path::begin() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::const_iterator path::begin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::const_iterator path::cbegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::iterator path::end() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_ + this->size();
-}
-
-path::const_iterator path::end() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_ + this->size();
-}
-
-path::const_iterator path::cend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_ + this->size();
-}
-
-void path::swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW
-{
-    using std::swap;
-    swap(this->base_, other.base_);
-    swap(this->size_, other.size_);
-    swap(this->capacity_, other.capacity_);
-}
-
-path::size_type path::size() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->size_;
-}
-
-path::size_type path::capacity() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->capacity_;
-}
-
-path::size_type path::max_size() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    // The Windows API has many functions that also have Unicode versions to
-    // permit an
-    // extended-length path for a maximum total path length of 32,767
-    // characters. This
-    // type of path is composed of components separated by backslashes, each up
-    // to the
-    // value returned in the lpMaximumComponentLength parameter of the
-    // GetVolumeInformation
-    // function (this value is commonly 255 characters). To specify an
-    // extended-length
-    // path, use the "\\?\" prefix. For example, "\\?\D:\very long path".
-    //
-    // Note  The maximum path of 32,767 characters is approximate, because the
-    // "\\?\"
-    // prefix may be expanded to a longer string by the system at run time, and
-    // this
-    // expansion applies to the total length
-    return 32767;
-}
-
-bool path::empty() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->size() == 0;
-}
-
-path::~path() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    if (this->base_ != nullptr)
-    {
-        delete[] this->base_;
-    }
-}
-
-path::reverse_iterator path::rbegin() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_iterator(this->end());
-}
-
-path::reverse_const_iterator path::rbegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->end());
-}
-
-path::reverse_const_iterator path::crbegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->end());
-}
-
-path::reverse_iterator path::rend() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_iterator(this->begin());
-}
-
-path::reverse_const_iterator path::rend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->begin());
-}
-
-path::reverse_const_iterator path::crend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->begin());
-}
-
-path::iterator path::ubegin() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase();
-}
-
-path::const_iterator path::ubegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase();
-}
-
-path::const_iterator path::cubegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase();
-}
-
-path::iterator path::uend() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase() + this->size();
-}
-
-path::const_iterator path::uend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase() + this->size();
-}
-
-path::const_iterator path::cuend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase() + this->size();
-}
-
-path::reverse_iterator path::rubegin() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_iterator(this->uend());
-}
-
-path::reverse_const_iterator path::rubegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->uend());
-}
-
-path::reverse_const_iterator path::crubegin() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->uend());
-}
-
-path::reverse_iterator path::ruend() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_iterator(this->ubegin());
-}
-
-path::reverse_const_iterator path::ruend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->ubegin());
-}
-
-path::reverse_const_iterator path::cruend() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return path::reverse_const_iterator(this->ubegin());
-}
-
-path::reference_type path::ufront() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    assert(!this->empty());
-    return *this->ubegin();
-}
-
-path::const_reference_type path::ufront() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    assert(!this->empty());
-    return *this->ubegin();
-}
-
-path::reference_type path::uback() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    assert(!this->empty());
-    return *(this->uend() - 1);
-}
-
-path::const_reference_type path::uback() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    assert(!this->empty());
-    return *(this->uend() - 1);
-}
-
-path::size_type path::get_next_geometric_size(path::size_type currentSize,
-                                              path::size_type requiredSize,
-                                              path::size_type maxSize)
-{
-    if (requiredSize > maxSize)
-    {
-        throw_length_error();
-    }
-
-    auto newCapacity = std::max(requiredSize, currentSize * 2);
-    // Don't let capacity doubling exceed max_size
-    newCapacity = std::min(newCapacity, maxSize);
-    return newCapacity;
-}
-
-void path::ensure_capacity(path::size_type desiredCapacity)
-{
-    this->reserve(get_next_geometric_size(
-        this->capacity(), desiredCapacity, this->max_size()));
-}
-
-void path::reserve(size_type count)
-{
-    if (count < this->capacity_)
-    {
-        return;
-    }
-
-    if (count >= this->max_size())
-    {
-        throw_length_error();
-    }
-
-    auto buffer = new wchar_t[count * 2 + 2];
-    if (this->base_)
-    {
-        auto upperBegin = this->upperBase();
-        std::copy(this->base_, this->base_ + this->size() + 1, buffer);
-        std::copy(
-            upperBegin, upperBegin + this->size() + 1, buffer + count + 1);
-        delete[] this->base_;
-    }
-
-    this->base_ = buffer;
-    this->capacity_ = count;
-}
-
-path::pointer path::upperBase() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_ + this->capacity_ + 1;
-}
-
-path::const_pointer path::upperBase() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_ + this->capacity_ + 1;
-}
-
-path::pointer path::data() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::const_pointer path::data() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::const_pointer path::c_str() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_;
-}
-
-path::const_pointer path::uc_str() const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->upperBase();
-}
-
-path::path(wchar_t const* string)
-    : capacity_(0)
-    , base_(nullptr)
-{
-    auto length = std::wcslen(string);
-    this->size_ = length;
-    this->ensure_capacity(length);
-
-    auto upperStart = this->upperBase();
-    std::copy(string, string + length + 1, this->base_);
-    path::uppercase_range(this->size_, this->base_, upperStart);
-    upperStart[this->size_] = L'\0';
-}
-
-path::path(std::wstring const& string)
-    : capacity_(0)
-    , base_(nullptr)
-{
-    this->size_ = string.size();
-    this->ensure_capacity(string.size());
-
-    auto upperStart = this->upperBase();
-    std::copy(string.cbegin(), string.cend(), this->base_);
-    this->base_[this->size_] = L'\0';
-    path::uppercase_range(this->size_, this->base_, upperStart);
-    upperStart[this->size_] = L'\0';
-}
-
-void path::push_back(wchar_t character)
-{
-    auto lastSize = this->size();
-    this->ensure_capacity(lastSize + 1);
-    auto upper = this->upperBase();
-    this->base_[lastSize] = character;
-    path::uppercase_range(1, this->base_ + lastSize, upper + lastSize);
-    ++this->size_;
-    this->base_[this->size()] = L'\0';
-    upper[this->size()] = L'\0';
-}
-
-void path::pop_back() BOOST_NOEXCEPT_OR_NOTHROW
-{
-    if (!this->empty())
-    {
-        this->base_[this->size() - 1] = L'\0';
-        this->upperBase()[this->size() - 1] = L'\0';
-        --this->size_;
-    }
-}
-
-path::const_reference_type path::operator[](path::size_type index) const BOOST_NOEXCEPT_OR_NOTHROW
-{
-    return this->base_[index];
-}
-
-path::const_reference_type path::at(path::size_type index) const
-{
-    if (index >= this->size())
-    {
-        throw std::length_error(
-            "Reference to path using path::at() exceeded range.");
-    }
-
-    return this->base_[index];
-}
 }
 }

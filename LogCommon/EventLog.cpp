@@ -13,6 +13,7 @@
 #include "Registry.hpp"
 #include "Path.hpp"
 #include "Library.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
@@ -39,8 +40,8 @@ OldEventLogEntry::OldEventLogEntry(PEVENTLOGRECORD pRecord)
         level = EventLogEntry::EvtLevelInformation + 1;
         break;
     }
-    source = reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) +
-                                              sizeof(*pRecord));
+    source = utf8::ToUtf8(reinterpret_cast<const wchar_t*>(reinterpret_cast<char*>(pRecord) +
+                                              sizeof(*pRecord)));
     eventId = eventIdWithExtras & 0x0000FFFF;
 
     strings.reserve(pRecord->NumStrings);
@@ -60,15 +61,13 @@ OldEventLogEntry::OldEventLogEntry( OldEventLogEntry && e )
         , dataString(std::move(e.dataString))
 {
     e.eventIdWithExtras = 0;
-    e.source = L"";
+    e.source.clear();
 }
 
-std::wstring OldEventLogEntry::GetDescription()
+std::string OldEventLogEntry::GetDescription()
 {
-    RegistryKey eventKey = RegistryKey::Open(
-        std::wstring(
-            L"\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" +
-            source),
+    RegistryKey eventKey = RegistryKey::Open("\\Registry\\Machine\\System\\CurrentControlSet\\services\\eventlog\\System\\" +
+            source,
         KEY_QUERY_VALUE);
     if (eventKey.Invalid())
     {
@@ -78,8 +77,8 @@ std::wstring OldEventLogEntry::GetDescription()
     try
     {
         RegistryValue eventMessageFileValue =
-            eventKey.GetValue(L"EventMessageFile");
-        std::wstring eventMessageFilePath =
+            eventKey.GetValue("EventMessageFile");
+        std::string eventMessageFilePath =
             eventMessageFileValue.GetStringStrict();
         Path::ResolveFromCommandLine(eventMessageFilePath);
 
@@ -90,17 +89,17 @@ std::wstring OldEventLogEntry::GetDescription()
     {
         // We don't know what library to use so just return the short data
         // string
-        return dataString;
+        return utf8::ToUtf8(dataString);
     }
 }
 
-std::wstring OldEventLogEntry::GetSource()
+std::string OldEventLogEntry::GetSource()
 {
     return source;
 }
 
-OldEventLog::OldEventLog(std::wstring sourceName /*= L"System"*/)
-    : handle(::OpenEventLogW(NULL, sourceName.c_str()))
+OldEventLog::OldEventLog(std::string sourceName /*= L"System"*/)
+    : handle(::OpenEventLogW(NULL, utf8::ToUtf16(sourceName).c_str()))
 {
     if (handle == NULL)
     {
@@ -357,7 +356,7 @@ class EvtFunctionHandles : boost::noncopyable
     EvtFormatMessage_t EvtFormatMessage;
 
     EvtFunctionHandles()
-            : wevtapi(L"wevtapi.dll")
+            : wevtapi("wevtapi.dll")
             , EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
             , EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
             , EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
@@ -381,7 +380,7 @@ static EvtFunctionHandles const& EvtFunctions()
     return evtFunctionHandles;
 }
 
-std::wstring XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
+std::string XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
 {
     HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(
         NULL, providerName.c_str(), NULL, 0, 0);
@@ -410,10 +409,10 @@ std::wstring XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
             break;
         case ERROR_EVT_MESSAGE_NOT_FOUND:
         case ERROR_EVT_MESSAGE_ID_NOT_FOUND:
-            return L"";
+            return "";
             break;
         case ERROR_EVT_UNRESOLVED_PARAMETER_INSERT:
-            return L"No Description Available.";
+            return "No Description Available.";
             break;
         default:
             Win32Exception::Throw(status);
@@ -422,7 +421,7 @@ std::wstring XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
 
     EvtFunctions().EvtClose(publisherHandle);
 
-    return buffer.data();
+    return utf8::ToUtf8(buffer.data());
 }
 
 XmlEventLogEntry::XmlEventLogEntry(HANDLE handle) : eventHandle(handle)
@@ -457,8 +456,7 @@ XmlEventLogEntry::XmlEventLogEntry(HANDLE handle) : eventHandle(handle)
     }
     PEVT_VARIANT renderedValues = reinterpret_cast<PEVT_VARIANT>(buffer.data());
 
-    providerName =
-        std::wstring(renderedValues[EvtSystemProviderName].StringVal);
+    providerName = renderedValues[EvtSystemProviderName].StringVal;
 
     eventId = renderedValues[EvtSystemEventID].UInt16Val;
     if (renderedValues[EvtSystemQualifiers].Type != EvtVarTypeNull)
@@ -496,17 +494,17 @@ XmlEventLogEntry::~XmlEventLogEntry()
     EvtFunctions().EvtClose(eventHandle);
 }
 
-std::wstring XmlEventLogEntry::GetDescription()
+std::string XmlEventLogEntry::GetDescription()
 {
     return this->FormatEventMessage(EvtFormatMessageEvent);
 }
 
-std::wstring XmlEventLogEntry::GetSource()
+std::string XmlEventLogEntry::GetSource()
 {
-    std::wstring response = this->FormatEventMessage(EvtFormatMessageProvider);
+    std::string response = this->FormatEventMessage(EvtFormatMessageProvider);
     if (response.size() == 0)
     {
-        return providerName;
+        return utf8::ToUtf8(providerName);
     }
     else
     {
@@ -518,10 +516,10 @@ std::wstring XmlEventLogEntry::GetSource()
     }
 }
 
-XmlEventLog::XmlEventLog(wchar_t* logPath /*= L"System"*/,
-                         wchar_t* query /*= L"Event/System"*/)
+XmlEventLog::XmlEventLog(char* logPath /*= L"System"*/,
+                         char* query /*= L"Event/System"*/)
     : queryHandle(
-          EvtFunctions().EvtQuery(NULL, logPath, query, EvtQueryChannelPath))
+          EvtFunctions().EvtQuery(NULL, utf8::ToUtf16(logPath).c_str(), utf8::ToUtf16(query).c_str(), EvtQueryChannelPath))
 {
     if (queryHandle == NULL)
     {
@@ -550,8 +548,8 @@ std::vector<std::unique_ptr<EventLogEntry>> XmlEventLog::ReadEvents()
     {
         for (std::size_t i = 0; i < numReturned; ++i)
         {
-            eventLogEntries.emplace_back(std::unique_ptr<EventLogEntry>(
-                new XmlEventLogEntry(eventHandles[i])));
+            eventLogEntries.emplace_back(
+                std::make_unique<XmlEventLogEntry>(eventHandles[i]));
         }
     }
 

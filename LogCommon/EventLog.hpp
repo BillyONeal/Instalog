@@ -51,18 +51,18 @@ struct EventLogEntry
     /// @brief    Gets the source name of the creator of the log entry
     ///
     /// @return    The source.
-    virtual std::wstring GetSource() = 0;
+    virtual std::string GetSource() = 0;
 
     /// @brief    Gets the description of the event
     ///
     /// @return    The description.
-    virtual std::wstring GetDescription() = 0;
+    virtual std::string GetDescription() = 0;
 };
 
 class OldEventLogEntry : public EventLogEntry
 {
     DWORD eventIdWithExtras;
-    std::wstring source;
+    std::string source;
     std::vector<std::wstring> strings;
     std::wstring dataString;
 
@@ -80,11 +80,11 @@ class OldEventLogEntry : public EventLogEntry
     /// @brief    Gets the source name of the creator of the log entry
     ///
     /// @return    The source.
-    virtual std::wstring GetSource();
+    virtual std::string GetSource() override;
     /// @brief    Gets the description of the event
     ///
     /// @return    The description.
-    virtual std::wstring GetDescription();
+    virtual std::string GetDescription() override;
 };
 
 class XmlEventLogEntry : boost::noncopyable, public EventLogEntry
@@ -97,7 +97,7 @@ class XmlEventLogEntry : boost::noncopyable, public EventLogEntry
     /// @param    messageFlag    The message flag.
     ///
     /// @return    The formatted message or "" if the message didn't exist
-    std::wstring FormatEventMessage(DWORD messageFlag);
+    std::string FormatEventMessage(DWORD messageFlag);
 
     public:
     /// @brief    Constructor for an event from a handle to the event
@@ -123,12 +123,12 @@ class XmlEventLogEntry : boost::noncopyable, public EventLogEntry
     /// @brief    Gets the source name of the creator of the log entry
     ///
     /// @return    The source.
-    virtual std::wstring GetSource();
+    virtual std::string GetSource();
 
     /// @brief    Gets the description of the event
     ///
     /// @return    The description.
-    virtual std::wstring GetDescription();
+    virtual std::string GetDescription();
 };
 
 /// @brief    Event log interface
@@ -152,7 +152,7 @@ class OldEventLog : public EventLog
     /// @brief    Constructor.
     ///
     /// @param    sourceName    (optional) name of the log source.
-    OldEventLog(std::wstring sourceName = L"System");
+    OldEventLog(std::string sourceName = "System");
 
     /// @brief    Destructor, frees the handle
     ~OldEventLog();
@@ -175,7 +175,7 @@ class XmlEventLog : public EventLog
     /// @param    query      (optional) the query.
     ///
     /// @throws FileNotFoundException on incompatible machines
-    XmlEventLog(wchar_t* logPath = L"System", wchar_t* query = L"Event/System");
+    XmlEventLog(char* logPath = "System", char* query = "Event/System");
 
     /// @brief    Destructor, frees the handle
     ~XmlEventLog();

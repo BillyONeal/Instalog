@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "Scripting.hpp"
+#include "LogSink.hpp"
 
 namespace Instalog
 {
@@ -10,12 +11,12 @@ namespace Instalog
 /// @brief    Pseudo HijackThis report generator.
 class LoadPointsReport : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const;
-    virtual std::wstring GetName() const;
+    virtual std::string GetScriptCommand() const;
+    virtual std::string GetName() const;
     virtual LogSectionPriorities GetPriority() const;
 
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const;
 };
 }

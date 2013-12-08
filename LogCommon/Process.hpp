@@ -32,12 +32,12 @@ class Process
     /// @brief    Gets the command line of the process.
     ///
     /// @return    The command line.
-    expected<std::wstring> GetCmdLine() const;
+    expected<std::string> GetCmdLine() const;
 
     /// @brief    Gets the executable path of the process.
     ///
     /// @return    The executable path.
-    expected<std::wstring> GetExecutablePath() const;
+    expected<std::string> GetExecutablePath() const;
 
     /// @brief    Terminates the process
     void Terminate();

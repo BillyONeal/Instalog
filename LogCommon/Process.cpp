@@ -13,6 +13,7 @@
 #include "ScopedPrivilege.hpp"
 #include "Process.hpp"
 #include "DdkStructures.h"
+#include "Utf8.hpp"
 
 namespace
 {
@@ -131,7 +132,7 @@ static UniqueHandle OpenProc(std::size_t processId, DWORD access)
     }
 }
 
-static expected<std::wstring>
+static expected<std::string>
 GetProcessStr(std::size_t processId,
               RtlUserProcessParametersSelector stringTargetSelector)
 {
@@ -139,7 +140,7 @@ GetProcessStr(std::size_t processId,
     {
         if (processId == 0)
         {
-            return L"System Idle Process";
+            return "System Idle Process";
         }
         if (processId == 4)
         {
@@ -161,7 +162,7 @@ GetProcessStr(std::size_t processId,
                 ::wcscat_s(
                     target + len, MAX_PATH - len, L"\\System32\\Ntoskrnl.exe");
             }
-            return target;
+            return utf8::ToUtf8(target);
         }
 
         try
@@ -208,7 +209,7 @@ GetProcessStr(std::size_t processId,
             {
                 Win32Exception::ThrowFromLastError();
             }
-            return result;
+            return utf8::ToUtf8(result);
         }
         catch (ErrorAccessDeniedException const&)
         {
@@ -219,7 +220,7 @@ GetProcessStr(std::size_t processId,
             // features.
             UniqueHandle hProc(
                 OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
-            RuntimeDynamicLinker kernel32(L"Kernel32.dll");
+            RuntimeDynamicLinker kernel32("Kernel32.dll");
             typedef BOOL(WINAPI * QueryFullProcessImageNameFunc)(
                 HANDLE, DWORD, LPWSTR, PDWORD);
             QueryFullProcessImageNameFunc queryProcessFile =
@@ -240,22 +241,22 @@ GetProcessStr(std::size_t processId,
                 Win32Exception::ThrowFromLastError();
             }
             buffer.resize(goalSize);
-            return buffer;
+            return utf8::ToUtf8(buffer);
         }
     }
     catch (...)
     {
-        return expected<std::wstring>::from_exception();
+        return expected<std::string>::from_exception();
     }
 }
 
-expected<std::wstring> Process::GetExecutablePath() const
+expected<std::string> Process::GetExecutablePath() const
 {
     return GetProcessStr(GetProcessId(),
                          &RTL_USER_PROCESS_PARAMETERS::ImagePathName);
 }
 
-expected<std::wstring> Process::GetCmdLine() const
+expected<std::string> Process::GetCmdLine() const
 {
     return GetProcessStr(GetProcessId(),
                          &RTL_USER_PROCESS_PARAMETERS::CommandLine);

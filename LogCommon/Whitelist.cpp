@@ -7,8 +7,6 @@
 #include <functional>
 #include <cstdint>
 #include <algorithm>
-#include <iostream>
-#include <iterator>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <windows.h>
@@ -41,7 +39,7 @@ static HMODULE GetCurrentModule()
 
 Whitelist::Whitelist(
     std::int32_t whitelistId,
-    std::vector<std::pair<std::wstring, std::wstring>> const& replacements)
+    std::vector<std::pair<std::string, std::string>> const& replacements)
 {
     using namespace std::placeholders;
     HMODULE hMod = GetCurrentModule();
@@ -61,22 +59,22 @@ Whitelist::Whitelist(
     {
         Win32Exception::ThrowFromLastError();
     }
-    wchar_t const* resourceDataCasted =
-        static_cast<wchar_t const*>(resourceData);
+    char const* resourceDataCasted =
+        static_cast<char const*>(resourceData);
     DWORD resourceLen = ::SizeofResource(hMod, resourceHandle);
     auto sourceRange = boost::make_iterator_range(
         resourceDataCasted,
-        resourceDataCasted + (resourceLen / sizeof(wchar_t)));
+        resourceDataCasted + (resourceLen / sizeof(char)));
     boost::algorithm::split(
-        innards, sourceRange, std::bind1st(std::equal_to<wchar_t>(), L'\n'));
+        innards, sourceRange, std::bind1st(std::equal_to<char>(), '\n'));
     std::locale loc;
-    std::for_each(innards.begin(), innards.end(), [&](std::wstring & x) {
+    std::for_each(innards.begin(), innards.end(), [&](std::string & x) {
         boost::algorithm::to_lower(x, loc);
     });
-    std::for_each(innards.begin(), innards.end(), [&](std::wstring & a) {
+    std::for_each(innards.begin(), innards.end(), [&](std::string & a) {
         std::for_each(replacements.begin(),
                       replacements.end(),
-                      [&](std::pair<std::wstring, std::wstring> const & b) {
+                      [&](std::pair<std::string, std::string> const & b) {
             if (boost::algorithm::istarts_with(a, b.first, loc))
             {
                 a.replace(a.begin(), a.begin() + b.first.size(), b.second);
@@ -86,16 +84,9 @@ Whitelist::Whitelist(
     std::sort(innards.begin(), innards.end());
 }
 
-bool Whitelist::IsOnWhitelist(std::wstring checked) const
+bool Whitelist::IsOnWhitelist(std::string checked) const
 {
     boost::algorithm::to_lower(checked);
     return std::binary_search(innards.begin(), innards.end(), checked);
-}
-
-void Whitelist::PrintAll(std::wostream& str) const
-{
-    std::copy(innards.begin(),
-              innards.end(),
-              std::ostream_iterator<std::wstring, wchar_t>(str, L"\n"));
 }
 }

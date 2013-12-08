@@ -8,6 +8,7 @@
 #include <vector>
 #include "StringUtilities.hpp"
 #include "Dns.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
@@ -50,8 +51,8 @@ static std::vector<char> GetSafeServersList()
     return serversList;
 }
 
-std::wstring IpAddressFromHostname(std::wstring const& hostname,
-                                   bool useSafeDnsAddresses /*= false*/)
+std::string IpAddressFromHostname(std::string const& hostname,
+                                  bool useSafeDnsAddresses /*= false*/)
 {
     DNS_STATUS status;
     PDNS_RECORD pDnsRecord;
@@ -60,7 +61,7 @@ std::wstring IpAddressFromHostname(std::wstring const& hostname,
     {
         std::vector<char> serversList = GetSafeServersList();
 
-        status = DnsQuery(hostname.c_str(),
+        status = DnsQuery_UTF8(hostname.c_str(),
                           DNS_TYPE_A,
                           DNS_QUERY_BYPASS_CACHE,
                           reinterpret_cast<PIP4_ARRAY>(serversList.data()),
@@ -69,7 +70,7 @@ std::wstring IpAddressFromHostname(std::wstring const& hostname,
     }
     else
     {
-        status = DnsQuery(hostname.c_str(),
+        status = DnsQuery_UTF8(hostname.c_str(),
                           DNS_TYPE_A,
                           DNS_QUERY_BYPASS_CACHE,
                           NULL,
@@ -79,7 +80,7 @@ std::wstring IpAddressFromHostname(std::wstring const& hostname,
 
     if (status)
     {
-        return L"";
+        return std::string();
     }
     else
     {
@@ -90,20 +91,20 @@ std::wstring IpAddressFromHostname(std::wstring const& hostname,
         char* hostnameNarrow = inet_ntoa(ipaddr);
         if (hostnameNarrow == NULL)
         {
-            return L"";
+            return std::string();
         }
         else
         {
-            return ConvertUnicode(hostnameNarrow);
+            return hostnameNarrow;
         }
     }
 }
 
-std::wstring HostnameFromIpAddress(std::wstring ipAddress,
-                                   bool useSafeDnsAddresses /*= false*/)
+std::string HostnameFromIpAddress(std::string const& ipAddress,
+                                  bool useSafeDnsAddresses /*= false*/)
 {
-    std::wstring reversedIpAddress(ReverseIpAddress(ipAddress));
-    reversedIpAddress.append(L".IN-ADDR.ARPA");
+    std::string reversedIpAddress(ReverseIpAddress(ipAddress));
+    reversedIpAddress.append(".IN-ADDR.ARPA");
 
     DNS_STATUS status;
     PDNS_RECORD pDnsRecord;
@@ -112,7 +113,7 @@ std::wstring HostnameFromIpAddress(std::wstring ipAddress,
     {
         std::vector<char> serversList = GetSafeServersList();
 
-        status = DnsQuery(reversedIpAddress.c_str(),
+        status = DnsQuery_UTF8(reversedIpAddress.c_str(),
                           DNS_TYPE_PTR,
                           DNS_QUERY_BYPASS_CACHE,
                           reinterpret_cast<PIP4_ARRAY>(serversList.data()),
@@ -121,7 +122,7 @@ std::wstring HostnameFromIpAddress(std::wstring ipAddress,
     }
     else
     {
-        status = DnsQuery(reversedIpAddress.c_str(),
+        status = DnsQuery_UTF8(reversedIpAddress.c_str(),
                           DNS_TYPE_PTR,
                           DNS_QUERY_BYPASS_CACHE,
                           NULL,
@@ -131,32 +132,32 @@ std::wstring HostnameFromIpAddress(std::wstring ipAddress,
 
     if (status)
     {
-        return L"";
+        return std::string();
     }
     else
     {
-        return pDnsRecord->Data.PTR.pNameHost;
+        return utf8::ToUtf8(pDnsRecord->Data.PTR.pNameHost);
     }
 }
 
-std::wstring ReverseIpAddress(std::wstring ipAddress)
+std::string ReverseIpAddress(std::string const& ipAddress)
 {
     if (ipAddress.size() == 0)
     {
-        return L"";
+        return std::string();
     }
 
-    std::wstring reversed;
+    std::string reversed;
     reversed.reserve(ipAddress.size());
 
     auto regionStart = ipAddress.end() - 1;
     auto regionEnd = ipAddress.end();
     for (; regionStart != ipAddress.begin(); --regionStart)
     {
-        if (*regionStart == L'.')
+        if (*regionStart == '.')
         {
             reversed.append(regionStart + 1, regionEnd);
-            reversed.append(L".");
+            reversed.push_back('.');
             regionEnd = regionStart;
         }
     }

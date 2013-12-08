@@ -37,7 +37,7 @@ class File : boost::noncopyable
     /// <exception cref="Win32Exception">Thrown when the underlying
     /// <c>CreateFileW</c>
     /// call fails.</exception>
-    File(std::wstring const& filename,
+    File(std::string const& filename,
          DWORD desiredAccess = GENERIC_READ,
          DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE,
          LPSECURITY_ATTRIBUTES securityAttributes = nullptr,
@@ -101,14 +101,14 @@ class File : boost::noncopyable
     /// <param name="filename">Filename of the file.</param>
     /// <returns>The size of the file.</returns>
     /// <exception cref="Win32Exception" />
-    static std::uint64_t GetSize(std::wstring const& filename);
+    static std::uint64_t GetSize(std::string const& filename);
 
     /// <summary>Gets the attributes of the specified file as a DWORD without
     /// opening a file handle</summary>
     /// <param name="filename">Filename of the file.</param>
     /// <returns>The attributes.</returns>
     /// <exception cref="Win32Exception" />
-    static DWORD GetAttributes(std::wstring const& filename);
+    static DWORD GetAttributes(std::string const& filename);
 
     /// <summary>Gets the extended attributes of the specified file without
     /// opening a file handle</summary>
@@ -116,45 +116,45 @@ class File : boost::noncopyable
     /// <returns>The extended attributes.</returns>
     /// <exception cref="Win32Exception" />
     static WIN32_FILE_ATTRIBUTE_DATA
-    GetExtendedAttributes(std::wstring const& filename);
+    GetExtendedAttributes(std::string const& filename);
 
     /// <summary>Deletes the given file.</summary>
     /// <param name="filename">Filename of the file.</param>
-    static void Delete(std::wstring const& filename);
+    static void Delete(std::string const& filename);
 
     /// <summary>Determines if the file exists.</summary>
     /// <param name="filename">Filename of the file.</param>
     /// <returns>true if the file appears to exist; otherwise, false.</returns>
-    static bool Exists(std::wstring const& filename);
+    static bool Exists(std::string const& filename);
 
     /// <summary>Determines if the given file is a directory without opening a
     /// file handle</summary>
     /// <param name="filename">Filename of the file.</param>
     /// <returns>true if the file is a directory; otherwise, false.</returns>
-    static bool IsDirectory(std::wstring const& filename);
+    static bool IsDirectory(std::string const& filename);
 
     /// <summary>Determines if the given file is exclusively a file -- that is,
     /// it is a file, not a directory, and that it exists.</summary>
     /// <param name="fileName">Filename of the file.</param>
     /// <returns>true the file name is an exclusive file; otherwise,
     /// false.</returns>
-    static bool IsExclusiveFile(std::wstring const& fileName);
+    static bool IsExclusiveFile(std::string const& fileName);
 
     /// <summary>Queries is executable.</summary>
     /// <param name="filename">Filename of the file.</param>
     /// <returns>true if executable; otherwise, false.</returns>
-    static bool IsExecutable(std::wstring const& filename);
+    static bool IsExecutable(std::string const& filename);
 
     /// <summary>Gets the company of the given file.</summary>
     /// <param name="target">File name of the file to check.</param>
     /// <returns>The company.</returns>
-    static std::wstring GetCompany(std::wstring const& target);
+    static std::string GetCompany(std::string const& target);
 };
 
 /// <summary>Find files record.</summary>
 class FindFilesRecord
 {
-    std::wstring cFileName;
+    std::string cFileName;
     std::uint64_t ftCreationTime;
     std::uint64_t ftLastAccessTime;
     std::uint64_t ftLastWriteTime;
@@ -166,7 +166,7 @@ class FindFilesRecord
     /// class.</summary>
     /// <param name="prefix">The prefix path.</param>
     /// <param name="winSource">The windows data record source.</param>
-    FindFilesRecord(std::wstring prefix, WIN32_FIND_DATAW const& winSource);
+    FindFilesRecord(std::string prefix, WIN32_FIND_DATAW const& winSource);
 
     /// <summary>Copy constructor.</summary>
     /// <param name="other">The object to copy.</param>
@@ -183,7 +183,7 @@ class FindFilesRecord
 
     /// <summary>Gets file name.</summary>
     /// <returns>The file name.</returns>
-    std::wstring const& GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW;
+    std::string const& GetFileName() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     /// <summary>Gets creation time.</summary>
     /// <returns>The creation time.</returns>
@@ -243,8 +243,8 @@ inline FindFilesOptions operator|(FindFilesOptions lhs, FindFilesOptions rhs)
 class FindFiles : boost::noncopyable
 {
     std::vector<FindHandle> handleStack;
-    std::wstring prefix;
-    std::wstring pattern;
+    std::string prefix;
+    std::string pattern;
     DWORD lastError;
     WIN32_FIND_DATAW findData;
     FindFilesOptions options;
@@ -258,7 +258,7 @@ class FindFiles : boost::noncopyable
     void NextImpl();
     bool OnEndShouldLeave() BOOST_NOEXCEPT_OR_NOTHROW;
     bool OnDotKeepGoing() BOOST_NOEXCEPT_OR_NOTHROW;
-    void Construct(std::wstring const& pattern);
+    void Construct(std::string const& pattern);
 
     public:
     /// <summary>Default constructor. Operates as a successful empty file search
@@ -269,13 +269,13 @@ class FindFiles : boost::noncopyable
     /// of nonrecursive, skipping dot directories.</summary>
     /// <param name="pattern">Specifies the pattern for which the search is
     /// conducted.</param>
-    FindFiles(std::wstring const& pattern);
+    FindFiles(std::string const& pattern);
 
     /// <summary>Constructor. Initiates a file search.</summary>
     /// <param name="pattern">Specifies the pattern for which the search is
     /// conducted.</param>
     /// <param name="options">Options for controlling the search.</param>
-    FindFiles(std::wstring const& pattern, FindFilesOptions options);
+    FindFiles(std::string const& pattern, FindFilesOptions options);
 
     /// <summary>Move constructor.</summary>
     /// <param name="toMove">[in,out] The instance from which move construction

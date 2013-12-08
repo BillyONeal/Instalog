@@ -20,8 +20,8 @@ namespace SystemFacades
 ///
 /// @return    The IPv4 address in the form xxx.xxx.xxx.xxx or empty string if
 /// an error occured
-std::wstring IpAddressFromHostname(std::wstring const& hostname,
-                                   bool useSafeDnsAddresses = false);
+std::string IpAddressFromHostname(std::string const& hostname,
+                                  bool useSafeDnsAddresses = false);
 
 /// @brief    Queries DNS for the hostnape for a given IP address
 ///
@@ -31,8 +31,8 @@ std::wstring IpAddressFromHostname(std::wstring const& hostname,
 /// "safe" DNS servers (Google's and if that fails, then OpenDNS)
 ///
 /// @return    The hostname or empty string if an error occured
-std::wstring HostnameFromIpAddress(std::wstring ipAddress,
-                                   bool useSafeDnsAddresses = false);
+std::string HostnameFromIpAddress(std::string const& ipAddress,
+                                  bool useSafeDnsAddresses = false);
 
 /// @brief    Reverses an IP address.  Doesn't do any validation, just reverses
 /// around periods.
@@ -40,6 +40,6 @@ std::wstring HostnameFromIpAddress(std::wstring ipAddress,
 /// @param    ipAddress    The address to reverse
 ///
 /// @return    The reversed IP address
-std::wstring ReverseIpAddress(std::wstring ipAddress);
+std::string ReverseIpAddress(std::string const& ipAddress);
 }
 }

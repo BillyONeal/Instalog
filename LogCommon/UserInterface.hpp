@@ -27,7 +27,7 @@ struct IUserInterface
     /// @brief    Logs a message to the user interface.
     ///
     /// @param    message    The message to log
-    virtual void LogMessage(std::wstring const& message) = 0;
+    virtual void LogMessage(std::string const& message) = 0;
 };
 
 /// @brief    User interface which is a no-op for all operations.
@@ -41,7 +41,7 @@ struct DoNothingUserInterface : public IUserInterface
     virtual void ReportFinished()
     {
     }
-    virtual void LogMessage(std::wstring const&)
+    virtual void LogMessage(std::string const&)
     {
     }
 };

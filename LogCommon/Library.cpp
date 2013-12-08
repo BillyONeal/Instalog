@@ -5,14 +5,15 @@
 #include "pch.hpp"
 #include "Win32Exception.hpp"
 #include "Library.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
 namespace SystemFacades
 {
 
-Library::Library(std::wstring const& filename, DWORD flags)
-    : hModule(::LoadLibraryExW(filename.c_str(), NULL, flags))
+Library::Library(std::string const& filename, DWORD flags)
+    : hModule(::LoadLibraryExW(utf8::ToUtf16(filename).c_str(), NULL, flags))
 {
     if (hModule == NULL)
     {
@@ -27,11 +28,11 @@ Library::~Library()
 
 RuntimeDynamicLinker& GetNtDll()
 {
-    static RuntimeDynamicLinker ntdll(L"ntdll.dll");
+    static RuntimeDynamicLinker ntdll("ntdll.dll");
     return ntdll;
 }
 
-RuntimeDynamicLinker::RuntimeDynamicLinker(std::wstring const& filename)
+RuntimeDynamicLinker::RuntimeDynamicLinker(std::string const& filename)
     : Library(filename, 0)
 {
 }
@@ -50,25 +51,57 @@ static bool IsVistaLaterCache()
     return isVistaLater;
 }
 
-FormattedMessageLoader::FormattedMessageLoader(std::wstring const& filename)
+static std::string FormatMessageU(HMODULE hModule, DWORD messageId, va_list* argPtr)
+{
+    wchar_t* messagePtr = nullptr;
+    if (FormatMessageW(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE |
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+        hModule,
+        messageId,
+        LANG_SYSTEM_DEFAULT,
+        reinterpret_cast<LPWSTR>(&messagePtr),
+        0,
+        argPtr) == 0)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+    std::string answer(utf8::ToUtf8(messagePtr));
+    LocalFree(messagePtr);
+    return answer;
+}
+
+FormattedMessageLoader::FormattedMessageLoader(std::string const& filename)
     : Library(filename,
               (IsVistaLaterCache() ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0) |
                   LOAD_LIBRARY_AS_DATAFILE)
 {
 }
 
-std::wstring FormattedMessageLoader::GetFormattedMessage(
-    DWORD const& messageId,
+std::string FormattedMessageLoader::GetFormattedMessage(
+    DWORD messageId)
+{
+    return FormatMessageU(this->hModule, messageId, nullptr);
+}
+
+std::string FormattedMessageLoader::GetFormattedMessage(
+    DWORD messageId,
+    std::vector<std::string> const& argumentsSource)
+{
+    std::vector<std::wstring> arguments;
+    arguments.reserve(argumentsSource.size());
+    std::transform(argumentsSource.cbegin(), argumentsSource.cend(), std::back_inserter(arguments), [](std::string const& s) { return utf8::ToUtf16(s); });
+    return GetFormattedMessage(messageId, arguments);
+}
+
+std::string FormattedMessageLoader::GetFormattedMessage(
+    DWORD messageId,
     std::vector<std::wstring> const& arguments)
 {
     std::vector<DWORD_PTR> argumentPtrs;
     argumentPtrs.reserve(arguments.size());
-
-    for (std::vector<DWORD_PTR>::size_type i = 0; i < arguments.size(); ++i)
-    {
-        argumentPtrs.push_back(
-            reinterpret_cast<DWORD_PTR>(arguments[i].c_str()));
-    }
+    std::transform(arguments.cbegin(), arguments.cend(), std::back_inserter(argumentPtrs),
+        [](std::wstring const& str) { return reinterpret_cast<DWORD_PTR>(str.c_str()); });
 
     auto argPtr = reinterpret_cast<va_list*>(argumentPtrs.data());
     if (arguments.empty())
@@ -76,22 +109,7 @@ std::wstring FormattedMessageLoader::GetFormattedMessage(
         argPtr = nullptr;
     }
 
-    wchar_t* messagePtr = nullptr;
-    if (FormatMessageW(
-            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE |
-                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-            hModule,
-            messageId,
-            LANG_SYSTEM_DEFAULT,
-            reinterpret_cast<LPWSTR>(&messagePtr),
-            0,
-            argPtr) == 0)
-    {
-        Win32Exception::ThrowFromLastError();
-    }
-    std::wstring answer(messagePtr);
-    LocalFree(messagePtr);
-    return answer;
+    return FormatMessageU(this->hModule, messageId, argPtr);
 }
 }
 }

@@ -26,8 +26,8 @@
 #undef WIN32_NO_STATUS
 #pragma warning(push)
 #pragma warning(disable : 4512)
+#include <boost/config.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/io/ios_state.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>

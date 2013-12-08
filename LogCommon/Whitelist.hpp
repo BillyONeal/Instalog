@@ -5,7 +5,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <ostream>
+#include "LogSink.hpp"
 
 namespace Instalog
 {
@@ -17,7 +17,7 @@ namespace Instalog
 /// in-place
 class Whitelist
 {
-    std::vector<std::wstring> innards;
+    std::vector<std::string> innards;
 
     public:
     /// @brief    Constructor.
@@ -31,19 +31,14 @@ class Whitelist
     /// @throws    Win32Exception on error
     Whitelist(
         std::int32_t whitelistId,
-        std::vector<std::pair<std::wstring, std::wstring>> const& replacements =
-            std::vector<std::pair<std::wstring, std::wstring>>());
+        std::vector<std::pair<std::string, std::string>> const& replacements =
+            std::vector<std::pair<std::string, std::string>>());
 
     /// @brief    Query if an item should be whitelisted
     ///
     /// @param    checked    The item to check
     ///
     /// @return    true if it should be whitelisted
-    bool IsOnWhitelist(std::wstring checked) const;
-
-    /// @brief    Print all of the whitelist elements
-    ///
-    /// @param [out]    str    The stream to write to.
-    void PrintAll(std::wostream& str) const;
+    bool IsOnWhitelist(std::string checked) const;
 };
 }

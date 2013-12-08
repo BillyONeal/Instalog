@@ -44,6 +44,36 @@ namespace Instalog
         virtual void append(char const* data, std::size_t dataLength);
     };
 
+    inline bool operator==(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() == rhs.get();
+    }
+
+    inline bool operator!=(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() != rhs.get();
+    }
+
+    inline bool operator<(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() < rhs.get();
+    }
+
+    inline bool operator>(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() > rhs.get();
+    }
+
+    inline bool operator<=(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() <= rhs.get();
+    }
+
+    inline bool operator>=(string_sink const& lhs, string_sink const& rhs)
+    {
+        return lhs.get() >= rhs.get();
+    }
+
     // Format results types.
     // When formatting a value (e.g. a single number), these types are where given
     // value formatters store the result.

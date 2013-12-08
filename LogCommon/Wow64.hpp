@@ -20,7 +20,7 @@ inline bool IsWow64()
 {
     try
     {
-        RuntimeDynamicLinker kernel32(L"kernel32.dll");
+        RuntimeDynamicLinker kernel32("kernel32.dll");
         typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
                                                __out PBOOL Wow64Process);
         auto IsWow64ProcessFunc =
@@ -42,7 +42,7 @@ inline bool IsWow64()
 struct NativeFilePathScope : boost::noncopyable
 {
     NativeFilePathScope()
-        : kernel32(L"kernel32.dll")
+        : kernel32("kernel32.dll")
         , ptr(nullptr)
     {
         try

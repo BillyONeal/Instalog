@@ -154,14 +154,12 @@ struct ErrorProcedureNotFoundException : public Win32Exception
 class HresultException : public std::exception
 {
     std::string narrow;
-    std::wstring wide;
     HRESULT hResult;
 
     public:
-    HresultException(HRESULT hRes, std::wstring w, std::string n);
+    HresultException(HRESULT hRes, std::string n);
     HRESULT GetErrorCode() const;
     std::string const& GetErrorStringA() const;
-    std::wstring const& GetErrorStringW() const;
     virtual char const* what();
 };
 

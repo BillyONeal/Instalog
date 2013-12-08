@@ -7,6 +7,7 @@
 #include "Library.hpp"
 #include "Com.hpp"
 #include "StringUtilities.hpp"
+#include "LogSink.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog
@@ -121,13 +122,14 @@ void __declspec(noreturn) ThrowFromHResult(HRESULT hRes)
         UniqueBstr bStr;
         iei->GetDescription(bStr.AsTarget());
         auto errorMessage = bStr.AsString();
-        std::string narrowMessage(Instalog::ConvertUnicode(errorMessage));
-        throw HresultException(hRes, errorMessage, narrowMessage);
+        std::string narrowMessage;
+        write(narrowMessage, errorMessage);
+        throw HresultException(hRes, narrowMessage);
     }
     else if (HRESULT_FACILITY(hRes) == FACILITY_ITF)
     {
         throw HresultException(
-            hRes, L"Interface Specific", "Interface Specific");
+            hRes, "Interface Specific");
     }
     else
     {
@@ -135,9 +137,8 @@ void __declspec(noreturn) ThrowFromHResult(HRESULT hRes)
     }
 }
 
-HresultException::HresultException( HRESULT hRes, std::wstring w, std::string n )
+HresultException::HresultException( HRESULT hRes, std::string n )
         : hResult(hRes)
-        , wide(std::move(w))
         , narrow(std::move(n))
 {
 }
@@ -150,11 +151,6 @@ HRESULT HresultException::GetErrorCode() const
 std::string const& HresultException::GetErrorStringA() const
 {
     return narrow;
-}
-
-std::wstring const& HresultException::GetErrorStringW() const
-{
-    return wide;
 }
 
 char const* HresultException::what()

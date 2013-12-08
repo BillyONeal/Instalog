@@ -27,7 +27,7 @@ class SecurityProduct
     std::wstring guid_;
     bool enabled_;
     UpdateStatusValues updateStatus_;
-    const wchar_t* letterCode_;
+    const char* letterCode_;
 
     public:
     SecurityProduct(
@@ -35,7 +35,7 @@ class SecurityProduct
             const std::wstring& guid,
             bool enabled,
             UpdateStatusValues updateStatus,
-            const wchar_t * letterCode)
+            const char * letterCode)
             :    name_(name), 
                 guid_(guid),
                 enabled_(enabled),
@@ -43,7 +43,7 @@ class SecurityProduct
                 letterCode_(letterCode)
     {
     }
-    const wchar_t* GetTwoLetterPrefix() const
+    const char* GetTwoLetterPrefix() const
     {
         return letterCode_;
     }

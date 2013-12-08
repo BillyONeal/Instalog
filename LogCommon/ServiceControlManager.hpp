@@ -19,13 +19,13 @@ class Service : boost::noncopyable
 {
     SC_HANDLE serviceHandle;
 
-    std::wstring serviceName;
-    std::wstring displayName;
-    std::wstring state;
+    std::string serviceName;
+    std::string displayName;
+    std::string state;
     DWORD start;
-    std::wstring filepath;
-    std::wstring svchostGroup;
-    expected<std::wstring> svchostDll;
+    std::string filepath;
+    std::string svchostGroup;
+    expected<std::string> svchostDll;
     bool svchostDamaged;
 
     public:
@@ -38,8 +38,8 @@ class Service : boost::noncopyable
     /// @param scmHandle   Handle to the ServiceControlManager.
     ///
     /// @throw    Win32Exception on error
-    Service(std::wstring const& serviceName,
-            std::wstring const& displayName,
+    Service(std::string const& serviceName,
+            std::string const& displayName,
             SERVICE_STATUS const& status,
             SC_HANDLE scmHandle);
 
@@ -61,7 +61,7 @@ class Service : boost::noncopyable
     /// Gets the service name.
     ///
     /// @return The service name.
-    std::wstring const& GetServiceName() const
+    std::string const& GetServiceName() const
     {
         return serviceName;
     }
@@ -69,7 +69,7 @@ class Service : boost::noncopyable
     /// Gets the display name.
     ///
     /// @return The display name.
-    std::wstring const& GetDisplayName() const
+    std::string const& GetDisplayName() const
     {
         return displayName;
     }
@@ -77,7 +77,7 @@ class Service : boost::noncopyable
     /// Gets the state.
     ///
     /// @return The state.
-    std::wstring const& GetState() const
+    std::string const& GetState() const
     {
         return state;
     }
@@ -98,7 +98,7 @@ class Service : boost::noncopyable
     /// Gets the filepath.
     ///
     /// @return The filepath.
-    std::wstring const& GetFilepath() const
+    std::string const& GetFilepath() const
     {
         return filepath;
     }
@@ -106,7 +106,7 @@ class Service : boost::noncopyable
     /// Gets the svchost group.
     ///
     /// @return The svchost group.
-    std::wstring const& GetSvchostGroup() const
+    std::string const& GetSvchostGroup() const
     {
         return svchostGroup;
     }
@@ -114,7 +114,7 @@ class Service : boost::noncopyable
     /// Gets the svchost dll path.
     ///
     /// @return The svchost dll path.
-    expected<std::wstring> const& GetSvchostDll() const
+    expected<std::string> const& GetSvchostDll() const
     {
         return svchostDll;
     }

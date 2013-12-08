@@ -15,6 +15,7 @@
 #include "StringUtilities.hpp"
 #include "Library.hpp"
 #include "Registry.hpp"
+#include "Utf8.hpp"
 
 namespace Instalog
 {
@@ -72,14 +73,15 @@ RegistryKey::RegistryKey() : hKey_(INVALID_HANDLE_VALUE)
 {
 }
 
-RegistryValue const RegistryKey::operator[](std::wstring const& name) const
+RegistryValue const RegistryKey::operator[](std::string const& name) const
 {
     return GetValue(name);
 }
 
-RegistryValue const RegistryKey::GetValue(std::wstring const& name) const
+RegistryValue const RegistryKey::GetValue(std::string const& name) const
 {
-    UNICODE_STRING valueName(WstringToUnicodeString(name));
+    std::wstring wideName(utf8::ToUtf16(name));
+    UNICODE_STRING valueName(WstringToUnicodeString(wideName));
     std::vector<unsigned char> buff(MAX_PATH);
     NTSTATUS errorCheck;
     do
@@ -112,7 +114,7 @@ RegistryValue const RegistryKey::GetValue(std::wstring const& name) const
     return RegistryValue(type, std::move(buff));
 }
 
-void RegistryKey::SetValue(std::wstring const& name,
+void RegistryKey::SetValue(std::string const& name,
                            std::size_t dataSize,
                            void const* data,
                            DWORD type)
@@ -122,7 +124,8 @@ void RegistryKey::SetValue(std::wstring const& name,
         throw std::out_of_range("Registry key data was too long.");
     }
 
-    UNICODE_STRING valueName(WstringToUnicodeString(name));
+    std::wstring wideName(utf8::ToUtf16(name));
+    UNICODE_STRING valueName(WstringToUnicodeString(wideName));
     auto clippedSize = static_cast<ULONG>(dataSize);
     NTSTATUS status = PNtSetValueKeyFunc(
         hKey_, &valueName, 0, type, const_cast<PVOID>(data), clippedSize);
@@ -130,6 +133,17 @@ void RegistryKey::SetValue(std::wstring const& name,
     {
         Win32Exception::ThrowFromNtError(status);
     }
+}
+
+void RegistryKey::SetValue(std::string const& name,
+    std::string const& data,
+    DWORD type)
+{
+    std::wstring wideData(utf8::ToUtf16(data));
+    this->SetValue(name,
+        wideData.size() * sizeof(wchar_t),
+        static_cast<void const*>(wideData.data()),
+        type);
 }
 
 static RegistryKey
@@ -153,14 +167,15 @@ RegistryKeyOpen(HANDLE hRoot, UNICODE_STRING& key, REGSAM samDesired)
 }
 
 static RegistryKey
-RegistryKeyOpen(HANDLE hRoot, std::wstring const& key, REGSAM samDesired)
+RegistryKeyOpen(HANDLE hRoot, std::string const& key, REGSAM samDesired)
 {
-    UNICODE_STRING ustrKey = WstringToUnicodeString(key);
+    std::wstring wideKey(utf8::ToUtf16(key));
+    UNICODE_STRING ustrKey = WstringToUnicodeString(wideKey);
     return RegistryKeyOpen(hRoot, ustrKey, samDesired);
 }
 
 RegistryKey RegistryKey::Open(
-    std::wstring const& key,
+    std::string const& key,
     REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/)
 {
     return RegistryKeyOpen(0, key, samDesired);
@@ -168,7 +183,7 @@ RegistryKey RegistryKey::Open(
 
 RegistryKey RegistryKey::Open(
     RegistryKey const& parent,
-    std::wstring const& key,
+    std::string const& key,
     REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/)
 {
     return RegistryKeyOpen(parent.GetHkey(), key, samDesired);
@@ -183,13 +198,14 @@ RegistryKey RegistryKey::Open(
 }
 
 static RegistryKey RegistryKeyCreate(HANDLE hRoot,
-                                     std::wstring const& key,
+                                     std::string const& key,
                                      REGSAM samDesired,
                                      DWORD options)
 {
     HANDLE hOpened;
     OBJECT_ATTRIBUTES attribs;
-    UNICODE_STRING ustrKey = WstringToUnicodeString(key);
+    std::wstring wideKey(utf8::ToUtf16(key));
+    UNICODE_STRING ustrKey = WstringToUnicodeString(wideKey);
     attribs.Length = sizeof(attribs);
     attribs.RootDirectory = hRoot;
     attribs.ObjectName = &ustrKey;
@@ -207,7 +223,7 @@ static RegistryKey RegistryKeyCreate(HANDLE hRoot,
 }
 
 RegistryKey RegistryKey::Create(
-    std::wstring const& key,
+    std::string const& key,
     REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/,
     DWORD options /*= REG_OPTION_NON_VOLATILE */)
 {
@@ -216,7 +232,7 @@ RegistryKey RegistryKey::Create(
 
 RegistryKey RegistryKey::Create(
     RegistryKey const& parent,
-    std::wstring const& key,
+    std::string const& key,
     REGSAM samDesired /*= KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS*/,
     DWORD options /*= REG_OPTION_NON_VOLATILE */)
 {
@@ -252,7 +268,7 @@ RegistryKeySizeInformation RegistryKey::GetSizeInformation() const
         keyFullInformation->Values);
 }
 
-std::wstring RegistryKey::GetName() const
+std::string RegistryKey::GetName() const
 {
     auto const buffSize = 32768ul;
     unsigned char buffer[buffSize];
@@ -266,16 +282,16 @@ std::wstring RegistryKey::GetName() const
     {
         Win32Exception::ThrowFromNtError(errorCheck);
     }
-    return std::wstring(keyBasicInformation->Name,
+    return utf8::ToUtf8(keyBasicInformation->Name,
                         keyBasicInformation->NameLength / sizeof(wchar_t));
 }
 
-std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
+std::vector<std::string> RegistryKey::EnumerateSubKeyNames() const
 {
     this->Check();
 
     const auto bufferLength = 32768;
-    std::vector<std::wstring> subkeys;
+    std::vector<std::string> subkeys;
     NTSTATUS errorCheck;
     ULONG index = 0;
     ULONG resultLength = 0;
@@ -294,8 +310,8 @@ std::vector<std::wstring> RegistryKey::EnumerateSubKeyNames() const
         {
             break;
         }
-        subkeys.emplace_back(basicInformation->Name,
-                             basicInformation->NameLength / sizeof(wchar_t));
+        subkeys.emplace_back(utf8::ToUtf8(basicInformation->Name,
+                                          basicInformation->NameLength / sizeof(wchar_t)));
     }
     if (errorCheck != STATUS_NO_MORE_ENTRIES)
     {
@@ -313,13 +329,13 @@ RegistryKey& RegistryKey::operator=(RegistryKey other)
 std::vector<RegistryKey> RegistryKey::EnumerateSubKeys(
     REGSAM samDesired /* = KEY_QUERY_VALUE | KEY_ENUMERATE_SUBKEYS */) const
 {
-    std::vector<std::wstring> names(EnumerateSubKeyNames());
+    std::vector<std::string> names(EnumerateSubKeyNames());
     std::vector<RegistryKey> result(names.size());
     std::transform(
         names.cbegin(),
         names.cend(),
         result.begin(),
-            [this, samDesired](std::wstring const & name)
+            [this, samDesired](std::string const & name)
                 ->RegistryKey { return Open(*this, name, samDesired); });
     return result;
 }
@@ -334,9 +350,9 @@ bool RegistryKey::Invalid() const
     return !Valid();
 }
 
-std::vector<std::wstring> RegistryKey::EnumerateValueNames() const
+std::vector<std::string> RegistryKey::EnumerateValueNames() const
 {
-    std::vector<std::wstring> result;
+    std::vector<std::string> result;
     ULONG index = 0;
     const ULONG valueNameStructSize =
         16384 * sizeof(wchar_t) + sizeof(KEY_VALUE_BASIC_INFORMATION);
@@ -356,7 +372,7 @@ std::vector<std::wstring> RegistryKey::EnumerateValueNames() const
                                                        &resultLength);
         if (NT_SUCCESS(errorCheck))
         {
-            result.emplace_back(std::wstring(
+            result.emplace_back(utf8::ToUtf8(
                 basicValueInformation->Name,
                 basicValueInformation->NameLength / sizeof(wchar_t)));
         }
@@ -475,10 +491,10 @@ RegistryValueAndData::RegistryValueAndData(RegistryValueAndData&& other)
 {
 }
 
-std::wstring RegistryValueAndData::GetName() const
+std::string RegistryValueAndData::GetName() const
 {
     auto casted = Cast();
-    return std::wstring(casted->Name, casted->NameLength / sizeof(wchar_t));
+    return utf8::ToUtf8(casted->Name, casted->NameLength / sizeof(wchar_t));
 }
 
 KEY_VALUE_FULL_INFORMATION const* RegistryValueAndData::Cast() const
@@ -621,7 +637,7 @@ DWORD BasicRegistryValue::GetDWord() const
     throw InvalidRegistryDataTypeException();
 }
 
-std::wstring BasicRegistryValue::GetStringStrict() const
+std::string BasicRegistryValue::GetStringStrict() const
 {
     auto type = GetType();
     if (type != REG_SZ && type != REG_EXPAND_SZ)
@@ -689,9 +705,9 @@ std::uint64_t BasicRegistryValue::GetQWordStrict() const
     return GetQWord();
 }
 
-std::wstring BasicRegistryValue::GetString() const
+std::string BasicRegistryValue::GetString() const
 {
-    std::wstring result;
+    std::string result;
     switch (GetType())
     {
     case REG_SZ:
@@ -703,11 +719,11 @@ std::wstring BasicRegistryValue::GetString() const
 
         if (*(wcend() - 1) == L'\0')
         {
-            result.assign(wcbegin(), wcend() - 1);
+            result = utf8::ToUtf8(wcbegin(), wcend() - 1);
         }
         else
         {
-            result.assign(wcbegin(), wcend());
+            result = utf8::ToUtf8(wcbegin(), wcend());
         }
 
         break;
@@ -717,7 +733,7 @@ std::wstring BasicRegistryValue::GetString() const
             throw InvalidRegistryDataTypeException();
         }
         result.reserve(14);
-        result.assign(L"dword:");
+        result.assign("dword:");
         {
             auto it = cbegin() + 3;
             auto itEnd = cbegin() - 1;
@@ -733,7 +749,7 @@ std::wstring BasicRegistryValue::GetString() const
             throw InvalidRegistryDataTypeException();
         }
         result.reserve(22);
-        result.assign(L"qword:");
+        result.assign("qword:");
         {
             auto it = cbegin() + 7;
             auto itEnd = cbegin() - 1;
@@ -749,7 +765,7 @@ std::wstring BasicRegistryValue::GetString() const
             throw InvalidRegistryDataTypeException();
         }
         result.reserve(17);
-        result.assign(L"dword-be:");
+        result.assign("dword-be:");
         {
             auto it = cbegin();
             auto itEnd = cbegin() + 4;
@@ -763,12 +779,12 @@ std::wstring BasicRegistryValue::GetString() const
         result.reserve(4 * size() + 7);
         if (GetType() == REG_BINARY)
         {
-            result.assign(L"hex:");
+            result.assign("hex:");
         }
         else
         {
-            wchar_t buff[16];
-            swprintf_s(buff, L"hex(%d):", GetType());
+            char buff[16];
+            sprintf_s(buff, "hex(%d):", GetType());
             result.assign(buff);
         }
         if (size() == 0)
@@ -781,7 +797,7 @@ std::wstring BasicRegistryValue::GetString() const
             auto end = cend();
             for (; it != end; ++it)
             {
-                result.push_back(L',');
+                result.push_back(',');
                 HexCharacter(*it, result);
             }
         }
@@ -790,21 +806,21 @@ std::wstring BasicRegistryValue::GetString() const
     return result;
 }
 
-std::vector<std::wstring> BasicRegistryValue::GetMultiStringArray() const
+std::vector<std::string> BasicRegistryValue::GetMultiStringArray() const
 {
     if (GetType() != REG_MULTI_SZ)
     {
         throw InvalidRegistryDataTypeException();
     }
-    std::vector<std::wstring> answers;
+    std::vector<std::string> answers;
     auto first = wcbegin();
     auto middle = first;
     auto last = wcend();
-    while (middle = std::find(first, last, L'\0'),
+    while (middle = std::find(first, last, '\0'),
            first != last && middle != last)
     {
         if (first != middle)
-            answers.emplace_back(std::wstring(first, middle));
+            answers.emplace_back(std::string(first, middle));
         first = middle + 1;
     }
     return answers;
@@ -820,12 +836,12 @@ wchar_t const* BasicRegistryValue::wcend() const
     return reinterpret_cast<wchar_t const*>(cend());
 }
 
-std::vector<std::wstring> BasicRegistryValue::GetCommaStringArray() const
+std::vector<std::string> BasicRegistryValue::GetCommaStringArray() const
 {
-    std::vector<std::wstring> answer;
-    std::wstring contents(GetStringStrict());
+    std::vector<std::string> answer;
+    std::string contents(GetStringStrict());
     boost::algorithm::split(
-        answer, contents, std::bind1st(std::equal_to<wchar_t>(), L','));
+        answer, contents, std::bind1st(std::equal_to<char>(), ','));
     for (auto& a : answer)
     {
         boost::algorithm::trim_left(a);

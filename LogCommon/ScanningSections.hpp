@@ -10,152 +10,152 @@ namespace Instalog
 /// @brief    Running processes scanning section
 struct RunningProcesses : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"runningprocesses";
+        return "runningprocesses";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Running Processes";
+        return "Running Processes";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 };
 
 /// @brief    Services/drivers scanning section
 struct ServicesDrivers : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"servicesdrivers";
+        return "servicesdrivers";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Services/Drivers";
+        return "Services/Drivers";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+    virtual void Execute(log_sink& logOutput,
+        ScriptSection const& sectionData,
+        std::vector<std::string> const& options) const override;
 };
 
 /// @brief    Event viewer scanning section
 struct EventViewer : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"eventviewer";
+        return "eventviewer";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Event Viewer";
+        return "Event Viewer";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 };
 
 /// @brief    Machine specifications scanning section
 struct MachineSpecifications : public ISectionDefinition
 {
     void test();
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"machinespecifications";
+        return "machinespecifications";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Machine Specifications";
+        return "Machine Specifications";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 
     private:
-    void OperatingSystem(std::wostream& logOutput) const;
-    void PerfFormattedData_PerfOS_System(std::wostream& logOutput) const;
-    void BaseBoard(std::wostream& logOutput) const;
-    void Processor(std::wostream& logOutput) const;
-    void LogicalDisk(std::wostream& logOutput) const;
+    void OperatingSystem(log_sink& logOutput) const;
+    void PerfFormattedData_PerfOS_System(log_sink& logOutput) const;
+    void BaseBoard(log_sink& logOutput) const;
+    void Processor(log_sink& logOutput) const;
+    void LogicalDisk(log_sink& logOutput) const;
 };
 
 /// @brief    Restore points scanning section
 struct RestorePoints : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"restorepoints";
+        return "restorepoints";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Restore Points";
+        return "Restore Points";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 };
 
 /// @brief    Installed programs scanning sections
 struct InstalledPrograms : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"installedprograms";
+        return "installedprograms";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Installed Programs";
+        return "Installed Programs";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 
     private:
-    void Enumerate(std::wostream& logOutput,
-                   std::wstring const& rootKeyPath) const;
+    void Enumerate(log_sink& logOutput,
+                   std::string const& rootKeyPath) const;
 };
 
 /// @brief    Created Last 30 and Find3M
 struct FindStarM : public ISectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const override
     {
-        return L"findstarm";
+        return "findstarm";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const override
     {
-        return L"Created Last 30";
+        return "Created Last 30";
     }
-    virtual LogSectionPriorities GetPriority() const
+    virtual LogSectionPriorities GetPriority() const override
     {
         return SCANNING;
     }
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& sectionData,
-                         std::vector<std::wstring> const& options) const;
+                         std::vector<std::string> const& options) const override;
 };
 }

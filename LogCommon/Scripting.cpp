@@ -22,47 +22,47 @@ namespace Instalog
 void ScriptParser::AddSectionDefinition(
     std::unique_ptr<ISectionDefinition> sectionTypeToAdd)
 {
-    std::wstring scriptCommand(sectionTypeToAdd->GetScriptCommand());
+    std::string scriptCommand(sectionTypeToAdd->GetScriptCommand());
     to_lower(scriptCommand);
     sectionTypes.emplace(
         std::make_pair(std::move(scriptCommand), std::move(sectionTypeToAdd)));
 }
 
-Script ScriptParser::Parse(std::wstring const& script) const
+Script ScriptParser::Parse(std::string const& script) const
 {
     std::size_t index = 0;
     Script result(this);
-    std::vector<std::wstring> scriptLines;
-    split(scriptLines, script, is_any_of(L"\r\n"), token_compress_on);
+    std::vector<std::string> scriptLines;
+    split(scriptLines, script, is_any_of("\r\n"), token_compress_on);
 
     scriptLines.erase(
         std::remove_if(scriptLines.begin(),
                        scriptLines.end(),
-                           [](std::wstring const & a)->bool {
+                           [](std::string const & a)->bool {
             return std::find_if(a.begin(),
                                 a.end(),
-                                std::not1(std::ptr_fun(iswspace))) == a.end();
+                                std::not1(std::ptr_fun(isspace))) == a.end();
         }),
         scriptLines.end());
 
-    std::vector<std::wstring>::iterator begin, end;
+    std::vector<std::string>::iterator begin, end;
     begin = scriptLines.begin();
     end = scriptLines.end();
     while (begin != end)
     {
-        if (!starts_with(*begin, L":"))
+        if (!starts_with(*begin, ":"))
         {
             ++begin;
             continue;
         }
-        std::wstring::iterator sectionStart = begin->begin();
+        std::string::iterator sectionStart = begin->begin();
         if (sectionStart != begin->end())
         {
             ++sectionStart;
         }
-        std::wstring::iterator argumentStart =
-            std::find_if(sectionStart, begin->end(), iswspace);
-        std::wstring scriptTarget(sectionStart, argumentStart);
+        std::string::iterator argumentStart =
+            std::find_if(sectionStart, begin->end(), isspace);
+        std::string scriptTarget(sectionStart, argumentStart);
         to_lower(scriptTarget);
 
         auto sectionIterator = sectionTypes.find(scriptTarget);
@@ -76,15 +76,15 @@ Script ScriptParser::Parse(std::wstring const& script) const
         {
             ++argumentStart;
         }
-        std::wstring argument(argumentStart, begin->end());
+        std::string argument(argumentStart, begin->end());
         ++begin;
-        std::vector<std::wstring>::iterator endOfOptions = begin;
-        endOfOptions = std::find_if(begin, end, [](std::wstring const & a) {
-            return starts_with(a, L":");
+        std::vector<std::string>::iterator endOfOptions = begin;
+        endOfOptions = std::find_if(begin, end, [](std::string const & a) {
+            return (!a.empty()) && a[0] == ':';
         });
         result.Add(def,
                    argument,
-                   std::vector<std::wstring>(begin, endOfOptions),
+                   std::vector<std::string>(begin, endOfOptions),
                    index++);
     }
     return result;
@@ -104,8 +104,8 @@ Script::Script(ScriptParser const* parent) : parent_(parent)
 }
 
 void Script::Add(ISectionDefinition const* def,
-                 std::wstring const& arg,
-                 std::vector<std::wstring> const& options,
+                 std::string const& arg,
+                 std::vector<std::string> const& options,
                  std::size_t index)
 {
     ScriptSection ss(def, arg, 0);
@@ -122,18 +122,18 @@ void Script::Add(ISectionDefinition const* def,
     }
 }
 
-std::map<ScriptSection, std::vector<std::wstring>> const&
+std::map<ScriptSection, std::vector<std::string>> const&
 Script::GetSections() const
 {
     return sections;
 }
 
-void Script::Run(std::wostream& logOutput, IUserInterface* ui) const
+void Script::Run(log_sink& logOutput, IUserInterface* ui) const
 {
-    ui->LogMessage(L"Starting Execution");
+    ui->LogMessage("Starting Execution");
     auto startTime = Instalog::GetLocalTime();
     WriteScriptHeader(logOutput, startTime);
-    typedef std::pair<ScriptSection, std::vector<std::wstring>> contained;
+    typedef std::pair<ScriptSection, std::vector<std::string>> contained;
     auto cmp = [](contained const & lhs, contained const & rhs)->bool
     {
         auto const& lhsDef = lhs.first.GetDefinition();
@@ -150,14 +150,16 @@ void Script::Run(std::wostream& logOutput, IUserInterface* ui) const
     for (auto& entry : sectionVec)
     {
         auto header = entry.first.GetDefinition().GetName();
-        ui->LogMessage(L"Executing " + header);
+        ui->LogMessage("Executing " + header);
         Instalog::Header(header);
-        logOutput << L"\n" << header << L"\n\n";
+        writeln(logOutput);
+        writeln(logOutput, header);
+        writeln(logOutput);
         entry.first.GetDefinition().Execute(
             logOutput, entry.first, entry.second);
     }
 
-    logOutput << L'\n';
+    writeln(logOutput);
     WriteScriptFooter(logOutput, startTime);
     ui->ReportFinished();
 }

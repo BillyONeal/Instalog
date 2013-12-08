@@ -2,9 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include <iostream>
-#include <fstream>
 #include <fcntl.h>
+#include <cstdio>
+#include <conio.h>
 #define NOMINMAX
 #include <windows.h>
 
@@ -21,79 +21,40 @@ struct ConsoleInterface : public Instalog::IUserInterface
 {
     virtual void ReportProgressPercent(std::size_t progress)
     {
-        std::wcout << progress << L" percent complete.\n";
+        std::printf("%d percent complete\n", progress);
     }
     virtual void ReportFinished()
     {
-        std::wcout << L"Complete.\n";
+        std::puts("Complete.");
     }
-    virtual void LogMessage(std::wstring const& str)
+    virtual void LogMessage(std::string const& str)
     {
-        std::wcout << str << L"\n";
+        std::puts(str.c_str());
     }
 };
 
 using namespace Instalog;
 
-static int instalog_main();
-
-// For the moment, we want these to crash.
-#undef NDEBUG
-#ifndef NDEBUG
-int main()
-{
-    return instalog_main();
-}
-#else
-int main()
-{
-    try
-    {
-        return instalog_main();
-    }
-    catch (Instalog::SystemFacades::HresultException const& hRes)
-    {
-        std::wcerr << "FAILURE!\n";
-        std::wcerr << L"HRESULT Error: 0x" << std::hex << hRes.GetErrorCode()
-                   << L": " << hRes.GetErrorStringW() << std::endl;
-    }
-    catch (Instalog::SystemFacades::Win32Exception const& win)
-    {
-        std::wcerr << "FAILURE!\n";
-        std::wcerr << L"Win32 Error: 0x" << std::hex << win.GetErrorCode()
-                   << L": " << win.GetWideMessage() << std::endl;
-    }
-    catch (std::exception const& stdExt)
-    {
-        std::cerr << "C++ Exception: " << stdExt.what() << std::endl;
-    }
-
-    return -1;
-}
-#endif
-
 /// @brief    Main entry-point for this application.
-static int instalog_main()
+int main()
 {
-    std::wcout <<
-        L" ___           _        _\n"
-        L"|_ _|_ __  ___| |_ __ _| | ___   __ _\n"
-        L" | || '_ \\/ __| __/ _` | |/ _ \\ / _` |\n"
-        L" | || | | \\__ \\ || (_| | | (_) | (_| |\n"
-        L"|___|_| |_|___/\\__\\__,_|_|\\___/ \\__, |\n"
-        L"by Jacob Snyder and Billy ONeal |___/\n";
+    std::puts(" ___           _        _\n"
+        "|_ _|_ __  ___| |_ __ _| | ___   __ _\n"
+        " | || '_ \\/ __| __/ _` | |/ _ \\ / _` |\n"
+        " | || | | \\__ \\ || (_| | | (_) | (_| |\n"
+        "|___|_| |_|___/\\__\\__,_|_|\\___/ \\__, |\n"
+        "by Jacob Snyder and Billy ONeal |___/");
 
     Instalog::SystemFacades::Com com;
     if (Instalog::SystemFacades::IsWow64())
     {
-        std::cerr << "This program is not designed to be run under WOW64 mode.\n"
-                     "Please download the x64 copy of Instalog instead.\n"
-                     "Press enter to terminate.";
-        std::cin.get();
+        std::puts("This program is not designed to be run under WOW64 mode.\n"
+                  "Please download the x64 copy of Instalog instead.\n"
+                  "Press any key to terminate.");
+        _getche();
         return -1;
     }
-    std::wofstream outFile(L"Instalog.txt", std::ios::trunc | std::ios::out);
-    outFile.exceptions(std::ios::failbit | std::ios::badbit);
+    file_sink outFile("Instalog.txt");
     ScriptParser sd;
     sd.AddSectionDefinition(
         std::unique_ptr<ISectionDefinition>(new RunningProcesses));
@@ -109,13 +70,12 @@ static int instalog_main()
     sd.AddSectionDefinition(
         std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
     sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new FindStarM));
-    wchar_t const defaultScript[] =
-        L":RunningProcesses\n:Loadpoints\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
+    char const defaultScript[] =
+        ":RunningProcesses\n:Loadpoints\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
     Script s = sd.Parse(defaultScript);
     std::unique_ptr<IUserInterface> ui(new ConsoleInterface);
     s.Run(outFile, ui.get());
-    outFile.close();
-    std::wcout << L"Press enter to close this window.";
-    std::wcin.get();
+    std::puts("Press enter to close this window.");
+    _getche();
     return 0;
 }

@@ -12,11 +12,11 @@ using namespace Instalog;
 
 struct TestingSectionDefinition : public ISectionDefinition
 {
-    virtual void Execute(std::wostream& logOutput,
+    virtual void Execute(log_sink& logOutput,
                          ScriptSection const& section,
-                         std::vector<std::wstring> const& vect) const
+                         std::vector<std::string> const& vect) const
     {
-        std::wstring vectWritten;
+        std::string vectWritten;
         if (vect.size())
         {
             std::size_t size = vect.size() * 3;
@@ -25,30 +25,28 @@ struct TestingSectionDefinition : public ISectionDefinition
                 size += it->size();
             }
             vectWritten.reserve(size);
-            vectWritten.assign(L"{");
+            vectWritten.assign("{");
             vectWritten.append(vect[0]);
             for (std::size_t idx = 1; idx < vect.size(); ++idx)
             {
-                vectWritten.append(L"}\n{").append(vect[idx]);
+                vectWritten.append("}\r\n{").append(vect[idx]);
             }
-            vectWritten.append(L"}");
+            vectWritten.append("}");
         }
 
-        logOutput << section.GetDefinition().GetName()
-                  << L" section has.GetArgument() \"" << section.GetArgument()
-                  << L"\" and options \n" << vectWritten << std::endl;
+        writeln(logOutput, section.GetDefinition().GetName(), " section has.GetArgument() \"", section.GetArgument(), "\" and options \r\n", vectWritten);
     }
 };
 
 struct OneSectionDefinition : public TestingSectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const
     {
-        return L"one";
+        return "one";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const
     {
-        return L"OnE";
+        return "OnE";
     }
     virtual LogSectionPriorities GetPriority() const
     {
@@ -58,13 +56,13 @@ struct OneSectionDefinition : public TestingSectionDefinition
 
 struct TwoSectionDefinition : public TestingSectionDefinition
 {
-    virtual std::wstring GetScriptCommand() const
+    virtual std::string GetScriptCommand() const
     {
-        return L"twosies";
+        return "twosies";
     }
-    virtual std::wstring GetName() const
+    virtual std::string GetName() const
     {
-        return L"Twosies";
+        return "Twosies";
     }
     virtual LogSectionPriorities GetPriority() const
     {
@@ -90,153 +88,153 @@ struct ScriptFactoryTest : public ::testing::Test
 
 TEST_F(ScriptFactoryTest, StartingWhitespace)
 {
-    const wchar_t example[] = L"\r\n"
-        L":one\r\n"
-        L":twosies";
+    const char example[] = "\r\n"
+        ":one\r\n"
+        ":twosies";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
     ScriptSection ss(one);
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, TrailingWhitespace)
 {
-    const wchar_t example[] =
-        L":one\r\n"
-        L":twosies\r\n\r\n\r\n";
+    const char example[] =
+        ":one\r\n"
+        ":twosies\r\n\r\n\r\n";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
     ScriptSection ss(one);
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, ContainedWhitespace)
 {
-    const wchar_t example[] =
-        L"\r\n\r\n\r\n:one\r\nexample\nexample2\r\n\r\n"
-        L":twosies\r\n\r\n\r\n";
+    const char example[] =
+        "\r\n\r\n\r\n:one\r\nexample\nexample2\r\n\r\n"
+        ":twosies\r\n\r\n\r\n";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
     ScriptSection ss(one);
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
-    std::vector<std::wstring> answer;
-    answer.emplace_back(L"example");
-    answer.emplace_back(L"example2");
+    ASSERT_EQ("", it->first.GetArgument());
+    std::vector<std::string> answer;
+    answer.emplace_back("example");
+    answer.emplace_back("example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, ArgumentsParsed)
 {
-    const wchar_t example[] =
-        L"\r\n\r\n\r\n:one example\nexample2\r\n\r\n"
-        L":twosies\r\n\r\n\r\n";
+    const char example[] =
+        "\r\n\r\n\r\n:one example\nexample2\r\n\r\n"
+        ":twosies\r\n\r\n\r\n";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
-    ScriptSection ss(one, L"example");
+    ScriptSection ss(one, "example");
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"example", it->first.GetArgument());
-    std::vector<std::wstring> answer;
-    answer.emplace_back(L"example2");
+    ASSERT_EQ("example", it->first.GetArgument());
+    std::vector<std::string> answer;
+    answer.emplace_back("example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, ArgumentsWhitespaceSignificant)
 {
-    const wchar_t example[] =
-        L"\r\n\r\n\r\n:one    example\nexample2\r\n\r\n"
-        L":twosies\r\n\r\n\r\n";
+    const char example[] =
+        "\r\n\r\n\r\n:one    example\nexample2\r\n\r\n"
+        ":twosies\r\n\r\n\r\n";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
-    ScriptSection ss(one, L"   example");
+    ScriptSection ss(one, "   example");
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"   example", it->first.GetArgument());
-    std::vector<std::wstring> answer;
-    answer.emplace_back(L"example2");
+    ASSERT_EQ("   example", it->first.GetArgument());
+    std::vector<std::string> answer;
+    answer.emplace_back("example2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, TakesSingleArgument)
 {
-    const wchar_t example[] =
-        L":one";
+    const char example[] =
+        ":one";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(1, s.GetSections().size());
     ScriptSection ss(one);
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
 }
 
 TEST_F(ScriptFactoryTest, Merges)
 {
-    const wchar_t example[] =
-        L":one\nexample\nexample2\r\nmerged\r\n"
-        L":twosies\r\n\r\n\r\n"
-        L":one\nmerged\nmerged2";
+    const char example[] =
+        ":one\nexample\nexample2\r\nmerged\r\n"
+        ":twosies\r\n\r\n\r\n"
+        ":one\nmerged\nmerged2";
     Script s(dispatcher.Parse(example));
     ASSERT_EQ(2, s.GetSections().size());
     ScriptSection ss(one);
     auto it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    std::vector<std::wstring> answer;
-    answer.emplace_back(L"example");
-    answer.emplace_back(L"example2");
-    answer.emplace_back(L"merged");
-    answer.emplace_back(L"merged");
-    answer.emplace_back(L"merged2");
+    std::vector<std::string> answer;
+    answer.emplace_back("example");
+    answer.emplace_back("example2");
+    answer.emplace_back("merged");
+    answer.emplace_back("merged");
+    answer.emplace_back("merged2");
     ASSERT_EQ(answer, it->second);
     ss = ScriptSection(two);
     it = s.GetSections().find(ss);
     ASSERT_NE(s.GetSections().end(), it);
-    ASSERT_EQ(L"", it->first.GetArgument());
+    ASSERT_EQ("", it->first.GetArgument());
     ASSERT_TRUE(it->second.empty());
 }
 
 TEST_F(ScriptFactoryTest, UnknownThrows)
 {
-    const wchar_t example[] = L":unknown";
+    const char example[] = ":unknown";
     EXPECT_THROW(Script s(dispatcher.Parse(example)),
                  UnknownScriptSectionException);
 }
 
 TEST_F(ScriptFactoryTest, EmptyThrows)
 {
-    const wchar_t example[] = L":";
+    const char example[] = ":";
     EXPECT_THROW(Script s(dispatcher.Parse(example)),
                  UnknownScriptSectionException);
 }
@@ -253,18 +251,18 @@ TEST(ScriptTest, CanExecute)
     dispatcher.AddSectionDefinition(std::move(oneTemp));
     dispatcher.AddSectionDefinition(std::move(twoTemp));
     Script s(dispatcher.Parse(
-        L":one argArg\nOptionOne\n:TwOsIeS\nOptionTwo\nOptionThree"));
+        ":one argArg\nOptionOne\n:TwOsIeS\nOptionTwo\nOptionThree"));
     std::unique_ptr<IUserInterface> ui(new DoNothingUserInterface);
-    std::wostringstream logOutput;
-    s.Run(logOutput, ui.get());
-    std::wstring out(logOutput.str());
+    string_sink outSink;
+    s.Run(outSink, ui.get());
+    std::string out(outSink.get());
     out.pop_back(); // \n
-    out.erase(std::find(out.rbegin(), out.rend(), L'\n').base(), out.end());
-    out.erase(out.begin(), std::find(out.begin(), out.end(), L'='));
+    out.erase(std::find(out.rbegin(), out.rend(), '\n').base(), out.end());
+    out.erase(out.begin(), std::find(out.begin(), out.end(), '='));
     out.pop_back();
-    ASSERT_EQ(L"======================= OnE ======================\n\nOnE "
-        L"section has.GetArgument() \"argArg\" and options \n{OptionOne}\n\n"
-        L"===================== Twosies ====================\n\nTwosies "
-        L"section has.GetArgument() \"\" and options \n{OptionTwo}\n{OptionThree}\n",
-        out);
+    ASSERT_STREQ("======================= OnE ======================\n\nOnE "
+        "section has.GetArgument() \"argArg\" and options \n{OptionOne}\n\n"
+        "===================== Twosies ====================\n\nTwosies "
+        "section has.GetArgument() \"\" and options \n{OptionTwo}\n{OptionThree}\n",
+        out.c_str());
 }

@@ -9,37 +9,23 @@
 
 namespace Instalog
 {
-/// @brief    Convert wide string to narrow string
-///
-/// @param    uni    The string to convert
-///
-/// @return    The narrow string
-std::string ConvertUnicode(const std::wstring& uni);
-
-/// @brief    Convert narrow string to wide string
-///
-/// @param    uni    The string to convert
-///
-/// @return    The wide string
-std::wstring ConvertUnicode(const std::string& uni);
-
 /// @brief    Escapes strings according to the general escape scheme
 ///
 /// @param [in,out]    target     String to escape
 /// @param    escapeCharacter    (optional) the escape character.
 /// @param    rightDelimiter     (optional) the right delimiter.
-void GeneralEscape(std::wstring& target,
-                   wchar_t escapeCharacter = L'#',
-                   wchar_t rightDelimiter = L'\0');
+void GeneralEscape(std::string& target,
+                   char escapeCharacter = '#',
+                   char rightDelimiter = '\0');
 
 /// @brief    Escapes strings according to the url escape scheme
 ///
 /// @param [in,out]    target     String to escape
 /// @param    escapeCharacter    (optional) the escape character.
 /// @param    rightDelimiter     (optional) the right delimiter.
-void HttpEscape(std::wstring& target,
-                wchar_t escapeCharacter = L'#',
-                wchar_t rightDelimiter = L'\0');
+void HttpEscape(std::string& target,
+                char escapeCharacter = '#',
+                char rightDelimiter = '\0');
 
 /// @brief    Malformed escaped sequence
 class MalformedEscapedSequence : public std::exception
@@ -58,9 +44,9 @@ class InvalidHexCharacter : public std::exception
 ///
 /// @param    characterToHex    The character to print in hexadecimal form.
 /// @param [in,out]    target    Target where the character should be written.
-inline void HexCharacter(unsigned char characterToHex, std::wstring& target)
+inline void HexCharacter(unsigned char characterToHex, std::string& target)
 {
-    static const wchar_t chars[] = L"0123456789ABCDEF";
+    static const char chars[] = "0123456789ABCDEF";
     target.push_back(chars[characterToHex >> 4]);
     target.push_back(chars[characterToHex & 0x0F]);
 }
@@ -75,19 +61,19 @@ inline void HexCharacter(unsigned char characterToHex, std::wstring& target)
 /// integer.
 ///
 /// @return    The character un-hexed.
-inline char UnHexCharacter(wchar_t hexCharacter)
+inline char UnHexCharacter(char hexCharacter)
 {
-    if (hexCharacter >= L'0' && hexCharacter <= L'9')
+    if (hexCharacter >= '0' && hexCharacter <= '9')
     {
-        return static_cast<char>(hexCharacter - L'0');
+        return hexCharacter - '0';
     }
-    if (hexCharacter >= L'A' && hexCharacter <= L'F')
+    if (hexCharacter >= 'A' && hexCharacter <= 'F')
     {
-        return static_cast<char>(hexCharacter - L'A' + 10);
+        return hexCharacter - 'A' + 10;
     }
-    if (hexCharacter >= L'a' && hexCharacter <= L'a')
+    if (hexCharacter >= 'a' && hexCharacter <= 'a')
     {
-        return static_cast<char>(hexCharacter - L'a' + 10);
+        return hexCharacter - 'a' + 10;
     }
     throw InvalidHexCharacter();
 }
@@ -112,10 +98,10 @@ template <typename InIter, typename OutIter>
 inline InIter Unescape(InIter begin,
                        InIter end,
                        OutIter target,
-                       wchar_t escapeCharacter = L'#',
-                       wchar_t endDelimiter = L'\0')
+                       char escapeCharacter = '#',
+                       char endDelimiter = '\0')
 {
-    wchar_t temp;
+    char temp;
     for (; begin != end && *begin != endDelimiter; ++begin)
     {
         if (*begin == escapeCharacter)
@@ -128,28 +114,28 @@ inline InIter Unescape(InIter begin,
 
             switch (*begin)
             {
-            case L'0':
+            case '0':
                 *target = 0x00;
                 break;
-            case L'b':
+            case 'b':
                 *target = 0x08;
                 break;
-            case L'f':
+            case 'f':
                 *target = 0x0C;
                 break;
-            case L'n':
+            case 'n':
                 *target = 0x0A;
                 break;
-            case L'r':
+            case 'r':
                 *target = 0x0D;
                 break;
-            case L't':
+            case 't':
                 *target = 0x09;
                 break;
-            case L'v':
+            case 'v':
                 *target = 0x0B;
                 break;
-            case L'x':
+            case 'x':
                 if (std::distance(begin, end) < 3)
                     throw MalformedEscapedSequence();
                 temp = 0;
@@ -160,7 +146,7 @@ inline InIter Unescape(InIter begin,
                 }
                 *target = temp;
                 break;
-            case L'u':
+            case 'u':
                 if (std::distance(begin, end) < 5)
                     throw MalformedEscapedSequence();
                 temp = 0;
@@ -202,7 +188,7 @@ inline InIter Unescape(InIter begin,
 template <typename InIter, typename OutIter>
 inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
 {
-    if (std::distance(begin, end) < 2 || *begin != L'"')
+    if (std::distance(begin, end) < 2 || *begin != '"')
     {
         // ""s are required
         throw MalformedEscapedSequence();
@@ -213,14 +199,14 @@ inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
     {
         switch (*begin)
         {
-        case L'\\':
+        case '\\':
             backslashCount++;
             break;
-        case L'"':
+        case '"':
             if (backslashCount)
             {
-                std::fill_n(target, backslashCount / 2, L'\\');
-                *target++ = L'"';
+                std::fill_n(target, backslashCount / 2, '\\');
+                *target++ = '"';
                 backslashCount = 0;
             }
             else
@@ -231,7 +217,7 @@ inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
         default:
             if (backslashCount)
             {
-                std::fill_n(target, backslashCount, L'\\');
+                std::fill_n(target, backslashCount, '\\');
                 backslashCount = 0;
             }
             *target++ = *begin;
@@ -244,5 +230,5 @@ inline InIter CmdLineToArgvWUnescape(InIter begin, InIter end, OutIter target)
 ///
 /// @param [in,out]    headerText    The header text.
 /// @param    headerWidth              (optional) The width of the header.
-void Header(std::wstring& headerText, std::size_t headerWidth = 50);
+void Header(std::string& headerText, std::size_t headerWidth = 50);
 }

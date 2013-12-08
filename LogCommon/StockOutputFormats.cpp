@@ -4,9 +4,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
-#include <iomanip>
 #include <boost/config.hpp>
-#include <boost/io/ios_state.hpp>
 #include <windows.h>
 #include "Registry.hpp"
 #include "Win32Exception.hpp"
@@ -23,105 +21,72 @@ using Instalog::SystemFacades::File;
 namespace Instalog
 {
 
-static void DateFormatImpl(std::wostream& str, std::uint64_t time, bool ms)
+static void FileTimeToSystemTimeImpl(std::uint64_t time, SYSTEMTIME& st)
 {
-    using namespace boost::io;
-    SYSTEMTIME st;
-    if (FileTimeToSystemTime(reinterpret_cast<FILETIME const*>(&time), &st) ==
-        0)
+    if (FileTimeToSystemTime(reinterpret_cast<FILETIME const*>(&time), &st) == 0)
     {
         Win32Exception::ThrowFromLastError();
     }
-    wios_fill_saver saveFill(str);
-    ios_flags_saver saveFlags(str);
-    str.fill(L'0');
-    str << std::setw(4) << st.wYear << L'-' << std::setw(2) << st.wMonth << L'-'
-        << std::setw(2) << st.wDay << L' ' << std::setw(2) << st.wHour << L':'
-        << std::setw(2) << st.wMinute << L':' << std::setw(2) << st.wSecond;
-    if (ms)
-    {
-        str << L'.' << std::setw(4) << st.wMilliseconds;
-    }
 }
 
-void WriteDefaultDateFormat(std::wostream& str, std::uint64_t time)
+void WriteDefaultDateFormat(log_sink& str, std::uint64_t time)
 {
-    DateFormatImpl(str, time, false);
+    SYSTEMTIME st;
+    FileTimeToSystemTimeImpl(time, st);
+    // YYYY-MM-DD HH:MM:SS
+    write(str, padded_number<WORD>(4, '0', st.wYear), '-', padded_number<WORD>(2, '0', st.wMonth), '-', padded_number<WORD>(2, '0', st.wDay), ' ', padded_number<WORD>(2, '0', st.wHour), ':', padded_number<WORD>(2, '0', st.wMinute), ':', padded_number<WORD>(2, '0', st.wSecond));
 }
-void WriteMillisecondDateFormat(std::wostream& str, std::uint64_t time)
+void WriteMillisecondDateFormat(log_sink& str, std::uint64_t time)
 {
-    DateFormatImpl(str, time, true);
+    SYSTEMTIME st;
+    FileTimeToSystemTimeImpl(time, st);
+    // YYYY-MM-DD HH:MM:SS.mmmm
+    // YYYY-MM-DD HH:MM:SS
+    write(str, padded_number<WORD>(4, '0', st.wYear), '-', padded_number<WORD>(2, '0', st.wMonth), '-', padded_number<WORD>(2, '0', st.wDay), ' ', padded_number<WORD>(2, '0', st.wHour), ':', padded_number<WORD>(2, '0', st.wMinute), ':', padded_number<WORD>(2, '0', st.wSecond), '.', padded_number<WORD>(4, '0', st.wMilliseconds));
 }
-void WriteFileAttributes(std::wostream& str, std::uint32_t attributes)
+void WriteFileAttributes(log_sink& str, std::uint32_t attributes)
 {
-    if (attributes & FILE_ATTRIBUTE_DIRECTORY)
-        str << L'd';
-    else
-        str << L'-';
+    char const result[] = {
+        (attributes & FILE_ATTRIBUTE_DIRECTORY     ? 'd' : '-'),
+        (attributes & FILE_ATTRIBUTE_COMPRESSED    ? 'c' : '-'),
+        (attributes & FILE_ATTRIBUTE_SYSTEM        ? 's' : '-'),
+        (attributes & FILE_ATTRIBUTE_HIDDEN        ? 'h' : '-'),
+        (attributes & FILE_ATTRIBUTE_ARCHIVE       ? 'a' : '-'),
+        (attributes & FILE_ATTRIBUTE_TEMPORARY     ? 't' : '-'),
+        (attributes & FILE_ATTRIBUTE_READONLY      ? 'r' : 'w'),
+        (attributes & FILE_ATTRIBUTE_REPARSE_POINT ? 'r' : '-')
+    };
 
-    if (attributes & FILE_ATTRIBUTE_COMPRESSED)
-        str << L'c';
-    else
-        str << L'-';
-
-    if (attributes & FILE_ATTRIBUTE_SYSTEM)
-        str << L's';
-    else
-        str << L'-';
-
-    if (attributes & FILE_ATTRIBUTE_HIDDEN)
-        str << L'h';
-    else
-        str << L'-';
-
-    if (attributes & FILE_ATTRIBUTE_ARCHIVE)
-        str << L'a';
-    else
-        str << L'-';
-
-    if (attributes & FILE_ATTRIBUTE_TEMPORARY)
-        str << L't';
-    else
-        str << L'-';
-
-    if (attributes & FILE_ATTRIBUTE_READONLY)
-        str << L'r';
-    else
-        str << L'w';
-
-    if (attributes & FILE_ATTRIBUTE_REPARSE_POINT)
-        str << L'r';
-    else
-        str << L'-';
+    str.append(result, sizeof(result));
 }
-void WriteDefaultFileOutput(std::wostream& str, std::wstring targetFile)
+void WriteDefaultFileOutput(log_sink& str, std::string targetFile)
 {
     if (Path::ResolveFromCommandLine(targetFile) == false)
     {
-        str << targetFile << L" [x]";
+        write(str, targetFile, " [x]");
         return;
     }
-    std::wstring companyInfo(L" ");
+    std::string companyInfo(" ");
     try
     {
         companyInfo.append(File::GetCompany(targetFile));
     }
     catch (Win32Exception const&)
     {
-        companyInfo = L"";
+        companyInfo = "";
     }
     WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
     std::uint64_t size =
         static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32 | fad.nFileSizeLow;
-    str << targetFile << L" [" << size << L' ';
+    write(str, targetFile, " [", size, ' ');
     std::uint64_t ctime =
         static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32 |
         fad.ftCreationTime.dwLowDateTime;
     WriteDefaultDateFormat(str, ctime);
-    str << companyInfo << L"]";
+    write(str, companyInfo, "]");
 }
 
-void WriteFileListingFile(std::wostream& str, std::wstring const& targetFile)
+void WriteFileListingFile(log_sink& str, std::string const& targetFile)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
     std::uint64_t size =
@@ -133,28 +98,29 @@ void WriteFileListingFile(std::wostream& str, std::wstring const& targetFile)
         static_cast<std::uint64_t>(fad.ftLastWriteTime.dwHighDateTime) << 32 |
         fad.ftLastWriteTime.dwLowDateTime;
     WriteDefaultDateFormat(str, ctime);
-    str << L" . ";
+    str.append(" . ", 3);
     WriteDefaultDateFormat(str, mtime);
-    str << L' ' << std::setw(10) << std::setfill(L' ') << size << L' ';
+    write(str, ' ', padded_number<std::uint64_t>(10, ' ', size), ' ');
     WriteFileAttributes(str, fad.dwFileAttributes);
-    str << L' ' << targetFile;
+    write(str, ' ', targetFile);
 }
 
-void WriteFileListingFromFindData(std::wostream& str,
+void WriteFileListingFromFindData(log_sink& str,
                                   SystemFacades::FindFilesRecord const& fad)
 {
     WriteDefaultDateFormat(str, fad.GetCreationTime());
-    str << L" . ";
+    str.append(" . ", 3);
     WriteDefaultDateFormat(str, fad.GetLastWriteTime());
-    str << L' ' << std::setw(10) << std::setfill(L' ') << fad.GetSize() << L' ';
+    write(str, ' ', padded_number<std::uint64_t>(10, ' ', fad.GetSize()), ' ');
     WriteFileAttributes(str, fad.GetAttributes());
-    str << L' ';
-    std::wstring escapedFileName(fad.GetFileName());
+    str.append(" ", 1);
+    std::string escapedFileName;
+    write(escapedFileName, fad.GetFileName());
     GeneralEscape(escapedFileName);
-    str << escapedFileName;
+    write(str, escapedFileName);
 }
 
-void WriteMemoryInformation(std::wostream& log)
+void WriteMemoryInformation(log_sink& log)
 {
     std::uint64_t availableRam = 0;
     std::uint64_t totalRam = 0;
@@ -164,7 +130,7 @@ void WriteMemoryInformation(std::wostream& log)
 
     availableRam = memStatus.ullAvailPhys;
 
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
     typedef BOOL(WINAPI *
                  GetPhysicallyInstalledFunc)(PULONGLONG TotalMemoryInKilobytes);
     try
@@ -180,11 +146,10 @@ void WriteMemoryInformation(std::wostream& log)
     }
     totalRam /= 1024 * 1024;
     availableRam /= 1024 * 1024;
-
-    log << availableRam << L'/' << totalRam << L" MB Free";
+    write(log, availableRam, '/', totalRam, " MB Free");
 }
 
-void WriteOsVersion(std::wostream& log)
+void WriteOsVersion(log_sink& log)
 {
     typedef BOOL(WINAPI * GetProductInfoFunc)(
         DWORD, DWORD, DWORD, DWORD, PDWORD);
@@ -194,7 +159,7 @@ void WriteOsVersion(std::wostream& log)
     GetVersionEx((LPOSVERSIONINFO) & versionInfo);
 
     DWORD productType = 0;
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
 
     try
     {
@@ -209,7 +174,7 @@ void WriteOsVersion(std::wostream& log)
     SYSTEM_INFO systemInfo;
     GetSystemInfo(&systemInfo);
 
-    log << L"Windows ";
+    write(log, "Windows ");
 
     switch (versionInfo.dwMajorVersion)
     {
@@ -217,46 +182,46 @@ void WriteOsVersion(std::wostream& log)
         switch (versionInfo.dwMinorVersion)
         {
         case 0:
-            log << L"2000 ";
+            write(log, "2000 ");
             if (versionInfo.wProductType == VER_NT_WORKSTATION)
-                log << L"Professional";
+                write(log, "Professional");
             else
             {
                 if (versionInfo.wSuiteMask & VER_SUITE_DATACENTER)
-                    log << L"Datacenter Server";
+                    write(log, "Datacenter Server");
                 else if (versionInfo.wSuiteMask & VER_SUITE_ENTERPRISE)
-                    log << L"Enterprise Server";
+                    write(log, "Enterprise Server");
                 else
-                    log << L"Server";
+                    write(log, "Server");
             }
             break;
         case 1:
-            log << L"XP ";
+            write(log, "XP ");
             if (GetSystemMetrics(SM_MEDIACENTER))
-                log << L"Media Center Edition";
+                write(log, "Media Center Edition");
             else if (GetSystemMetrics(SM_STARTER))
-                log << L"Starter Edition";
+                write(log, "Starter Edition");
             else if (GetSystemMetrics(SM_TABLETPC))
-                log << L"Tablet PC Edition";
+                write(log, "Tablet PC Edition");
             else if (versionInfo.wSuiteMask & VER_SUITE_PERSONAL)
-                log << L"Home Edition";
+                write(log, "Home Edition");
             else
-                log << L"Professional Edition";
+                write(log, "Professional Edition");
             break;
         case 2:
             if (GetSystemMetrics(SM_SERVERR2))
-                log << L"Server 2003 R2 ";
+                write(log, "Server 2003 R2 ");
             else if (versionInfo.wSuiteMask == VER_SUITE_STORAGE_SERVER)
-                log << L"Storage Server 2003";
+                write(log, "Storage Server 2003");
             else if (versionInfo.wSuiteMask ==
                      /*VER_SUITE_WH_SERVER*/ 0x00008000)
-                log << L"Home Server";
+                write(log, "Home Server");
             else if (versionInfo.wProductType == VER_NT_WORKSTATION &&
                      systemInfo.wProcessorArchitecture ==
                          PROCESSOR_ARCHITECTURE_AMD64)
-                log << L"XP Professional x64 Edition";
+                write(log, "XP Professional x64 Edition");
             else
-                log << L"Server 2003 ";
+                write(log, "Server 2003 ");
 
             if (versionInfo.wProductType != VER_NT_WORKSTATION)
             {
@@ -264,24 +229,24 @@ void WriteOsVersion(std::wostream& log)
                     PROCESSOR_ARCHITECTURE_AMD64)
                 {
                     if (versionInfo.wSuiteMask & VER_SUITE_DATACENTER)
-                        log << L"Datacenter x64 Edition";
+                        write(log, "Datacenter x64 Edition");
                     else if (versionInfo.wSuiteMask & VER_SUITE_ENTERPRISE)
-                        log << L"Enterprise x64 Edition";
+                        write(log, "Enterprise x64 Edition");
                     else
-                        log << L"Standard x64 Edition";
+                        write(log, "Standard x64 Edition");
                 }
                 else
                 {
                     if (versionInfo.wSuiteMask & VER_SUITE_COMPUTE_SERVER)
-                        log << L"Compute Cluster Edition";
+                        write(log, "Compute Cluster Edition");
                     else if (versionInfo.wSuiteMask & VER_SUITE_DATACENTER)
-                        log << L"Datacenter Edition";
+                        write(log, "Datacenter Edition");
                     else if (versionInfo.wSuiteMask & VER_SUITE_ENTERPRISE)
-                        log << L"Enterprise Edition";
+                        write(log, "Enterprise Edition");
                     else if (versionInfo.wSuiteMask & VER_SUITE_BLADE)
-                        log << L"Web Edition";
+                        write(log, "Web Edition");
                     else
-                        log << L"Standard Edition";
+                        write(log, "Standard Edition");
                 }
             }
         }
@@ -291,203 +256,201 @@ void WriteOsVersion(std::wostream& log)
         {
         case 0:
             if (versionInfo.wProductType == VER_NT_WORKSTATION)
-                log << L"Vista ";
+                write(log, "Vista ");
             else
-                log << L"Server 2008 ";
+                write(log, "Server 2008 ");
 
             break;
         case 1:
             if (versionInfo.wProductType == VER_NT_WORKSTATION)
-                log << L"7 ";
+                write(log, "7 ");
             else
-                log << L"Server 2008 R2 ";
+                write(log, "Server 2008 R2 ");
             break;
         case 2:
             if (versionInfo.wProductType == VER_NT_WORKSTATION)
-                log << L"8 ";
+                write(log, "8 ");
             else
-                log << L"Server 8 ";
+                write(log, "Server 8 ");
         }
         switch (productType)
         {
         case PRODUCT_BUSINESS:
-            log << L"Business Edition";
+            write(log, "Business Edition");
             break;
         case PRODUCT_BUSINESS_N:
-            log << L"Business Edition N";
+            write(log, "Business Edition N");
             break;
         case PRODUCT_CLUSTER_SERVER:
-            log << L"HPC Edition";
+            write(log, "HPC Edition");
             break;
         case PRODUCT_DATACENTER_SERVER:
-            log << L"Server Datacenter Edition";
+            write(log, "Server Datacenter Edition");
             break;
         case PRODUCT_DATACENTER_SERVER_CORE:
-            log << L"Server Datacenter Edition (Server Core)";
+            write(log, "Server Datacenter Edition (Server Core)");
             break;
         case /*PRODUCT_DATACENTER_SERVER_CORE_V*/ 0x00000027:
-            log << L"Server Datacenter Edition without Hyper-V (Server Core)";
+            write(log, "Server Datacenter Edition without Hyper-V (Server Core)");
             break;
         case /*PRODUCT_DATACENTER_SERVER_V*/ 0x00000025:
-            log << L"Server Datacenter Edition without Hyper-V";
+            write(log, "Server Datacenter Edition without Hyper-V");
             break;
         case PRODUCT_ENTERPRISE:
-            log << L"Enterprise Edition";
+            write(log, "Enterprise Edition");
             break;
         case /*PRODUCT_ENTERPRISE_E*/ 0x00000046:
-            log << L"Enterprise Edition E";
+            write(log, "Enterprise Edition E");
             break;
         case /*PRODUCT_ENTERPRISE_N*/ 0x0000001B:
-            log << L"Enterprise Edition N";
+            write(log, "Enterprise Edition N");
             break;
         case PRODUCT_ENTERPRISE_SERVER:
-            log << L"Server Enterprise Edition";
+            write(log, "Server Enterprise Edition");
             break;
         case PRODUCT_ENTERPRISE_SERVER_CORE:
-            log << L"Server Enterprise Edition (Server Core)";
+            write(log, "Server Enterprise Edition (Server Core)");
             break;
         case /*PRODUCT_ENTERPRISE_SERVER_CORE_V*/ 0x00000029:
-            log << L"Server Enterprise Edition without Hyper-V (Server Core)";
+            write(log, "Server Enterprise Edition without Hyper-V (Server Core)");
             break;
         case PRODUCT_ENTERPRISE_SERVER_IA64:
-            log << L"Server Enterprise Edition for Itanium-based Systems";
+            write(log, "Server Enterprise Edition for Itanium-based Systems");
             break;
         case /*PRODUCT_ENTERPRISE_SERVER_V*/ 0x00000026:
-            log << L"Server Enterprise Edition without Hyper-V";
+            write(log, "Server Enterprise Edition without Hyper-V");
             break;
         case PRODUCT_HOME_BASIC:
-            log << L"Home Basic Edition";
+            write(log, "Home Basic Edition");
             break;
         case /*PRODUCT_HOME_BASIC_E*/ 0x00000043:
-            log << L"Home Basic Edition E";
+            write(log, "Home Basic Edition E");
             break;
         case /*PRODUCT_HOME_BASIC_N*/ 0x00000005:
-            log << L"Home Basic Edition N";
+            write(log, "Home Basic Edition N");
             break;
         case PRODUCT_HOME_PREMIUM:
-            log << L"Home Premium Edition";
+            write(log, "Home Premium Edition");
             break;
         case /*PRODUCT_HOME_PREMIUM_E*/ 0x00000044:
-            log << L"Home Premium Edition E";
+            write(log, "Home Premium Edition E");
             break;
         case /*PRODUCT_HOME_PREMIUM_N*/ 0x0000001A:
-            log << L"Home Premium Edition N";
+            write(log, "Home Premium Edition N");
             break;
         case /*PRODUCT_HYPERV*/ 0x0000002A:
-            log << L"Hyper-V Server Edition";
+            write(log, "Hyper-V Server Edition");
             break;
         case /*PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT*/ 0x0000001E:
-            log << L"Essential Business Server Management Server";
+            write(log, "Essential Business Server Management Server");
             break;
         case /*PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING*/ 0x00000020:
-            log << L"Essential Business Server Messaging Server";
+            write(log, "Essential Business Server Messaging Server");
             break;
         case /*PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY*/ 0x0000001F:
-            log << L"Essential Business Server Security Server";
+            write(log, "Essential Business Server Security Server");
             break;
         case /*PRODUCT_PROFESSIONAL*/ 0x00000030:
-            log << L"Professional Edition";
+            write(log, "Professional Edition");
             break;
         case /*PRODUCT_PROFESSIONAL_E*/ 0x00000045:
-            log << L"Professional Edition E";
+            write(log, "Professional Edition E");
             break;
         case /*PRODUCT_PROFESSIONAL_N*/ 0x00000031:
-            log << L"Professional Edition N";
+            write(log, "Professional Edition N");
             break;
         case PRODUCT_SERVER_FOR_SMALLBUSINESS:
-            log << L"for Windows Essential Server Solutions";
+            write(log, "for Windows Essential Server Solutions");
             break;
         case /*PRODUCT_SERVER_FOR_SMALLBUSINESS_V*/ 0x00000023:
-            log << L"without Hyper-V for Windows Essential Server Solutions";
+            write(log, "without Hyper-V for Windows Essential Server Solutions");
             break;
         case /*PRODUCT_SERVER_FOUNDATION*/ 0x00000021:
-            log << L"Server Foundation Edition";
+            write(log, "Server Foundation Edition");
             break;
         case PRODUCT_SMALLBUSINESS_SERVER:
-            log << L"Small Business Server";
+            write(log, "Small Business Server");
             break;
         case PRODUCT_STANDARD_SERVER:
-            log << L"Server Standard Edition";
+            write(log, "Server Standard Edition");
             break;
         case PRODUCT_STANDARD_SERVER_CORE:
-            log << L"Server Standard Edition (Server Core)";
+            write(log, "Server Standard Edition (Server Core)");
             break;
         case /*PRODUCT_STANDARD_SERVER_CORE_V*/ 0x00000028:
-            log << L"Server Standard Edition without Hyper-V (Server Core)";
+            write(log, "Server Standard Edition without Hyper-V (Server Core)");
             break;
         case /*PRODUCT_STANDARD_SERVER_V*/ 0x00000024:
-            log << L"Server Standard Edition without Hyper-V";
+            write(log, "Server Standard Edition without Hyper-V");
             break;
         case PRODUCT_STARTER:
-            log << L"Starter Edition";
+            write(log, "Starter Edition");
             break;
         case /*PRODUCT_STARTER_E*/ 0x00000042:
-            log << L"Starter Edition E";
+            write(log, "Starter Edition E");
             break;
         case /*PRODUCT_STARTER_N*/ 0x0000002F:
-            log << L"Starter Edition N";
+            write(log, "Starter Edition N");
             break;
         case PRODUCT_STORAGE_ENTERPRISE_SERVER:
-            log << L"Storage Server Enterprise Edition";
+            write(log, "Storage Server Enterprise Edition");
             break;
         case PRODUCT_STORAGE_EXPRESS_SERVER:
-            log << L"Storage Server Express Edition";
+            write(log, "Storage Server Express Edition");
             break;
         case PRODUCT_STORAGE_STANDARD_SERVER:
-            log << L"Storage Server Standard Edition";
+            write(log, "Storage Server Standard Edition");
             break;
         case PRODUCT_STORAGE_WORKGROUP_SERVER:
-            log << L"Storage Server Workgroup Edition";
+            write(log, "Storage Server Workgroup Edition");
             break;
         case PRODUCT_ULTIMATE:
-            log << L"Ultimate Edition";
+            write(log, "Ultimate Edition");
             break;
         case /*PRODUCT_ULTIMATE_E*/ 0x00000047:
-            log << L"Ultimate Edition E";
+            write(log, "Ultimate Edition E");
             break;
         case /*PRODUCT_ULTIMATE_N*/ 0x0000001C:
-            log << L"Ultimate Edition N";
+            write(log, "Ultimate Edition N");
             break;
         case PRODUCT_WEB_SERVER:
-            log << L"Web Edition";
+            write(log, "Web Edition");
             break;
         case /*PRODUCT_WEB_SERVER_CORE*/ 0x0000001D:
-            log << L"Web Edition (Server Core)";
+            write(log, "Web Edition (Server Core)");
             break;
         case /*PRODUCT_CONSUMER_PREVIEW*/ 0x0000004A:
-            log << L"Consumer Preview";
+            write(log, "Consumer Preview");
             break;
         default:
         {
-            log << L"UNKNOWN EDITION (GetProductInfo -> 0x" << std::hex
-                << productType << L")";
+            write(log, "UNKNOWN EDITION (GetProductInfo -> 0x", hex(productType), ')');
         }
         }
         break;
     }
     if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        log << L" x86 ";
+        write(log, " x86 ");
     }
     else if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        log << L" x64 ";
+        write(log, " x64 ");
     }
-    log << versionInfo.dwMajorVersion << L'.' << versionInfo.dwMinorVersion
-        << L'.' << versionInfo.dwBuildNumber << L'.'
-        << versionInfo.wServicePackMajor;
+    write(log, versionInfo.dwMajorVersion, '.', versionInfo.dwMinorVersion, '.',
+          versionInfo.dwBuildNumber, '.', versionInfo.wServicePackMajor);
 }
 
-static std::wstring GetAdobeReaderVersion()
+static std::string GetAdobeReaderVersion()
 {
     using SystemFacades::RegistryKey;
 #ifdef _M_X64
     RegistryKey adobeKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Adobe\\Installer",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Adobe\\Installer",
         KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 #else
     RegistryKey adobeKey =
-        RegistryKey::Open(L"\\Registry\\Machine\\Software\\Adobe\\Installer",
+        RegistryKey::Open("\\Registry\\Machine\\Software\\Adobe\\Installer",
                           KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 #endif
     if (adobeKey.Invalid())
@@ -500,7 +463,7 @@ static std::wstring GetAdobeReaderVersion()
     {
         throw std::exception("Broken Adobe Reader Install");
     }
-    return subkeys[0][L"ProductVersion"].GetStringStrict();
+    return subkeys[0]["ProductVersion"].GetStringStrict();
 }
 
 LONG GetTimeZoneBias()
@@ -528,35 +491,35 @@ std::uint64_t GetLocalTime()
     return FiletimeToInteger(ft);
 }
 
-static void WriteFlashData(std::wostream& log)
+static void WriteFlashData(log_sink& log)
 {
 #ifdef _M_X64
     RegistryKey flashPluginKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayerPlugin",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayerPlugin",
         KEY_QUERY_VALUE);
 #else
     RegistryKey flashPluginKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayerPlugin",
+        "\\Registry\\Machine\\Software\\Macromedia\\FlashPlayerPlugin",
         KEY_QUERY_VALUE);
 #endif
 
 #ifdef _M_X64
     RegistryKey flashKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer",
+        "\\Registry\\Machine\\Software\\Wow6432Node\\Macromedia\\FlashPlayer",
         KEY_QUERY_VALUE);
 #else
     RegistryKey flashKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer",
+        "\\Registry\\Machine\\Software\\Macromedia\\FlashPlayer",
         KEY_QUERY_VALUE);
 #endif
 
-    log << L" Flash: ";
+    write(log, " Flash: ");
     if (flashPluginKey.Valid())
     {
         try
         {
-            std::wstring flashVer(flashPluginKey[L"Version"].GetStringStrict());
-            log << flashVer;
+            std::string flashVer(flashPluginKey["Version"].GetStringStrict());
+            write(log, flashVer);
             return;
         }
         catch (SystemFacades::ErrorFileNotFoundException const&)
@@ -569,12 +532,12 @@ static void WriteFlashData(std::wostream& log)
     {
         try
         {
-            std::wstring flashVer(flashKey[L"CurrentVersion"].GetStringStrict());
+            std::string flashVer(flashKey["CurrentVersion"].GetStringStrict());
             std::transform(flashVer.begin(),
                            flashVer.end(),
                            flashVer.begin(),
-                           [](wchar_t x) { return x == L',' ? L'.' : x; });
-            log << flashVer;
+                           [](char x) { return x == ',' ? '.' : x; });
+            write(log, flashVer);
             return;
         }
         catch (SystemFacades::ErrorFileNotFoundException const&)
@@ -584,60 +547,58 @@ static void WriteFlashData(std::wostream& log)
     }
 
     // Base case, does not appear to be installed (at least not correctly).
-    log << L"Not Installed";
+    write(log, "Not Installed");
 }
 
-void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
+void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
 {
-    log << L"Instalog " << BOOST_STRINGIZE(INSTALOG_VERSION);
+    write(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION));
     switch (GetSystemMetrics(SM_CLEANBOOT))
     {
     case 1:
-        log << L" MINIMAL";
+        writeln(log, " MINIMAL");
         break;
     case 2:
-        log << L" NETWORK";
+        writeln(log, " NETWORK");
         break;
     }
-    log << L"\nRun By ";
+    write(log, "Run By ");
     wchar_t userName[257]; // UNLEN + 1
     DWORD userNameLength = 257;
     GetUserName(userName, &userNameLength);
-    log << std::wstring(userName, userNameLength - 1);
-    log << L" on ";
+    write(log, std::wstring(userName, userNameLength - 1), " on ");
 
-    auto timeZoneBias = GetTimeZoneBias();
+    auto timeZoneBias = -GetTimeZoneBias();
+    long displayBiasHour = timeZoneBias / 60;
+    long displayBiasMinutes = timeZoneBias % 60;
 
     WriteMillisecondDateFormat(log, startTime);
-    log << L" [GMT " << std::showpos << (-timeZoneBias / 60) << L':'
-        << std::noshowpos << std::setw(2) << std::setfill(L'0')
-        << (-timeZoneBias % 60) << L"]\n";
+    writeln (log, " [GMT ", displayBiasHour >= 0 ? "+" : "", displayBiasHour, ':', padded_number<long>(2, '0', displayBiasMinutes), ']');
 
     RegistryKey ieKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
+        "\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
         KEY_QUERY_VALUE);
     if (ieKey.Valid())
     {
-        log << L"IE: " << ieKey[L"Version"].GetStringStrict();
+        write(log, "IE: ", ieKey["Version"].GetStringStrict());
     }
     else
     {
-        log << L"IE ERROR!";
+        write(log, "IE ERROR!");
     }
 
     RegistryKey javaKey = RegistryKey::Open(
-        L"\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment",
+        "\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment",
         KEY_QUERY_VALUE);
     if (javaKey.Valid())
     {
         try
         {
-            log << L" Java: "
-                << javaKey[L"BrowserJavaVersion"].GetStringStrict();
+            write(log, " Java: ", javaKey["BrowserJavaVersion"].GetStringStrict());
         }
         catch (SystemFacades::ErrorFileNotFoundException const&)
         {
-            log << L" Java: Not Installed";
+            write(log, " Java: Not Installed");
         }
     }
 
@@ -645,29 +606,28 @@ void WriteScriptHeader(std::wostream& log, std::uint64_t startTime)
 
     try
     {
-        std::wstring adobeVersion(GetAdobeReaderVersion());
-        log << L" Adobe: " << adobeVersion;
+        std::string adobeVersion(GetAdobeReaderVersion());
+        write(log, " Adobe: ", adobeVersion);
     }
     catch (std::exception const&)
     {
     } // No log output on failure.
 
-    log << L"\n";
+    writeln(log);
     WriteOsVersion(log);
-    log << L' ';
+    write(log, ' ');
     WriteMemoryInformation(log);
-    log << L"\n";
+    writeln(log);
 }
 
-void WriteScriptFooter(std::wostream& log, std::uint64_t startTime)
+void WriteScriptFooter(log_sink& log, std::uint64_t startTime)
 {
     auto endTime = Instalog::GetLocalTime();
     auto duration = endTime - startTime;
     auto seconds = duration / 10000000ull;
     auto milliseconds = (duration / 10000ull) - (seconds * 1000);
-    log << L"Instalog " << BOOST_STRINGIZE(INSTALOG_VERSION) << L" finished at ";
+    write(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION), " finished at ");
     WriteMillisecondDateFormat(log, endTime);
-    log << " (Generation took " << seconds << L'.' << std::setw(4)
-        << std::setfill(L'0') << milliseconds << L" seconds)\n";
+    writeln(log, " (Generation took ", seconds, '.', padded_number<decltype(milliseconds)>(4, '0', milliseconds), " seconds)");
 }
 }

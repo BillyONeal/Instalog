@@ -129,7 +129,7 @@ class BasicRegistryValue
     ///          throws instead.
     ///
     /// @return    The value data interpreted as a string.
-    std::wstring GetString() const;
+    std::string GetString() const;
 
     /// @brief    Gets the data in this value as a string in a strict manner.
     ///
@@ -142,7 +142,7 @@ class BasicRegistryValue
     ///         REG_EXPAND_SZ.
     ///
     /// @return    The string strict.
-    std::wstring GetStringStrict() const;
+    std::string GetStringStrict() const;
 
     /// @brief    Gets the data of this value as a vector of strings.
     ///
@@ -150,7 +150,7 @@ class BasicRegistryValue
     ///         Thrown in the event the value is not of type REG_MULTI_SZ.
     ///
     /// @return    The multi string array.
-    std::vector<std::wstring> GetMultiStringArray() const;
+    std::vector<std::string> GetMultiStringArray() const;
 
     /// @brief    Gets the data of this value as a vector of strings, assuming
     ///         the data is separated by commas.
@@ -160,7 +160,7 @@ class BasicRegistryValue
     ///         REG_MULTI_SZ
     ///
     /// @return    The comma string array.
-    std::vector<std::wstring> GetCommaStringArray() const;
+    std::vector<std::string> GetCommaStringArray() const;
 };
 
 /// @brief    Registry value. An implementation of BasicRegistryValue.
@@ -231,7 +231,7 @@ class RegistryValueAndData : public BasicRegistryValue
         innerBuffer_ = std::move(other.innerBuffer_);
         return *this;
     }
-    std::wstring GetName() const;
+    std::string GetName() const;
 
     /// @brief    Gets the type of data in this registry value.
     ///
@@ -336,14 +336,14 @@ class RegistryKey : boost::noncopyable
     /// @param    name    The name of the value to retrieve.
     ///
     /// @return    The value.
-    RegistryValue const GetValue(std::wstring const& name) const;
+    RegistryValue const GetValue(std::string const& name) const;
 
     /// @brief    Array indexer operator. Forwards to GetValue()
     ///
     /// @param    name    The name of the value to retrieve.
     ///
     /// @return    The registry value retrieved from the given name.
-    RegistryValue const operator[](std::wstring const& name) const;
+    RegistryValue const operator[](std::string const& name) const;
 
     /// Sets a registry value.
     /// @param name             The name of the value.
@@ -353,7 +353,7 @@ class RegistryKey : boost::noncopyable
     /// @throws Instalog::SystemFacades::Win32Exception on failure
     /// @throws std::out_of_range The parameter dataSize exceeds
     /// std::numeric_limits<uint32_t>::max().
-    void SetValue(std::wstring const& name,
+    void SetValue(std::string const& name,
                   std::size_t dataSize,
                   void const* data,
                   DWORD type);
@@ -365,7 +365,7 @@ class RegistryKey : boost::noncopyable
     /// @throws Instalog::SystemFacades::Win32Exception on failure
     template <typename Ty>
     void
-    SetValue(std::wstring const& name, std::vector<Ty> const& data, DWORD type)
+    SetValue(std::string const& name, std::vector<Ty> const& data, DWORD type)
     {
         this->SetValue(name,
                        data.size() * sizeof(Ty),
@@ -378,15 +378,9 @@ class RegistryKey : boost::noncopyable
     /// @param data The value data.
     /// @param type (optional) The type. If not supplied, defaults to REG_SZ.
     /// @throws Instalog::SystemFacades::Win32Exception on failure
-    void SetValue(std::wstring const& name,
-                  std::wstring const& data,
-                  DWORD type = REG_SZ)
-    {
-        this->SetValue(name,
-                       data.size() * sizeof(wchar_t),
-                       static_cast<void const*>(data.data()),
-                       type);
-    }
+    void SetValue(std::string const& name,
+        std::string const& data,
+        DWORD type = REG_SZ);
 
     /// @brief    Deletes this registry key. This method requires that the
     ///         registry key was opened with the DELETE access right.
@@ -407,7 +401,7 @@ class RegistryKey : boost::noncopyable
     /// @brief    Gets the names of all values stored in this registry key.
     ///
     /// @return    A vector of value names.
-    std::vector<std::wstring> EnumerateValueNames() const;
+    std::vector<std::string> EnumerateValueNames() const;
 
     /// @brief    Gets the registry values contained in this key.
     ///
@@ -417,7 +411,7 @@ class RegistryKey : boost::noncopyable
     /// @brief    Gets the name of this registry key.
     ///
     /// @return    The name.
-    std::wstring GetName() const;
+    std::string GetName() const;
 
     /// @brief    Gets the size information for this registry key.
     ///
@@ -427,7 +421,7 @@ class RegistryKey : boost::noncopyable
     /// @brief    Gets the sub key names of this registry key.
     ///
     /// @return    A vector of sub key names.
-    std::vector<std::wstring> EnumerateSubKeyNames() const;
+    std::vector<std::string> EnumerateSubKeyNames() const;
 
     /// @brief    Enumerates sub keys.
     ///
@@ -451,7 +445,7 @@ class RegistryKey : boost::noncopyable
     /// @return    A RegistryKey instance. In the event an error occurs, this
     ///         instance will be invalid. Call GetLastError for extended
     ///         error information.
-    static RegistryKey Open(std::wstring const& key,
+    static RegistryKey Open(std::string const& key,
                             REGSAM samDesired =
                                 KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 
@@ -468,7 +462,7 @@ class RegistryKey : boost::noncopyable
     ///         instance will be invalid. Call GetLastError for extended
     ///         error information.
     static RegistryKey Open(RegistryKey const& parent,
-                            std::wstring const& key,
+                            std::string const& key,
                             REGSAM samDesired =
                                 KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS);
 
@@ -501,7 +495,7 @@ class RegistryKey : boost::noncopyable
     /// @return    A RegistryKey instance. In the event an error occurs, this
     ///         instance will be invalid. Call GetLastError for extended
     ///         error information.
-    static RegistryKey Create(std::wstring const& key,
+    static RegistryKey Create(std::string const& key,
                               REGSAM samDesired =
                                   KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
                               DWORD options = REG_OPTION_NON_VOLATILE);
@@ -521,7 +515,7 @@ class RegistryKey : boost::noncopyable
     ///         instance will be invalid. Call GetLastError for extended
     ///         error information.
     static RegistryKey Create(RegistryKey const& parent,
-                              std::wstring const& key,
+                              std::string const& key,
                               REGSAM samDesired =
                                   KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
                               DWORD options = REG_OPTION_NON_VOLATILE);
