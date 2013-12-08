@@ -12,6 +12,7 @@
 #include <boost/config.hpp>
 #include <boost/spirit/include/karma_generate.hpp>
 #include <boost/spirit/include/karma_numeric.hpp>
+#include <utf8/utf8.h>
 #include "OptimisticBuffer.hpp"
 
 namespace Instalog
@@ -167,6 +168,40 @@ namespace Instalog
     format_character_result format_value(char value) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_character_result(value);
+    }
+
+    // Format wide character versions of the above.
+    std::string format_value(std::wstring const& value)
+    {
+        static_assert(sizeof(wchar_t) == 2, "This method needs to be inspected / updated if wchar_t is not UTF-16.");
+        std::string result;
+        result.reserve(value.size());
+        utf8::utf16to8(value.cbegin(), value.cend(), std::back_inserter(result));
+        return result;
+    }
+
+    std::string format_value(wchar_t const* value)
+    {
+        static_assert(sizeof(wchar_t) == 2, "This method needs to be inspected / updated if wchar_t is not UTF-16.");
+        auto const valueLength = std::wcslen(value);
+        std::string result;
+        result.reserve(valueLength);
+        utf8::utf16to8(value, value + valueLength, std::back_inserter(result));
+        return result;
+    }
+
+    format_stack_result<4> format_value(wchar_t value)
+    {
+        static_assert(sizeof(wchar_t) == 2, "This method needs to be inspected / updated if wchar_t is not UTF-16.");
+        if (utf8::internal::is_lead_surrogate(value) || utf8::internal::is_trail_surrogate(value))
+        {
+            throw utf8::invalid_utf16(static_cast<std::uint16_t>(value));
+        }
+
+        format_stack_result<4> result;
+        auto const endIterator = utf8::append(value, result.data());
+        result.set_size(endIterator - result.data());
+        return result;
     }
 
     // boost::spirit::karma numeric generators. These perform default

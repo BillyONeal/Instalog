@@ -19,6 +19,7 @@
   <PropertyGroup>
     <OutDir>$(MSBuildThisFileDirectory)Build\$(Configuration)_$(Platform)\</OutDir>
     <IntDir>$(OutDir)Intermediate\$(ProjectName)\</IntDir>
+    <IncludePath>$(MSBuildThisFileDirectory)ThirdParty\utf8_v2_3_4;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <Import Project="$(MSBuildThisFileDirectory)\InstalogVersion.props" />
   <ItemDefinitionGroup>

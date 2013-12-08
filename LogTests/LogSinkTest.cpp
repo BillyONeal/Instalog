@@ -153,3 +153,48 @@ TEST(WriteFormat, HexSigned64)
     write(sink, hex(example));
     ASSERT_STREQ("DEADBEEFC0FFEE00", sink.c_str());
 }
+
+static const wchar_t unicodeExample[] =
+{
+    0xD83D, 0xDD28, // Unicode hammer character
+    L' ', L'i', L's', L' ', L'a', L' ', L'h', L'a', L'm', L'm', L'e', L'r', L' ',
+    0x24B8, // Unicode copyright symbol
+    L' ', L'i', L's', L' ', L'a', L' ', L'c', L'o', L'p', L'y', L'r', L'i', L'g', L'h', L't',
+    L'\0'
+};
+
+static const char unicodeResult[] = "\xf0\x9f\x94\xa8 is a hammer \xe2\x92\xb8 is a copyright";
+
+TEST(WriteFormat, WideStrings)
+{
+    std::wstring asString(unicodeExample);
+    std::string sink;
+    write(sink, asString);
+    ASSERT_STREQ(unicodeResult, sink.c_str());
+}
+
+TEST(WriteFormat, WideCharacterArrays)
+{
+    std::string sink;
+    write(sink, unicodeExample);
+    ASSERT_STREQ(unicodeResult, sink.c_str());
+}
+
+TEST(WriteFormat, WideCharacter)
+{
+    std::string sink;
+    write(sink, static_cast<wchar_t>(0x24B8)); // copyright symbol
+    ASSERT_STREQ("\xe2\x92\xb8", sink.c_str());
+}
+
+TEST(WriteFormat, WideCharacterLeadingSurrogate)
+{
+    std::string sink;
+    ASSERT_THROW(write(sink, static_cast<wchar_t>(0xD83D)), utf8::invalid_utf16);
+}
+
+TEST(WriteFormat, WideCharacterTrailingSurrogate)
+{
+    std::string sink;
+    ASSERT_THROW(write(sink, static_cast<wchar_t>(0xDD28)), utf8::invalid_utf16);
+}
