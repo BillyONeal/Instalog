@@ -2,7 +2,7 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 #pragma once
-
+#include <cstdint>
 #include <cstddef>
 #include <string>
 #include <utility>
@@ -83,6 +83,11 @@ namespace Instalog
         size_type length;
         char array[allocLength];
     public:
+        format_stack_result() = default;
+        format_stack_result(std::uint16_t length_)
+            : length(length_)
+        { }
+
         static const std::size_t declared_size = allocLength;
         decltype(array)& data() BOOST_NOEXCEPT_OR_NOTHROW
         {
@@ -246,5 +251,92 @@ namespace Instalog
     Sink& writeln(Sink& target, Values &&...values)
     {
         return write_impl(target, format_value(std::forward<Values>(values))..., get_newline());
+    }
+
+    template <typename NumberType>
+    class padded_number
+    {
+        std::size_t size_impl;
+        NumberType value;
+        char fill_impl;
+    public:
+        padded_number(std::size_t size_, char fill_, NumberType value_) BOOST_NOEXCEPT_OR_NOTHROW
+            : value(value_)
+            , fill_impl(fill_)
+            , size_impl(size_)
+        {}
+        
+        std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW
+        {
+            return this->size_impl;
+        }
+
+        NumberType get() const BOOST_NOEXCEPT_OR_NOTHROW
+        {
+            return this->value;
+        }
+
+        char fill() const BOOST_NOEXCEPT_OR_NOTHROW
+        {
+            return this->fill_impl;
+        }
+    };
+
+    template <typename NumberType>
+    std::string format_value(padded_number<NumberType> const& val)
+    {
+        auto const& basic = format_value(val.get());
+        auto const unpaddedSize = basic.size();
+        auto const desiredSize = val.size();
+        std::string result;
+        if (unpaddedSize < desiredSize)
+        {
+            result.reserve(desiredSize);
+            auto const paddingCharacters = desiredSize - unpaddedSize;
+            result.append(paddingCharacters, val.fill());
+        }
+        
+        result.append(basic.data(), unpaddedSize);
+        return result;
+    }
+
+    template <typename NumberType>
+    struct hex_formatted_value
+    {
+        NumberType value;
+    public:
+        hex_formatted_value(NumberType value_) BOOST_NOEXCEPT_OR_NOTHROW
+            : value(value_)
+        {}
+        NumberType get() const BOOST_NOEXCEPT_OR_NOTHROW
+        {
+            return this->value;
+        }
+    };
+
+    template <typename NumberType>
+    hex_formatted_value<typename std::make_unsigned<NumberType>::type> hex(NumberType value)
+    {
+        static_assert(std::is_integral<NumberType>::value, "Hex accepts only integral values.");
+        typedef typename std::make_unsigned<NumberType>::type unsignedType;
+        unsignedType formattedValue = static_cast<unsignedType>(value);
+        return hex_formatted_value<unsignedType>(formattedValue);
+    }
+
+    template <typename NumberType>
+    format_stack_result<sizeof(NumberType)* 2> format_value(hex_formatted_value<NumberType> const& val)
+    {
+        char const hexChars[] = "0123456789ABCDEF";
+        auto const value = val.get();
+        char const* asChar = reinterpret_cast<char const*>(&value);
+        format_stack_result<sizeof(NumberType)* 2> result(sizeof(NumberType)* 2);
+        for (std::size_t idx = 0; idx < sizeof(NumberType); ++idx)
+        {
+            char const currentChar = asChar[sizeof(NumberType) - idx - 1];
+            result.data()[idx * 2    ] = hexChars[(currentChar & 0xF0) >> 4];
+            result.data()[idx * 2 + 1] = hexChars[ currentChar & 0x0F];
+        }
+
+        return result;
     }
 }

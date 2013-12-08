@@ -107,3 +107,49 @@ TEST(WriteFormat, FloatingPointTypes)
     write(sink, "Float: ", f, " Double: ", d);
     ASSERT_STREQ("Float: 3.14 Double: 2.718", sink.c_str());
 }
+
+TEST(WriteFormat, PaddedNumberSmall)
+{
+    std::string sink;
+    write(sink, padded_number<std::uint32_t>(10, 'A', 1729), padded_number<std::uint32_t>(10, '0', 1730));
+    ASSERT_STREQ("AAAAAA17290000001730", sink.c_str());
+}
+
+TEST(WriteFormat, PaddedNumberBig)
+{
+    std::string sink;
+    write(sink, padded_number<std::uint32_t>(2, 'A', 1729));
+    ASSERT_STREQ("1729", sink.c_str());
+}
+
+TEST(WriteFormat, Hex)
+{
+    std::uint32_t example = 0xDEADBEEF;
+    std::string sink;
+    write(sink, hex(example));
+    ASSERT_STREQ("DEADBEEF", sink.c_str());
+}
+
+TEST(WriteFormat, HexSigned)
+{
+    std::int32_t example = static_cast<std::int32_t>(0xDEADBEEF);
+    std::string sink;
+    write(sink, hex(example));
+    ASSERT_STREQ("DEADBEEF", sink.c_str());
+}
+
+TEST(WriteFormat, Hex64)
+{
+    std::uint64_t example = 0xDEADBEEFC0FFEE00;
+    std::string sink;
+    write(sink, hex(example));
+    ASSERT_STREQ("DEADBEEFC0FFEE00", sink.c_str());
+}
+
+TEST(WriteFormat, HexSigned64)
+{
+    std::int64_t example = static_cast<std::int64_t>(0xDEADBEEFC0FFEE00);
+    std::string sink;
+    write(sink, hex(example));
+    ASSERT_STREQ("DEADBEEFC0FFEE00", sink.c_str());
+}
