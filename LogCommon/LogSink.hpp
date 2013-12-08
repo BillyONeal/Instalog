@@ -20,7 +20,7 @@ namespace Instalog
     struct log_sink
     {
         virtual void append(char const* data, std::size_t dataLength) = 0;
-        virtual ~log_sink()
+        virtual ~log_sink() BOOST_NOEXCEPT_OR_NOTHROW
         {}
     };
 
@@ -33,7 +33,7 @@ namespace Instalog
         {
             this->target.append(data, dataLength);
         }
-        std::string const& get() const
+        std::string const& get() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->target;
         }
@@ -59,15 +59,15 @@ namespace Instalog
         std::size_t length;
     public:
         format_intrusive_result() = default;
-        format_intrusive_result(char const* data_, std::size_t length_)
+        format_intrusive_result(char const* data_, std::size_t length_) BOOST_NOEXCEPT_OR_NOTHROW
             : ptr(data_)
             , length(length_)
         {}
-        char const* data() const
+        char const* data() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->ptr;
         }
-        std::size_t size() const
+        std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->length;
         }
@@ -84,19 +84,19 @@ namespace Instalog
         char array[allocLength];
     public:
         static const std::size_t declared_size = allocLength;
-        decltype(array)& data()
+        decltype(array)& data() BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->array;
         }
-        char const* data() const
+        char const* data() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->array;
         }
-        void set_size(std::size_t size_)
+        void set_size(std::size_t size_) BOOST_NOEXCEPT_OR_NOTHROW
         {
             this->length = static_cast<size_type>(size_);
         }
-        std::size_t size() const
+        std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return length;
         }
@@ -125,14 +125,14 @@ namespace Instalog
         char result;
     public:
         format_character_result() = default;
-        format_character_result(char value)
+        format_character_result(char value) BOOST_NOEXCEPT_OR_NOTHROW
             : result(value)
         { }
-        std::size_t size() const
+        std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return 1;
         }
-        char const* data() const
+        char const* data() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return &this->result;
         }
@@ -147,19 +147,19 @@ namespace Instalog
     // 
     
     // Format std::string
-    format_intrusive_result format_value(std::string const& value)
+    format_intrusive_result format_value(std::string const& value) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result(value.c_str(), value.size());
     }
     
     // Format character pointers. (Assume null terminated)
-    format_intrusive_result format_value(char const* ptr)
+    format_intrusive_result format_value(char const* ptr) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result(ptr, std::strlen(ptr));
     }
 
     // Format single characters
-    format_character_result format_value(char value)
+    format_character_result format_value(char value) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_character_result(value);
     }
@@ -167,7 +167,7 @@ namespace Instalog
     // boost::spirit::karma numeric generators. These perform default
     // formatting of numbers.
 #define GENERATE_KARMA_GENERATOR(t, parser) \
-    stack_result_for_digits<t>::type format_value(t value) \
+    stack_result_for_digits<t>::type format_value(t value) BOOST_NOEXCEPT_OR_NOTHROW \
     { \
         using namespace boost::spirit::karma; \
         stack_result_for_digits<t>::type result; \
@@ -194,12 +194,12 @@ namespace Instalog
 
     // Platform newline selection.
 #ifdef BOOST_WINDOWS
-    format_intrusive_result get_newline()
+    format_intrusive_result get_newline() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result("\r\n", 2);
     }
 #else
-    format_stack_result<1> get_newline()
+    format_stack_result<1> get_newline() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result("\n", 1);
     }
@@ -207,13 +207,13 @@ namespace Instalog
 
     // sum_sizes function basis case. Returns the sum of all std::size_t instances
     // passed in as arguments.
-    std::size_t sum_sizes()
+    std::size_t sum_sizes() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return 0;
     }
 
     template <typename... Integral>
-    std::size_t sum_sizes(std::size_t size, Integral ...sizes)
+    std::size_t sum_sizes(std::size_t size, Integral ...sizes) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return size + sum_sizes(sizes...);
     }
