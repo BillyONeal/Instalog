@@ -31,6 +31,19 @@ namespace Instalog
         std::string const& get() const BOOST_NOEXCEPT_OR_NOTHROW;
     };
 
+    // Log sink which writes results into a file.
+    class file_sink final : public log_sink
+    {
+        // Typically HANDLE on Windows, FILE* or file number on Unix.
+        std::uintptr_t handleValue;
+    public:
+        file_sink(std::string const& filePath);
+        file_sink(file_sink const&) = delete;
+        file_sink(file_sink&&) BOOST_NOEXCEPT_OR_NOTHROW;
+        ~file_sink() BOOST_NOEXCEPT_OR_NOTHROW;
+        virtual void append(char const* data, std::size_t dataLength);
+    };
+
     // Format results types.
     // When formatting a value (e.g. a single number), these types are where given
     // value formatters store the result.
@@ -174,12 +187,12 @@ namespace Instalog
 
     // Platform newline selection.
 #ifdef BOOST_WINDOWS
-    format_intrusive_result get_newline() BOOST_NOEXCEPT_OR_NOTHROW
+    format_intrusive_result inline get_newline() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result("\r\n", 2);
     }
 #else
-    format_stack_result<1> get_newline() BOOST_NOEXCEPT_OR_NOTHROW
+    format_stack_result<1> inline get_newline() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return format_intrusive_result("\n", 1);
     }
@@ -187,13 +200,13 @@ namespace Instalog
 
     // sum_sizes function basis case. Returns the sum of all std::size_t instances
     // passed in as arguments.
-    std::size_t sum_sizes() BOOST_NOEXCEPT_OR_NOTHROW
+    std::size_t inline sum_sizes() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return 0;
     }
 
     template <typename... Integral>
-    std::size_t sum_sizes(std::size_t size, Integral ...sizes) BOOST_NOEXCEPT_OR_NOTHROW
+    std::size_t inline sum_sizes(std::size_t size, Integral ...sizes) BOOST_NOEXCEPT_OR_NOTHROW
     {
         return size + sum_sizes(sizes...);
     }

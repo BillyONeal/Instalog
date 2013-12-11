@@ -44,6 +44,7 @@
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="LogSink.cpp" />
+    <ClCompile Include="LogSink_Windows.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

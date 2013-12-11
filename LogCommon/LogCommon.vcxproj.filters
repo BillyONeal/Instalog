@@ -86,6 +86,9 @@
     <ClCompile Include="LogSink.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LogSink_Windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp">
