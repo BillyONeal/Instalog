@@ -93,6 +93,7 @@
     <ClInclude Include="StockOutputFormats.hpp" />
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />
+    <ClInclude Include="Utf8.hpp" />
     <ClInclude Include="Whitelist.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
     <ClInclude Include="Win32Glue.hpp" />

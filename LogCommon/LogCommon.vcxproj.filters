@@ -190,6 +190,9 @@
     <ClInclude Include="LogSink.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utf8.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CommonWhitelists.rc" />
