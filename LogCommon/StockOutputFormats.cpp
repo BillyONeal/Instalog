@@ -566,7 +566,7 @@ static void WriteFlashData(log_sink& log)
 
 void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
 {
-    write(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION));
+    writeln(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION));
     switch (GetSystemMetrics(SM_CLEANBOOT))
     {
     case 1:
