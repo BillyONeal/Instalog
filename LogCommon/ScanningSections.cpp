@@ -645,6 +645,12 @@ void InstalledPrograms::Enumerate(log_sink& logOutput,
         {
             RegistryValue displayName(uninstallKey->GetValue("DisplayName"));
             currentEntry = displayName.GetString();
+            // A common bug in programs is that they set their display name to end with a null in the registry.
+            if (!currentEntry.empty() && currentEntry.back() == '\0')
+            {
+                currentEntry.pop_back();
+            }
+
             GeneralEscape(currentEntry);
         }
         catch (ErrorFileNotFoundException const&)
@@ -681,7 +687,7 @@ void InstalledPrograms::Enumerate(log_sink& logOutput,
         {
         }
 
-        entries.push_back(std::move(currentEntry));
+        entries.emplace_back(std::move(currentEntry));
     }
     std::sort(entries.begin(),
               entries.end(),
@@ -691,7 +697,7 @@ void InstalledPrograms::Enumerate(log_sink& logOutput,
 
     for (auto const& str : entries)
     {
-        write(logOutput, str);
+        writeln(logOutput, str);
     }
 }
 
