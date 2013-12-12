@@ -36,10 +36,10 @@
     </Link>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
-    <DropFileName>Instalog_$(InstalogVersion).exe</DropFileName>
+    <DropFileName>Instalog_$(InstalogVersion)</DropFileName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <DropFileName>Instalog_$(InstalogVersion)_x64.exe</DropFileName>
+    <DropFileName>Instalog_$(InstalogVersion)_x64</DropFileName>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
@@ -58,7 +58,7 @@
     <None Include="..\LogCommon\Services Drivers.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\LogCommon\resource.h" />
+    <ClInclude Include="..\C\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="OlderWindows.obj">
@@ -74,6 +74,7 @@
   </ImportGroup>
   <Target Name="AfterBuild" Condition="'$(Configuration)'!='Debug'">
     <MakeDir Directories="$(OutDir)..\..\Drop" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(OutDir)..\..\Drop\$(DropFileName)" />
+    <Copy SourceFiles="$(TargetDir)Instalog.exe" DestinationFiles="$(OutDir)..\..\Drop\$(DropFileName).exe" />
+    <Copy SourceFiles="$(TargetDir)Instalog.pdb" DestinationFiles="$(OutDir)..\..\Drop\$(DropFileName).pdb" />
   </Target>
 </Project>
