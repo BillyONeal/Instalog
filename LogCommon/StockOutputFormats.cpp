@@ -582,7 +582,7 @@ void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
     GetUserName(userName, &userNameLength);
     write(log, std::wstring(userName, userNameLength - 1), " on ");
 
-    auto timeZoneBias = -GetTimeZoneBias();
+    auto timeZoneBias = (-GetTimeZoneBias() - 60);
     long displayBiasHour = timeZoneBias / 60;
     long displayBiasMinutes = timeZoneBias % 60;
 
