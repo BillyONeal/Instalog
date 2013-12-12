@@ -149,7 +149,7 @@ ServicesDrivers::Execute(log_sink& logOutput,
         string_sink tempSink;
         if (service->IsSvchostService() && svcHostDll.is_valid())
         {
-            write(currentServiceString, service->GetSvchostGroup(), '->');
+            write(currentServiceString, service->GetSvchostGroup(), "->");
             WriteDefaultFileOutput(tempSink, svcHostDll.get());
             currentServiceString.append(tempSink.get());
         }

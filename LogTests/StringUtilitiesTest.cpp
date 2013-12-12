@@ -312,11 +312,11 @@ TEST(StringUtilities, Url_UrlEscape)
 
     str = "HTTP";
     HttpEscape(str);
-    EXPECT_EQ("htt#p", str);
+    EXPECT_EQ("HTT#P", str);
 
     str = "hTtP";
     HttpEscape(str);
-    EXPECT_EQ("htt#p", str);
+    EXPECT_EQ("hTt#P", str);
 
     str = "hthttptp";
     HttpEscape(str);
@@ -332,11 +332,11 @@ TEST(StringUtilities, Url_UrlEscape)
 
     str = "HTTp://go.microsoft.com/";
     HttpEscape(str);
-    EXPECT_EQ("htt#p://go.microsoft.com/", str);
+    EXPECT_EQ("HTT#p://go.microsoft.com/", str);
 
     str = "hTtp://go.microsoft.com/";
     HttpEscape(str);
-    EXPECT_EQ("htt#p://go.microsoft.com/", str);
+    EXPECT_EQ("hTt#p://go.microsoft.com/", str);
 
     str = "hthttptp://go.microsoft.com/";
     HttpEscape(str);

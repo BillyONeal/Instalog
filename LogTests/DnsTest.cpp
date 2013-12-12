@@ -52,9 +52,9 @@ TEST(DnsIpReverse, RealIpReverse)
 
 TEST(DnsHostnameFromAddress, DefaultServers)
 {
-    ASSERT_TRUE(boost::ends_with(
-        HostnameFromIpAddress(IpAddressFromHostname("google.com")),
-        ".1e100.net"));
+    auto const ip = IpAddressFromHostname("google.com");
+    auto const host = HostnameFromIpAddress(ip);
+    ASSERT_TRUE(boost::ends_with(host, ".1e100.net")) << "IP was " << ip << " and host is " << host;
 }
 
 /* This needs reworked; see issue 13

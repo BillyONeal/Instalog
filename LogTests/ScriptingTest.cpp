@@ -257,12 +257,13 @@ TEST(ScriptTest, CanExecute)
     s.Run(outSink, ui.get());
     std::string out(outSink.get());
     out.pop_back(); // \n
-    out.erase(std::find(out.rbegin(), out.rend(), '\n').base(), out.end());
+    out.pop_back(); // \r
+    out.erase(std::find(out.rbegin(), out.rend(), '\r').base(), out.end());
     out.erase(out.begin(), std::find(out.begin(), out.end(), '='));
     out.pop_back();
-    ASSERT_STREQ("======================= OnE ======================\n\nOnE "
-        "section has.GetArgument() \"argArg\" and options \n{OptionOne}\n\n"
-        "===================== Twosies ====================\n\nTwosies "
-        "section has.GetArgument() \"\" and options \n{OptionTwo}\n{OptionThree}\n",
+    ASSERT_STREQ("======================= OnE ======================\r\n\r\nOnE "
+        "section has.GetArgument() \"argArg\" and options \r\n{OptionOne}\r\n\r\n"
+        "===================== Twosies ====================\r\n\r\nTwosies "
+        "section has.GetArgument() \"\" and options \r\n{OptionTwo}\r\n{OptionThree}\r\n",
         out.c_str());
 }

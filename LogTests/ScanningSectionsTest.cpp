@@ -67,7 +67,7 @@ TEST_F(RunningProcessesTest, SvchostHasFullLine)
 
 TEST_F(RunningProcessesTest, TestsDoNotHaveFullLine)
 {
-    std::string tests = "Logtests.exe\n";
+    std::string tests = "Logtests.exe\r\n";
     Go();
     ASSERT_PRED2(&test_icontains, ss.get(), tests);
 }

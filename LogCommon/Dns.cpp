@@ -136,7 +136,7 @@ std::string HostnameFromIpAddress(std::string const& ipAddress,
     }
     else
     {
-        return utf8::ToUtf8(pDnsRecord->Data.PTR.pNameHost);
+        return std::string(reinterpret_cast<char const*>(pDnsRecord->Data.PTR.pNameHost));
     }
 }
 

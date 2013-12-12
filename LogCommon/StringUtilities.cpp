@@ -16,6 +16,7 @@ static void WriteEscapeHex(Iterator& out, char escapeCharacter, char value)
 {
     char const hexChars[] = "0123456789ABCDEF";
     *(out++) = escapeCharacter;
+    *(out++) = 'x';
     *(out++) = hexChars[value >> 4];
     *(out++) = hexChars[value & 0x0F];
 }
@@ -37,16 +38,34 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
 {
     // Count the number of characters in the resulting string
     std::size_t resultSize = target.size();
-    bool lastWasSpace = false;
+    bool lastWasSpace = true;
     unsigned short httpState = 0;
     for (char c : target)
     {
-        // These characters get escaped as 1 extra character.
-        if (c == escapeCharacter || c == rightDelimiter)
+        if (escapeHttp)
         {
-            resultSize++;
-            continue;
+            if (c == http[0] || c == HTTP[0])
+            {
+                httpState = 1;
+            }
+            else if (c == http[httpState] || c == HTTP[httpState])
+            {
+                ++httpState;
+            }
+            else
+            {
+                httpState = 0;
+            }
+
+            if (httpState == 4)
+            {
+                resultSize++;
+                httpState = 0;
+                continue;
+            }
         }
+
+        // These characters get escaped as 1 extra character.
 
         if (lastWasSpace && c == ' ')
         {
@@ -69,13 +88,34 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
             continue;
         }
 
-        if (c <= 0x1F || c >= 0x80)
+        if (c == escapeCharacter || c == rightDelimiter)
+        {
+            resultSize++;
+            continue;
+        }
+
+        if (c <= 0x1F || c >= 0x7F)
         {
             // #xXX
             resultSize += 3;
             continue;
         }
+    }
 
+    // We expect most of the time that escapes are not necessary. If the resulting size is
+    // unchanged at this point, none were and we can avoid an extra allocation.
+    if (resultSize == target.size())
+    {
+        return;
+    }
+
+    // This switch allows the caller to avoid reallocating in some cases.
+    std::string source(target);
+    target.resize(resultSize);
+    auto out = target.begin();
+    lastWasSpace = true;
+    for (char c : source)
+    {
         if (escapeHttp)
         {
             if (c == http[0] || c == HTTP[0])
@@ -93,30 +133,10 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
 
             if (httpState == 4)
             {
-                resultSize++;
+                WriteEscapeChar(out, escapeCharacter, c);
+                httpState = 0;
                 continue;
             }
-        }
-    }
-
-    // We expect most of the time that escapes are not necessary. If the resulting size is
-    // unchanged at this point, none were and we can avoid an extra allocation.
-    if (resultSize == target.size())
-    {
-        return;
-    }
-
-    // This switch allows the caller to avoid reallocating in some cases.
-    std::string source(target);
-    target.resize(resultSize);
-    auto out = target.begin();
-    lastWasSpace = false;
-    for (char c : source)
-    {
-        if (c == escapeCharacter || c == rightDelimiter)
-        {
-            WriteEscapeChar(out, escapeCharacter, c);
-            continue;
         }
 
         if (lastWasSpace && c == ' ')
@@ -152,35 +172,17 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
             continue;
         }
 
-        lastWasSpace = false;
+        if (c == escapeCharacter || c == rightDelimiter)
+        {
+            WriteEscapeChar(out, escapeCharacter, c);
+            continue;
+        }
 
-        if (c <= 0x1F || c >= 0x80)
+        if (c <= 0x1F || c >= 0x7F)
         {
             // #xXX
             WriteEscapeHex(out, escapeCharacter, c);
             continue;
-        }
-
-        if (escapeHttp)
-        {
-            if (c == http[0] || c == HTTP[0])
-            {
-                httpState = 1;
-            }
-            else if (c == http[httpState] || c == HTTP[httpState])
-            {
-                ++httpState;
-            }
-            else
-            {
-                httpState = 0;
-            }
-
-            if (httpState == 4)
-            {
-                WriteEscapeChar(out, escapeCharacter, c);
-                continue;
-            }
         }
 
         *(out++) = c;
