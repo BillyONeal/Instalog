@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <cstring>
+#include <cstddef>
 #include <iterator>
 #include <utf8/utf8.h>
 
@@ -26,9 +27,14 @@ namespace utf8
         return result;
     }
 
+    inline std::string ToUtf8(wchar_t const* const input, std::size_t lengthInCharacters)
+    {
+        return ToUtf8(input, input + lengthInCharacters);
+    }
+
     inline std::string ToUtf8(wchar_t const* const input)
     {
-        return ToUtf8(input, input + std::wcslen(input));
+        return ToUtf8(input, std::wcslen(input));
     }
 
     inline std::wstring ToUtf16(std::string const& input)
@@ -39,12 +45,21 @@ namespace utf8
         return result;
     }
 
-    inline std::wstring ToUtf16(char const* const input)
+    inline std::wstring ToUtf16(char const* const input, char const* const end)
     {
-        char const* const end = input + std::strlen(input);
         std::wstring result;
         result.reserve(end - input);
         utf8::utf8to16(input, end, std::back_inserter(result));
         return result;
+    }
+
+    inline std::wstring ToUtf16(char const* const input, std::size_t lengthInBytes)
+    {
+        return ToUtf16(input, input + lengthInBytes);
+    }
+
+    inline std::wstring ToUtf16(char const* const input)
+    {
+        return ToUtf16(input, std::strlen(input));
     }
 }
