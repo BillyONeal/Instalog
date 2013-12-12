@@ -58,7 +58,7 @@
     <None Include="..\LogCommon\Services Drivers.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\C\resource.h" />
+    <ClInclude Include="..\LogCommon\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="OlderWindows.obj">
