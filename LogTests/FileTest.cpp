@@ -10,6 +10,7 @@
 #include "../LogCommon/Path.hpp"
 #include "../LogCommon/Win32Exception.hpp"
 #include "../LogCommon/Win32Glue.hpp"
+#include "../LogCommon/Utf8.hpp"
 
 using Instalog::SystemFacades::File;
 using Instalog::SystemFacades::FindFiles;
@@ -17,18 +18,20 @@ using Instalog::SystemFacades::ErrorFileNotFoundException;
 using Instalog::SystemFacades::ErrorPathNotFoundException;
 using Instalog::SystemFacades::ErrorAccessDeniedException;
 
-static std::wstring GenerateTestDirectory()
+static std::string GenerateTestDirectory()
 {
-    std::wstring result;
-    result.resize(MAX_PATH);
-    result.resize(::GetTempPathW(MAX_PATH, &result[0]));
-    result = Instalog::Path::Append(std::move(result), L"InstalogTesting");
-    ::CreateDirectoryW(result.c_str(), 0);
-    result.push_back(L'\\');
+    std::wstring resultWide;
+    resultWide.resize(MAX_PATH);
+    resultWide.resize(::GetTempPathW(MAX_PATH, &resultWide[0]));
+    std::string result = utf8::ToUtf8(resultWide);
+    result = Instalog::Path::Append(std::move(result), "InstalogTesting");
+    resultWide = utf8::ToUtf16(result);
+    ::CreateDirectoryW(resultWide.c_str(), 0);
+    result.push_back('\\');
     return result;
 }
 
-static std::wstring GetTestPath(std::wstring const& suffix)
+static std::string GetTestPath(std::string const& suffix)
 {
     static auto startingDirectory = ::GenerateTestDirectory();
     auto result = startingDirectory;
@@ -38,13 +41,13 @@ static std::wstring GetTestPath(std::wstring const& suffix)
 
 TEST(File, CanOpenDefault)
 {
-    ASSERT_THROW(File unitUnderTest(GetTestPath(L"CanOpenDefault.txt")),
+    ASSERT_THROW(File unitUnderTest(GetTestPath("CanOpenDefault.txt")),
                  ErrorFileNotFoundException);
 }
 
 TEST(File, CanOpenWithOtherOptions)
 {
-    File unitUnderTest(GetTestPath(L"CanOpenWithOtherOptions.txt"),
+    File unitUnderTest(GetTestPath("CanOpenWithOtherOptions.txt"),
                        GENERIC_READ,
                        0,
                        0,
@@ -55,14 +58,14 @@ TEST(File, CanOpenWithOtherOptions)
 TEST(File, CloseActuallyCalled)
 {
     {
-        File unitUnderTest(GetTestPath(L"CloseActuallyCalled.txt"),
+        File unitUnderTest(GetTestPath("CloseActuallyCalled.txt"),
                            GENERIC_READ,
                            0,
                            0,
                            CREATE_NEW,
                            FILE_FLAG_DELETE_ON_CLOSE);
     }
-    ASSERT_FALSE(File::Exists(GetTestPath(L"CloseActuallyCalled.txt")));
+    ASSERT_FALSE(File::Exists(GetTestPath("CloseActuallyCalled.txt")));
 }
 
 TEST(File, GetSizeHandle)
@@ -75,7 +78,7 @@ TEST(File, GetSizeHandle)
 
     // Write to the file
     {
-        File fileToWriteTo(GetTestPath(L"GetSizeHandle.txt"),
+        File fileToWriteTo(GetTestPath("GetSizeHandle.txt"),
                            GENERIC_READ | GENERIC_WRITE,
                            0,
                            0,
@@ -85,7 +88,7 @@ TEST(File, GetSizeHandle)
 
     // Read from the file
     {
-        File fileToReadFrom(GetTestPath(L"GetSizeHandle.txt"),
+        File fileToReadFrom(GetTestPath("GetSizeHandle.txt"),
                             GENERIC_READ,
                             0,
                             0,
@@ -99,7 +102,7 @@ TEST(File, GetAttributesHandle)
 {
     // Write to the file
     {
-        File fileToWriteTo(GetTestPath(L"GetAttributesHandle.txt"),
+        File fileToWriteTo(GetTestPath("GetAttributesHandle.txt"),
                            GENERIC_READ | GENERIC_WRITE,
                            0,
                            0,
@@ -108,7 +111,7 @@ TEST(File, GetAttributesHandle)
 
     // Read from the file
     {
-        File fileToReadFrom(GetTestPath(L"GetAttributesHandle.txt"),
+        File fileToReadFrom(GetTestPath("GetAttributesHandle.txt"),
                             GENERIC_READ,
                             0,
                             0,
@@ -123,7 +126,7 @@ TEST(File, GetExtendedAttributes)
     // We just take an example file and make the assumption that if we are
     // consistent that's right.
 
-    File explorer(L"C:\\Windows\\Explorer.exe",
+    File explorer("C:\\Windows\\Explorer.exe",
                   FILE_READ_EA | FILE_READ_ATTRIBUTES,
                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                   nullptr,
@@ -131,7 +134,7 @@ TEST(File, GetExtendedAttributes)
     BY_HANDLE_FILE_INFORMATION a = explorer.GetExtendedAttributes();
 
     WIN32_FILE_ATTRIBUTE_DATA b =
-        File::GetExtendedAttributes(L"C:\\Windows\\Explorer.exe");
+        File::GetExtendedAttributes("C:\\Windows\\Explorer.exe");
 
     EXPECT_EQ(a.dwFileAttributes, b.dwFileAttributes);
     EXPECT_EQ(a.ftCreationTime.dwLowDateTime, b.ftCreationTime.dwLowDateTime);
@@ -157,7 +160,7 @@ TEST(File, GetSizeNoHandle)
 
     // Write to the file
     {
-        File fileToWriteTo(GetTestPath(L"GetSizeNoHandle.txt"),
+        File fileToWriteTo(GetTestPath("GetSizeNoHandle.txt"),
                            GENERIC_READ | GENERIC_WRITE,
                            0,
                            0,
@@ -165,16 +168,16 @@ TEST(File, GetSizeNoHandle)
         fileToWriteTo.WriteBytes(bytesToWrite);
     }
 
-    EXPECT_EQ(4, File::GetSize(GetTestPath(L"GetSizeNoHandle.txt")));
+    EXPECT_EQ(4, File::GetSize(GetTestPath("GetSizeNoHandle.txt")));
 
-    File::Delete(GetTestPath(L"GetSizeNoHandle.txt"));
+    File::Delete(GetTestPath("GetSizeNoHandle.txt"));
 }
 
 TEST(File, GetAttributesNoHandle)
 {
     // Write to the file
     {
-        File fileToWriteTo(GetTestPath(L"GetAttributesNoHandle.txt"),
+        File fileToWriteTo(GetTestPath("GetAttributesNoHandle.txt"),
                            GENERIC_READ | GENERIC_WRITE,
                            0,
                            0,
@@ -182,14 +185,14 @@ TEST(File, GetAttributesNoHandle)
     }
 
     EXPECT_EQ(FILE_ATTRIBUTE_ARCHIVE,
-              File::GetAttributes(GetTestPath(L"GetAttributesNoHandle.txt")));
+              File::GetAttributes(GetTestPath("GetAttributesNoHandle.txt")));
 
-    File::Delete(GetTestPath(L"GetAttributesNoHandle.txt"));
+    File::Delete(GetTestPath("GetAttributesNoHandle.txt"));
 }
 
 TEST(File, CanReadBytes)
 {
-    File explorer(L"C:\\Windows\\Explorer.exe",
+    File explorer("C:\\Windows\\Explorer.exe",
                   FILE_READ_DATA,
                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                   nullptr,
@@ -209,7 +212,7 @@ TEST(File, CanWriteBytes)
 
     // Write to the file
     {
-        File fileToWriteTo(GetTestPath(L"CanWriteBytes.txt"),
+        File fileToWriteTo(GetTestPath("CanWriteBytes.txt"),
                            GENERIC_READ | GENERIC_WRITE,
                            0,
                            0,
@@ -219,7 +222,7 @@ TEST(File, CanWriteBytes)
 
     // Read from the file
     {
-        File fileToReadFrom(GetTestPath(L"CanWriteBytes.txt"),
+        File fileToReadFrom(GetTestPath("CanWriteBytes.txt"),
                             GENERIC_READ,
                             0,
                             0,
@@ -232,7 +235,7 @@ TEST(File, CanWriteBytes)
 
 TEST(File, CantWriteBytesToReadOnlyFile)
 {
-    File fileToWriteTo(GetTestPath(L"CantWriteBytesToReadOnlyFile.txt"),
+    File fileToWriteTo(GetTestPath("CantWriteBytesToReadOnlyFile.txt"),
                        GENERIC_READ,
                        0,
                        0,
@@ -252,90 +255,90 @@ TEST(File, CantWriteBytesToReadOnlyFile)
 TEST(File, CanDelete)
 {
     {
-        File unitUnderTest(GetTestPath(L"DeleteMe.txt"),
+        File unitUnderTest(GetTestPath("DeleteMe.txt"),
                            GENERIC_READ,
                            0,
                            0,
                            CREATE_NEW,
                            FILE_ATTRIBUTE_NORMAL);
     }
-    File::Delete(GetTestPath(L"DeleteMe.txt"));
-    ASSERT_FALSE(File::Exists(GetTestPath(L"DeleteMe.txt")));
+    File::Delete(GetTestPath("DeleteMe.txt"));
+    ASSERT_FALSE(File::Exists(GetTestPath("DeleteMe.txt")));
 }
 
 TEST(File, DeleteChecksError)
 {
-    ASSERT_THROW(File::Delete(GetTestPath(L"IDoNotExist.txt")),
+    ASSERT_THROW(File::Delete(GetTestPath("IDoNotExist.txt")),
                  ErrorFileNotFoundException);
 }
 
 TEST(File, FileExists)
 {
-    ASSERT_TRUE(File::Exists(L"C:\\Windows\\Explorer.exe"));
+    ASSERT_TRUE(File::Exists("C:\\Windows\\Explorer.exe"));
 }
 
 TEST(File, DirectoryExists)
 {
-    ASSERT_TRUE(File::Exists(L"C:\\Windows"));
+    ASSERT_TRUE(File::Exists("C:\\Windows"));
 }
 
 TEST(File, NotExists)
 {
-    ASSERT_FALSE(File::Exists(GetTestPath(L"I Do Not Exist")));
+    ASSERT_FALSE(File::Exists(GetTestPath("I Do Not Exist")));
 }
 
 TEST(File, IsDirectoryExists)
 {
-    ASSERT_TRUE(File::IsDirectory(L"C:\\Windows"));
+    ASSERT_TRUE(File::IsDirectory("C:\\Windows"));
 }
 
 TEST(File, IsDirectoryNotExists)
 {
-    ASSERT_FALSE(File::IsDirectory(GetTestPath(L"I Do Not Exist")));
+    ASSERT_FALSE(File::IsDirectory(GetTestPath("I Do Not Exist")));
 }
 
 TEST(File, IsDirectoryFile)
 {
-    ASSERT_FALSE(File::IsDirectory(L"C:\\Windows\\Explorer.exe"));
+    ASSERT_FALSE(File::IsDirectory("C:\\Windows\\Explorer.exe"));
 }
 
 TEST(File, IsExecutable)
 {
-    ASSERT_TRUE(File::IsExecutable(L"C:\\Windows\\Explorer.exe"));
+    ASSERT_TRUE(File::IsExecutable("C:\\Windows\\Explorer.exe"));
 }
 
 TEST(File, IsExecutablNonExecutable)
 {
     ASSERT_FALSE(
-        File::IsExecutable(L"C:\\Windows\\System32\\drivers\\etc\\hosts"));
+        File::IsExecutable("C:\\Windows\\System32\\drivers\\etc\\hosts"));
 }
 
 TEST(File, IsExecutableDirectory)
 {
-    ASSERT_FALSE(File::IsExecutable(L"C:\\Windows"));
+    ASSERT_FALSE(File::IsExecutable("C:\\Windows"));
 }
 
 TEST(File, GetsCompanyInformation)
 {
-    EXPECT_EQ(L"Microsoft Corporation",
-              File::GetCompany(L"C:\\Windows\\Explorer.exe"));
+    EXPECT_EQ("Microsoft Corporation",
+              File::GetCompany("C:\\Windows\\Explorer.exe"));
 }
 
 TEST(File, ExtendedAttributesStaticFailsNonexistent)
 {
-    EXPECT_THROW(File::GetExtendedAttributes(L"C:\\Nonexistent\\Nonexistent"),
+    EXPECT_THROW(File::GetExtendedAttributes("C:\\Nonexistent\\Nonexistent"),
                  ErrorPathNotFoundException);
 }
 
 TEST(File, AttributesStaticFailsNonexistent)
 {
-    EXPECT_THROW(File::GetAttributes(L"C:\\Nonexistent\\Nonexistent"),
+    EXPECT_THROW(File::GetAttributes("C:\\Nonexistent\\Nonexistent"),
                  ErrorPathNotFoundException);
 }
 
 TEST(File, GetSizeStaticFailsNonexistent)
 {
-    EXPECT_THROW(File::GetSize(L"C:\\Nonexistent\\Nonexistent"),
+    EXPECT_THROW(File::GetSize("C:\\Nonexistent\\Nonexistent"),
                  ErrorPathNotFoundException);
 }
 
@@ -359,18 +362,18 @@ TEST(File, FileIsMoveAssignable)
 
 TEST(File, ExclusiveMatch)
 {
-    ASSERT_PRED1(File::IsExclusiveFile, L"C:\\Windows\\Explorer.exe");
+    ASSERT_PRED1(File::IsExclusiveFile, "C:\\Windows\\Explorer.exe");
 }
 
 TEST(File, ExclusiveNoMatch)
 {
     ASSERT_FALSE(
-        File::IsExclusiveFile(L"C:\\Nonexistent\\Nonexistent\\Nonexistent"));
+        File::IsExclusiveFile("C:\\Nonexistent\\Nonexistent\\Nonexistent"));
 }
 
 TEST(File, ExclusiveNoMatchDir)
 {
-    ASSERT_FALSE(File::IsExclusiveFile(L"C:\\Windows"));
+    ASSERT_FALSE(File::IsExclusiveFile("C:\\Windows"));
 }
 
 using Instalog::Path::Append;
@@ -391,40 +394,40 @@ struct FindFileFixture : public ::testing::Test
     |           \---ShouldNotSee
     */
 
-    std::wstring rootPath;
-    std::wstring basicRootPath;
-    std::wstring errorRootPath;
+    std::string rootPath;
+    std::string basicRootPath;
+    std::string errorRootPath;
 
-    std::wstring one;
-    std::wstring two;
-    std::wstring three;
-    std::wstring four;
-    std::wstring five;
-    std::wstring six;
+    std::string one;
+    std::string two;
+    std::string three;
+    std::string four;
+    std::string five;
+    std::string six;
 
-    std::wstring accessDenied;
-    std::wstring shouldNotSee;
-    std::wstring afterAccess;
-    std::wstring afterAccess2;
+    std::string accessDenied;
+    std::string shouldNotSee;
+    std::string afterAccess;
+    std::string afterAccess2;
 
     virtual void SetUp() override
     {
         // Figure out what the paths should be.
-        rootPath = GetTestPath(L"FindFileTests");
-        basicRootPath = Append(rootPath, L"Basic");
-        errorRootPath = Append(rootPath, L"Errors");
+        rootPath = GetTestPath("FindFileTests");
+        basicRootPath = Append(rootPath, "Basic");
+        errorRootPath = Append(rootPath, "Errors");
 
-        one = Append(basicRootPath, L"One");
-        two = Append(basicRootPath, L"Two");
-        three = Append(basicRootPath, L"Three");
-        four = Append(one, L"Four");
-        five = Append(four, L"Five");
-        six = Append(two, L"Six");
+        one = Append(basicRootPath, "One");
+        two = Append(basicRootPath, "Two");
+        three = Append(basicRootPath, "Three");
+        four = Append(one, "Four");
+        five = Append(four, "Five");
+        six = Append(two, "Six");
 
-        accessDenied = Append(errorRootPath, L"AccessDenied");
-        shouldNotSee = Append(accessDenied, L"ShouldNotSee");
-        afterAccess = Append(errorRootPath, L"After");
-        afterAccess2 = Append(afterAccess, L"After2");
+        accessDenied = Append(errorRootPath, "AccessDenied");
+        shouldNotSee = Append(accessDenied, "ShouldNotSee");
+        afterAccess = Append(errorRootPath, "After");
+        afterAccess2 = Append(afterAccess, "After2");
 
         // Create the security descriptor for the Access Denied directory
         // Grant WRITE_DAC to everyone, and nothing else
@@ -452,21 +455,21 @@ struct FindFileFixture : public ::testing::Test
         sa.nLength = sizeof(sa);
         sa.lpSecurityDescriptor = &sd;
 
-        ::CreateDirectoryW(rootPath.c_str(), nullptr);
-        ::CreateDirectoryW(basicRootPath.c_str(), nullptr);
-        ::CreateDirectoryW(errorRootPath.c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(rootPath).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(basicRootPath).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(errorRootPath).c_str(), nullptr);
 
-        ::CreateDirectoryW(one.c_str(), nullptr);
-        ::CreateDirectoryW(two.c_str(), nullptr);
-        ::CreateDirectoryW(three.c_str(), nullptr);
-        ::CreateDirectoryW(four.c_str(), nullptr);
-        ::CreateDirectoryW(five.c_str(), nullptr);
-        ::CreateDirectoryW(six.c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(one).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(two).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(three).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(four).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(five).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(six).c_str(), nullptr);
 
-        ::CreateDirectoryW(accessDenied.c_str(), &sa);
-        ::CreateDirectoryW(shouldNotSee.c_str(), nullptr);
-        ::CreateDirectoryW(afterAccess.c_str(), nullptr);
-        ::CreateDirectoryW(afterAccess2.c_str(), &sa);
+        ::CreateDirectoryW(utf8::ToUtf16(accessDenied).c_str(), &sa);
+        ::CreateDirectoryW(utf8::ToUtf16(shouldNotSee).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(afterAccess).c_str(), nullptr);
+        ::CreateDirectoryW(utf8::ToUtf16(afterAccess2).c_str(), &sa);
     }
 
     virtual void TearDown() override
@@ -485,7 +488,8 @@ struct FindFileFixture : public ::testing::Test
         ::SetSecurityDescriptorControl(
             &sd, SE_DACL_PROTECTED, SE_DACL_PROTECTED);
 
-        ::SetNamedSecurityInfoW(&accessDenied[0],
+        std::wstring accessDeniedWide(utf8::ToUtf16(accessDenied));
+        ::SetNamedSecurityInfoW(&accessDeniedWide[0],
                                 SE_FILE_OBJECT,
                                 DACL_SECURITY_INFORMATION,
                                 nullptr,
@@ -493,7 +497,8 @@ struct FindFileFixture : public ::testing::Test
                                 acl,
                                 nullptr);
 
-        ::SetNamedSecurityInfoW(&shouldNotSee[0],
+        std::wstring shouldNotSeeWide(utf8::ToUtf16(shouldNotSee));
+        ::SetNamedSecurityInfoW(&shouldNotSeeWide[0],
                                 SE_FILE_OBJECT,
                                 DACL_SECURITY_INFORMATION,
                                 nullptr,
@@ -501,7 +506,8 @@ struct FindFileFixture : public ::testing::Test
                                 acl,
                                 nullptr);
 
-        ::SetNamedSecurityInfoW(&afterAccess2[0],
+        std::wstring afterAccess2Wide(utf8::ToUtf16(afterAccess2));
+        ::SetNamedSecurityInfoW(&afterAccess2Wide[0],
                                 SE_FILE_OBJECT,
                                 DACL_SECURITY_INFORMATION,
                                 nullptr,
@@ -509,29 +515,29 @@ struct FindFileFixture : public ::testing::Test
                                 acl,
                                 nullptr);
 
-        ::RemoveDirectoryW(afterAccess2.c_str());
-        ::RemoveDirectoryW(afterAccess.c_str());
-        ::RemoveDirectoryW(shouldNotSee.c_str());
-        ::RemoveDirectoryW(accessDenied.c_str());
+        ::RemoveDirectoryW(afterAccess2Wide.c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(afterAccess).c_str());
+        ::RemoveDirectoryW(shouldNotSeeWide.c_str());
+        ::RemoveDirectoryW(accessDeniedWide.c_str());
 
-        ::RemoveDirectoryW(six.c_str());
-        ::RemoveDirectoryW(five.c_str());
-        ::RemoveDirectoryW(four.c_str());
-        ::RemoveDirectoryW(three.c_str());
-        ::RemoveDirectoryW(two.c_str());
-        ::RemoveDirectoryW(one.c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(six).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(five).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(four).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(three).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(two).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(one).c_str());
 
-        ::RemoveDirectoryW(errorRootPath.c_str());
-        ::RemoveDirectoryW(basicRootPath.c_str());
-        ::RemoveDirectoryW(rootPath.c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(errorRootPath).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(basicRootPath).c_str());
+        ::RemoveDirectoryW(utf8::ToUtf16(rootPath).c_str());
     }
 };
 
 TEST_F(FindFileFixture, FindFilesBasic)
 {
-    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, L"*"));
+    Instalog::SystemFacades::FindFiles handle(Append(basicRootPath, "*"));
 
-    wchar_t const* expectedResults[] = {L"One", L"Three", L"Two", };
+    char const* expectedResults[] = {"One", "Three", "Two", };
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
@@ -552,10 +558,10 @@ TEST_F(FindFileFixture, FindFilesWithDots)
     using Instalog::SystemFacades::FindFilesOptions;
 
     Instalog::SystemFacades::FindFiles handle(
-        Append(basicRootPath, L"*"), FindFilesOptions::IncludeDotDirectories);
+        Append(basicRootPath, "*"), FindFilesOptions::IncludeDotDirectories);
 
-    wchar_t const* expectedResults[] = {
-        L".", L"..", L"One", L"Three", L"Two", };
+    char const* expectedResults[] = {
+        ".", "..", "One", "Three", "Two", };
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
@@ -573,7 +579,7 @@ TEST_F(FindFileFixture, FindFilesWithDots)
 TEST_F(FindFileFixture, FindFilesFileNonexistent)
 {
     Instalog::SystemFacades::FindFiles handle(
-        Append(basicRootPath, L"nonexistent"));
+        Append(basicRootPath, "nonexistent"));
     EXPECT_THROW(handle.GetRecord(), std::logic_error);
     EXPECT_FALSE(handle.TryGetRecord().is_valid());
     EXPECT_TRUE(handle.Next());
@@ -587,7 +593,7 @@ TEST_F(FindFileFixture, FindFilesFileNonexistent)
 
 TEST_F(FindFileFixture, FindFilesPathNonexistent)
 {
-    auto const pattern = Append(basicRootPath, L"nonexistent\\nonexistent");
+    auto const pattern = Append(basicRootPath, "nonexistent\\nonexistent");
     Instalog::SystemFacades::FindFiles handle(pattern);
     EXPECT_FALSE(handle.TryGetRecord().is_valid());
     EXPECT_THROW(handle.GetRecord(), std::logic_error);
@@ -602,10 +608,10 @@ TEST_F(FindFileFixture, FindFilesPathNonexistent)
 
 TEST_F(FindFileFixture, FindFilesSingle)
 {
-    auto const pattern = Append(basicRootPath, L"ON*");
+    auto const pattern = Append(basicRootPath, "ON*");
     Instalog::SystemFacades::FindFiles handle(pattern);
     EXPECT_TRUE(handle.Next());
-    auto const expected = Append(basicRootPath, L"One");
+    auto const expected = Append(basicRootPath, "One");
     EXPECT_EQ(expected, handle.GetRecord().GetFileName());
 }
 
@@ -615,13 +621,13 @@ TEST_F(FindFileFixture, FindFilesRecursiveWithDots)
     using Instalog::SystemFacades::FindFilesOptions;
 
     Instalog::SystemFacades::FindFiles handle(
-        Append(basicRootPath, L"*"),
+        Append(basicRootPath, "*"),
         FindFilesOptions::RecursiveSearch |
             FindFilesOptions::IncludeDotDirectories);
 
-    wchar_t const* expectedResults[] = {
-        L".",               L"..",    L"One", L"One\\Four",
-        L"One\\Four\\Five", L"Three", L"Two", L"Two\\Six"};
+    char const* expectedResults[] = {
+        ".",               "..",    "One", "One\\Four",
+        "One\\Four\\Five", "Three", "Two", "Two\\Six"};
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
@@ -642,15 +648,15 @@ TEST_F(FindFileFixture, FindFilesRecursiveWithErrors)
     using Instalog::SystemFacades::FindFilesOptions;
 
     Instalog::SystemFacades::FindFiles handle(
-        Append(rootPath, L"*"), FindFilesOptions::RecursiveSearch);
+        Append(rootPath, "*"), FindFilesOptions::RecursiveSearch);
 
-    wchar_t const* expectedResults[] = {
-        L"Basic",                L"Basic\\One",
-        L"Basic\\One\\Four",     L"Basic\\One\\Four\\Five",
-        L"Basic\\Three",         L"Basic\\Two",
-        L"Basic\\Two\\Six",      L"Errors",
-        L"Errors\\AccessDenied", L"Errors\\After",
-        L"Errors\\After\\After2"};
+    char const* expectedResults[] = {
+        "Basic",                "Basic\\One",
+        "Basic\\One\\Four",     "Basic\\One\\Four\\Five",
+        "Basic\\Three",         "Basic\\Two",
+        "Basic\\Two\\Six",      "Errors",
+        "Errors\\AccessDenied", "Errors\\After",
+        "Errors\\After\\After2"};
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
@@ -671,12 +677,12 @@ TEST_F(FindFileFixture, FindFilesRecursiveWithErrorsErrorsChecked)
     using Instalog::SystemFacades::FindFilesOptions;
 
     Instalog::SystemFacades::FindFiles handle(
-        Append(rootPath, L"*"), FindFilesOptions::RecursiveSearch);
+        Append(rootPath, "*"), FindFilesOptions::RecursiveSearch);
 
-    wchar_t const* expectedResults[] = {
-        L"Basic",                  L"Basic\\One",   L"Basic\\One\\Four",
-        L"Basic\\One\\Four\\Five", L"Basic\\Three", L"Basic\\Two",
-        L"Basic\\Two\\Six",        L"Errors",       L"Errors\\AccessDenied", };
+    char const* expectedResults[] = {
+        "Basic",                  "Basic\\One",   "Basic\\One\\Four",
+        "Basic\\One\\Four\\Five", "Basic\\Three", "Basic\\Two",
+        "Basic\\Two\\Six",        "Errors",       "Errors\\AccessDenied", };
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {
@@ -707,18 +713,18 @@ TEST_F(FindFileFixture, FindFilesRecursiveWithDotsWithErrors)
     using Instalog::SystemFacades::FindFilesOptions;
 
     Instalog::SystemFacades::FindFiles handle(
-        Append(rootPath, L"*"),
+        Append(rootPath, "*"),
         FindFilesOptions::RecursiveSearch |
             FindFilesOptions::IncludeDotDirectories);
 
-    wchar_t const* expectedResults[] = {
-        L".",                    L"..",
-        L"Basic",                L"Basic\\One",
-        L"Basic\\One\\Four",     L"Basic\\One\\Four\\Five",
-        L"Basic\\Three",         L"Basic\\Two",
-        L"Basic\\Two\\Six",      L"Errors",
-        L"Errors\\AccessDenied", L"Errors\\After",
-        L"Errors\\After\\After2"};
+    char const* expectedResults[] = {
+        ".",                    "..",
+        "Basic",                "Basic\\One",
+        "Basic\\One\\Four",     "Basic\\One\\Four\\Five",
+        "Basic\\Three",         "Basic\\Two",
+        "Basic\\Two\\Six",      "Errors",
+        "Errors\\AccessDenied", "Errors\\After",
+        "Errors\\After\\After2"};
 
     for (std::size_t idx = 0; idx < _countof(expectedResults); ++idx)
     {

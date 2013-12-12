@@ -7,10 +7,11 @@
 #include <string>
 #include <algorithm>
 #include <Windows.h>
+#include "../LogCommon/Utf8.hpp"
 
-inline std::wstring GetTestBinaryPath()
+inline std::string GetTestBinaryPath()
 {
-    std::wstring (*ptr)() = GetTestBinaryPath;
+    std::string (*ptr)() = GetTestBinaryPath;
     wchar_t const* ptrVoid = reinterpret_cast<wchar_t const*>(ptr);
     HMODULE hMod;
     ::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
@@ -20,29 +21,19 @@ inline std::wstring GetTestBinaryPath()
     std::wstring result;
     result.resize(MAX_PATH);
     result.resize(::GetModuleFileNameW(hMod, &result[0], MAX_PATH));
-    return result;
+    return utf8::ToUtf8(result);
 }
 
-inline std::wstring GetTestBinaryDir()
+inline std::string GetTestBinaryDir()
 {
-    std::wstring result(GetTestBinaryPath());
-    result.replace(std::find(result.crbegin(), result.crend(), L'\\').base(),
+    std::string result(GetTestBinaryPath());
+    result.replace(std::find(result.crbegin(), result.crend(), '\\').base(),
                    result.cend(),
-                   L"TestData\\");
+                   "TestData\\");
     return result;
 }
 
-inline std::wstring GetTestFilePath(std::wstring const& file)
+inline std::string GetTestFilePath(std::string const& file)
 {
     return GetTestBinaryDir().append(file);
-}
-
-inline std::string Str(char const* val)
-{
-    return val;
-}
-
-inline std::wstring Str(wchar_t const* val)
-{
-    return val;
 }

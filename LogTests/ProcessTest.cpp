@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include "../LogCommon/Win32Exception.hpp"
 #include "../LogCommon/Process.hpp"
+#include "../LogCommon/Utf8.hpp"
 
 #pragma comment(lib, "psapi.lib")
 
@@ -56,7 +57,7 @@ TEST(Process, CanGetProcessExecutables)
 {
     wchar_t currentProcessExecutable[MAX_PATH];
     ::GetModuleFileName(NULL, currentProcessExecutable, MAX_PATH);
-    std::wstring baseName = currentProcessExecutable;
+    std::string baseName = utf8::ToUtf8(currentProcessExecutable);
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
     for (Process p : enumerator)
@@ -74,7 +75,7 @@ TEST(Process, CanGetProcessExecutables)
 TEST(Process, CanGetProcessCommandLines)
 {
     wchar_t const* currentProcessCmdLine = ::GetCommandLineW();
-    std::wstring baseName = currentProcessCmdLine;
+    std::string baseName = utf8::ToUtf8(currentProcessCmdLine);
     ProcessEnumerator enumerator;
     bool couldFindMyOwnProcess = false;
     for (Process p : enumerator)

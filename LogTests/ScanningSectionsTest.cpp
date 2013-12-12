@@ -12,10 +12,10 @@ using namespace Instalog;
 
 struct BaseSectionsTest : public testing::Test
 {
-    std::wostringstream ss;
-    std::vector<std::wstring> options;
+    string_sink ss;
+    std::vector<std::string> options;
     ISectionDefinition const* def;
-    std::wstring arg;
+    std::string arg;
     void Go()
     {
         def->Execute(ss, ScriptSection(def, arg), options);
@@ -33,12 +33,12 @@ struct RunningProcessesTest : public BaseSectionsTest
 
 TEST_F(RunningProcessesTest, CommandIsrunningprocesses)
 {
-    ASSERT_EQ(L"runningprocesses", rp.GetScriptCommand());
+    ASSERT_EQ("runningprocesses", rp.GetScriptCommand());
 }
 
 TEST_F(RunningProcessesTest, NameIsRunningProcesses)
 {
-    ASSERT_EQ(L"Running Processes", rp.GetName());
+    ASSERT_EQ("Running Processes", rp.GetName());
 }
 
 TEST_F(RunningProcessesTest, PriorityIsScanning)
@@ -46,8 +46,8 @@ TEST_F(RunningProcessesTest, PriorityIsScanning)
     ASSERT_EQ(SCANNING, rp.GetPriority());
 }
 
-inline bool test_icontains(std::wstring const& haystack,
-                           std::wstring const& needle)
+inline bool test_icontains(std::string const& haystack,
+                           std::string const& needle)
 {
     return boost::algorithm::icontains(haystack, needle);
 }
@@ -60,23 +60,23 @@ TEST_F(RunningProcessesTest, SvchostHasFullLine)
         return;
     }
 
-    std::wstring svcHost = L"C:\\Windows\\system32\\svchost.exe -k netsvcs";
+    std::string svcHost = "C:\\Windows\\system32\\svchost.exe -k netsvcs";
     Go();
-    ASSERT_PRED2(&test_icontains, ss.str(), svcHost);
+    ASSERT_PRED2(&test_icontains, ss.get(), svcHost);
 }
 
 TEST_F(RunningProcessesTest, TestsDoNotHaveFullLine)
 {
-    std::wstring tests = L"Logtests.exe\n";
+    std::string tests = "Logtests.exe\n";
     Go();
-    ASSERT_PRED2(&test_icontains, ss.str(), tests);
+    ASSERT_PRED2(&test_icontains, ss.get(), tests);
 }
 
 TEST_F(RunningProcessesTest, NtoskrnlNotPresent)
 {
     Go();
     ASSERT_FALSE(boost::algorithm::contains(
-        ss.str(), L"C:\\Windows\\System32\\Ntoskrnl.exe"));
+        ss.get(), "C:\\Windows\\System32\\Ntoskrnl.exe"));
 }
 
 struct ServicesDriversTest : public BaseSectionsTest
@@ -90,35 +90,35 @@ struct ServicesDriversTest : public BaseSectionsTest
 
 TEST_F(ServicesDriversTest, ScriptCommandIsCorrect)
 {
-    ASSERT_EQ(L"servicesdrivers", sd.GetScriptCommand());
+    ASSERT_EQ("servicesdrivers", sd.GetScriptCommand());
 }
 
 TEST_F(ServicesDriversTest, NameIsCorrect)
 {
-    ASSERT_EQ(L"Services/Drivers", sd.GetName());
+    ASSERT_EQ("Services/Drivers", sd.GetName());
 }
 
 TEST_F(ServicesDriversTest, ActuallyGotOutput)
 {
     Go();
-    ASSERT_FALSE(ss.str().empty());
+    ASSERT_FALSE(ss.get().empty());
 }
 
 TEST_F(ServicesDriversTest, TcpipWhitelisted)
 {
     Go();
     ASSERT_FALSE(boost::algorithm::contains(
-        ss.str(),
-        L"R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
+        ss.get(),
+        "R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
 }
 
 TEST_F(ServicesDriversTest, RpcSsSvchost)
 {
     Go();
     ASSERT_TRUE(boost::algorithm::contains(
-        ss.str(),
-        L"R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"))
-        << L"This will fail if RpcSs is not configured to auto-start or is not running";
+        ss.get(),
+        "R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"))
+        << "This will fail if RpcSs is not configured to auto-start or is not running";
 }
 
 struct EventViewerTest : public BaseSectionsTest
@@ -132,16 +132,16 @@ struct EventViewerTest : public BaseSectionsTest
 
 TEST_F(EventViewerTest, ScriptCommandIsCorrect)
 {
-    ASSERT_EQ(L"eventviewer", ev.GetScriptCommand());
+    ASSERT_EQ("eventviewer", ev.GetScriptCommand());
 }
 
 TEST_F(EventViewerTest, NameIsCorrect)
 {
-    ASSERT_EQ(L"Event Viewer", ev.GetName());
+    ASSERT_EQ("Event Viewer", ev.GetName());
 }
 
 TEST_F(EventViewerTest, ActuallyGotOutput)
 {
     Go();
-    ASSERT_FALSE(ss.str().empty());
+    ASSERT_FALSE(ss.get().empty());
 }

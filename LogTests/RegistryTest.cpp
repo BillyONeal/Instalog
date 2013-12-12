@@ -9,10 +9,11 @@
 #include "../LogCommon/Win32Glue.hpp"
 #include "../LogCommon/Registry.hpp"
 #include "../LogCommon/Win32Exception.hpp"
+#include "../LogCommon/Utf8.hpp"
 
 using namespace Instalog::SystemFacades;
 
-static std::wstring GetCurrentUserRelativeKeyPath(wchar_t const* other)
+static std::string GetCurrentUserRelativeKeyPath(char const* other)
 {
     std::wstring resultStr;
     resultStr.reserve(1024);
@@ -31,8 +32,7 @@ static std::wstring GetCurrentUserRelativeKeyPath(wchar_t const* other)
     ::ConvertSidToStringSidW(user.User.Sid, &result);
     resultStr.append(result);
     ::LocalFree(result);
-    resultStr.append(other);
-    return resultStr;
+    return utf8::ToUtf8(resultStr) + other;
 }
 
 TEST(Registry, IsDefaultConstructable)
@@ -45,7 +45,7 @@ TEST(Registry, CanCreateKey)
 {
     RegistryKey keyUnderTest = RegistryKey::Create(
         GetCurrentUserRelativeKeyPath(
-            L"\\Software\\Microsoft\\NonexistentTestKeyHere"),
+            "\\Software\\Microsoft\\NonexistentTestKeyHere"),
         KEY_QUERY_VALUE | DELETE);
     if (keyUnderTest.Invalid())
     {
@@ -67,7 +67,7 @@ TEST(Registry, CanOpenKey)
 {
     RegistryKey keyUnderTest = RegistryKey::Create(
         GetCurrentUserRelativeKeyPath(
-            L"\\Software\\Microsoft\\NonexistentTestKeyHere"),
+            "\\Software\\Microsoft\\NonexistentTestKeyHere"),
         KEY_QUERY_VALUE | DELETE);
     if (keyUnderTest.Invalid())
     {
@@ -76,7 +76,7 @@ TEST(Registry, CanOpenKey)
     }
     RegistryKey keyOpenedAgain =
         RegistryKey::Open(GetCurrentUserRelativeKeyPath(
-                              L"\\Software\\Microsoft\\NonexistentTestKeyHere"),
+                              "\\Software\\Microsoft\\NonexistentTestKeyHere"),
                           KEY_QUERY_VALUE);
     EXPECT_TRUE(keyOpenedAgain.Valid());
     keyUnderTest.Delete();
@@ -86,7 +86,7 @@ TEST(Registry, CantOpenNonexistentKey)
 {
     RegistryKey keyUnderTest =
         RegistryKey::Open(GetCurrentUserRelativeKeyPath(
-                              L"\\Software\\Microsoft\\NonexistentTestKeyHere"),
+                              "\\Software\\Microsoft\\NonexistentTestKeyHere"),
                           KEY_QUERY_VALUE);
     ASSERT_TRUE(keyUnderTest.Invalid());
 }
@@ -94,10 +94,10 @@ TEST(Registry, CantOpenNonexistentKey)
 TEST(Registry, CanCreateSubkey)
 {
     RegistryKey rootKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft"));
+        GetCurrentUserRelativeKeyPath("\\Software\\Microsoft"));
     ASSERT_TRUE(rootKey.Valid());
     RegistryKey subKey =
-        RegistryKey::Create(rootKey, L"Example", KEY_ALL_ACCESS);
+        RegistryKey::Create(rootKey, "Example", KEY_ALL_ACCESS);
     if (subKey.Invalid())
     {
         DWORD last = ::GetLastError();
@@ -110,20 +110,20 @@ TEST(Registry, CanDelete)
 {
     RegistryKey keyUnderTest = RegistryKey::Create(
         GetCurrentUserRelativeKeyPath(
-            L"\\Software\\Microsoft\\NonexistentTestKeyHere"),
+            "\\Software\\Microsoft\\NonexistentTestKeyHere"),
         DELETE);
     keyUnderTest.Delete();
     keyUnderTest = RegistryKey::Open(GetCurrentUserRelativeKeyPath(
-        L"\\Software\\Microsoft\\NonexistentTestKeyHere"));
+        "\\Software\\Microsoft\\NonexistentTestKeyHere"));
     ASSERT_TRUE(keyUnderTest.Invalid());
 }
 
 TEST(Registry, CanOpenSubkey)
 {
     RegistryKey rootKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L"\\Software\\Microsoft"));
+        GetCurrentUserRelativeKeyPath("\\Software\\Microsoft"));
     ASSERT_TRUE(rootKey.Valid());
-    RegistryKey subKey = RegistryKey::Open(rootKey, L"Windows", KEY_ALL_ACCESS);
+    RegistryKey subKey = RegistryKey::Open(rootKey, "Windows", KEY_ALL_ACCESS);
     EXPECT_TRUE(subKey.Valid());
 }
 
@@ -151,24 +151,24 @@ TEST(Registry, GetsRightSizeInformation)
     RegCloseKey(hKey);
     std::uint64_t convertedTime = Instalog::FiletimeToInteger(lastTime);
     RegistryKey systemKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L"\\Software"), KEY_READ);
+        GetCurrentUserRelativeKeyPath("\\Software"), KEY_READ);
     auto sizeInfo = systemKey.GetSizeInformation();
     ASSERT_EQ(convertedTime, sizeInfo.GetLastWriteTime());
     ASSERT_EQ(subKeys, sizeInfo.GetNumberOfSubkeys());
     ASSERT_EQ(values, sizeInfo.GetNumberOfValues());
 }
 
-static std::vector<std::wstring> GetDefaultUserKeySubkeys()
+static std::vector<std::string> GetDefaultUserKeySubkeys()
 {
-    std::vector<std::wstring> defaultItems;
-    defaultItems.emplace_back(L"Console");
-    defaultItems.emplace_back(L"Environment");
-    defaultItems.emplace_back(L"Software");
+    std::vector<std::string> defaultItems;
+    defaultItems.emplace_back("Console");
+    defaultItems.emplace_back("Environment");
+    defaultItems.emplace_back("Software");
     std::sort(defaultItems.begin(), defaultItems.end());
     return defaultItems;
 }
 
-static void CheckVectorContainsUserSubkeys(std::vector<std::wstring> const& vec)
+static void CheckVectorContainsUserSubkeys(std::vector<std::string> const& vec)
 {
     auto defaultItems = GetDefaultUserKeySubkeys();
     ASSERT_TRUE(std::includes(
@@ -178,7 +178,7 @@ static void CheckVectorContainsUserSubkeys(std::vector<std::wstring> const& vec)
 TEST(Registry, CanEnumerateSubKeyNames)
 {
     RegistryKey systemKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
+        GetCurrentUserRelativeKeyPath(""), KEY_ENUMERATE_SUB_KEYS);
     ASSERT_TRUE(systemKey.Valid());
     auto subkeyNames = systemKey.EnumerateSubKeyNames();
     std::sort(subkeyNames.begin(), subkeyNames.end());
@@ -188,9 +188,9 @@ TEST(Registry, CanEnumerateSubKeyNames)
 TEST(Registry, SubKeyNamesCanBeSorted)
 {
     RegistryKey systemKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
+        GetCurrentUserRelativeKeyPath(""), KEY_ENUMERATE_SUB_KEYS);
     ASSERT_TRUE(systemKey.Valid());
-    std::vector<std::wstring> col(systemKey.EnumerateSubKeyNames());
+    std::vector<std::string> col(systemKey.EnumerateSubKeyNames());
     std::sort(col.begin(), col.end());
     ASSERT_TRUE(std::is_sorted(col.begin(), col.end()));
 }
@@ -198,21 +198,21 @@ TEST(Registry, SubKeyNamesCanBeSorted)
 TEST(Registry, CanGetName)
 {
     RegistryKey userSoftwareKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L"\\Software"), KEY_QUERY_VALUE);
+        GetCurrentUserRelativeKeyPath("\\Software"), KEY_QUERY_VALUE);
     ASSERT_TRUE(userSoftwareKey.Valid());
     RegistryKey newLinkKey =
-        RegistryKey::Create(GetCurrentUserRelativeKeyPath(L"\\ExampleLink"),
+        RegistryKey::Create(GetCurrentUserRelativeKeyPath("\\ExampleLink"),
                             KEY_SET_VALUE | KEY_CREATE_LINK,
                             REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK);
     if (newLinkKey.Valid())
     {
-        newLinkKey.SetValue(L"SymbolicLinkValue",
-                            GetCurrentUserRelativeKeyPath(L"\\Software"),
+        newLinkKey.SetValue("SymbolicLinkValue",
+                            GetCurrentUserRelativeKeyPath("\\Software"),
                             REG_LINK);
     }
 
     RegistryKey shouldMatchSoftwareKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L"\\ExampleLink"), KEY_QUERY_VALUE);
+        GetCurrentUserRelativeKeyPath("\\ExampleLink"), KEY_QUERY_VALUE);
     ASSERT_STREQ(userSoftwareKey.GetName().c_str(),
                  shouldMatchSoftwareKey.GetName().c_str());
 }
@@ -220,14 +220,14 @@ TEST(Registry, CanGetName)
 TEST(Registry, CanGetSubKeysOpened)
 {
     RegistryKey systemKey = RegistryKey::Open(
-        GetCurrentUserRelativeKeyPath(L""), KEY_ENUMERATE_SUB_KEYS);
+        GetCurrentUserRelativeKeyPath(""), KEY_ENUMERATE_SUB_KEYS);
     std::vector<RegistryKey> subkeys(
         systemKey.EnumerateSubKeys(KEY_QUERY_VALUE));
-    std::vector<std::wstring> names;
+    std::vector<std::string> names;
     for (RegistryKey const& p : subkeys)
     {
-        std::wstring name(p.GetName());
-        names.emplace_back(std::find(name.rbegin(), name.rend(), L'\\').base(),
+        std::string name(p.GetName());
+        names.emplace_back(std::find(name.rbegin(), name.rend(), '\\').base(),
                            name.end());
     }
 
@@ -401,11 +401,11 @@ struct RegistryValueTest : public testing::Test
         ::RegCloseKey(hConversions);
         ::RegCloseKey(hKey);
         keyUnderTest = RegistryKey::Open(
-            GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal"),
+            GetCurrentUserRelativeKeyPath("\\Software\\BillyONeal"),
             KEY_QUERY_VALUE);
         conversionsKey =
             RegistryKey::Open(GetCurrentUserRelativeKeyPath(
-                                  L"\\Software\\BillyONeal\\Conversions"),
+                                  "\\Software\\BillyONeal\\Conversions"),
                               KEY_QUERY_VALUE);
         ASSERT_TRUE(keyUnderTest.Valid());
         ASSERT_TRUE(conversionsKey.Valid());
@@ -413,10 +413,10 @@ struct RegistryValueTest : public testing::Test
     void TearDown()
     {
         RegistryKey::Open(GetCurrentUserRelativeKeyPath(
-                              L"\\Software\\BillyONeal\\Conversions"),
+                              "\\Software\\BillyONeal\\Conversions"),
                           DELETE).Delete();
         RegistryKey::Open(
-            GetCurrentUserRelativeKeyPath(L"\\Software\\BillyONeal"), DELETE)
+            GetCurrentUserRelativeKeyPath("\\Software\\BillyONeal"), DELETE)
             .Delete();
     }
 
@@ -432,7 +432,7 @@ struct RegistryValueTest : public testing::Test
 
 TEST_F(RegistryValueTest, CanGetValueData)
 {
-    auto data = keyUnderTest.GetValue(L"ExampleData");
+    auto data = keyUnderTest.GetValue("ExampleData");
     ASSERT_EQ(REG_SZ, data.GetType());
     ASSERT_EQ(sizeof(exampleData), data.size());
     ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleDataCasted));
@@ -440,7 +440,7 @@ TEST_F(RegistryValueTest, CanGetValueData)
 
 TEST_F(RegistryValueTest, CanGetDWordRawData)
 {
-    auto data = keyUnderTest.GetValue(L"ExampleDword");
+    auto data = keyUnderTest.GetValue("ExampleDword");
     ASSERT_EQ(REG_DWORD, data.GetType());
     ASSERT_EQ(sizeof(DWORD), data.size());
     union
@@ -454,7 +454,7 @@ TEST_F(RegistryValueTest, CanGetDWordRawData)
 
 TEST_F(RegistryValueTest, CanGetLongValueData)
 {
-    auto data = keyUnderTest.GetValue(L"ExampleLongData");
+    auto data = keyUnderTest.GetValue("ExampleLongData");
     ASSERT_EQ(REG_SZ, data.GetType());
     ASSERT_EQ(sizeof(exampleLongData), data.size());
     ASSERT_TRUE(std::equal(data.cbegin(), data.cend(), exampleLongDataCasted));
@@ -465,17 +465,17 @@ TEST_F(RegistryValueTest, CanEnumerateValueNames)
     auto names = keyUnderTest.EnumerateValueNames();
     ASSERT_EQ(10, names.size());
     std::sort(names.begin(), names.end());
-    std::array<std::wstring, 10> answers;
-    answers[0] = L"ExampleData";
-    answers[1] = L"ExampleDataBinary";
-    answers[2] = L"ExampleDataExpand";
-    answers[3] = L"ExampleDataNone";
-    answers[4] = L"ExampleDword";
-    answers[5] = L"ExampleFDword";
-    answers[6] = L"ExampleLongData";
-    answers[7] = L"ExampleLongDataExpand";
-    answers[8] = L"ExampleMultiSz";
-    answers[9] = L"ExampleQWord";
+    std::array<std::string, 10> answers;
+    answers[0] = "ExampleData";
+    answers[1] = "ExampleDataBinary";
+    answers[2] = "ExampleDataExpand";
+    answers[3] = "ExampleDataNone";
+    answers[4] = "ExampleDword";
+    answers[5] = "ExampleFDword";
+    answers[6] = "ExampleLongData";
+    answers[7] = "ExampleLongDataExpand";
+    answers[8] = "ExampleMultiSz";
+    answers[9] = "ExampleQWord";
     for (auto idx = 0ul; idx < names.size(); ++idx)
     {
         EXPECT_EQ(answers[idx], names[idx]);
@@ -487,11 +487,11 @@ TEST_F(RegistryValueTest, CanEnumerateValuesAndData)
     auto namesData = keyUnderTest.EnumerateValues();
     ASSERT_EQ(10, namesData.size());
     std::sort(namesData.begin(), namesData.end());
-    ASSERT_EQ(L"ExampleData", namesData[0].GetName());
+    ASSERT_EQ("ExampleData", namesData[0].GetName());
     ASSERT_EQ(REG_SZ, namesData[0].GetType());
-    ASSERT_EQ(L"ExampleDword", namesData[4].GetName());
+    ASSERT_EQ("ExampleDword", namesData[4].GetName());
     ASSERT_EQ(REG_DWORD, namesData[4].GetType());
-    ASSERT_EQ(L"ExampleLongData", namesData[6].GetName());
+    ASSERT_EQ("ExampleLongData", namesData[6].GetName());
     ASSERT_EQ(REG_SZ, namesData[6].GetType());
     ASSERT_TRUE(std::equal(
         namesData[0].cbegin(), namesData[0].cend(), exampleDataCasted));
@@ -508,13 +508,13 @@ TEST_F(RegistryValueTest, CanSortValuesAndData)
     ASSERT_EQ(10, namesData.size());
     std::random_shuffle(namesData.begin(), namesData.end());
     std::sort(namesData.begin(), namesData.end());
-    std::vector<std::wstring> out;
+    std::vector<std::string> out;
     out.resize(10);
     std::transform(namesData.begin(),
                    namesData.end(),
                    out.begin(),
                    std::mem_fun_ref(&RegistryValueAndData::GetName));
-    std::vector<std::wstring> outSorted(out);
+    std::vector<std::string> outSorted(out);
     std::sort(outSorted.begin(), outSorted.end());
     ASSERT_EQ(outSorted, out);
 }
@@ -522,7 +522,7 @@ TEST_F(RegistryValueTest, CanSortValuesAndData)
 TEST_F(RegistryValueTest, StringizeWorks)
 {
     auto underTest = GetAndSort();
-    std::vector<std::wstring> stringized(underTest.size());
+    std::vector<std::string> stringized(underTest.size());
     std::transform(underTest.begin(),
                    underTest.end(),
                    stringized.begin(),
@@ -531,23 +531,23 @@ TEST_F(RegistryValueTest, StringizeWorks)
     EXPECT_TRUE(
         std::equal(stringized[0].cbegin(), stringized[0].cend(), exampleData));
     EXPECT_EQ(
-        stringized[1], L"hex:65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
-        L",00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00"
-        L",6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65"
-        L",00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00"
-        L",00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
+        stringized[1], "hex:65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
+        ",00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61,00"
+        ",6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00,65"
+        ",00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00"
+        ",00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00");
     ASSERT_LE(stringized[2].size(), _countof(exampleData));
     EXPECT_TRUE(
         std::equal(stringized[2].cbegin(), stringized[2].cend(), exampleData));
     EXPECT_EQ(
-        stringized[3], L"hex(0):65,00,78,00,61,00,6D,00,70,00,6C,00,65,00"
-        L",20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61"
-        L",00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00"
-        L",65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
-        L",00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00"
+        stringized[3], "hex(0):65,00,78,00,61,00,6D,00,70,00,6C,00,65,00"
+        ",20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20,00,65,00,78,00,61"
+        ",00,6D,00,70,00,6C,00,65,00,20,00,74,00,65,00,73,00,74,00,20,00,74,00"
+        ",65,00,73,00,74,00,20,00,65,00,78,00,61,00,6D,00,70,00,6C,00,65,00,20"
+        ",00,00,00,20,00,65,00,6D,00,62,00,65,00,64,00,64,00,65,00,64,00,00,00"
         );
-    EXPECT_EQ(stringized[4], L"dword:DEADBEEF");
-    EXPECT_EQ(stringized[5], L"dword-be:DEADBEEF");
+    EXPECT_EQ(stringized[4], "dword:DEADBEEF");
+    EXPECT_EQ(stringized[5], "dword-be:DEADBEEF");
     ASSERT_LE(stringized[6].size(), _countof(exampleLongData));
     EXPECT_TRUE(std::equal(
         stringized[6].cbegin(), stringized[6].cend(), exampleLongData));
@@ -556,8 +556,8 @@ TEST_F(RegistryValueTest, StringizeWorks)
         stringized[7].cbegin(), stringized[7].cend(), exampleLongData));
     EXPECT_EQ(
         stringized[8],
-        L"hex(7):46,00,6F,00,6F,00,00,00,62,00,61,00,72,00,00,00,62,00,61,00,7A,00,00,00,00,00,00,00");
-    EXPECT_EQ(stringized[9], L"qword:BADC0FFEEBADBAD1");
+        "hex(7):46,00,6F,00,6F,00,00,00,62,00,61,00,72,00,00,00,62,00,61,00,7A,00,00,00,00,00,00,00");
+    EXPECT_EQ(stringized[9], "qword:BADC0FFEEBADBAD1");
 }
 
 TEST_F(RegistryValueTest, StrictStringize)
@@ -598,51 +598,51 @@ TEST_F(RegistryValueTest, DwordGetStrictRejectsBe)
 
 TEST_F(RegistryValueTest, DwordGetSmallQword)
 {
-    EXPECT_EQ(0xDEADBEEF, conversionsKey[L"SmallQWord"].GetDWord());
+    EXPECT_EQ(0xDEADBEEF, conversionsKey["SmallQWord"].GetDWord());
 }
 
 TEST_F(RegistryValueTest, DwordGetSmallQwordStrict)
 {
-    EXPECT_THROW(conversionsKey[L"SmallQWord"].GetDWordStrict(),
+    EXPECT_THROW(conversionsKey["SmallQWord"].GetDWordStrict(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, DwordGetLargeQword)
 {
-    EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleQWord"].GetDWord(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, DwordGetFailsForInvalidInputs)
 {
-    EXPECT_THROW(keyUnderTest[L"ExampleData"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleData"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataBinary"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataExpand"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataNone"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleLongData"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleLongDataExpand"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetDWord(),
+    EXPECT_THROW(keyUnderTest["ExampleMultiSz"].GetDWord(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, DwordGetTriesStringConversions)
 {
-    EXPECT_EQ(42, conversionsKey[L"WordData"].GetDWord());
+    EXPECT_EQ(42, conversionsKey["WordData"].GetDWord());
 }
 
 TEST_F(RegistryValueTest, DwordGetFailsForInvalidStringConversions)
 {
-    EXPECT_THROW(conversionsKey[L"WordDataAppended"].GetDWord(),
+    EXPECT_THROW(conversionsKey["WordDataAppended"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(conversionsKey[L"WordDataTooLong"].GetDWord(),
+    EXPECT_THROW(conversionsKey["WordDataTooLong"].GetDWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(conversionsKey[L"WordDataTooLongQ"].GetDWord(),
+    EXPECT_THROW(conversionsKey["WordDataTooLongQ"].GetDWord(),
                  InvalidRegistryDataTypeException);
 }
 
@@ -674,100 +674,100 @@ TEST_F(RegistryValueTest, QwordGetStrictRejectsDword)
 
 TEST_F(RegistryValueTest, QwordGetDword)
 {
-    EXPECT_EQ(0xDEADBEEFull, keyUnderTest[L"ExampleDword"].GetQWord());
+    EXPECT_EQ(0xDEADBEEFull, keyUnderTest["ExampleDword"].GetQWord());
 }
 
 TEST_F(RegistryValueTest, QwordGetFailsForInvalidInputs)
 {
-    EXPECT_THROW(keyUnderTest[L"ExampleData"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleData"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataBinary"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataExpand"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleDataNone"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleLongData"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleLongDataExpand"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetQWord(),
+    EXPECT_THROW(keyUnderTest["ExampleMultiSz"].GetQWord(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, QwordGetTriesStringConversions)
 {
-    EXPECT_EQ(42, conversionsKey[L"WordData"].GetQWord());
-    EXPECT_EQ(4294967296ull, conversionsKey[L"WordDataTooLong"].GetQWord());
+    EXPECT_EQ(42, conversionsKey["WordData"].GetQWord());
+    EXPECT_EQ(4294967296ull, conversionsKey["WordDataTooLong"].GetQWord());
 }
 
 TEST_F(RegistryValueTest, QwordGetFailsForInvalidStringConversions)
 {
-    EXPECT_THROW(conversionsKey[L"WordDataAppended"].GetQWord(),
+    EXPECT_THROW(conversionsKey["WordDataAppended"].GetQWord(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(conversionsKey[L"WordDataTooLongQ"].GetQWord(),
+    EXPECT_THROW(conversionsKey["WordDataTooLongQ"].GetQWord(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, CanGetMultiStringArray)
 {
-    std::vector<std::wstring> expected;
-    expected.emplace_back(L"Foo");
-    expected.emplace_back(L"bar");
-    expected.emplace_back(L"baz");
-    std::vector<std::wstring> enumerated(
-        keyUnderTest[L"ExampleMultiSz"].GetMultiStringArray());
+    std::vector<std::string> expected;
+    expected.emplace_back("Foo");
+    expected.emplace_back("bar");
+    expected.emplace_back("baz");
+    std::vector<std::string> enumerated(
+        keyUnderTest["ExampleMultiSz"].GetMultiStringArray());
     EXPECT_EQ(expected, enumerated);
 }
 
 TEST_F(RegistryValueTest, MultiStringGetFailsForInvalidInputs)
 {
-    EXPECT_THROW(keyUnderTest[L"ExampleDword"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDword"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleFDword"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleFDword"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleQWord"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleData"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleData"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDataBinary"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataExpand"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDataExpand"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDataNone"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongData"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleLongData"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleLongDataExpand"].GetMultiStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleLongDataExpand"].GetMultiStringArray(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, CommaStringGetFailsForInvalidInputs)
 {
-    EXPECT_THROW(keyUnderTest[L"ExampleDword"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDword"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleFDword"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleFDword"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleQWord"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleQWord"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataBinary"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDataBinary"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleDataNone"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleDataNone"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
-    EXPECT_THROW(keyUnderTest[L"ExampleMultiSz"].GetCommaStringArray(),
+    EXPECT_THROW(keyUnderTest["ExampleMultiSz"].GetCommaStringArray(),
                  InvalidRegistryDataTypeException);
 }
 
 TEST_F(RegistryValueTest, CanGetCommaString)
 {
-    std::vector<std::wstring> expected;
-    expected.emplace_back(L"Foo");
-    expected.emplace_back(L"bar");
-    expected.emplace_back(L"baz");
-    std::vector<std::wstring> enumerated(
-        conversionsKey[L"CommaTest"].GetCommaStringArray());
+    std::vector<std::string> expected;
+    expected.emplace_back("Foo");
+    expected.emplace_back("bar");
+    expected.emplace_back("baz");
+    std::vector<std::string> enumerated(
+        conversionsKey["CommaTest"].GetCommaStringArray());
     EXPECT_EQ(expected, enumerated);
-    std::vector<std::wstring> enumeratedExpand(
-        conversionsKey[L"CommaTestExpand"].GetCommaStringArray());
+    std::vector<std::string> enumeratedExpand(
+        conversionsKey["CommaTestExpand"].GetCommaStringArray());
     EXPECT_EQ(expected, enumeratedExpand);
 }

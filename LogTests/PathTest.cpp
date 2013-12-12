@@ -11,91 +11,92 @@
 #include "../LogCommon/Path.hpp"
 #include "../LogCommon/Wow64.hpp"
 #include "TestSupport.hpp"
+#include "../LogCommon/Utf8.hpp"
 
 using namespace Instalog::Path;
 
 TEST(PathAppendTest, NoSlashes)
 {
-    EXPECT_EQ(L"one\\two", Append(L"one", L"two"));
+    EXPECT_EQ("one\\two", Append("one", "two"));
 }
 
 TEST(PathAppendTest, PathHasSlashes)
 {
-    EXPECT_EQ(L"one\\two", Append(L"one\\", L"two"));
+    EXPECT_EQ("one\\two", Append("one\\", "two"));
 }
 
 TEST(PathAppendTest, MoreHasSlashes)
 {
-    EXPECT_EQ(L"one\\two", Append(L"one", L"\\two"));
+    EXPECT_EQ("one\\two", Append("one", "\\two"));
 }
 
 TEST(PathAppendTest, BothHaveSlashes)
 {
-    EXPECT_EQ(L"one\\two", Append(L"one\\", L"\\two"));
+    EXPECT_EQ("one\\two", Append("one\\", "\\two"));
 }
 
 TEST(PathAppendTest, PathHasManySlashes)
 {
-    EXPECT_EQ(L"one\\\\\\two", Append(L"one\\\\\\", L"two"));
+    EXPECT_EQ("one\\\\\\two", Append("one\\\\\\", "two"));
 }
 
 TEST(PathAppendTest, MoreHasManySlashes)
 {
-    EXPECT_EQ(L"one\\\\\\two", Append(L"one", L"\\\\\\two"));
+    EXPECT_EQ("one\\\\\\two", Append("one", "\\\\\\two"));
 }
 
 TEST(PathAppendTest, BothHaveManySlashes)
 {
-    EXPECT_EQ(L"one\\\\\\\\\\two", Append(L"one\\\\\\", L"\\\\\\two"));
+    EXPECT_EQ("one\\\\\\\\\\two", Append("one\\\\\\", "\\\\\\two"));
 }
 
 TEST(PathAppendTest, MoreIsEmpty)
 {
-    EXPECT_EQ(L"one", Append(L"one", L""));
+    EXPECT_EQ("one", Append("one", ""));
 }
 
 TEST(PathAppendTest, PathIsEmpty)
 {
-    EXPECT_EQ(L"two", Append(L"", L"two"));
+    EXPECT_EQ("two", Append("", "two"));
 }
 
 TEST(PathAppendTest, BothAreEmpty)
 {
-    EXPECT_EQ(L"", Append(L"", L""));
+    EXPECT_EQ("", Append("", ""));
 }
 
 TEST(PathAppendTest, AppendFailure)
 {
     EXPECT_STREQ(
-        L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found",
+        "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found",
         Append(
-            L"c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64",
-            L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found").c_str());
+            "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64",
+            "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found").c_str());
 }
 
 TEST(PathPrettify, CorrectOutput)
 {
-    std::wstring path(L"C:\\ExAmPlE\\FooBar\\Target.EXE");
+    std::string path("C:\\ExAmPlE\\FooBar\\Target.EXE");
     Prettify(path.begin(), path.end());
-    ASSERT_EQ(L"C:\\Example\\Foobar\\Target.exe", path);
+    ASSERT_EQ("C:\\Example\\Foobar\\Target.exe", path);
 }
 
 TEST(PathPrettify, DriveCapitalized)
 {
-    std::wstring path(L"c:\\Example\\Foobar\\Target.exe");
+    std::string path("c:\\Example\\Foobar\\Target.exe");
     Prettify(path.begin(), path.end());
-    ASSERT_EQ(L"C:\\Example\\Foobar\\Target.exe", path);
+    ASSERT_EQ("C:\\Example\\Foobar\\Target.exe", path);
 }
 
 TEST(PathPrettify, SpacesOkay)
 {
-    std::wstring path(L"C:\\Example\\Foo bar\\Target.exe");
+    std::string path("C:\\Example\\Foo bar\\Target.exe");
     Prettify(path.begin(), path.end());
-    ASSERT_EQ(L"C:\\Example\\Foo bar\\Target.exe", path);
+    ASSERT_EQ("C:\\Example\\Foo bar\\Target.exe", path);
 }
 
-static void TestExpansion(std::wstring const& expected,
-                          std::wstring source,
+static void TestExpansion(std::string const& expected,
+                          std::string source,
                           bool expectedReturn = true)
 {
     EXPECT_EQ(expectedReturn, ExpandShortPath(source));
@@ -104,12 +105,12 @@ static void TestExpansion(std::wstring const& expected,
 
 TEST(PathExpanding, DirectoryExpansion)
 {
-    TestExpansion(L"C:\\Program Files\\", L"C:\\Progra~1\\");
+    TestExpansion("C:\\Program Files\\", "C:\\Progra~1\\");
 }
 
 TEST(PathExpanding, NonExistantDirectoryExpansion)
 {
-    TestExpansion(L"C:\\zzzzz~1\\", L"C:\\zzzzz~1\\", false);
+    TestExpansion("C:\\zzzzz~1\\", "C:\\zzzzz~1\\", false);
 }
 
 TEST(PathExpanding, FileExpansion)
@@ -126,18 +127,18 @@ TEST(PathExpanding, FileExpansion)
         std::wcout << ::GetLastError() << std::endl;
     }
 
-    TestExpansion(L"Temporary Long Path File", L"Tempor~1", true);
+    TestExpansion("Temporary Long Path File", "Tempor~1", true);
 
     ::CloseHandle(hFile);
 }
 
 TEST(PathExpanding, NonExistantFileExpansion)
 {
-    TestExpansion(L"zzzzzz~1", L"zzzzzz~1", false);
+    TestExpansion("zzzzzz~1", "zzzzzz~1", false);
 }
 
-static void TestResolve(std::wstring expected,
-                        std::wstring source,
+static void TestResolve(std::string expected,
+                        std::string source,
                         bool expectedReturn = true)
 {
     Instalog::SystemFacades::NativeFilePathScope scope;
@@ -148,105 +149,106 @@ static void TestResolve(std::wstring expected,
 
 TEST(PathResolution, EmptyGivesEmpty)
 {
-    TestResolve(L"", L"", false);
+    TestResolve("", "", false);
 }
 
 TEST(PathResolution, DoesNotExistUnchanged)
 {
     TestResolve(
-        L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe",
-        L"C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe",
+        "C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe",
+        "C:\\Windows\\DOESNOTEXIST\\DOESNOTEXIST\\GAHIDONTKNOWWHATSGOINGTOHAPPEN\\Explorer.exe",
         false);
 }
 
 TEST(PathResolution, CanonicalPathUnchanged)
 {
-    TestResolve(L"C:\\Windows\\Explorer.exe", L"C:\\Windows\\Explorer.exe");
+    TestResolve("C:\\Windows\\Explorer.exe", "C:\\Windows\\Explorer.exe");
 }
 
 TEST(PathResolution, NativePathsCanonicalized)
 {
-    TestResolve(L"C:\\Windows\\Explorer.exe",
-                L"\\??\\C:\\Windows\\Explorer.exe");
+    TestResolve("C:\\Windows\\Explorer.exe",
+                "\\??\\C:\\Windows\\Explorer.exe");
 }
 
 TEST(PathResolution, NtPathsCanonicalized)
 {
-    TestResolve(L"C:\\Windows\\Explorer.exe",
-                L"\\\\?\\C:\\Windows\\Explorer.exe");
+    TestResolve("C:\\Windows\\Explorer.exe",
+                "\\\\?\\C:\\Windows\\Explorer.exe");
 }
 
 TEST(PathResolution, GlobalrootRemoved)
 {
-    TestResolve(L"C:\\Windows\\Explorer.exe",
-                L"globalroot\\C:\\Windows\\Explorer.exe");
+    TestResolve("C:\\Windows\\Explorer.exe",
+                "globalroot\\C:\\Windows\\Explorer.exe");
 }
 
 TEST(PathResolution, SlashGlobalrootRemoved)
 {
-    TestResolve(L"C:\\Windows\\Explorer.exe",
-                L"\\globalroot\\C:\\Windows\\Explorer.exe");
+    TestResolve("C:\\Windows\\Explorer.exe",
+                "\\globalroot\\C:\\Windows\\Explorer.exe");
 }
 
 TEST(PathResolution, System32Replaced)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"system32\\Ntoskrnl.exe");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, System32SlashedReplaced)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"\\system32\\Ntoskrnl.exe");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "\\system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, WindDirReplaced)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"\\systemroot\\system32\\Ntoskrnl.exe");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "\\systemroot\\system32\\Ntoskrnl.exe");
 }
 
 TEST(PathResolution, DefaultKernelFoundOnPath)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe", L"ntoskrnl");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe", "ntoskrnl");
 }
 
 TEST(PathResolution, AddsExtension)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"C:\\Windows\\System32\\Ntoskrnl");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "C:\\Windows\\System32\\Ntoskrnl");
 }
 
 TEST(PathResolution, CombinePhaseOneAndTwo)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"\\globalroot\\System32\\Ntoskrnl");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "\\globalroot\\System32\\Ntoskrnl");
 }
 
 TEST(PathResolution, RundllVundo)
 {
-    TestResolve(L"C:\\Windows\\System32\\Ntoskrnl.exe",
-                L"rundll32 ntoskrnl,ShellExecute");
+    TestResolve("C:\\Windows\\System32\\Ntoskrnl.exe",
+                "rundll32 ntoskrnl,ShellExecute");
 }
 
 TEST(PathResolution, RundllVundoSpaces)
 {
     TestResolve(
-        L"C:\\Windows\\System32\\Ntoskrnl.exe",
-        L"rundll32                                                 ntoskrnl,ShellExecute");
+        "C:\\Windows\\System32\\Ntoskrnl.exe",
+        "rundll32                                                 ntoskrnl,ShellExecute");
 }
 
 TEST(PathResolution, QuotedPath)
 {
     TestResolve(
-        L"C:\\Program files\\Windows nt\\Accessories\\Wordpad.exe",
-        L"\"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe\"  Arguments Arguments Arguments");
+        "C:\\Program files\\Windows nt\\Accessories\\Wordpad.exe",
+        "\"C:\\Program Files\\Windows nt\\Accessories\\Wordpad.exe\"  Arguments Arguments Arguments");
 }
 
 TEST(PathResolution, QuotedPathRundll)
 {
-    std::wstring testPath(GetTestFilePath(L"ExampleTestingFile.exe"));
-    HANDLE hFile = ::CreateFileW(testPath.c_str(),
+    std::string testPath(GetTestFilePath("ExampleTestingFile.exe"));
+    std::wstring testPathWide(utf8::ToUtf16(testPath));
+    HANDLE hFile = ::CreateFileW(testPathWide.c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
@@ -255,16 +257,16 @@ TEST(PathResolution, QuotedPathRundll)
                                  0);
     TestResolve(
         testPath,
-        L"\"C:\\Windows\\System32\\Rundll32.exe\" \"" + testPath + L",Argument arg arg\"");
+        "\"C:\\Windows\\System32\\Rundll32.exe\" \"" + testPath + ",Argument arg arg\"");
     ::CloseHandle(hFile);
 }
 
 struct PathResolutionPathOrderFixture : public testing::Test
 {
-    std::vector<std::wstring> pathItems;
-    std::wstring const fileName;
+    std::vector<std::string> pathItems;
+    std::string const fileName;
     PathResolutionPathOrderFixture()
-        : fileName(L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found")
+        : fileName("ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found")
     {
     }
     virtual void SetUp()
@@ -273,17 +275,18 @@ struct PathResolutionPathOrderFixture : public testing::Test
         std::wstring pathBuffer;
         DWORD pathLen = ::GetEnvironmentVariableW(L"PATH", nullptr, 0);
         pathBuffer.resize(pathLen);
-        ::GetEnvironmentVariable(L"PATH", &pathBuffer[0], pathLen);
+        ::GetEnvironmentVariableW(L"PATH", &pathBuffer[0], pathLen);
         pathBuffer.pop_back(); // remove null
-        boost::algorithm::split(pathItems,
+        std::vector<std::wstring> pathWideItems;
+        boost::algorithm::split(pathWideItems,
                                 pathBuffer,
                                 std::bind1st(std::equal_to<wchar_t>(), L';'));
-        ASSERT_LE(3ul, pathItems.size());
-        std::transform(pathItems.begin(),
-                       pathItems.end(),
-                       pathItems.begin(),
-                       [&](std::wstring & x) { return Append(x, fileName); });
-        std::for_each(pathItems.begin(), pathItems.end(), [](std::wstring & a) {
+        ASSERT_LE(3ul, pathWideItems.size());
+        std::transform(pathWideItems.begin(),
+                       pathWideItems.end(),
+                       std::back_inserter(pathItems),
+                       [&](std::wstring & x) { return Append(utf8::ToUtf8(x), fileName); });
+        std::for_each(pathItems.begin(), pathItems.end(), [](std::string & a) {
             Prettify(a.begin(), a.end());
         });
     }
@@ -296,7 +299,7 @@ TEST_F(PathResolutionPathOrderFixture, NoCreateFails)
 
 TEST_F(PathResolutionPathOrderFixture, SeesLastPathItem)
 {
-    HANDLE hFile = ::CreateFileW(pathItems.back().c_str(),
+    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathItems.back()).c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
@@ -316,7 +319,7 @@ TEST_F(PathResolutionPathOrderFixture, RespectsPathOrder)
     std::size_t foundFiles = 0;
     for (; idx < pathItems.size() && foundFiles < _countof(files); ++idx)
     {
-        HANDLE hCurrent = ::CreateFileW(pathItems[idx].c_str(),
+        HANDLE hCurrent = ::CreateFileW(utf8::ToUtf16(pathItems[idx]).c_str(),
                                         GENERIC_WRITE,
                                         0,
                                         0,
@@ -351,10 +354,10 @@ TEST_F(PathResolutionPathOrderFixture, RespectsPathOrder)
 
 struct PathResolutionPathExtOrderFixture : public testing::Test
 {
-    std::vector<std::wstring> pathItems;
-    std::wstring const fileName;
+    std::vector<std::string> pathItems;
+    std::string const fileName;
     PathResolutionPathExtOrderFixture()
-        : fileName(L"ExampleFileDoesNotExistFindMeFindMeFindMeFindMeExt")
+        : fileName("ExampleFileDoesNotExistFindMeFindMeFindMeFindMeExt")
     {
     }
     virtual void SetUp()
@@ -364,19 +367,25 @@ struct PathResolutionPathExtOrderFixture : public testing::Test
         pathBuffer.resize(pathLen);
         ::GetEnvironmentVariable(L"PATHEXT", &pathBuffer[0], pathLen);
         pathBuffer.pop_back(); // remove null
-        boost::algorithm::split(pathItems,
+        std::vector<std::wstring> pathItemsWide;
+        boost::algorithm::split(pathItemsWide,
                                 pathBuffer,
                                 std::bind1st(std::equal_to<wchar_t>(), L';'));
-        ASSERT_LE(3u, pathItems.size());
+        ASSERT_LE(3u, pathItemsWide.size());
+        std::transform(pathItemsWide.cbegin(),
+                       pathItemsWide.cend(),
+                       std::back_inserter(pathItems),
+                       [](std::wstring const& s)
+        { return utf8::ToUtf8(s); });
         std::for_each(pathItems.begin(),
                       pathItems.end(),
-                      [this](std::wstring & a) { a.insert(0, fileName); });
+                      [this](std::string & a) { a.insert(0, fileName); });
         std::transform(pathItems.begin(),
                        pathItems.end(),
                        pathItems.begin(),
-                       [](std::wstring &
-                          x) { return Append(L"C:\\Windows\\System32", x); });
-        std::for_each(pathItems.begin(), pathItems.end(), [](std::wstring & a) {
+                       [](std::string &
+                          x) { return Append("C:\\Windows\\System32", x); });
+        std::for_each(pathItems.begin(), pathItems.end(), [](std::string & a) {
             Prettify(a.begin(), a.end());
         });
     }
@@ -389,7 +398,7 @@ TEST_F(PathResolutionPathExtOrderFixture, NoCreateFails)
 
 TEST_F(PathResolutionPathExtOrderFixture, SeesLastPathItem)
 {
-    HANDLE hFile = ::CreateFileW(pathItems.back().c_str(),
+    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathItems.back()).c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
@@ -402,14 +411,14 @@ TEST_F(PathResolutionPathExtOrderFixture, SeesLastPathItem)
 
 TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
 {
-    HANDLE hFile = ::CreateFileW(pathItems[1].c_str(),
+    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathItems[1]).c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
                                  CREATE_ALWAYS,
                                  FILE_FLAG_DELETE_ON_CLOSE,
                                  0);
-    HANDLE hFile2 = ::CreateFileW(pathItems[2].c_str(),
+    HANDLE hFile2 = ::CreateFileW(utf8::ToUtf16(pathItems[2]).c_str(),
                                   GENERIC_WRITE,
                                   0,
                                   0,
@@ -419,75 +428,4 @@ TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
     TestResolve(pathItems[1], fileName);
     ::CloseHandle(hFile);
     ::CloseHandle(hFile2);
-}
-
-struct PathClassTests : testing::Test
-{
-    path examplePath;
-    virtual void SetUp()
-    {
-        examplePath = L"C:\\I am an example path.exe";
-    }
-};
-
-TEST_F(PathClassTests, UppercaseSanity)
-{
-    std::wstring result(L"C:\\I AM AN EXAMPLE PATH.EXE");
-    ASSERT_TRUE(
-        std::equal(examplePath.ubegin(), examplePath.uend(), result.begin()));
-}
-
-TEST_F(PathClassTests, CanInsert)
-{
-    auto insertionLength = 233u;
-    // Force reallocation
-    ASSERT_GT(insertionLength, examplePath.capacity());
-    std::wstring buffer;
-    buffer.insert(buffer.begin(), insertionLength, L'a');
-    examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
-    buffer.insert(0, L"C:\\");
-    buffer.append(L"I am an example path.exe");
-    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-    boost::algorithm::to_upper(buffer);
-    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
-}
-
-TEST_F(PathClassTests, CanInsertNoRealloc)
-{
-    // Force reallocation
-    examplePath.reserve(260);
-    std::wstring buffer(L"aaaa");
-    examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
-    buffer.insert(0, L"C:\\");
-    buffer.append(L"I am an example path.exe");
-    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-    boost::algorithm::to_upper(buffer);
-    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
-}
-
-TEST_F(PathClassTests, CanInsertBorderCaseNoReallocate)
-{
-    auto insertionLength = examplePath.capacity() - examplePath.size();
-    auto oldCapacity = examplePath.capacity();
-    std::wstring buffer;
-    buffer.insert(buffer.begin(), insertionLength, L'a');
-    examplePath.insert(examplePath.begin() + 3, buffer.begin(), buffer.end());
-    buffer.insert(0, L"C:\\");
-    buffer.append(L"I am an example path.exe");
-    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-    boost::algorithm::to_upper(buffer);
-    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
-    ASSERT_EQ(examplePath.size(), examplePath.capacity());
-    ASSERT_EQ(oldCapacity, examplePath.capacity());
-}
-
-TEST_F(PathClassTests, CanInsertNothing)
-{
-    // Insert zero length
-    char* nullPtr = nullptr;
-    examplePath.insert(examplePath.begin() + 3, nullPtr, nullPtr);
-    std::wstring buffer(L"C:\\I am an example path.exe");
-    ASSERT_STREQ(buffer.c_str(), examplePath.c_str());
-    boost::algorithm::to_upper(buffer);
-    ASSERT_STREQ(buffer.c_str(), examplePath.uc_str());
 }

@@ -146,17 +146,6 @@ inline InIter Unescape(InIter begin,
                 }
                 *target = temp;
                 break;
-            case 'u':
-                if (std::distance(begin, end) < 5)
-                    throw MalformedEscapedSequence();
-                temp = 0;
-                for (unsigned int idx = 0; idx < 4; ++idx)
-                {
-                    temp <<= 4;
-                    temp |= UnHexCharacter(*++begin);
-                }
-                *target = temp;
-                break;
             default:
                 *target = *begin;
                 break;
