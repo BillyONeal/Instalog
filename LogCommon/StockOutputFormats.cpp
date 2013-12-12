@@ -16,6 +16,8 @@
 
 using Instalog::SystemFacades::RegistryKey;
 using Instalog::SystemFacades::Win32Exception;
+using Instalog::SystemFacades::ErrorFileNotFoundException;
+using Instalog::SystemFacades::ErrorPathNotFoundException;
 using Instalog::SystemFacades::File;
 
 namespace Instalog
@@ -75,15 +77,27 @@ void WriteDefaultFileOutput(log_sink& str, std::string targetFile)
     {
         companyInfo = "";
     }
-    WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
-    std::uint64_t size =
-        static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32 | fad.nFileSizeLow;
-    write(str, targetFile, " [", size, ' ');
-    std::uint64_t ctime =
-        static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32 |
-        fad.ftCreationTime.dwLowDateTime;
-    WriteDefaultDateFormat(str, ctime);
-    write(str, companyInfo, "]");
+    write(str, targetFile);
+    try
+    {
+        WIN32_FILE_ATTRIBUTE_DATA fad = File::GetExtendedAttributes(targetFile);
+        std::uint64_t size =
+            static_cast<std::uint64_t>(fad.nFileSizeHigh) << 32 | fad.nFileSizeLow;
+        write(str, " [", size, ' ');
+        std::uint64_t ctime =
+            static_cast<std::uint64_t>(fad.ftCreationTime.dwHighDateTime) << 32 |
+            fad.ftCreationTime.dwLowDateTime;
+        WriteDefaultDateFormat(str, ctime);
+        write(str, companyInfo, "]");
+    }
+    catch (ErrorFileNotFoundException const&)
+    {
+        write(str, " [?]");
+    }
+    catch (ErrorPathNotFoundException const&)
+    {
+        write(str, " [?]");
+    }
 }
 
 void WriteFileListingFile(log_sink& str, std::string const& targetFile)
