@@ -179,7 +179,7 @@ void WriteOsVersion(log_sink& log)
     {
         auto getProductInfo =
             kernel32.GetProcAddress<GetProductInfoFunc>("GetProductInfo");
-        getProductInfo(6, 2, 0, 0, &productType);
+        getProductInfo(6, 3, 0, 0, &productType);
     }
     catch (SystemFacades::ErrorProcedureNotFoundException const&)
     {
@@ -189,6 +189,7 @@ void WriteOsVersion(log_sink& log)
     GetSystemInfo(&systemInfo);
 
     write(log, "Windows ");
+    char const* professionalName = "Professional Edition";
 
     switch (versionInfo.dwMajorVersion)
     {
@@ -282,10 +283,19 @@ void WriteOsVersion(log_sink& log)
                 write(log, "Server 2008 R2 ");
             break;
         case 2:
+            professionalName = "Pro";
             if (versionInfo.wProductType == VER_NT_WORKSTATION)
                 write(log, "8 ");
             else
-                write(log, "Server 8 ");
+                write(log, "Server 2012 ");
+            break;
+        case 3:
+            professionalName = "Pro";
+            if (versionInfo.wProductType == VER_NT_WORKSTATION)
+                write(log, "8.1 ");
+            else
+                write(log, "Server 2012 R2 ");
+            break;
         }
         switch (productType)
         {
@@ -365,13 +375,13 @@ void WriteOsVersion(log_sink& log)
             write(log, "Essential Business Server Security Server");
             break;
         case /*PRODUCT_PROFESSIONAL*/ 0x00000030:
-            write(log, "Professional Edition");
+            write(log, professionalName);
             break;
         case /*PRODUCT_PROFESSIONAL_E*/ 0x00000045:
-            write(log, "Professional Edition E");
+            write(log, professionalName, " E");
             break;
         case /*PRODUCT_PROFESSIONAL_N*/ 0x00000031:
-            write(log, "Professional Edition N");
+            write(log, professionalName, " N");
             break;
         case PRODUCT_SERVER_FOR_SMALLBUSINESS:
             write(log, "for Windows Essential Server Solutions");
@@ -433,7 +443,7 @@ void WriteOsVersion(log_sink& log)
         case /*PRODUCT_WEB_SERVER_CORE*/ 0x0000001D:
             write(log, "Web Edition (Server Core)");
             break;
-        case /*PRODUCT_CONSUMER_PREVIEW*/ 0x0000004A:
+        case /*PRODUCT_CONSUMER_PREVIEW ?*/ 0x0000004A:
             write(log, "Consumer Preview");
             break;
         default:
