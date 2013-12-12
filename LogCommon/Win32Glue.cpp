@@ -169,7 +169,7 @@ void Disable64FsRedirector::Disable() BOOST_NOEXCEPT_OR_NOTHROW
         return;
     }
 
-    SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+    SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
     auto const isWow64 =
         kernel32.GetProcAddress<IsWow64ProcessFunc>("IsWow64Process");
     if (isWow64 == nullptr)
@@ -204,7 +204,7 @@ void Disable64FsRedirector::Enable() BOOST_NOEXCEPT_OR_NOTHROW
         return;
     }
 
-    SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+    SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
     auto const enableFunc =
         kernel32.GetProcAddress<Wow64RevertFsRedirectionFunc>(
             "Wow64RevertWow64FsRedirection");
@@ -222,7 +222,7 @@ Disable64FsRedirector::~Disable64FsRedirector() BOOST_NOEXCEPT_OR_NOTHROW
 bool IsWow64Process() BOOST_NOEXCEPT_OR_NOTHROW
 {
 #ifndef _M_X64
-    SystemFacades::RuntimeDynamicLinker kernel32(L"kernel32.dll");
+    SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
     auto const isWow64 =
         kernel32.GetProcAddress<IsWow64ProcessFunc>("IsWow64Process");
     if (isWow64 == nullptr)
