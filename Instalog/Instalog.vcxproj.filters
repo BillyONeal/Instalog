@@ -41,4 +41,7 @@
       <Filter>Source Files</Filter>
     </Object>
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="SupportedOs.manifest" />
+  </ItemGroup>
 </Project>
