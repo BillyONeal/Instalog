@@ -7,6 +7,7 @@
 #include <limits>
 #include <algorithm>
 #include "../LogCommon/StringUtilities.hpp"
+#include "../LogCommon/LogSink.hpp"
 
 using namespace Instalog;
 
@@ -86,34 +87,59 @@ TEST(StringUtilities, General_VerticalTab)
     EXPECT_EQ("#v", str);
 }
 
+static void TestGeneralOtherAscii(unsigned char c)
+{
+    std::string expected;
+    std::string str;
+
+    // No pre/post
+    write(expected, "#x", hex_formatted_value<unsigned char>(c));
+    str.push_back(c);
+    GeneralEscape(str);
+    ASSERT_EQ(expected, str);
+
+    // Pre
+    expected.clear();
+    write(expected, "before #x", hex_formatted_value<unsigned char>(c));
+    str.assign("before ");
+    str.push_back(c);
+    GeneralEscape(str);
+    ASSERT_EQ(expected, str);
+
+    // Post
+    expected.clear();
+    write(expected, "#x", hex_formatted_value<unsigned char>(c), " after");
+    str.resize(1);
+    str[0] = c;
+    str.append(" after");
+    GeneralEscape(str);
+    ASSERT_EQ(expected, str);
+
+    // Both
+    expected.clear();
+    write(expected, "before #x", hex_formatted_value<unsigned char>(c), " after");
+    str.assign("before ");
+    str.push_back(c);
+    str.append(" after");
+    GeneralEscape(str);
+    ASSERT_EQ(expected, str);
+}
+
 TEST(StringUtilities, General_OtherASCII)
 {
-    for (char c = 0x00; c < 0x1F; ++c)
+    unsigned char ranges[][2] = {
+        // #0
+        {0x01u, 0x08u}, // #b, #t, #n, #v, #f, #r
+        {0x0Eu, 0x20u}, // (printables),
+        {0x7Fu, 0x00u}, // wrap around to 0
+    };
+
+    for (auto const& range : ranges)
     {
-        if (c == 0x00 || c == 0x08 || c == 0x0C || c == 0x0A || c == 0x0D ||
-            c == 0x09 || c == 0x0B)
+        for (unsigned char c = range[0]; c != range[1]; ++c)
         {
-            continue;
+            TestGeneralOtherAscii(c);
         }
-
-        std::string str(1, c);
-        GeneralEscape(str);
-        char expected[5];
-        sprintf_s(expected, 5, "#x%02X", c);
-        EXPECT_STREQ(expected, str.c_str());
-    }
-
-    {
-        std::string str(1, 0x7F);
-        GeneralEscape(str);
-        EXPECT_EQ("#x7F", str);
-    }
-
-    {
-        std::string str(1, 0x7F);
-        str.append("end");
-        GeneralEscape(str);
-        EXPECT_EQ("#x7Fend", str);
     }
 }
 

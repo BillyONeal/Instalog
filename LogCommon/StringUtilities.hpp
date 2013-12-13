@@ -15,8 +15,8 @@ namespace Instalog
 /// @param    escapeCharacter    (optional) the escape character.
 /// @param    rightDelimiter     (optional) the right delimiter.
 void GeneralEscape(std::string& target,
-                   char escapeCharacter = '#',
-                   char rightDelimiter = '\0');
+                   unsigned char escapeCharacter = '#',
+                   unsigned char rightDelimiter = '\0');
 
 /// @brief    Escapes strings according to the url escape scheme
 ///
@@ -24,8 +24,8 @@ void GeneralEscape(std::string& target,
 /// @param    escapeCharacter    (optional) the escape character.
 /// @param    rightDelimiter     (optional) the right delimiter.
 void HttpEscape(std::string& target,
-                char escapeCharacter = '#',
-                char rightDelimiter = '\0');
+                unsigned char escapeCharacter = '#',
+                unsigned char rightDelimiter = '\0');
 
 /// @brief    Malformed escaped sequence
 class MalformedEscapedSequence : public std::exception

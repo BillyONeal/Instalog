@@ -8,13 +8,13 @@
 
 namespace Instalog
 {
-static char http[] = "http";
-static char HTTP[] = "HTTP";
+static unsigned char http[] = "http";
+static unsigned char HTTP[] = "HTTP";
 
 template <typename Iterator>
-static void WriteEscapeHex(Iterator& out, char escapeCharacter, char value)
+static void WriteEscapeHex(Iterator& out, unsigned char escapeCharacter, unsigned char value)
 {
-    char const hexChars[] = "0123456789ABCDEF";
+    unsigned char const hexChars[] = "0123456789ABCDEF";
     *(out++) = escapeCharacter;
     *(out++) = 'x';
     *(out++) = hexChars[value >> 4];
@@ -22,25 +22,25 @@ static void WriteEscapeHex(Iterator& out, char escapeCharacter, char value)
 }
 
 template <typename Iterator>
-static void WriteEscapeChar(Iterator& out, char escapeCharacter, char value)
+static void WriteEscapeChar(Iterator& out, unsigned char escapeCharacter, unsigned char value)
 {
     *(out++) = escapeCharacter;
     *(out++) = value;
 }
 
 template <typename Iterator>
-static void WriteChar(Iterator& out, char value)
+static void WriteChar(Iterator& out, unsigned char value)
 {
     *(out++) = value;
 }
 
-static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char rightDelimiter, bool escapeHttp)
+static void GeneralEscapeImpl(std::string& target, unsigned char escapeCharacter, unsigned char rightDelimiter, bool escapeHttp)
 {
     // Count the number of characters in the resulting string
     std::size_t resultSize = target.size();
     bool lastWasSpace = true;
     unsigned short httpState = 0;
-    for (char c : target)
+    for (unsigned char c : target)
     {
         if (escapeHttp)
         {
@@ -88,16 +88,16 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
             continue;
         }
 
-        if (c == escapeCharacter || c == rightDelimiter)
-        {
-            resultSize++;
-            continue;
-        }
-
         if (c <= 0x1F || c >= 0x7F)
         {
             // #xXX
             resultSize += 3;
+            continue;
+        }
+
+        if (c == escapeCharacter || c == rightDelimiter)
+        {
+            resultSize++;
             continue;
         }
     }
@@ -114,7 +114,7 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
     target.resize(resultSize);
     auto out = target.begin();
     lastWasSpace = true;
-    for (char c : source)
+    for (unsigned char c : source)
     {
         if (escapeHttp)
         {
@@ -172,16 +172,16 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
             continue;
         }
 
-        if (c == escapeCharacter || c == rightDelimiter)
-        {
-            WriteEscapeChar(out, escapeCharacter, c);
-            continue;
-        }
-
         if (c <= 0x1F || c >= 0x7F)
         {
             // #xXX
             WriteEscapeHex(out, escapeCharacter, c);
+            continue;
+        }
+
+        if (c == escapeCharacter || c == rightDelimiter)
+        {
+            WriteEscapeChar(out, escapeCharacter, c);
             continue;
         }
 
@@ -190,15 +190,15 @@ static void GeneralEscapeImpl(std::string& target, char escapeCharacter, char ri
 }
 
 void GeneralEscape(std::string& target,
-                   char escapeCharacter,
-                   char rightDelimiter)
+                   unsigned char escapeCharacter,
+                   unsigned char rightDelimiter)
 {
     return GeneralEscapeImpl(target, escapeCharacter, rightDelimiter, false);
 }
 
 void HttpEscape(std::string& target,
-                char escapeCharacter /*= L'#'*/,
-                char rightDelimiter /*= L'\0'*/)
+                unsigned char escapeCharacter /*= L'#'*/,
+                unsigned char rightDelimiter /*= L'\0'*/)
 {
     return GeneralEscapeImpl(target, escapeCharacter, rightDelimiter, true);
 }
