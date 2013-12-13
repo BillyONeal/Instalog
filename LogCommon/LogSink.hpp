@@ -304,6 +304,12 @@ namespace Instalog
     };
 
     template <typename NumberType>
+    padded_number<NumberType> inline pad(std::size_t size, char fill, NumberType value) BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return padded_number<NumberType>(size, fill, value);
+    }
+
+    template <typename NumberType>
     std::string format_value(padded_number<NumberType> const& val)
     {
         auto const& basic = format_value(val.get());

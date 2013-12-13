@@ -93,14 +93,14 @@ static void TestGeneralOtherAscii(unsigned char c)
     std::string str;
 
     // No pre/post
-    write(expected, "#x", hex_formatted_value<unsigned char>(c));
+    write(expected, "#x", hex(c));
     str.push_back(c);
     GeneralEscape(str);
     ASSERT_EQ(expected, str);
 
     // Pre
     expected.clear();
-    write(expected, "before #x", hex_formatted_value<unsigned char>(c));
+    write(expected, "before #x", hex(c));
     str.assign("before ");
     str.push_back(c);
     GeneralEscape(str);
@@ -108,7 +108,7 @@ static void TestGeneralOtherAscii(unsigned char c)
 
     // Post
     expected.clear();
-    write(expected, "#x", hex_formatted_value<unsigned char>(c), " after");
+    write(expected, "#x", hex(c), " after");
     str.resize(1);
     str[0] = c;
     str.append(" after");
@@ -117,7 +117,7 @@ static void TestGeneralOtherAscii(unsigned char c)
 
     // Both
     expected.clear();
-    write(expected, "before #x", hex_formatted_value<unsigned char>(c), " after");
+    write(expected, "before #x", hex(c), " after");
     str.assign("before ");
     str.push_back(c);
     str.append(" after");

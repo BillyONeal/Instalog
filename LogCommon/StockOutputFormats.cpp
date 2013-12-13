@@ -36,7 +36,7 @@ void WriteDefaultDateFormat(log_sink& str, std::uint64_t time)
     SYSTEMTIME st;
     FileTimeToSystemTimeImpl(time, st);
     // YYYY-MM-DD HH:MM:SS
-    write(str, padded_number<WORD>(4, '0', st.wYear), '-', padded_number<WORD>(2, '0', st.wMonth), '-', padded_number<WORD>(2, '0', st.wDay), ' ', padded_number<WORD>(2, '0', st.wHour), ':', padded_number<WORD>(2, '0', st.wMinute), ':', padded_number<WORD>(2, '0', st.wSecond));
+    write(str, pad(4, '0', st.wYear), '-', pad(2, '0', st.wMonth), '-', pad(2, '0', st.wDay), ' ', pad(2, '0', st.wHour), ':', pad(2, '0', st.wMinute), ':', pad(2, '0', st.wSecond));
 }
 void WriteMillisecondDateFormat(log_sink& str, std::uint64_t time)
 {
@@ -44,7 +44,7 @@ void WriteMillisecondDateFormat(log_sink& str, std::uint64_t time)
     FileTimeToSystemTimeImpl(time, st);
     // YYYY-MM-DD HH:MM:SS.mmmm
     // YYYY-MM-DD HH:MM:SS
-    write(str, padded_number<WORD>(4, '0', st.wYear), '-', padded_number<WORD>(2, '0', st.wMonth), '-', padded_number<WORD>(2, '0', st.wDay), ' ', padded_number<WORD>(2, '0', st.wHour), ':', padded_number<WORD>(2, '0', st.wMinute), ':', padded_number<WORD>(2, '0', st.wSecond), '.', padded_number<WORD>(4, '0', st.wMilliseconds));
+    write(str, pad(4, '0', st.wYear), '-', pad(2, '0', st.wMonth), '-', pad(2, '0', st.wDay), ' ', pad(2, '0', st.wHour), ':', pad(2, '0', st.wMinute), ':', pad(2, '0', st.wSecond), '.', pad(4, '0', st.wMilliseconds));
 }
 void WriteFileAttributes(log_sink& str, std::uint32_t attributes)
 {
@@ -114,7 +114,7 @@ void WriteFileListingFile(log_sink& str, std::string const& targetFile)
     WriteDefaultDateFormat(str, ctime);
     str.append(" . ", 3);
     WriteDefaultDateFormat(str, mtime);
-    write(str, ' ', padded_number<std::uint64_t>(10, ' ', size), ' ');
+    write(str, ' ', pad(10, ' ', size), ' ');
     WriteFileAttributes(str, fad.dwFileAttributes);
     write(str, ' ', targetFile);
 }
@@ -125,7 +125,7 @@ void WriteFileListingFromFindData(log_sink& str,
     WriteDefaultDateFormat(str, fad.GetCreationTime());
     str.append(" . ", 3);
     WriteDefaultDateFormat(str, fad.GetLastWriteTime());
-    write(str, ' ', padded_number<std::uint64_t>(10, ' ', fad.GetSize()), ' ');
+    write(str, ' ', pad(10, ' ', fad.GetSize()), ' ');
     WriteFileAttributes(str, fad.GetAttributes());
     str.append(" ", 1);
     std::string escapedFileName;
@@ -597,7 +597,7 @@ void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
     long displayBiasMinutes = timeZoneBias % 60;
 
     WriteMillisecondDateFormat(log, startTime);
-    writeln (log, " [GMT ", displayBiasHour >= 0 ? "+" : "", displayBiasHour, ':', padded_number<long>(2, '0', displayBiasMinutes), ']');
+    writeln (log, " [GMT ", displayBiasHour >= 0 ? "+" : "", displayBiasHour, ':', pad(2, '0', displayBiasMinutes), ']');
 
     RegistryKey ieKey = RegistryKey::Open(
         "\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
@@ -652,6 +652,6 @@ void WriteScriptFooter(log_sink& log, std::uint64_t startTime)
     auto milliseconds = (duration / 10000ull) - (seconds * 1000);
     write(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION), " finished at ");
     WriteMillisecondDateFormat(log, endTime);
-    writeln(log, " (Generation took ", seconds, '.', padded_number<decltype(milliseconds)>(4, '0', milliseconds), " seconds)");
+    writeln(log, " (Generation took ", seconds, '.', pad(4, '0', milliseconds), " seconds)");
 }
 }

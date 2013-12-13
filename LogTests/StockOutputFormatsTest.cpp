@@ -151,7 +151,7 @@ TEST(StockFormats, Listing)
     WriteDefaultDateFormat(expected, ctime);
     write(expected, " . ");
     WriteDefaultDateFormat(expected, mtime);
-    write(expected, ' ', padded_number<DWORD>(10, ' ', fad.nFileSizeLow), ' ');
+    write(expected, ' ', pad(10, ' ', fad.nFileSizeLow), ' ');
     WriteFileAttributes(expected, fad.dwFileAttributes);
     write(expected, " C:\\Windows\\Explorer.exe");
     EXPECT_EQ(expected, ss);

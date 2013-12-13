@@ -111,14 +111,14 @@ TEST(WriteFormat, FloatingPointTypes)
 TEST(WriteFormat, PaddedNumberSmall)
 {
     std::string sink;
-    write(sink, padded_number<std::uint32_t>(10, 'A', 1729), padded_number<std::uint32_t>(10, '0', 1730));
+    write(sink, pad(10, 'A', 1729), pad(10, '0', 1730));
     ASSERT_STREQ("AAAAAA17290000001730", sink.c_str());
 }
 
 TEST(WriteFormat, PaddedNumberBig)
 {
     std::string sink;
-    write(sink, padded_number<std::uint32_t>(2, 'A', 1729));
+    write(sink, pad(2, 'A', 1729));
     ASSERT_STREQ("1729", sink.c_str());
 }
 
