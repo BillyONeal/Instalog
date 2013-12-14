@@ -3,8 +3,8 @@
   <PropertyGroup>
     <InstalogMajorVersion>0</InstalogMajorVersion>
     <InstalogMinorVersion>0</InstalogMinorVersion>
-    <InstalogRevision>4</InstalogRevision>
-    <InstalogBuild>1</InstalogBuild>
+    <InstalogRevision>5</InstalogRevision>
+    <InstalogBuild>0</InstalogBuild>
     <InstalogVersion>$(InstalogMajorVersion).$(InstalogMinorVersion).$(InstalogRevision).$(InstalogBuild)</InstalogVersion>
     <InstalogRcVersion>$(InstalogMajorVersion),$(InstalogMinorVersion),$(InstalogRevision),$(InstalogBuild)</InstalogRcVersion>
   </PropertyGroup>
