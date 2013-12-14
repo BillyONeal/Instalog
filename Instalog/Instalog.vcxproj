@@ -72,9 +72,14 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
-  <Target Name="AfterBuild" Condition="'$(Configuration)'!='Debug'">
-    <MakeDir Directories="$(OutDir)..\..\Drop" />
-    <Copy SourceFiles="$(TargetDir)Instalog.exe" DestinationFiles="$(OutDir)..\..\Drop\$(DropFileName).exe" />
-    <Copy SourceFiles="$(TargetDir)Instalog.pdb" DestinationFiles="$(OutDir)..\..\Drop\$(DropFileName).pdb" />
+  <Target Name="AfterBuild">
+    <Message Importance="High" Text="Signing $(TargetDir)Instalog.exe" />
+    <SignFile CertificateThumbprint="8b0026ecbe5bf245993b26e164f02e1313579e47" TimestampUrl="http://timestamp.verisign.com/scripts/timestamp.dll" SigningTarget="$(TargetDir)Instalog.exe" ContinueOnError="true" />
+  </Target>
+  <Target Name="ReleaseBuild" Condition="'$(Configuration)'!='Debug'" AfterTargets="AfterBuild">
+    <MakeDir Directories="$(MSBuildThisFileDirectory)..\Drop" />
+    <Message Importance="High" Text="Dropping to $([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Drop\$(DropFileName).exe'))" />
+    <Copy SourceFiles="$(TargetDir)Instalog.exe" DestinationFiles="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Drop\$(DropFileName).exe'))" />
+    <Copy SourceFiles="$(TargetDir)Instalog.pdb" DestinationFiles="$(MSBuildThisFileDirectory)..\Drop\$(DropFileName).pdb" />
   </Target>
 </Project>
