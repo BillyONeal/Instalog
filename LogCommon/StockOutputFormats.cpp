@@ -574,6 +574,41 @@ static void WriteFlashData(log_sink& log)
     write(log, "Not Installed");
 }
 
+using SystemFacades::RegistryValueAndData;
+
+static std::vector<RegistryValueAndData>::const_iterator find_registry_value(std::vector<RegistryValueAndData> const& values, char const* const valueName)
+{
+    return std::find_if(values.cbegin(), values.cend(), [valueName](RegistryValueAndData const& data) {
+        return data.GetName() == valueName;
+    });
+}
+
+static void WriteJavaData(log_sink& log)
+{
+    RegistryKey javaKey = RegistryKey::Open(
+        "\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment",
+        KEY_QUERY_VALUE);
+    if (javaKey.Valid())
+    {
+        auto const valueNames = javaKey.EnumerateValues();
+        auto const java7FamilyVersion = find_registry_value(valueNames, "Java7FamilyVersion");
+        if (java7FamilyVersion != valueNames.cend())
+        {
+            write(log, " Java: ", java7FamilyVersion->GetStringStrict().substr(2));
+            return;
+        }
+
+        auto const browserJavaVersion = find_registry_value(valueNames, "BrowserJavaVersion");
+        if (browserJavaVersion != valueNames.cend())
+        {
+            write(log, " Java: ", browserJavaVersion->GetStringStrict());
+            return;
+        }
+    }
+
+    write(log, " Java: Not Installed");
+}
+
 void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
 {
     writeln(log, "Instalog ", BOOST_STRINGIZE(INSTALOG_VERSION));
@@ -611,21 +646,7 @@ void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
         write(log, "IE ERROR!");
     }
 
-    RegistryKey javaKey = RegistryKey::Open(
-        "\\Registry\\Machine\\Software\\JavaSoft\\Java Runtime Environment",
-        KEY_QUERY_VALUE);
-    if (javaKey.Valid())
-    {
-        try
-        {
-            write(log, " Java: ", javaKey["BrowserJavaVersion"].GetStringStrict());
-        }
-        catch (SystemFacades::ErrorFileNotFoundException const&)
-        {
-            write(log, " Java: Not Installed");
-        }
-    }
-
+    WriteJavaData(log);
     WriteFlashData(log);
 
     try
