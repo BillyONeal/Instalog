@@ -210,16 +210,21 @@ static void CheckSecurityCenter(UniqueComPtr<IWbemServices>& wbemServices,
                           BSTR(L"productEnabled"),
                           BSTR(L"productUpToDate"));
 }
-static void CheckSecurityCenter2(UniqueComPtr<IWbemServices>& wbemServices,
+static bool CheckSecurityCenter2(UniqueComPtr<IWbemServices>& wbemServices,
                                  std::vector<SecurityProduct>& result)
 {
     UniqueComPtr<IWbemServices> securityCenter2;
-    ThrowIfFailed(
-        wbemServices->OpenNamespace(BSTR(L"SecurityCenter2"),
+    HRESULT errorCheck = wbemServices->OpenNamespace(BSTR(L"SecurityCenter2"),
                                     0,
                                     0,
                                     securityCenter2.PassAsOutParameter(),
-                                    0));
+                                    0);
+    if (errorCheck == WBEM_E_INVALID_NAMESPACE)
+    {
+        return true;
+    }
+    ThrowIfFailed(errorCheck);
+
     INSTALOG_TRACE(L"AntiVirusProduct");
     SecCenter2ProductCheck(
         securityCenter2, BSTR(L"AntiVirusProduct"), result, avCode);
@@ -229,6 +234,8 @@ static void CheckSecurityCenter2(UniqueComPtr<IWbemServices>& wbemServices,
     INSTALOG_TRACE(L"AntiSpywareProduct");
     SecCenter2ProductCheck(
         securityCenter2, BSTR(L"AntiSpywareProduct"), result, asCode);
+
+    return false;
 }
 
 std::vector<SecurityProduct> EnumerateSecurityProducts()
@@ -239,13 +246,10 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
     GetVersionExW(&version);
     INSTALOG_TRACE(L"Making IWbemServices");
     UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
-    if (version.dwMajorVersion >= 6)
+    if (CheckSecurityCenter2(wbemServices, result))
     {
-        INSTALOG_TRACE(L"Enumerating SecurityCenter2");
-        CheckSecurityCenter2(wbemServices, result);
+        CheckSecurityCenter(wbemServices, result);
     }
-    INSTALOG_TRACE(L"Enumerating SecurityCenter");
-    CheckSecurityCenter(wbemServices, result);
     return result;
 }
 
