@@ -13,6 +13,7 @@
 #include "Registry.hpp"
 #include "Path.hpp"
 #include "Library.hpp"
+#include "ScopeExit.hpp"
 #include "Utf8.hpp"
 
 namespace Instalog
@@ -384,9 +385,18 @@ std::string XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
 {
     HANDLE publisherHandle = EvtFunctions().EvtOpenPublisherMetadata(
         NULL, providerName.c_str(), NULL, 0, 0);
+    ScopeExit onExit([publisherHandle]() { EvtFunctions().EvtClose(publisherHandle); });
     if (publisherHandle == NULL)
     {
-        Win32Exception::ThrowFromLastError();
+        DWORD lastError = ::GetLastError();
+        if (lastError == ERROR_FILE_NOT_FOUND)
+        {
+            return "No Description Available.";
+        }
+        else
+        {
+            Win32Exception::Throw(lastError);
+        }
     }
 
     std::vector<wchar_t> buffer;
@@ -409,8 +419,6 @@ std::string XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
             break;
         case ERROR_EVT_MESSAGE_NOT_FOUND:
         case ERROR_EVT_MESSAGE_ID_NOT_FOUND:
-            return "";
-            break;
         case ERROR_EVT_UNRESOLVED_PARAMETER_INSERT:
             return "No Description Available.";
             break;
@@ -418,8 +426,6 @@ std::string XmlEventLogEntry::FormatEventMessage(DWORD messageFlag)
             Win32Exception::Throw(status);
         }
     }
-
-    EvtFunctions().EvtClose(publisherHandle);
 
     return utf8::ToUtf8(buffer.data());
 }
