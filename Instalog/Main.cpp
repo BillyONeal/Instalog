@@ -56,20 +56,14 @@ int main()
     }
     file_sink outFile("Instalog.txt");
     ScriptParser sd;
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new RunningProcesses));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new LoadPointsReport));
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new ServicesDrivers));
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new EventViewer));
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new MachineSpecifications));
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new RestorePoints));
-    sd.AddSectionDefinition(
-        std::unique_ptr<ISectionDefinition>(new InstalledPrograms));
-    sd.AddSectionDefinition(std::unique_ptr<ISectionDefinition>(new FindStarM));
+    sd.AddSectionDefinition(std::make_unique<RunningProcesses>());
+    sd.AddSectionDefinition(std::make_unique<LoadPointsReport>());
+    sd.AddSectionDefinition(std::make_unique<ServicesDrivers>());
+    sd.AddSectionDefinition(std::make_unique<EventViewer>());
+    sd.AddSectionDefinition(std::make_unique<MachineSpecifications>());
+    sd.AddSectionDefinition(std::make_unique<RestorePoints>());
+    sd.AddSectionDefinition(std::make_unique<InstalledPrograms>());
+    sd.AddSectionDefinition(std::make_unique<FindStarM>());
     char const defaultScript[] =
         ":RunningProcesses\n:Loadpoints\n:ServicesDrivers\n:FindStarM\n:EventViewer\n:MachineSpecifications\n:RestorePoints\n:InstalledPrograms\n";
     Script s = sd.Parse(defaultScript);
