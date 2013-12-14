@@ -9,7 +9,6 @@
 #include "Process.hpp"
 #include "ServiceControlManager.hpp"
 #include "Path.hpp"
-#include "Whitelist.hpp"
 #include "ScopedPrivilege.hpp"
 #include "Win32Exception.hpp"
 #include "StockOutputFormats.hpp"
@@ -24,6 +23,20 @@
 
 namespace Instalog
 {
+template <typename Container>
+static bool list_contains(Container const& c, std::string const& input)
+{
+    for (auto const& entry : c)
+    {
+        if (boost::algorithm::iequals(entry, input))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void RunningProcesses::Execute(log_sink& logOutput,
                                ScriptSection const&,
                                std::vector<std::string> const&) const
@@ -32,17 +45,37 @@ void RunningProcesses::Execute(log_sink& logOutput,
     using Instalog::SystemFacades::ErrorAccessDeniedException;
     using Instalog::SystemFacades::ScopedPrivilege;
 
-    std::vector<std::string> fullPrintList;
     std::string winDir = Path::GetWindowsPath();
-    fullPrintList.push_back(Path::Append(winDir, "System32\\Svchost.exe"));
-    fullPrintList.push_back(Path::Append(winDir, "System32\\Svchost"));
-    fullPrintList.push_back(Path::Append(winDir, "System32\\Rundll32.exe"));
-    fullPrintList.push_back(Path::Append(winDir, "Syswow64\\Rundll32.exe"));
-    boost::algorithm::to_lower(winDir);
-    std::vector<std::pair<std::string, std::string>> replacements;
-    replacements.emplace_back(
-        std::pair<std::string, std::string>("c:\\windows\\", winDir));
-    Whitelist w(IDR_RUNNINGPROCESSESWHITELIST, replacements);
+    std::vector<std::string> fullPrintList;
+    char const* const fullPrintSources[] = {
+        "System32\\Svchost.exe",
+        "System32\\Svchost",
+        "System32\\Rundll32.exe",
+        "Syswow64\\Rundll32.exe"
+    };
+
+    for (auto path : fullPrintSources)
+    {
+        fullPrintList.emplace_back(Path::Append(winDir, path));
+    }
+
+    std::vector<std::string> noPrintList;
+    char const* const noPrintSources[] = {
+        "ntoskrnl.exe",
+        "csrss.exe",
+        "wininit.exe",
+        "services.exe",
+        "lsass.exe"
+    };
+
+    std::string system32(Path::Append(winDir, "system32"));
+    for (auto path : noPrintSources)
+    {
+        noPrintList.emplace_back(Path::Append(system32, path));
+    }
+
+    noPrintList.emplace_back("System Idle Process");
+    noPrintList.emplace_back("\\Systemroot\\System32\\smss.exe");
 
     ScopedPrivilege privilegeHolder(SE_DEBUG_NAME);
     ProcessEnumerator enumerator;
@@ -58,7 +91,7 @@ void RunningProcesses::Execute(log_sink& logOutput,
             {
                 executable.erase(executable.begin(), executable.begin() + 4);
             }
-            if (w.IsOnWhitelist(executable))
+            if (list_contains(noPrintList, executable))
             {
                 continue;
             }
@@ -97,27 +130,6 @@ void RunningProcesses::Execute(log_sink& logOutput,
     }
 }
 
-static bool IsOnServicesWhitelist(Instalog::SystemFacades::Service const& svc)
-{
-    static Whitelist wht(IDR_SERVICESDRIVERSWHITELIST);
-    if (svc.IsDamagedSvchost())
-    {
-        return false;
-    }
-    std::string whitelistcheck;
-    whitelistcheck.reserve(
-        3 + svc.GetSvchostGroup().size() + svc.GetFilepath().size() +
-        svc.GetServiceName().size() + svc.GetDisplayName().size());
-    whitelistcheck.append(svc.GetSvchostGroup());
-    whitelistcheck.push_back(';');
-    whitelistcheck.append(svc.GetFilepath());
-    whitelistcheck.push_back(';');
-    whitelistcheck.append(svc.GetServiceName());
-    whitelistcheck.push_back(';');
-    whitelistcheck.append(svc.GetDisplayName());
-    return wht.IsOnWhitelist(whitelistcheck);
-}
-
 void
 ServicesDrivers::Execute(log_sink& logOutput,
                          ScriptSection const& /*sectionData*/,
@@ -132,11 +144,6 @@ ServicesDrivers::Execute(log_sink& logOutput,
 
     for (auto service = services.begin(); service != services.end(); ++service)
     {
-        if (IsOnServicesWhitelist(*service))
-        {
-            continue;
-        }
-
         std::string currentServiceString;
         write(currentServiceString, service->GetState(), service->GetStart());
         if (service->IsDamagedSvchost())

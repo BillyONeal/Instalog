@@ -61,7 +61,6 @@
     <ClCompile Include="ServiceControlManagerTest.cpp" />
     <ClCompile Include="StockOutputFormatsTest.cpp" />
     <ClCompile Include="StringUtilitiesTest.cpp" />
-    <ClCompile Include="WhitelistTest.cpp" />
     <ClCompile Include="Win32ExceptionTest.cpp" />
     <ClCompile Include="Win32GlueTest.cpp" />
   </ItemGroup>

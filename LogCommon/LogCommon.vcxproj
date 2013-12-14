@@ -59,7 +59,6 @@
     <ClCompile Include="ServiceControlManager.cpp" />
     <ClCompile Include="StockOutputFormats.cpp" />
     <ClCompile Include="StringUtilities.cpp" />
-    <ClCompile Include="Whitelist.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
     <ClCompile Include="Win32Glue.cpp" />
     <ClCompile Include="Wmi.cpp" />
@@ -95,7 +94,6 @@
     <ClInclude Include="StringUtilities.hpp" />
     <ClInclude Include="UserInterface.hpp" />
     <ClInclude Include="Utf8.hpp" />
-    <ClInclude Include="Whitelist.hpp" />
     <ClInclude Include="Win32Exception.hpp" />
     <ClInclude Include="Win32Glue.hpp" />
     <ClInclude Include="Wmi.hpp" />
@@ -115,12 +113,6 @@
     <ClCompile Include="LoadPointsReport.cpp" />
     <None Include="Running Processes.txt" />
     <None Include="Services Drivers.txt" />
-    <ProtocolBuffer Include="Whitelist.proto" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(ProjectDir)\..\ThirdParty\protobuf-2.4.1\vsprojects\libprotobuf-lite.vcxproj">
-      <Project>{49ea010d-706f-4be2-a397-77854b72a040}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

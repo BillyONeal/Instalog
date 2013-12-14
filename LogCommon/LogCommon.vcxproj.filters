@@ -50,9 +50,6 @@
     <ClCompile Include="StockOutputFormats.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Whitelist.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ServiceControlManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -131,9 +128,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Whitelist.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ServiceControlManager.hpp">
