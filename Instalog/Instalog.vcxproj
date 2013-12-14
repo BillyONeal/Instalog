@@ -50,15 +50,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Instalog.ico" />
-    <None Include="..\LogCommon\Running Processes.txt" />
-    <None Include="..\LogCommon\Services Drivers.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\LogCommon\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="OlderWindows.obj">
@@ -67,6 +59,12 @@
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="SupportedOs.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Instalog.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -20,21 +20,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\LogCommon\CommonWhitelists.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Instalog.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\LogCommon\Running Processes.txt" />
-    <None Include="..\LogCommon\Services Drivers.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\LogCommon\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Object Include="OlderWindows.obj">
@@ -43,5 +31,15 @@
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="SupportedOs.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Instalog.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

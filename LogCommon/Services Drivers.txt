@@ -1,1 +1,0 @@
-;C:\Windows\System32\Drivers\Tcpip.sys;Tcpip;TCP/IP Protocol Driver

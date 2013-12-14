@@ -5,7 +5,6 @@
 #include "pch.hpp"
 #include <vector>
 #include <boost/algorithm/string/case_conv.hpp>
-#include "resource.h"
 #include "Process.hpp"
 #include "ServiceControlManager.hpp"
 #include "Path.hpp"

@@ -105,14 +105,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="CommonWhitelists.rc">
-      <NullTerminateStrings>false</NullTerminateStrings>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="LoadPointsReport.cpp" />
-    <None Include="Running Processes.txt" />
-    <None Include="Services Drivers.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

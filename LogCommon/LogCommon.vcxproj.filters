@@ -12,12 +12,6 @@
     <Filter Include="Precompiled">
       <UniqueIdentifier>{fde33c8a-7b14-420a-a07c-30155b312cac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Whitelists">
-      <UniqueIdentifier>{960e73c8-6776-4c56-bae9-fd2115f6b151}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Protocol Buffers">
-      <UniqueIdentifier>{b54d4d76-1712-4a80-8a25-22198b8f2108}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -190,21 +184,5 @@
     <ClInclude Include="Utf8.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="CommonWhitelists.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Running Processes.txt">
-      <Filter>Whitelists</Filter>
-    </None>
-    <None Include="Services Drivers.txt">
-      <Filter>Whitelists</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProtocolBuffer Include="Whitelist.proto">
-      <Filter>Protocol Buffers</Filter>
-    </ProtocolBuffer>
   </ItemGroup>
 </Project>

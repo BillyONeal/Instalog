@@ -1,7 +1,0 @@
-System Idle Process
-C:\Windows\System32\Ntoskrnl.exe
-\SystemRoot\System32\smss.exe
-C:\Windows\system32\csrss.exe
-C:\Windows\system32\wininit.exe
-C:\Windows\system32\services.exe
-C:\Windows\system32\lsass.exe
