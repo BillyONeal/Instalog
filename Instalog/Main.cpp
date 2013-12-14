@@ -54,7 +54,8 @@ int main()
         _getche();
         return -1;
     }
-    file_sink outFile("Instalog.txt");
+
+    file_sink outFile("%USERPROFILE%\\Desktop\\Instalog.txt");
     ScriptParser sd;
     sd.AddSectionDefinition(std::make_unique<RunningProcesses>());
     sd.AddSectionDefinition(std::make_unique<LoadPointsReport>());

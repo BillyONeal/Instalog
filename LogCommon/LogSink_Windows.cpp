@@ -15,9 +15,16 @@ namespace Instalog
     file_sink::file_sink(std::string const& filePath)
         : handleValue(reinterpret_cast<std::uintptr_t>(INVALID_HANDLE_VALUE))
     {
-        std::wstring widePath(utf8::ToUtf16(filePath));
+        std::wstring widePathSource = utf8::ToUtf16(filePath);
+        std::vector<wchar_t> widePath;
+        DWORD actualLength;
+        while ((actualLength = ::ExpandEnvironmentStringsW(widePathSource.c_str(), widePath.data(), static_cast<DWORD>(widePath.size()))) > widePath.size())
+        {
+            widePath.resize(actualLength);
+        }
+
         HANDLE hFile =
-            ::CreateFileW(widePath.c_str(),
+            ::CreateFileW(widePath.data(),
                           FILE_WRITE_DATA | FILE_APPEND_DATA,
                           0,
                           nullptr,
