@@ -57,12 +57,11 @@ the following textual replacements:
     replaced with \var{EscapeCharacter}\texttt{xHH}, where \texttt{HH} is the
     hexadecimal representation of the numeric value of the given character.
     \item Non-ASCII characters (\verb|U+0080| and above) are replaced with
-    \var{EscapeCharacter}\texttt{uHHHH}, where \texttt{HHHH} is the hexadecimal
-    representation of the numeric value of the character.
-    \item Unicode characters requiring a surrogate pair in UTF-16 (that is,
-    greater than U+FFFF) are represented as two normal Unicode
-    (\var{EscapeCharacter}\texttt{uHHHH}) escapes matching the UTF-16 surrogate
-    pair. (This is exactly how they'd be represented in Windows itself.)
+    \var{EscapeCharacter}\texttt{xHH} escape sequences, where \texttt{HH} is the
+    hexadecimal represenation of the UTF-8 surrogate pairs necessary to create
+    the non-ASCII character. (Example: When \var{EscapeCharacter} is \verb|#|,
+    \verb|U+00A9 COPYRIGHT SYMBOL| becomes \verb|#C2#A9|, \verb|U+2014 EM DASH|
+    becomes \verb|#E2#80#94|.)
     \item Forum software destroys significant whitespace; but escaping every
     space would be impractical. Where there is more than a single consecutive
     space, the second and later spaces are escaped. (That is, replaced with
