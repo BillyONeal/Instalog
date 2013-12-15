@@ -583,6 +583,30 @@ static std::vector<RegistryValueAndData>::const_iterator find_registry_value(std
     });
 }
 
+static void WriteIeData(log_sink& log)
+{
+    RegistryKey ieKey = RegistryKey::Open(
+        "\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
+        KEY_QUERY_VALUE);
+    if (!ieKey.Valid())
+    {
+        write(log, "IE ERROR!");
+        return;
+    }
+
+    std::string actualVersion;
+    try
+    {
+        actualVersion = ieKey["svcVersion"].GetStringStrict();
+    }
+    catch (SystemFacades::ErrorFileNotFoundException const&)
+    {
+        actualVersion = ieKey["Version"].GetStringStrict();
+    }
+    
+    write(log, "IE: ", actualVersion);
+ }
+
 static void WriteJavaData(log_sink& log)
 {
     RegistryKey javaKey = RegistryKey::Open(
@@ -634,18 +658,7 @@ void WriteScriptHeader(log_sink& log, std::uint64_t startTime)
     WriteMillisecondDateFormat(log, startTime);
     writeln (log, " [GMT ", displayBiasHour >= 0 ? "+" : "", displayBiasHour, ':', pad(2, '0', displayBiasMinutes), ']');
 
-    RegistryKey ieKey = RegistryKey::Open(
-        "\\Registry\\Machine\\Software\\Microsoft\\Internet Explorer",
-        KEY_QUERY_VALUE);
-    if (ieKey.Valid())
-    {
-        write(log, "IE: ", ieKey["Version"].GetStringStrict());
-    }
-    else
-    {
-        write(log, "IE ERROR!");
-    }
-
+    WriteIeData(log);
     WriteJavaData(log);
     WriteFlashData(log);
 
