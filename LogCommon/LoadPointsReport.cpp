@@ -1633,6 +1633,41 @@ static void WinlogonNotify(log_sink& output)
     SubkeyMajorBasedEnumeration(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify", "Notify", "DllName", FileProcess);
 }
 
+static void AppinitDllsBitless(log_sink& output, std::string const& rootKey, std::string const& suffix)
+{
+    RegistryKey key(RegistryKey::Open(rootKey, KEY_QUERY_VALUE));
+    if (!key.Valid())
+    {
+        return;
+    }
+
+    try
+    {
+        for (auto const& dll : key["Appinit_DLLs"].GetCommaStringArray())
+        {
+            if (dll.empty())
+            {
+                continue;
+            }
+
+            write(output, "AppinitDll", suffix, ": ");
+            WriteDefaultFileOutput(output, dll);
+            writeln(output);
+        }
+    }
+    catch (ErrorFileNotFoundException const&)
+    {
+    }
+}
+
+static void AppinitDlls(log_sink& output)
+{
+#ifdef _M_X64
+    AppinitDllsBitless(output, "\\Registry\\Machine\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows", "");
+#endif
+    AppinitDllsBitless(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", Get64Suffix());
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1641,6 +1676,7 @@ static void MachineSpecificHjt(log_sink& output)
     Protocols(output);
     NameSpaceHandler(output);
     WinlogonNotify(output);
+    AppinitDlls(output);
     // Appinit DLLs
     // SSODL
     // STS
