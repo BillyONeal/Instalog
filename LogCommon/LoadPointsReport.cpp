@@ -1536,19 +1536,55 @@ static void TcpNameservers(log_sink& output)
     }
 }
 
+static void MachineSpecificHjt(log_sink& output)
+{
+    ExecuteDpf(output);
+    ExecuteWinsock2Parameters(output);
+    TcpNameservers(output);
+    // Protocols
+    // Winlogon Notify
+    // Appinit DLLs
+    // SSODL
+    // STS
+    // SE Hooks
+    // Security Providers
+    // LSA
+    // CSRSS DLL
+    // Active Setup
+    // IFEO
+    // File Associations
+    // Hosts
+}
+
+static void UserSpecificHjt(log_sink& output, std::string const& rootKey)
+{
+    // Internet Connection Wizard, ShellNext
+    // Proxy Server
+    // Proxy Override
+    // INI Autostarts
+    // Startup Folder
+}
+
 void LoadPointsReport::Execute(log_sink& output,
                         ScriptSection const&,
                         std::vector<std::string> const&) const
 {
     SecurityCenterOutput(output);
     CommonHjt(output, "\\Registry\\Machine");
-    ExecuteDpf(output);
-    ExecuteWinsock2Parameters(output);
-    TcpNameservers(output);
+    MachineSpecificHjt(output);
 
     auto hives = EnumerateUserHives();
     for (std::string const& hive : hives)
     {
+        string_sink userSink;
+        CommonHjt(userSink, hive);
+        UserSpecificHjt(userSink, hive);
+        std::string const& userSettings = userSink.get();
+        if (userSettings.empty())
+        {
+            continue;
+        }
+
         std::string head("User Settings");
         Header(head);
         std::string sid(std::find(hive.crbegin(), hive.crend(), '\\').base(),
@@ -1559,7 +1595,7 @@ void LoadPointsReport::Execute(log_sink& output,
         writeln(output, head);
         writeln(output);
         writeln(output, "Identity: [", user, "] ", sid);
-        CommonHjt(output, hive);
+        write(output, userSettings);
     }
 }
 }
