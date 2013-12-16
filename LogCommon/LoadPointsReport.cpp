@@ -1668,6 +1668,39 @@ static void AppinitDlls(log_sink& output)
     AppinitDllsBitless(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", Get64Suffix());
 }
 
+static void ShellObjectServiceDelayLoad(log_sink& output)
+{
+    ClsidValueBasedOutput(
+        output,
+        "Ssodl",
+        "\\Registry\\Machine",
+        "\\Microsoft\\Windows\\CurrentVersion\\ShellObjectServiceDelayLoad",
+        VALUE,
+        CLASS_ROOT_DEFAULT);
+}
+
+static void SharedTaskScheduler(log_sink& output)
+{
+    ClsidValueBasedOutput(
+        output,
+        "Sts",
+        "\\Registry\\Machine",
+        "\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SharedTaskScheduler",
+        VALUE,
+        CLASS_ROOT_DEFAULT);
+}
+
+static void ShellExecuteHooks(log_sink& output)
+{
+    ClsidValueBasedOutput(
+        output,
+        "Seh",
+        "\\Registry\\Machine",
+        "\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ShellExecuteHooks",
+        NAME,
+        CLASS_ROOT_DEFAULT);
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1677,10 +1710,9 @@ static void MachineSpecificHjt(log_sink& output)
     NameSpaceHandler(output);
     WinlogonNotify(output);
     AppinitDlls(output);
-    // Appinit DLLs
-    // SSODL
-    // STS
-    // SE Hooks
+    ShellObjectServiceDelayLoad(output);
+    SharedTaskScheduler(output);
+    ShellExecuteHooks(output);
     // Security Providers
     // LSA
     // CSRSS DLL
