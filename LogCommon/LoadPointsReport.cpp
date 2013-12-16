@@ -1711,6 +1711,37 @@ static void SecurityProviders(log_sink& output)
     SingleCommaValueBitless(output, "\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", "SecurityProviders", "SecurityProviders", "");
 }
 
+static void LocalSecurityAuthorityValue(log_sink& output, RegistryKey const& key, std::string const& value)
+{
+    std::string valueName(value + " Packages");
+    std::vector<std::string> entries;
+    for (auto const& entry : key[valueName].GetMultiStringArray())
+    {
+        if (entry.empty())
+        {
+            continue;
+        }
+
+        entries.emplace_back(entry + ".dll");
+    }
+
+    std::sort(entries.begin(), entries.end());
+    for (std::string const& entry : entries)
+    {
+        write(output, value, "Package: ");
+        WriteDefaultFileOutput(output, entry);
+        writeln(output);
+    }
+}
+
+static void LocalSecurityAuthority(log_sink& output)
+{
+    RegistryKey key(RegistryKey::Open("\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\Lsa", KEY_QUERY_VALUE));
+    LocalSecurityAuthorityValue(output, key, "Authentication");
+    LocalSecurityAuthorityValue(output, key, "Notification");
+    LocalSecurityAuthorityValue(output, key, "Security");
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1724,7 +1755,7 @@ static void MachineSpecificHjt(log_sink& output)
     SharedTaskScheduler(output);
     ShellExecuteHooks(output);
     SecurityProviders(output);
-    // LSA
+    LocalSecurityAuthority(output);
     // CSRSS DLL
     // Active Setup
     // IFEO
