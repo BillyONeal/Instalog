@@ -1633,7 +1633,7 @@ static void WinlogonNotify(log_sink& output)
     SubkeyMajorBasedEnumeration(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify", "Notify", "DllName", FileProcess);
 }
 
-static void AppinitDllsBitless(log_sink& output, std::string const& rootKey, std::string const& suffix)
+static void SingleCommaValueBitless(log_sink& output, std::string const& rootKey, std::string const& valueName, std::string const& prefix, std::string const& suffix)
 {
     RegistryKey key(RegistryKey::Open(rootKey, KEY_QUERY_VALUE));
     if (!key.Valid())
@@ -1643,14 +1643,14 @@ static void AppinitDllsBitless(log_sink& output, std::string const& rootKey, std
 
     try
     {
-        for (auto const& dll : key["Appinit_DLLs"].GetCommaStringArray())
+        for (auto const& dll : key[valueName].GetCommaStringArray())
         {
             if (dll.empty())
             {
                 continue;
             }
 
-            write(output, "AppinitDll", suffix, ": ");
+            write(output, prefix, suffix, ": ");
             WriteDefaultFileOutput(output, dll);
             writeln(output);
         }
@@ -1660,21 +1660,26 @@ static void AppinitDllsBitless(log_sink& output, std::string const& rootKey, std
     }
 }
 
-static void AppinitDlls(log_sink& output)
+static void SingleCommaValue(log_sink& output, std::string const& rootKey, std::string const& valueName, std::string const& prefix)
 {
 #ifdef _M_X64
-    AppinitDllsBitless(output, "\\Registry\\Machine\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows", "");
+    SingleCommaValueBitless(output, "\\Registry\\Machine\\SOFTWARE\\Wow6432Node\\" + rootKey, valueName, prefix, "");
 #endif
-    AppinitDllsBitless(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", Get64Suffix());
+    SingleCommaValueBitless(output, "\\Registry\\Machine\\SOFTWARE\\" + rootKey, valueName, prefix, Get64Suffix());
 }
 
-static void ShellObjectServiceDelayLoad(log_sink& output)
+static void AppinitDlls(log_sink& output)
+{
+    SingleCommaValue(output, "Microsoft\\Windows NT\\CurrentVersion\\Windows", "Appinit_DLLs", "AppinitDll");
+}
+
+static void ShellServiceObjectDelayLoad(log_sink& output)
 {
     ClsidValueBasedOutput(
         output,
         "Ssodl",
         "\\Registry\\Machine",
-        "\\Microsoft\\Windows\\CurrentVersion\\ShellObjectServiceDelayLoad",
+        "\\Microsoft\\Windows\\CurrentVersion\\ShellServiceObjectDelayLoad",
         VALUE,
         CLASS_ROOT_DEFAULT);
 }
@@ -1686,7 +1691,7 @@ static void SharedTaskScheduler(log_sink& output)
         "Sts",
         "\\Registry\\Machine",
         "\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SharedTaskScheduler",
-        VALUE,
+        NAME,
         CLASS_ROOT_DEFAULT);
 }
 
@@ -1701,6 +1706,11 @@ static void ShellExecuteHooks(log_sink& output)
         CLASS_ROOT_DEFAULT);
 }
 
+static void SecurityProviders(log_sink& output)
+{
+    SingleCommaValueBitless(output, "\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", "SecurityProviders", "SecurityProviders", "");
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1710,10 +1720,10 @@ static void MachineSpecificHjt(log_sink& output)
     NameSpaceHandler(output);
     WinlogonNotify(output);
     AppinitDlls(output);
-    ShellObjectServiceDelayLoad(output);
+    ShellServiceObjectDelayLoad(output);
     SharedTaskScheduler(output);
     ShellExecuteHooks(output);
-    // Security Providers
+    SecurityProviders(output);
     // LSA
     // CSRSS DLL
     // Active Setup
