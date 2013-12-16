@@ -413,6 +413,11 @@ class RegistryKey : boost::noncopyable
     /// @return    The name.
     std::string GetName() const;
 
+    /// @brief  Gets the local name.
+    ///
+    /// @return The local name.
+    std::string GetLocalName() const;
+
     /// @brief    Gets the size information for this registry key.
     ///
     /// @return    The size information.

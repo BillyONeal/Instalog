@@ -286,6 +286,18 @@ std::string RegistryKey::GetName() const
                         keyBasicInformation->NameLength / sizeof(wchar_t));
 }
 
+std::string RegistryKey::GetLocalName() const
+{
+    std::string sourceName = this->GetName();
+    auto const lastSlash = sourceName.find_last_of('\\');
+    if (lastSlash != std::string::npos)
+    {
+        sourceName.erase(0, lastSlash + 1);
+    }
+
+    return sourceName;
+}
+
 std::vector<std::string> RegistryKey::EnumerateSubKeyNames() const
 {
     this->Check();
