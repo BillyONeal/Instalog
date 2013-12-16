@@ -72,7 +72,8 @@
   </ImportGroup>
   <Target Name="AfterBuild">
     <Message Importance="High" Text="Signing $(TargetDir)Instalog.exe" />
-    <SignFile CertificateThumbprint="8b0026ecbe5bf245993b26e164f02e1313579e47" TimestampUrl="http://timestamp.verisign.com/scripts/timestamp.dll" SigningTarget="$(TargetDir)Instalog.exe" ContinueOnError="true" />
+    <Exec Command="&quot;C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe&quot; sign /sha1 8f52fa9db30525dfabb35b08bd1966693a30eccf /d &quot;Instalog Diagnostics and Logging Tool&quot; /t http://timestamp.verisign.com/scripts/timestamp.dll  &quot;$(TargetDir)Instalog.exe&quot;" ContinueOnError="true" />
+    <Exec Command="&quot;C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe&quot; sign /sha1 8b0026ecbe5bf245993b26e164f02e1313579e47 /as /fd sha256 /tr http://timestamp.geotrust.com/  &quot;$(TargetDir)Instalog.exe&quot;" ContinueOnError="true" />
   </Target>
   <Target Name="ReleaseBuild" Condition="'$(Configuration)'!='Debug'" AfterTargets="AfterBuild">
     <MakeDir Directories="$(MSBuildThisFileDirectory)..\Drop" />
