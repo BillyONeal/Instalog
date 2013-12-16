@@ -260,7 +260,7 @@ static void SubkeyMajorBasedEnumeration(
     {
         try
         {
-            pods.emplace_back(val.GetName(), val[valueName].GetString());
+            pods.emplace_back(val.GetLocalName(), val[valueName].GetString());
         }
         catch (ErrorFileNotFoundException const&)
         {
@@ -1628,6 +1628,11 @@ static void Protocols(log_sink& output)
     ProtocolsSection(output, "\\Registry\\Machine\\SOFTWARE\\Classes\\PROTOCOLS\\Handler", "IeHandler");
 }
 
+static void WinlogonNotify(log_sink& output)
+{
+    SubkeyMajorBasedEnumeration(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify", "Notify", "DllName", FileProcess);
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1635,8 +1640,7 @@ static void MachineSpecificHjt(log_sink& output)
     TcpNameservers(output);
     Protocols(output);
     NameSpaceHandler(output);
-    // Protocols
-    // Winlogon Notify
+    WinlogonNotify(output);
     // Appinit DLLs
     // SSODL
     // STS
