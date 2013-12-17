@@ -1,0 +1,17 @@
+* text=auto
+*.cpp text
+*.h text
+*.hpp text
+.* text
+*.txt text
+*.vcxproj text
+*.vcxproj.filters text
+*.rc text
+*.manifest text
+*.masm text
+*.obj binary
+*.vsd binary
+*.pptx binary
+*.tex text
+*.bat text=crlf
+
