@@ -4,6 +4,8 @@
 
 #include "pch.hpp"
 #include <unordered_set>
+#include <limits>
+#include <cstdlib>
 #include <boost/algorithm/string.hpp>
 #include "File.hpp"
 #include "StringUtilities.hpp"
@@ -368,5 +370,234 @@ std::string ExpandEnvStrings(std::string const& input)
     return utf8::ToUtf8(result);
 }
 
+} // Instalog::Path
+
+static std::size_t path_buffer_size_for_characters(std::size_t characterCount)
+{
+    // 1x characterCount = source text
+    // 1 null
+    // 1x characterCount = uppercase source text
+    // 1 null
+    return characterCount * 2 + 2;
 }
+
+static void convert_ntfs_upper(wchar_t const* const input, std::size_t const length, wchar_t* const output)
+{
+    int inputLength = static_cast<int>(length);
+    if (static_cast<std::size_t>(inputLength) != length)
+    {
+        std::terminate();
+    }
+
+    if (::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, input, inputLength, output, inputLength) == 0)
+    {
+        std::terminate();
+    }
+
+    output[length] = L'\0';
 }
+
+wchar_t* path_get_upper_ptr(wchar_t* buffer, std::size_t capacity) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return buffer + capacity + 1;
+}
+
+wchar_t const* path_get_upper_ptr(wchar_t const* buffer, std::size_t capacity) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return buffer + capacity + 1;
+}
+
+void path::construct(char const* const buffer, std::size_t length)
+{
+    std::size_t u16Length = 0;
+    char const* const end = buffer + length;
+    for (char const* current = buffer; current != end;)
+    {
+        uint32_t cp = utf8::next(current, end);
+        if (cp > 0xFFFFu)
+        {
+            // a surrogate pair
+            u16Length += 2;
+        }
+        else
+        {
+            ++u16Length;
+        }
+    }
+
+    this->set_sizes_to(u16Length);
+    auto const bufferSize = path_buffer_size_for_characters(u16Length);
+    this->buffer.reset(new wchar_t[bufferSize]);
+    wchar_t * lowerEnd = utf8::utf8to16(buffer, end, this->buffer.get());
+    *lowerEnd = L'\0';
+
+    this->construct_upper();
+}
+
+void path::set_sizes_to(std::size_t const size)
+{
+    this->actualSize = size;
+    this->actualCapacity = size;
+}
+
+void path::construct(wchar_t const* const buffer, std::size_t length)
+{
+    this->set_sizes_to(length);
+    auto const bufferSize = path_buffer_size_for_characters(length);
+    this->buffer.reset(new wchar_t[bufferSize]);
+    wchar_t* lowerEnd = std::copy_n(buffer, length, this->buffer.get());
+    *lowerEnd = L'\0';
+    this->construct_upper();
+}
+
+void path::construct_upper()
+{
+    // Assumes that the internal buffer has the normal case part
+    // of the buffer filled out; fills in the upper case part.
+    convert_ntfs_upper(this->get(), this->size(), path_get_upper_ptr(this->buffer.get(), this->capacity()));
+}
+
+path::path() BOOST_NOEXCEPT_OR_NOTHROW : buffer(nullptr), actualSize(0), actualCapacity(0)
+{}
+
+path::path(std::nullptr_t) BOOST_NOEXCEPT_OR_NOTHROW : buffer(nullptr), actualSize(0), actualCapacity(0)
+{}
+
+path::path(char const* sourcePath)
+{
+    this->construct(sourcePath, std::strlen(sourcePath));
+}
+
+path::path(wchar_t const* sourcePath)
+{
+    this->construct(sourcePath, std::wcslen(sourcePath));
+}
+
+path::path(std::string const& sourcePath)
+{
+    this->construct(sourcePath.c_str(), sourcePath.size());
+}
+
+path::path(std::wstring const& sourcePath)
+{
+    this->construct(sourcePath.c_str(), sourcePath.size());
+}
+
+path::path(path const& other)
+{
+    std::size_t const otherSize = other.size();
+    std::size_t const bufferSize = path_buffer_size_for_characters(otherSize);
+    this->buffer.reset(new wchar_t[bufferSize]);
+    this->set_sizes_to(otherSize);
+    wchar_t* nullPointer = std::copy_n(other.get(), otherSize, this->buffer.get());
+    *nullPointer = L'\0';
+    nullPointer = std::copy_n(other.get_upper(), otherSize, path_get_upper_ptr(this->buffer.get(), this->capacity()));
+    *nullPointer = L'\0';
+}
+
+path::path(path && other) BOOST_NOEXCEPT_OR_NOTHROW
+: buffer(std::move(other.buffer))
+, actualSize(other.actualSize)
+, actualCapacity(other.actualCapacity)
+{
+    other.actualSize = 0u;
+    other.actualCapacity = 0u;
+}
+
+path& path::operator=(path const& other)
+{
+    std::size_t const otherSize = other.size();
+    std::size_t const bufferSize = path_buffer_size_for_characters(otherSize);
+    // Note use of a seperate buffer rather than this->buffer to
+    // support assign-to-self
+    std::unique_ptr<wchar_t[]> newBuffer(new wchar_t[bufferSize]);
+    wchar_t* nullPointer = std::copy_n(other.get(), otherSize, newBuffer.get());
+    *nullPointer = L'\0';
+    nullPointer = std::copy_n(other.get_upper(), otherSize, path_get_upper_ptr(newBuffer.get(), otherSize));
+    *nullPointer = L'\0';
+
+    // Ok, these are nothrow
+    this->buffer = std::move(newBuffer);
+    this->set_sizes_to(otherSize);
+
+    return *this;
+}
+
+path& path::operator=(path && other) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    this->buffer = std::move(other.buffer);
+    std::size_t const otherSize = other.size();
+    std::size_t const otherCapacity = other.capacity();
+    other.set_sizes_to(0);
+    this->actualSize = otherSize;
+    this->actualCapacity = otherCapacity;
+    return *this;
+}
+
+std::string path::to_string() const
+{
+    return utf8::ToUtf8(this->get(), this->size());
+}
+
+std::string path::to_upper_string() const
+{
+    return utf8::ToUtf8(this->get_upper(), this->size());
+}
+
+std::wstring path::to_wstring() const
+{
+    return std::wstring(this->get(), this->size());
+}
+
+std::wstring path::to_upper_wstring() const
+{
+    return std::wstring(this->get_upper(), this->size());;
+}
+
+static const wchar_t emptyString[] = L"";
+
+wchar_t const* path::get() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return this->empty() ? emptyString : this->buffer.get();
+}
+
+wchar_t const* path::get_upper() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return this->empty() ? emptyString : path_get_upper_ptr(this->buffer.get(), this->capacity());
+}
+
+path::size_type path::size() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return this->actualSize;
+}
+
+path::size_type path::capacity() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return this->actualCapacity;
+}
+
+path::size_type path::max_size() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return std::numeric_limits<short>::max();
+}
+
+bool path::empty() const BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return this->size() == 0;
+}
+
+void path::swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    using std::swap;
+    swap(buffer, other.buffer);
+    swap(actualSize, other.actualSize);
+    swap(actualCapacity, other.actualCapacity);
+}
+
+path::~path() BOOST_NOEXCEPT_OR_NOTHROW
+{
+    // delete this->buffer happens in unique_ptr destructor
+}
+
+
+} // Instalog

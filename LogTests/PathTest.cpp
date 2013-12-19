@@ -14,6 +14,7 @@
 #include "../LogCommon/Utf8.hpp"
 
 using namespace Instalog::Path;
+using Instalog::path;
 
 TEST(PathAppendTest, NoSlashes)
 {
@@ -429,3 +430,276 @@ TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
     ::CloseHandle(hFile);
     ::CloseHandle(hFile2);
 }
+
+// These tests use U+00A9 COPYRIGHT SIGN as an example character not requiring UTF-16 surrogates
+#define UNICODE_CHARACTER   "\xC2\xA9"
+#define UNICODE_CHARACTERW L"\x00A9"
+
+// These tests use U+1F4A9 PILE OF POO as an example character requiring UTF-16 surrogates
+#define SURROGATE_CHARACTER   "\xF0\x9F\x92\xA9"
+#define SURROGATE_CHARACTERW L"\xD83D\xDCA9"
+
+static char const examplePath[] = "Example i " SURROGATE_CHARACTER " path " UNICODE_CHARACTER;
+static wchar_t const exampleWidePath[] = L"Example i " SURROGATE_CHARACTERW L" path " UNICODE_CHARACTERW;
+static char const* examplePathUpper = "EXAMPLE I " SURROGATE_CHARACTER " PATH " UNICODE_CHARACTER;
+static wchar_t const* exampleWidePathUpper = L"EXAMPLE I " SURROGATE_CHARACTERW L" PATH " UNICODE_CHARACTERW;
+
+static void test_path_class_unicode_path(path const& p)
+{
+    // -1 for the null
+    EXPECT_EQ(_countof(exampleWidePath) - 1, p.size());
+    EXPECT_EQ(_countof(exampleWidePath) - 1, p.capacity());
+    EXPECT_EQ(32767, p.max_size());
+
+    EXPECT_STREQ(exampleWidePath, p.get());
+    EXPECT_EQ(static_cast<std::string>(examplePath), p.to_string());
+    EXPECT_EQ(static_cast<std::wstring>(exampleWidePath), p.to_wstring());
+
+    EXPECT_STREQ(exampleWidePathUpper, p.get_upper());
+    EXPECT_EQ(static_cast<std::string>(examplePathUpper), p.to_upper_string());
+    EXPECT_EQ(static_cast<std::wstring>(exampleWidePathUpper), p.to_upper_wstring());
+}
+
+TEST(PathClass, ConstructUnicodeFromCharStar)
+{
+    path p(examplePath);
+    test_path_class_unicode_path(p);
+}
+
+TEST(PathClass, ConstructUnicodeFromWcharTStar)
+{
+    path p(exampleWidePath);
+    test_path_class_unicode_path(p);
+}
+
+TEST(PathClass, ConstructUnicodeFromString)
+{
+    path p(static_cast<std::string>(examplePath));
+    test_path_class_unicode_path(p);
+}
+
+TEST(PathClass, ConstructUnicodeFromWstring)
+{
+    path p(static_cast<std::wstring>(exampleWidePath));
+    test_path_class_unicode_path(p);
+}
+
+static void test_empty_path(path const& p)
+{
+    EXPECT_EQ(0u, p.size());
+    EXPECT_EQ(0u, p.capacity());
+    EXPECT_NE(nullptr, p.get());
+    EXPECT_NE(nullptr, p.get_upper());
+}
+
+TEST(PathClass, DefaultConstructionIsEmpty)
+{
+    path p;
+    test_empty_path(p);
+}
+
+TEST(PathClass, NullptrConstructionIsEmpty)
+{
+    path p(nullptr);
+    test_empty_path(p);
+}
+
+static void test_equal_paths(path const& expected, path const& actual)
+{
+    EXPECT_EQ(expected.size(), actual.size());
+    EXPECT_STREQ(expected.get(), actual.get());
+    EXPECT_STREQ(expected.get_upper(), actual.get_upper());
+    EXPECT_EQ(expected, actual);
+}
+
+static void test_path_is_example(path const& actual)
+{
+    EXPECT_EQ(7, actual.size());
+    EXPECT_STREQ(L"Example", actual.get());
+    EXPECT_STREQ(L"EXAMPLE", actual.get_upper());
+}
+
+TEST(PathClass, CopyConstructor)
+{
+    path start("Example");
+    path copy(start);
+    test_equal_paths(start, copy);
+}
+
+TEST(PathClass, MoveConstructor)
+{
+    path start("Example");
+    path moved(std::move(start));
+    test_empty_path(start);
+    test_path_is_example(moved);
+}
+
+TEST(PathClass, CopyAssignment)
+{
+    path start("Example");
+    path copy;
+    copy = start;
+    test_equal_paths(start, copy);
+}
+
+TEST(PathClass, CopyAssignmentToSelf)
+{
+    path start("Example");
+    start = start;
+    test_path_is_example(start);
+}
+
+TEST(PathClass, MoveAssignment)
+{
+    path start("Example");
+    path moved;
+    moved = std::move(start);
+    test_empty_path(start);
+    test_path_is_example(moved);
+}
+
+TEST(PathClass, MoveAssignmentToSelf)
+{
+    path start("Example");
+    start = std::move(start);
+    test_path_is_example(start);
+}
+
+TEST(PathClass, SwapMember)
+{
+    path left("Right path");
+    path right("Left path");
+    left.swap(right);
+    EXPECT_STREQ(L"Left path", left.get());
+    EXPECT_EQ(9, left.size());
+    EXPECT_EQ(9, left.capacity());
+    EXPECT_STREQ(L"Right path", right.get());
+    EXPECT_EQ(10, right.size());
+    EXPECT_EQ(10, right.capacity());
+}
+
+TEST(PathClass, SwapNoneMember)
+{
+    path left("Right path");
+    path right("Left path");
+    swap(left, right);
+    EXPECT_STREQ(L"Left path", left.get());
+    EXPECT_EQ(9, left.size());
+    EXPECT_EQ(9, left.capacity());
+    EXPECT_STREQ(L"Right path", right.get());
+    EXPECT_EQ(10, right.size());
+    EXPECT_EQ(10, right.capacity());
+}
+
+TEST(PathClass, Equals)
+{
+    path left("Example");
+    path right("ExAmPlE");
+    EXPECT_TRUE(left == right);
+}
+
+TEST(PathClass, NotEquals)
+{
+    path left("Example");
+    path right("ExAmPlE");
+    EXPECT_FALSE(left != right);
+}
+
+TEST(PathClass, Less)
+{
+    path empty;
+    path apple("Apple");
+    path bear("Bear");
+    path cat("Cat");
+    EXPECT_TRUE(empty < apple);
+    EXPECT_TRUE(empty < bear);
+    EXPECT_TRUE(empty < cat);
+    EXPECT_TRUE(apple < bear);
+    EXPECT_TRUE(apple < cat);
+    EXPECT_TRUE(bear < cat);
+
+    EXPECT_FALSE(cat < empty);
+    EXPECT_FALSE(cat < apple);
+    EXPECT_FALSE(cat < bear);
+    EXPECT_FALSE(bear < empty);
+    EXPECT_FALSE(bear < apple);
+    EXPECT_FALSE(apple < empty);
+
+    EXPECT_FALSE(empty < empty);
+    EXPECT_FALSE(cat < cat);
+}
+
+TEST(PathClass, Greater)
+{
+    path empty;
+    path apple("Apple");
+    path bear("Bear");
+    path cat("Cat");
+
+    EXPECT_TRUE(cat > empty);
+    EXPECT_TRUE(cat > apple);
+    EXPECT_TRUE(cat > bear);
+    EXPECT_TRUE(bear > empty);
+    EXPECT_TRUE(bear > apple);
+    EXPECT_TRUE(apple > empty);
+
+    EXPECT_FALSE(empty > apple);
+    EXPECT_FALSE(empty > bear);
+    EXPECT_FALSE(empty > cat);
+    EXPECT_FALSE(apple > bear);
+    EXPECT_FALSE(apple > cat);
+    EXPECT_FALSE(bear > cat);
+
+    EXPECT_FALSE(empty > empty);
+    EXPECT_FALSE(cat > cat);
+}
+
+TEST(PathClass, LessEqual)
+{
+    path empty;
+    path apple("Apple");
+    path bear("Bear");
+    path cat("Cat");
+    EXPECT_TRUE(empty <= apple);
+    EXPECT_TRUE(empty <= bear);
+    EXPECT_TRUE(empty <= cat);
+    EXPECT_TRUE(apple <= bear);
+    EXPECT_TRUE(apple <= cat);
+    EXPECT_TRUE(bear <= cat);
+
+    EXPECT_FALSE(cat <= empty);
+    EXPECT_FALSE(cat <= apple);
+    EXPECT_FALSE(cat <= bear);
+    EXPECT_FALSE(bear <= empty);
+    EXPECT_FALSE(bear <= apple);
+    EXPECT_FALSE(apple <= empty);
+
+    EXPECT_TRUE(empty <= empty);
+    EXPECT_TRUE(cat <= cat);
+}
+
+TEST(PathClass, GreaterEqual)
+{
+    path empty;
+    path apple("Apple");
+    path bear("Bear");
+    path cat("Cat");
+
+    EXPECT_TRUE(cat >= empty);
+    EXPECT_TRUE(cat >= apple);
+    EXPECT_TRUE(cat >= bear);
+    EXPECT_TRUE(bear >= empty);
+    EXPECT_TRUE(bear >= apple);
+    EXPECT_TRUE(apple >= empty);
+
+    EXPECT_FALSE(empty >= apple);
+    EXPECT_FALSE(empty >= bear);
+    EXPECT_FALSE(empty >= cat);
+    EXPECT_FALSE(apple >= bear);
+    EXPECT_FALSE(apple >= cat);
+    EXPECT_FALSE(bear >= cat);
+
+    EXPECT_TRUE(empty >= empty);
+    EXPECT_TRUE(cat >= cat);
+}
+

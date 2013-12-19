@@ -3,11 +3,9 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
+#include <cstddef>
 #include <string>
-#include <memory>
-#include <iterator>
 #include <algorithm>
-#include <type_traits>
 #include <boost/config.hpp>
 
 namespace Instalog
@@ -66,4 +64,94 @@ std::string GetWindowsPath();
 std::string ExpandEnvStrings(std::string const& input);
 
 }
+
+
+class path
+{
+public:
+    typedef std::size_t size_type;
+    
+    path() BOOST_NOEXCEPT_OR_NOTHROW;
+    path(std::nullptr_t) BOOST_NOEXCEPT_OR_NOTHROW;
+    path(char const* sourcePath);
+    path(wchar_t const* sourcePath);
+    path(std::string const& sourcePath);
+    path(std::wstring const& sourcePath);
+    path(path const& other);
+    path(path && other) BOOST_NOEXCEPT_OR_NOTHROW;
+
+    path& operator=(path const& other);
+    path& operator=(path && other) BOOST_NOEXCEPT_OR_NOTHROW;
+
+    std::string to_string() const;
+    std::string to_upper_string() const;
+
+    std::wstring to_wstring() const;
+    std::wstring to_upper_wstring() const;
+
+    wchar_t const* get() const BOOST_NOEXCEPT_OR_NOTHROW;
+    wchar_t const* get_upper() const BOOST_NOEXCEPT_OR_NOTHROW;
+
+    size_type size() const BOOST_NOEXCEPT_OR_NOTHROW;
+    size_type capacity() const BOOST_NOEXCEPT_OR_NOTHROW;
+    size_type max_size() const BOOST_NOEXCEPT_OR_NOTHROW;
+    bool empty() const BOOST_NOEXCEPT_OR_NOTHROW;
+
+    void swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW;
+
+    ~path() BOOST_NOEXCEPT_OR_NOTHROW;
+private:
+    void construct(char const* const buffer, std::size_t length);
+    void construct(wchar_t const* const buffer, std::size_t length);
+    void construct_upper() BOOST_NOEXCEPT_OR_NOTHROW;
+    void set_sizes_to(std::size_t length) BOOST_NOEXCEPT_OR_NOTHROW;
+    std::unique_ptr<wchar_t[]> buffer;
+    size_type actualSize;
+    size_type actualCapacity;
+};
+
+inline bool operator==(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    auto const lhsSize = lhs.size();
+    auto const rhsSize = rhs.size();
+    auto const lhsUpper = lhs.get_upper();
+    return lhsSize == rhsSize && std::equal(lhsUpper, lhsUpper + lhsSize, rhs.get_upper());
+}
+
+inline bool operator!=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return !(lhs == rhs);
+}
+
+inline bool operator<(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    auto const lhsSize = lhs.size();
+    auto const lhsBegin = lhs.get_upper();
+    auto const lhsEnd = lhsBegin + lhsSize;
+    auto const rhsSize = rhs.size();
+    auto const rhsBegin = rhs.get_upper();
+    auto const rhsEnd = rhsBegin + rhsSize;
+    return std::lexicographical_compare(lhsBegin, lhsEnd, rhsBegin, rhsEnd);
+}
+
+inline bool operator>(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return rhs < lhs;
+}
+
+inline bool operator<=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return !(lhs > rhs);
+}
+
+inline bool operator>=(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return !(lhs < rhs);
+}
+
+inline void swap(path& lhs, path& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    lhs.swap(rhs);
+}
+
 }
