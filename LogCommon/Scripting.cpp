@@ -4,7 +4,6 @@
 
 #include "pch.hpp"
 #include <clocale>
-#include <functional>
 #include <algorithm>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -24,8 +23,7 @@ void ScriptParser::AddSectionDefinition(
 {
     std::string scriptCommand(sectionTypeToAdd->GetScriptCommand());
     to_lower(scriptCommand);
-    sectionTypes.emplace(
-        std::make_pair(std::move(scriptCommand), std::move(sectionTypeToAdd)));
+    sectionTypes.emplace(std::move(scriptCommand), std::move(sectionTypeToAdd));
 }
 
 Script ScriptParser::Parse(std::string const& script) const
@@ -39,15 +37,12 @@ Script ScriptParser::Parse(std::string const& script) const
         std::remove_if(scriptLines.begin(),
                        scriptLines.end(),
                            [](std::string const & a)->bool {
-            return std::find_if(a.begin(),
-                                a.end(),
-                                std::not1(std::ptr_fun(isspace))) == a.end();
+            return std::all_of(a.cbegin(), a.cend(), isspace);
         }),
         scriptLines.end());
 
-    std::vector<std::string>::iterator begin, end;
-    begin = scriptLines.begin();
-    end = scriptLines.end();
+    auto begin = scriptLines.begin();
+    auto end = scriptLines.end();
     while (begin != end)
     {
         if (!starts_with(*begin, ":"))
@@ -112,8 +107,7 @@ void Script::Add(ISectionDefinition const* def,
     auto insertPoint = sections.find(ss);
     if (insertPoint == sections.end())
     {
-        sections.insert(
-            std::make_pair(ScriptSection(def, arg, index), options));
+        sections.emplace(ScriptSection(def, arg, index), options);
     }
     else
     {
