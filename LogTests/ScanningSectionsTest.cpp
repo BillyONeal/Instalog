@@ -98,12 +98,6 @@ TEST_F(ServicesDriversTest, NameIsCorrect)
     ASSERT_EQ("Services/Drivers", sd.GetName());
 }
 
-TEST_F(ServicesDriversTest, ActuallyGotOutput)
-{
-    Go();
-    ASSERT_FALSE(ss.get().empty());
-}
-
 TEST_F(ServicesDriversTest, RpcSsSvchost)
 {
     Go();
