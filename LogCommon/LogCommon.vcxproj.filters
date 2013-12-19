@@ -181,5 +181,8 @@
     <ClInclude Include="Utf8.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LogAlgorithm.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
