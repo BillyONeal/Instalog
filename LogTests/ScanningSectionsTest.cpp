@@ -104,14 +104,6 @@ TEST_F(ServicesDriversTest, ActuallyGotOutput)
     ASSERT_FALSE(ss.get().empty());
 }
 
-TEST_F(ServicesDriversTest, TcpipWhitelisted)
-{
-    Go();
-    ASSERT_FALSE(boost::algorithm::contains(
-        ss.get(),
-        "R0 Tcpip;TCP/IP Protocol Driver;C:\\Windows\\System32\\Drivers\\Tcpip.sys"));
-}
-
 TEST_F(ServicesDriversTest, RpcSsSvchost)
 {
     Go();
