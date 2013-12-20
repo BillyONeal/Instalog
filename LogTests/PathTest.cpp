@@ -264,32 +264,55 @@ TEST(PathResolution, QuotedPathRundll)
 
 struct PathResolutionPathOrderFixture : public testing::Test
 {
+    std::wstring dir1W;
+    std::wstring dir2W;
+    std::wstring pathBuffer;
     std::vector<std::string> pathItems;
+    std::vector<std::string> pathExtItems;
     std::string const fileName;
     PathResolutionPathOrderFixture()
         : fileName("ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found")
     {
     }
+
     virtual void SetUp()
     {
         using namespace std::placeholders;
-        std::wstring pathBuffer;
         DWORD pathLen = ::GetEnvironmentVariableW(L"PATH", nullptr, 0);
         pathBuffer.resize(pathLen);
         ::GetEnvironmentVariableW(L"PATH", &pathBuffer[0], pathLen);
         pathBuffer.pop_back(); // remove null
-        std::vector<std::wstring> pathWideItems;
-        boost::algorithm::split(pathWideItems,
-                                pathBuffer,
-                                std::bind1st(std::equal_to<wchar_t>(), L';'));
-        ASSERT_LE(3ul, pathWideItems.size());
-        std::transform(pathWideItems.begin(),
-                       pathWideItems.end(),
-                       std::back_inserter(pathItems),
-                       [&](std::wstring & x) { return Append(utf8::ToUtf8(x), fileName); });
-        std::for_each(pathItems.begin(), pathItems.end(), [](std::string & a) {
-            Prettify(a.begin(), a.end());
-        });
+
+        std::string dir1 = Instalog::Path::Append(GetTestBinaryDir(), "Directory1");
+        std::string dir2 = Instalog::Path::Append(GetTestBinaryDir(), "Directory2");
+        dir1W = utf8::ToUtf16(dir1);
+        dir2W = utf8::ToUtf16(dir2);
+        std::wstring setPath = dir1W + L";" + dir2W;
+        ::SetEnvironmentVariableW(L"PATH", setPath.c_str());
+        pathItems.emplace_back(Instalog::Path::Append(dir1, fileName));
+        pathItems.emplace_back(Instalog::Path::Append(dir2, fileName));
+        ::CreateDirectoryW(dir1W.c_str(), nullptr);
+        ::CreateDirectoryW(dir2W.c_str(), nullptr);
+
+        std::wstring pathExt;
+        pathLen = ::GetEnvironmentVariableW(L"PATHEXT", nullptr, 0);
+        pathExt.resize(pathLen);
+        ::GetEnvironmentVariableW(L"PATHEXT", &pathExt[0], pathLen);
+        pathExt.pop_back(); // remove null
+        std::vector<std::wstring> pathExtWide;
+        boost::algorithm::split(pathExtWide,
+            pathExt,
+            std::bind1st(std::equal_to<wchar_t>(), L';'));
+        ASSERT_LE(3u, pathExtWide.size());
+        pathExtItems.emplace_back(Instalog::Path::Append(dir1, "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe" + utf8::ToUtf8(pathExtWide[0])));
+        pathExtItems.emplace_back(Instalog::Path::Append(dir1, "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe" + utf8::ToUtf8(pathExtWide[1])));
+    }
+
+    virtual void TearDown()
+    {
+        ::RemoveDirectoryW(dir1W.c_str());
+        ::RemoveDirectoryW(dir2W.c_str());
+        ::SetEnvironmentVariableW(L"PATH", pathBuffer.c_str());
     }
 };
 
@@ -353,80 +376,36 @@ TEST_F(PathResolutionPathOrderFixture, RespectsPathOrder)
     }
 }
 
-struct PathResolutionPathExtOrderFixture : public testing::Test
+TEST_F(PathResolutionPathOrderFixture, SeesLastPathExtItem)
 {
-    std::vector<std::string> pathItems;
-    std::string const fileName;
-    PathResolutionPathExtOrderFixture()
-        : fileName("ExampleFileDoesNotExistFindMeFindMeFindMeFindMeExt")
-    {
-    }
-    virtual void SetUp()
-    {
-        std::wstring pathBuffer;
-        DWORD pathLen = ::GetEnvironmentVariableW(L"PATHEXT", nullptr, 0);
-        pathBuffer.resize(pathLen);
-        ::GetEnvironmentVariable(L"PATHEXT", &pathBuffer[0], pathLen);
-        pathBuffer.pop_back(); // remove null
-        std::vector<std::wstring> pathItemsWide;
-        boost::algorithm::split(pathItemsWide,
-                                pathBuffer,
-                                std::bind1st(std::equal_to<wchar_t>(), L';'));
-        ASSERT_LE(3u, pathItemsWide.size());
-        std::transform(pathItemsWide.cbegin(),
-                       pathItemsWide.cend(),
-                       std::back_inserter(pathItems),
-                       [](std::wstring const& s)
-        { return utf8::ToUtf8(s); });
-        std::for_each(pathItems.begin(),
-                      pathItems.end(),
-                      [this](std::string & a) { a.insert(0, fileName); });
-        std::transform(pathItems.begin(),
-                       pathItems.end(),
-                       pathItems.begin(),
-                       [](std::string &
-                          x) { return Append("C:\\Windows\\System32", x); });
-        std::for_each(pathItems.begin(), pathItems.end(), [](std::string & a) {
-            Prettify(a.begin(), a.end());
-        });
-    }
-};
-
-TEST_F(PathResolutionPathExtOrderFixture, NoCreateFails)
-{
-    TestResolve(fileName, fileName, false);
-}
-
-TEST_F(PathResolutionPathExtOrderFixture, SeesLastPathItem)
-{
-    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathItems.back()).c_str(),
+    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathExtItems.back()).c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
                                  CREATE_ALWAYS,
                                  FILE_FLAG_DELETE_ON_CLOSE,
                                  0);
-    TestResolve(pathItems.back(), fileName);
+    TestResolve(pathExtItems.back(), "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe");
     ::CloseHandle(hFile);
 }
 
-TEST_F(PathResolutionPathExtOrderFixture, RespectsPathExtOrder)
+TEST_F(PathResolutionPathOrderFixture, RespectsPathExtOrder)
 {
-    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathItems[1]).c_str(),
+    HANDLE hFile = ::CreateFileW(utf8::ToUtf16(pathExtItems[0]).c_str(),
                                  GENERIC_WRITE,
                                  0,
                                  0,
                                  CREATE_ALWAYS,
                                  FILE_FLAG_DELETE_ON_CLOSE,
                                  0);
-    HANDLE hFile2 = ::CreateFileW(utf8::ToUtf16(pathItems[2]).c_str(),
+    HANDLE hFile2 = ::CreateFileW(utf8::ToUtf16(pathExtItems[1]).c_str(),
                                   GENERIC_WRITE,
                                   0,
                                   0,
                                   CREATE_ALWAYS,
                                   FILE_FLAG_DELETE_ON_CLOSE,
                                   0);
-    TestResolve(pathItems[1], fileName);
+    TestResolve(pathExtItems[0], "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe");
     ::CloseHandle(hFile);
     ::CloseHandle(hFile2);
 }

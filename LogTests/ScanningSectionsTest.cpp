@@ -60,9 +60,10 @@ TEST_F(RunningProcessesTest, SvchostHasFullLine)
         return;
     }
 
+    std::string svcHostBad = "C:\\Windows\\system32\\svchost.exe";
     std::string svcHost = "C:\\Windows\\system32\\svchost.exe -k netsvcs";
     Go();
-    ASSERT_PRED2(&test_icontains, ss.get(), svcHost);
+    ASSERT_TRUE(test_icontains(ss.get(), svcHost) || !test_icontains(ss.get(), svcHostBad));
 }
 
 TEST_F(RunningProcessesTest, TestsDoNotHaveFullLine)

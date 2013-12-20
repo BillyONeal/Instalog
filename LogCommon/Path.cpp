@@ -225,7 +225,7 @@ static bool TryExtensionsAndPaths(std::string& path,
         return false;
 
     // Third, try to prepend it with each path in %PATH% and try each extension
-    static std::vector<std::string> splitPath = getSplitPath();
+    std::vector<std::string> splitPath = getSplitPath();
     for (std::vector<std::string>::iterator splitPathIt = splitPath.begin();
          splitPathIt != splitPath.end();
          ++splitPathIt)
