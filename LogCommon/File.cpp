@@ -9,6 +9,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include "Utf8.hpp"
 #include "Win32Exception.hpp"
+#include "OptimisticBuffer.hpp"
 
 #pragma comment(lib, "Version.lib")
 
@@ -161,23 +162,42 @@ bool File::IsExecutable(std::string const& filename)
 std::string File::GetCompany(std::string const& filenameUtf8)
 {
     std::wstring filename(utf8::ToUtf16(filenameUtf8));
-    DWORD infoSize = ::GetFileVersionInfoSizeW(filename.c_str(), 0);
-    if (infoSize == 0)
-    {
-        Win32Exception::ThrowFromLastError();
-    }
-    std::vector<char> buff(infoSize);
+
+    // The version data is usually <= 4k
+    auto const initialTry = 4096;
+    OptimisticBuffer<4096> buff(initialTry);
     if (::GetFileVersionInfoW(filename.c_str(),
-                              0,
-                              static_cast<DWORD>(buff.size()),
-                              buff.data()) == 0)
+        0,
+        static_cast<DWORD>(buff.Size()),
+        buff.Get()) == 0)
     {
-        Win32Exception::ThrowFromLastError();
+        DWORD lastError = ::GetLastError();
+        if (lastError != ERROR_INSUFFICIENT_BUFFER)
+        {
+            Win32Exception::Throw(lastError);
+        }
+
+        // Optimistic attempt failed, figure out the actual size and use that.
+        DWORD infoSize = ::GetFileVersionInfoSizeW(filename.c_str(), 0);
+        if (infoSize == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+
+        buff.Resize(infoSize);
+        if (::GetFileVersionInfoW(filename.c_str(),
+                                  0,
+                                  static_cast<DWORD>(buff.Size()),
+                                  buff.Get()) == 0)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
     }
+
     wchar_t const targetPath[] = L"\\StringFileInfo\\040904B0\\CompanyName";
     void* companyData;
     UINT len;
-    if (::VerQueryValueW(buff.data(), targetPath, &companyData, &len) == 0)
+    if (::VerQueryValueW(buff.Get(), targetPath, &companyData, &len) == 0)
     {
         Win32Exception::ThrowFromLastError();
     }

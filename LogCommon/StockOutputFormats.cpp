@@ -68,14 +68,14 @@ void WriteDefaultFileOutput(log_sink& str, std::string targetFile)
         write(str, targetFile, " [x]");
         return;
     }
-    std::string companyInfo(" ");
+    std::string companyInfo(1, ' ');
     try
     {
         companyInfo.append(File::GetCompany(targetFile));
     }
     catch (Win32Exception const&)
     {
-        companyInfo = "";
+        companyInfo.clear();
     }
     write(str, targetFile);
     try
