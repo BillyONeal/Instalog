@@ -119,7 +119,6 @@ TEST(StockFormats, DefaultFileWithCompany)
 {
     using Instalog::SystemFacades::File;
     std::string inputFile(GetTestFilePath("TestVerInfoApp.exe"));
-    Instalog::Path::Prettify(inputFile.begin(), inputFile.end());
     string_sink ss;
     WriteDefaultFileOutput(ss, inputFile);
     WIN32_FILE_ATTRIBUTE_DATA fad =
@@ -131,7 +130,7 @@ TEST(StockFormats, DefaultFileWithCompany)
         fad.ftCreationTime.dwLowDateTime;
     WriteDefaultDateFormat(expected, ctime);
     write(expected, " Expected Company Name]");
-    EXPECT_EQ(expected, ss);
+    EXPECT_STRCASEEQ(expected.get().c_str(), ss.get().c_str());
 }
 
 TEST(StockFormats, Listing)

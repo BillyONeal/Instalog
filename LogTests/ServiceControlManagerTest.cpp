@@ -59,13 +59,13 @@ TEST(ServiceControlManager, TcpipService)
         });
 
     ASSERT_NE(tcpip, services.end());
-    EXPECT_EQ("TCP/IP Protocol Driver", tcpip->GetDisplayName());
+    EXPECT_STRCASEEQ("TCP/IP Protocol Driver", tcpip->GetDisplayName().c_str());
     EXPECT_EQ("R", tcpip->GetState())
         << "This will fail if Tcpip is not running";
     EXPECT_EQ(SERVICE_BOOT_START, tcpip->GetStart())
         << "This will fail if Tcpip is not configured to auto-start";
-    EXPECT_EQ("C:\\Windows\\System32\\Drivers\\Tcpip.sys",
-              tcpip->GetFilepath());
+    EXPECT_STRCASEEQ("C:\\Windows\\System32\\Drivers\\Tcpip.sys",
+              tcpip->GetFilepath().c_str());
     EXPECT_TRUE(tcpip->GetSvchostGroup().empty());
     EXPECT_FALSE(tcpip->GetSvchostDll().is_valid());
     EXPECT_FALSE(tcpip->IsSvchostService());
@@ -77,9 +77,7 @@ TEST(ServiceControlManager, RpcSsSvchostService)
 
     auto rcpss = std::find_if(
         services.begin(), services.end(), [](Service const & service)->bool {
-            return service.GetServiceName() == "RpcSs";
-        // Triggers compiler bug
-        // return boost::algorithm::iequals(service.getServiceName(), L"RpcSs");
+            return boost::algorithm::iequals(service.GetServiceName(), "RpcSs");
         });
 
     ASSERT_NE(rcpss, services.end());
@@ -88,10 +86,10 @@ TEST(ServiceControlManager, RpcSsSvchostService)
         << "This will fail if RpcSs is not running";
     EXPECT_EQ(SERVICE_AUTO_START, rcpss->GetStart())
         << "This will fail if RpcSs is not configured to auto-start";
-    EXPECT_EQ("C:\\Windows\\System32\\Svchost.exe", rcpss->GetFilepath());
+    EXPECT_STRCASEEQ("C:\\Windows\\System32\\Svchost.exe", rcpss->GetFilepath().c_str());
     EXPECT_EQ("rpcss", rcpss->GetSvchostGroup());
-    EXPECT_EQ("C:\\Windows\\System32\\Rpcss.dll",
-              rcpss->GetSvchostDll().get());
+    EXPECT_STRCASEEQ("C:\\Windows\\System32\\Rpcss.dll",
+              rcpss->GetSvchostDll().get().c_str());
     EXPECT_TRUE(rcpss->IsSvchostService());
 }
 
@@ -110,7 +108,7 @@ TEST(ServiceControlManager, BeepEmptyImagepathService)
         << "This will fail if beep is not running";
     EXPECT_EQ(1, beep->GetStart())
         << "This will fail if beep is not configured to auto-start";
-    EXPECT_EQ("C:\\Windows\\System32\\Drivers\\Beep.sys", beep->GetFilepath());
+    EXPECT_STRCASEEQ("C:\\Windows\\System32\\Drivers\\Beep.sys", beep->GetFilepath().c_str());
     EXPECT_TRUE(beep->GetSvchostGroup().empty());
     EXPECT_FALSE(beep->IsSvchostService());
 }

@@ -23,15 +23,6 @@ namespace Path
 /// @param    [in] more    The right of the path to be appended
 std::string Append(std::string path, std::string const& more);
 
-/// @brief    "Prettifies" paths
-///
-/// @details    Lowercases everything in a path besides the drive letter and
-/// characters immediately following backslashes
-///
-/// @param    first    An iterator to the beginning of the path to be pretified
-/// @param    last     An iterator one past the end of the path to be pretified
-void Prettify(std::string::iterator first, std::string::iterator last);
-
 /// @brief    Expands a short windows path to the corresponding long version
 ///
 /// @param    path    Full long path to the file

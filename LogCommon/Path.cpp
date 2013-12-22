@@ -296,7 +296,6 @@ bool ResolveFromCommandLine(std::string& path)
 
         path = unescaped;
         ExpandShortPath(path);
-        Prettify(path.begin(), path.end());
         return SystemFacades::File::IsExclusiveFile(path);
     }
     else
@@ -306,33 +305,8 @@ bool ResolveFromCommandLine(std::string& path)
         if (status)
         {
             ExpandShortPath(path);
-            Prettify(path.begin(), path.end());
         }
         return status;
-    }
-}
-
-void Prettify(std::string::iterator first, std::string::iterator last)
-{
-    bool upperCase = true;
-    for (; first != last; ++first)
-    {
-        if (upperCase)
-        {
-            *first = static_cast<char>(toupper(*first));
-            upperCase = false;
-        }
-        else
-        {
-            if (*first == '\\')
-            {
-                upperCase = true;
-            }
-            else
-            {
-                *first = static_cast<char>(tolower(*first));
-            }
-        }
     }
 }
 

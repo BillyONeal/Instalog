@@ -75,27 +75,6 @@ TEST(PathAppendTest, AppendFailure)
             "ExampleFileDoesNotExistFindMeFindMeFindMeFindMe.found").c_str());
 }
 
-TEST(PathPrettify, CorrectOutput)
-{
-    std::string path("C:\\ExAmPlE\\FooBar\\Target.EXE");
-    Prettify(path.begin(), path.end());
-    ASSERT_EQ("C:\\Example\\Foobar\\Target.exe", path);
-}
-
-TEST(PathPrettify, DriveCapitalized)
-{
-    std::string path("c:\\Example\\Foobar\\Target.exe");
-    Prettify(path.begin(), path.end());
-    ASSERT_EQ("C:\\Example\\Foobar\\Target.exe", path);
-}
-
-TEST(PathPrettify, SpacesOkay)
-{
-    std::string path("C:\\Example\\Foo bar\\Target.exe");
-    Prettify(path.begin(), path.end());
-    ASSERT_EQ("C:\\Example\\Foo bar\\Target.exe", path);
-}
-
 static void TestExpansion(std::string const& expected,
                           std::string source,
                           bool expectedReturn = true)

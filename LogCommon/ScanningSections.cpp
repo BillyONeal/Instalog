@@ -94,7 +94,8 @@ void RunningProcesses::Execute(log_sink& logOutput,
             {
                 continue;
             }
-            Path::Prettify(executable.begin(), executable.end());
+            
+            executable.begin(), executable.end();
             std::string pathElement;
             auto equTest = [&](std::string const & str)->bool
             {

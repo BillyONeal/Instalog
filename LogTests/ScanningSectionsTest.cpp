@@ -102,7 +102,7 @@ TEST_F(ServicesDriversTest, NameIsCorrect)
 TEST_F(ServicesDriversTest, RpcSsSvchost)
 {
     Go();
-    ASSERT_TRUE(boost::algorithm::contains(
+    ASSERT_TRUE(boost::algorithm::icontains(
         ss.get(),
         "R2 RpcSs;Remote Procedure Call (RPC);rpcss->C:\\Windows\\System32\\Rpcss.dll"))
         << "This will fail if RpcSs is not configured to auto-start or is not running";
