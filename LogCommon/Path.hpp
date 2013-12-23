@@ -95,10 +95,12 @@ private:
     void construct(char const* const buffer, std::size_t length);
     void construct(wchar_t const* const buffer, std::size_t length);
     void construct_upper() BOOST_NOEXCEPT_OR_NOTHROW;
-    void set_sizes_to(std::size_t length) BOOST_NOEXCEPT_OR_NOTHROW;
+    void set_sizes_to(size_type length) BOOST_NOEXCEPT_OR_NOTHROW;
+    wchar_t* get_upper_ptr() BOOST_NOEXCEPT_OR_NOTHROW;
+    wchar_t const* get_upper_ptr() const BOOST_NOEXCEPT_OR_NOTHROW;
     std::unique_ptr<wchar_t[]> buffer;
-    size_type actualSize;
-    size_type actualCapacity;
+    int actualSize;
+    int actualCapacity;
 };
 
 inline bool operator==(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
