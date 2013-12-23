@@ -487,19 +487,24 @@ path::path(path && other) BOOST_NOEXCEPT_OR_NOTHROW
 
 path& path::operator=(path const& other)
 {
-    std::size_t const otherSize = other.size();
-    std::size_t const bufferSize = path_buffer_size_for_characters(otherSize);
-    // Note use of a seperate buffer rather than this->buffer to
-    // support assign-to-self
-    std::unique_ptr<wchar_t[]> newBuffer(new wchar_t[bufferSize]);
-    wchar_t* nullPointer = std::copy_n(other.get(), otherSize, newBuffer.get());
-    *nullPointer = L'\0';
-    nullPointer = std::copy_n(other.get_upper(), otherSize, newBuffer.get() + otherSize + 1);
-    *nullPointer = L'\0';
+    wchar_t* copyPtr;
+    int const otherSize = other.actualSize;
+    if (otherSize > this->actualCapacity)
+    {
+        std::size_t const bufferSize = path_buffer_size_for_characters(otherSize);
+        // Assign to self is not possible because otherSize > actualCapacity, so we
+        // can safely reset this->buffer.
+        this->buffer.reset(new wchar_t[bufferSize]);
 
-    // Ok, these are nothrow
-    this->buffer = std::move(newBuffer);
-    this->set_sizes_to(otherSize);
+        // Ok, this is nothrow
+        this->actualCapacity = otherSize;
+    }
+
+    copyPtr = std::copy_n(other.get(), otherSize, this->buffer.get());
+    *copyPtr = L'\0';
+    copyPtr = std::copy_n(other.get_upper(), otherSize, this->get_upper_ptr());
+    *copyPtr = L'\0';
+    this->actualSize = otherSize;
 
     return *this;
 }

@@ -500,6 +500,16 @@ TEST(PathClass, CopyAssignment)
     test_equal_paths(start, copy);
 }
 
+TEST(PathClass, CopyAssignmentToLonger)
+{
+    path start("Example");
+    path copy("This string is really really long.");
+    auto const cap = copy.capacity();
+    copy = start;
+    test_equal_paths(start, copy);
+    EXPECT_EQ(cap, copy.capacity());
+}
+
 TEST(PathClass, CopyAssignmentToSelf)
 {
     path start("Example");
