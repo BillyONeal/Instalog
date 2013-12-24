@@ -671,3 +671,35 @@ TEST(PathClass, GreaterEqual)
     EXPECT_TRUE(cat >= cat);
 }
 
+TEST(PathClass, PathClear)
+{
+    path filled(L"data here");
+    EXPECT_EQ(9, filled.capacity());
+    filled.clear();
+    EXPECT_EQ(9, filled.capacity());
+    EXPECT_TRUE(filled.empty());
+    EXPECT_STREQ(L"", filled.get());
+}
+
+TEST(PathClass, InsertGrow)
+{
+    path filled(L"start end");
+    filled.insert(6, L"middle ");
+    EXPECT_STREQ(L"start middle end", filled.get());
+    EXPECT_STREQ(L"start middle end", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDDLE END", filled.get_upper());
+    EXPECT_STREQ(L"START MIDDLE END", filled.to_upper_wstring().c_str());
+}
+
+TEST(PathClass, InsertNoGrow)
+{
+    path filled(L"this is a path with data which makes it really long");
+    path smallData("start end");
+    filled = smallData;
+    filled.insert(6, L"example");
+    filled.insert(6, L"middle ");
+    EXPECT_STREQ(L"start middle exampleend", filled.get());
+    EXPECT_STREQ(L"start middle exampleend", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.get_upper());
+    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.to_upper_wstring().c_str());
+}

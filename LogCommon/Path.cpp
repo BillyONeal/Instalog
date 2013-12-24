@@ -357,18 +357,16 @@ static std::size_t path_buffer_size_for_characters(std::size_t characterCount)
 
 static void convert_ntfs_upper(wchar_t const* const input, std::size_t const length, wchar_t* const output)
 {
-    int inputLength = static_cast<int>(length);
-    if (static_cast<std::size_t>(inputLength) != length)
+    if (length > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
         std::terminate();
     }
 
+    auto const inputLength = static_cast<int>(length);
     if (::LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, input, inputLength, output, inputLength) == 0)
     {
         std::terminate();
     }
-
-    output[length] = L'\0';
 }
 
 wchar_t* path::get_upper_ptr() BOOST_NOEXCEPT_OR_NOTHROW
@@ -416,7 +414,7 @@ void path::set_sizes_to(std::size_t const size)
         std::terminate();
     }
 
-    int actualSet = static_cast<int>(size);
+    auto const actualSet = static_cast<std::uint32_t>(size);
     this->actualSize = actualSet;
     this->actualCapacity = actualSet;
 }
@@ -435,7 +433,10 @@ void path::construct_upper()
 {
     // Assumes that the internal buffer has the normal case part
     // of the buffer filled out; fills in the upper case part.
-    convert_ntfs_upper(this->get(), this->size(), this->get_upper_ptr());
+    auto const s = this->actualSize;
+    auto const ptr = this->get_upper_ptr();
+    convert_ntfs_upper(this->get(), s, ptr);
+    ptr[s] = L'\0';
 }
 
 path::path() BOOST_NOEXCEPT_OR_NOTHROW : buffer(nullptr), actualSize(0), actualCapacity(0)
@@ -488,7 +489,7 @@ path::path(path && other) BOOST_NOEXCEPT_OR_NOTHROW
 path& path::operator=(path const& other)
 {
     wchar_t* copyPtr;
-    int const otherSize = other.actualSize;
+    auto const otherSize = other.actualSize;
     if (otherSize > this->actualCapacity)
     {
         std::size_t const bufferSize = path_buffer_size_for_characters(otherSize);
@@ -562,6 +563,13 @@ path::size_type path::capacity() const BOOST_NOEXCEPT_OR_NOTHROW
     return this->actualCapacity;
 }
 
+void path::clear() BOOST_NOEXCEPT_OR_NOTHROW
+{
+    this->actualSize = 0;
+    *(this->buffer.get()) = L'\0';
+    *(this->get_upper_ptr()) = L'\0';
+}
+
 path::size_type path::max_size() const BOOST_NOEXCEPT_OR_NOTHROW
 {
     return std::numeric_limits<short>::max();
@@ -578,6 +586,46 @@ void path::swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW
     swap(buffer, other.buffer);
     swap(actualSize, other.actualSize);
     swap(actualCapacity, other.actualCapacity);
+}
+
+void path::insert(size_type index, std::wstring const& newContent)
+{
+    using std::swap;
+    auto const newContentSize = newContent.size();
+    size_type const requiredCapacity = this->actualSize + newContentSize;
+    if (requiredCapacity > this->max_size())
+    {
+        std::terminate();
+    }
+
+    auto const oldSize = this->actualSize;
+    auto const oldCapacity = this->actualCapacity;
+    auto const aboveIndex = oldSize - index + 1;
+    if (requiredCapacity <= oldCapacity)
+    {
+        wchar_t* insertionPtr = this->buffer.get() + index;
+        wchar_t* destinationPtr = insertionPtr + newContentSize;
+        std::memmove(destinationPtr, insertionPtr, aboveIndex * sizeof(wchar_t));
+        insertionPtr = this->get_upper_ptr() + index;
+        destinationPtr = insertionPtr + newContentSize;
+        std::memmove(destinationPtr, insertionPtr, aboveIndex * sizeof(wchar_t));
+    }
+    else
+    {
+        auto const newCapacity = std::max(requiredCapacity, static_cast<size_type>(this->actualSize * 2));
+        std::unique_ptr<wchar_t[]> buff(new wchar_t[path_buffer_size_for_characters(newCapacity)]);
+        swap(buff, this->buffer);
+        this->actualCapacity = static_cast<std::uint32_t>(newCapacity);
+        auto const postIndex = index + newContentSize;
+        std::memcpy(this->buffer.get(), buff.get(), index * sizeof(wchar_t));
+        std::memcpy(this->buffer.get() + postIndex, buff.get() + index, aboveIndex * sizeof(wchar_t));
+        std::memcpy(this->get_upper_ptr(), buff.get() + oldCapacity + 1, index * sizeof(wchar_t));
+        std::memcpy(this->get_upper_ptr() + postIndex, buff.get() + oldCapacity + 1 + index, aboveIndex * sizeof(wchar_t));
+    }
+
+    std::memcpy(this->buffer.get() + index, newContent.c_str(), newContentSize * sizeof(wchar_t));
+    convert_ntfs_upper(this->buffer.get() + index, newContentSize, this->get_upper_ptr() + index);
+    this->actualSize += static_cast<std::uint32_t>(newContentSize);
 }
 
 path::~path() BOOST_NOEXCEPT_OR_NOTHROW

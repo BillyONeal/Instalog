@@ -85,10 +85,13 @@ public:
 
     size_type size() const BOOST_NOEXCEPT_OR_NOTHROW;
     size_type capacity() const BOOST_NOEXCEPT_OR_NOTHROW;
+    void clear() BOOST_NOEXCEPT_OR_NOTHROW;
     size_type max_size() const BOOST_NOEXCEPT_OR_NOTHROW;
     bool empty() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     void swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW;
+
+    void insert(size_type index, std::wstring const& newContent);
 
     ~path() BOOST_NOEXCEPT_OR_NOTHROW;
 private:
@@ -99,8 +102,8 @@ private:
     wchar_t* get_upper_ptr() BOOST_NOEXCEPT_OR_NOTHROW;
     wchar_t const* get_upper_ptr() const BOOST_NOEXCEPT_OR_NOTHROW;
     std::unique_ptr<wchar_t[]> buffer;
-    int actualSize;
-    int actualCapacity;
+    std::uint32_t actualSize;
+    std::uint32_t actualCapacity;
 };
 
 inline bool operator==(path const& lhs, path const& rhs) BOOST_NOEXCEPT_OR_NOTHROW
