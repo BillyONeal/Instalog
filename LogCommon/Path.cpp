@@ -588,10 +588,15 @@ void path::swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW
     swap(actualCapacity, other.actualCapacity);
 }
 
-void path::insert(size_type index, std::wstring const& newContent)
+void path::insert(size_type index, wchar_t const* newContent, size_type newContentSize)
 {
     using std::swap;
-    auto const newContentSize = newContent.size();
+    if (this->buffer.get() < newContent && newContent < (this->buffer.get() + path_buffer_size_for_characters(this->actualCapacity)))
+    {
+        this->insert(index, std::wstring(newContent, newContentSize));
+        return;
+    }
+
     size_type const requiredCapacity = this->actualSize + newContentSize;
     if (requiredCapacity > this->max_size())
     {
@@ -623,9 +628,19 @@ void path::insert(size_type index, std::wstring const& newContent)
         std::memcpy(this->get_upper_ptr() + postIndex, buff.get() + oldCapacity + 1 + index, aboveIndex * sizeof(wchar_t));
     }
 
-    std::memcpy(this->buffer.get() + index, newContent.c_str(), newContentSize * sizeof(wchar_t));
+    std::memcpy(this->buffer.get() + index, newContent, newContentSize * sizeof(wchar_t));
     convert_ntfs_upper(this->buffer.get() + index, newContentSize, this->get_upper_ptr() + index);
     this->actualSize += static_cast<std::uint32_t>(newContentSize);
+}
+
+void path::insert(size_type index, wchar_t const* newContent)
+{
+    this->insert(index, newContent, std::wcslen(newContent));
+}
+
+void path::insert(size_type index, std::wstring const& newContent)
+{
+    this->insert(index, newContent.c_str(), newContent.size());
 }
 
 path::~path() BOOST_NOEXCEPT_OR_NOTHROW

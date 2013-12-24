@@ -703,3 +703,59 @@ TEST(PathClass, InsertNoGrow)
     EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.get_upper());
     EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.to_upper_wstring().c_str());
 }
+
+TEST(PathClass, InsertGrowStr)
+{
+    path filled(L"start end");
+    filled.insert(6, static_cast<std::wstring>(L"middle "));
+    EXPECT_STREQ(L"start middle end", filled.get());
+    EXPECT_STREQ(L"start middle end", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDDLE END", filled.get_upper());
+    EXPECT_STREQ(L"START MIDDLE END", filled.to_upper_wstring().c_str());
+}
+
+TEST(PathClass, InsertNoGrowStr)
+{
+    path filled(L"this is a path with data which makes it really long");
+    path smallData("start end");
+    filled = smallData;
+    filled.insert(6, static_cast<std::wstring>(L"example"));
+    filled.insert(6, static_cast<std::wstring>(L"middle "));
+    EXPECT_STREQ(L"start middle exampleend", filled.get());
+    EXPECT_STREQ(L"start middle exampleend", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.get_upper());
+    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.to_upper_wstring().c_str());
+}
+
+TEST(PathClass, InsertGrowLen)
+{
+    path filled(L"start end");
+    filled.insert(6, L"middle ", 3);
+    EXPECT_STREQ(L"start midend", filled.get());
+    EXPECT_STREQ(L"start midend", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDEND", filled.get_upper());
+    EXPECT_STREQ(L"START MIDEND", filled.to_upper_wstring().c_str());
+}
+
+TEST(PathClass, InsertNoGrowLen)
+{
+    path filled(L"this is a path with data which makes it really long");
+    path smallData("start end");
+    filled = smallData;
+    filled.insert(6, L"example", 3);
+    filled.insert(6, L"middle ", 3);
+    EXPECT_STREQ(L"start midexaend", filled.get());
+    EXPECT_STREQ(L"start midexaend", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START MIDEXAEND", filled.get_upper());
+    EXPECT_STREQ(L"START MIDEXAEND", filled.to_upper_wstring().c_str());
+}
+
+TEST(PathClass, OverlappingRegions)
+{
+    path filled(L"start end");
+    filled.insert(5, filled.get() + 5);
+    EXPECT_STREQ(L"start end end", filled.get());
+    EXPECT_STREQ(L"start end end", filled.to_wstring().c_str());
+    EXPECT_STREQ(L"START END END", filled.get_upper());
+    EXPECT_STREQ(L"START END END", filled.to_upper_wstring().c_str());
+}

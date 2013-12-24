@@ -90,8 +90,10 @@ public:
     bool empty() const BOOST_NOEXCEPT_OR_NOTHROW;
 
     void swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW;
-
+    
+    void insert(size_type index, wchar_t const* ptr);
     void insert(size_type index, std::wstring const& newContent);
+    void insert(size_type index, wchar_t const* ptr, size_type ptrLength);
 
     ~path() BOOST_NOEXCEPT_OR_NOTHROW;
 private:
