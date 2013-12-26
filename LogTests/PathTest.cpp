@@ -777,22 +777,22 @@ TEST(PathClass, LengthBufferInsert)
 
 TEST(PathClass, AppendCStr)
 {
-    path p;
+    path p(L"bar");
     p.append(L"Example");
-    EXPECT_STREQ(L"Example", p.get());
+    EXPECT_STREQ(L"barExample", p.get());
 }
 
 TEST(PathClass, AppendWstr)
 {
-    path p;
+    path p(L"foo");
     std::wstring example(L"Example");
     p.append(example);
-    EXPECT_STREQ(L"Example", p.get());
+    EXPECT_STREQ(L"fooExample", p.get());
 }
 
 TEST(PathClass, AppendBuffLen)
 {
-    path p;
+    path p(L"Baz");
     p.append(L"Example", 2);
-    EXPECT_STREQ(L"Ex", p.get());
+    EXPECT_STREQ(L"BazEx", p.get());
 }

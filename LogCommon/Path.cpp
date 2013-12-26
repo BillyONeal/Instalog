@@ -677,17 +677,17 @@ void path::insert(size_type index, std::wstring const& newContent)
 
 void path::append(wchar_t const* ptr)
 {
-    this->insert(0, ptr);
+    this->insert(this->size(), ptr);
 }
 
 void path::append(std::wstring const& newContent)
 {
-    this->insert(0, newContent);
+    this->insert(this->size(), newContent);
 }
 
 void path::append(wchar_t const* ptr, size_type ptrLength)
 {
-    this->insert(0, ptr, ptrLength);
+    this->insert(this->size(), ptr, ptrLength);
 }
 
 path::~path() BOOST_NOEXCEPT_OR_NOTHROW
