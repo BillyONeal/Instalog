@@ -681,14 +681,19 @@ TEST(PathClass, PathClear)
     EXPECT_STREQ(L"", filled.get());
 }
 
+static void expect_path_is(path const& p, wchar_t const* value, wchar_t const* upperValue)
+{
+    EXPECT_STREQ(value, p.get());
+    EXPECT_STREQ(upperValue, p.get_upper());
+    EXPECT_STREQ(value, p.to_wstring().c_str());
+    EXPECT_STREQ(upperValue, p.to_upper_wstring().c_str());
+}
+
 TEST(PathClass, InsertGrow)
 {
     path filled(L"start end");
     filled.insert(6, L"middle ");
-    EXPECT_STREQ(L"start middle end", filled.get());
-    EXPECT_STREQ(L"start middle end", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDDLE END", filled.get_upper());
-    EXPECT_STREQ(L"START MIDDLE END", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start middle end", L"START MIDDLE END");
 }
 
 TEST(PathClass, InsertNoGrow)
@@ -698,20 +703,14 @@ TEST(PathClass, InsertNoGrow)
     filled = smallData;
     filled.insert(6, L"example");
     filled.insert(6, L"middle ");
-    EXPECT_STREQ(L"start middle exampleend", filled.get());
-    EXPECT_STREQ(L"start middle exampleend", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.get_upper());
-    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start middle exampleend", L"START MIDDLE EXAMPLEEND");
 }
 
 TEST(PathClass, InsertGrowStr)
 {
     path filled(L"start end");
     filled.insert(6, static_cast<std::wstring>(L"middle "));
-    EXPECT_STREQ(L"start middle end", filled.get());
-    EXPECT_STREQ(L"start middle end", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDDLE END", filled.get_upper());
-    EXPECT_STREQ(L"START MIDDLE END", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start middle end", L"START MIDDLE END");
 }
 
 TEST(PathClass, InsertNoGrowStr)
@@ -721,20 +720,14 @@ TEST(PathClass, InsertNoGrowStr)
     filled = smallData;
     filled.insert(6, static_cast<std::wstring>(L"example"));
     filled.insert(6, static_cast<std::wstring>(L"middle "));
-    EXPECT_STREQ(L"start middle exampleend", filled.get());
-    EXPECT_STREQ(L"start middle exampleend", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.get_upper());
-    EXPECT_STREQ(L"START MIDDLE EXAMPLEEND", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start middle exampleend", L"START MIDDLE EXAMPLEEND");
 }
 
 TEST(PathClass, InsertGrowLen)
 {
     path filled(L"start end");
     filled.insert(6, L"middle ", 3);
-    EXPECT_STREQ(L"start midend", filled.get());
-    EXPECT_STREQ(L"start midend", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDEND", filled.get_upper());
-    EXPECT_STREQ(L"START MIDEND", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start midend", L"START MIDEND");
 }
 
 TEST(PathClass, InsertNoGrowLen)
@@ -744,20 +737,14 @@ TEST(PathClass, InsertNoGrowLen)
     filled = smallData;
     filled.insert(6, L"example", 3);
     filled.insert(6, L"middle ", 3);
-    EXPECT_STREQ(L"start midexaend", filled.get());
-    EXPECT_STREQ(L"start midexaend", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START MIDEXAEND", filled.get_upper());
-    EXPECT_STREQ(L"START MIDEXAEND", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start midexaend", L"START MIDEXAEND");
 }
 
 TEST(PathClass, OverlappingRegions)
 {
     path filled(L"start end");
     filled.insert(5, filled.get() + 5);
-    EXPECT_STREQ(L"start end end", filled.get());
-    EXPECT_STREQ(L"start end end", filled.to_wstring().c_str());
-    EXPECT_STREQ(L"START END END", filled.get_upper());
-    EXPECT_STREQ(L"START END END", filled.to_upper_wstring().c_str());
+    expect_path_is(filled, L"start end end", L"START END END");
 }
 
 TEST(PathClass, WstringInsert)
@@ -765,21 +752,21 @@ TEST(PathClass, WstringInsert)
     path p;
     std::wstring example(L"example");
     p.insert(0, example);
-    EXPECT_STREQ(L"example", p.get());
+    expect_path_is(p, L"example", L"EXAMPLE");
 }
 
 TEST(PathClass, LengthBufferInsert)
 {
     path p;
     p.insert(0, L"this is new content", 4);
-    EXPECT_STREQ(L"this", p.get());
+    expect_path_is(p, L"this", L"THIS");
 }
 
 TEST(PathClass, AppendCStr)
 {
     path p(L"bar");
     p.append(L"Example");
-    EXPECT_STREQ(L"barExample", p.get());
+    expect_path_is(p, L"barExample", L"BAREXAMPLE");
 }
 
 TEST(PathClass, AppendWstr)
@@ -787,12 +774,21 @@ TEST(PathClass, AppendWstr)
     path p(L"foo");
     std::wstring example(L"Example");
     p.append(example);
-    EXPECT_STREQ(L"fooExample", p.get());
+    expect_path_is(p, L"fooExample", L"FOOEXAMPLE");
 }
 
 TEST(PathClass, AppendBuffLen)
 {
     path p(L"Baz");
     p.append(L"Example", 2);
-    EXPECT_STREQ(L"BazEx", p.get());
+    expect_path_is(p, L"BazEx", L"BAZEX");
+}
+
+TEST(PathClass, EraseMiddle)
+{
+    //                111111
+    //      0123456789012345
+    path p("start middle end");
+    p.erase(6, 7);
+    expect_path_is(p, L"start end", L"START END");
 }

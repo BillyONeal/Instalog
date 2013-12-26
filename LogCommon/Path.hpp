@@ -101,6 +101,11 @@ public:
     void append(std::wstring const& newContent);
     void append(wchar_t const* ptr, size_type ptrLength);
 
+    // Removes all characters after `index`
+    void erase(size_type index) BOOST_NOEXCEPT_OR_NOTHROW;
+    // Removes `length` characters after `index`
+    void erase(size_type index, size_type length) BOOST_NOEXCEPT_OR_NOTHROW;
+
     ~path() BOOST_NOEXCEPT_OR_NOTHROW;
 private:
     void construct(char const* const buffer, std::size_t length);
@@ -110,6 +115,7 @@ private:
     wchar_t* get_upper_ptr() BOOST_NOEXCEPT_OR_NOTHROW;
     wchar_t const* get_upper_ptr() const BOOST_NOEXCEPT_OR_NOTHROW;
     std::uint32_t get_next_capacity(size_type minimumCapacity) BOOST_NOEXCEPT_OR_NOTHROW;
+    void add_nulls() BOOST_NOEXCEPT_OR_NOTHROW;
     std::unique_ptr<wchar_t[]> buffer;
     std::uint32_t actualSize;
     std::uint32_t actualCapacity;

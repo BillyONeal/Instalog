@@ -406,7 +406,7 @@ void path::construct(char const* const buffer, std::size_t length)
     this->construct_upper();
 }
 
-void path::set_sizes_to(std::size_t const size)
+void path::set_sizes_to(std::size_t const size) BOOST_NOEXCEPT_OR_NOTHROW
 {
     std::size_t const intMax = std::numeric_limits<int>::max();
     if (size > intMax)
@@ -417,6 +417,12 @@ void path::set_sizes_to(std::size_t const size)
     auto const actualSet = static_cast<std::uint32_t>(size);
     this->actualSize = actualSet;
     this->actualCapacity = actualSet;
+}
+
+void path::add_nulls() BOOST_NOEXCEPT_OR_NOTHROW
+{
+    *(this->buffer.get() + this->actualSize) = L'\0';
+    *(this->get_upper_ptr() + this->actualSize) = L'\0';
 }
 
 void path::construct(wchar_t const* const buffer, std::size_t length)
@@ -657,8 +663,7 @@ void path::insert(size_type index, wchar_t const* newContent, size_type newConte
     }
 
     this->actualSize += static_cast<std::uint32_t>(newContentSize);
-    *(this->buffer.get() + this->actualSize) = L'\0';
-    *(this->get_upper_ptr() + this->actualSize) = L'\0';
+    this->add_nulls();
 
     // Copy the new content into the "hole"
     std::memcpy(this->buffer.get() + index, newContent, newContentSize * sizeof(wchar_t));
@@ -688,6 +693,29 @@ void path::append(std::wstring const& newContent)
 void path::append(wchar_t const* ptr, size_type ptrLength)
 {
     this->insert(this->size(), ptr, ptrLength);
+}
+
+void path::erase(size_type index) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    this->erase(index, this->size() - index);
+}
+
+void path::erase(size_type index, size_type length) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    auto const postStartIndex = index + length;
+    auto const postStartSize = this->actualSize - postStartIndex;
+    assert(postStartSize >= 0 && postStartSize <= this->size());
+    auto const postStartBytes = postStartSize * sizeof(wchar_t);
+    wchar_t* source;
+    wchar_t* target;
+    source = this->buffer.get() + postStartIndex;
+    target = this->buffer.get() + index;
+    std::memmove(target, source, postStartBytes);
+    source = this->get_upper_ptr() + postStartIndex;
+    target = this->get_upper_ptr() + index;
+    std::memmove(target, source, postStartBytes);
+    this->actualSize -= static_cast<std::uint32_t>(length);
+    this->add_nulls();
 }
 
 path::~path() BOOST_NOEXCEPT_OR_NOTHROW
