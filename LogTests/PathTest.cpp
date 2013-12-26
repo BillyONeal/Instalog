@@ -792,3 +792,22 @@ TEST(PathClass, EraseMiddle)
     p.erase(6, 7);
     expect_path_is(p, L"start end", L"START END");
 }
+
+TEST(PathClass, EraseNoOp)
+{
+    path p("start end");
+    p.erase(6, 0);
+    expect_path_is(p, L"start end", L"START END");
+}
+
+TEST(PathClass, EraseEmpty)
+{
+    path p;
+    p.erase(0);
+}
+
+TEST(PathClass, EraseEmptyRanged)
+{
+    path p;
+    p.erase(0, 0);
+}

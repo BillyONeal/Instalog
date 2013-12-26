@@ -421,8 +421,11 @@ void path::set_sizes_to(std::size_t const size) BOOST_NOEXCEPT_OR_NOTHROW
 
 void path::add_nulls() BOOST_NOEXCEPT_OR_NOTHROW
 {
-    *(this->buffer.get() + this->actualSize) = L'\0';
-    *(this->get_upper_ptr() + this->actualSize) = L'\0';
+    if (this->buffer)
+    {
+        *(this->buffer.get() + this->actualSize) = L'\0';
+        *(this->get_upper_ptr() + this->actualSize) = L'\0';
+    }
 }
 
 void path::construct(wchar_t const* const buffer, std::size_t length)
