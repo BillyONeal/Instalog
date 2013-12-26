@@ -759,3 +759,18 @@ TEST(PathClass, OverlappingRegions)
     EXPECT_STREQ(L"START END END", filled.get_upper());
     EXPECT_STREQ(L"START END END", filled.to_upper_wstring().c_str());
 }
+
+TEST(PathClass, WstringInsert)
+{
+    path p;
+    std::wstring example(L"example");
+    p.insert(0, example);
+    EXPECT_STREQ(L"example", p.get());
+}
+
+TEST(PathClass, LengthBufferInsert)
+{
+    path p;
+    p.insert(0, L"this is new content", 4);
+    EXPECT_STREQ(L"this", p.get());
+}
