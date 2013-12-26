@@ -675,6 +675,21 @@ void path::insert(size_type index, std::wstring const& newContent)
     this->insert(index, newContent.c_str(), newContent.size());
 }
 
+void path::append(wchar_t const* ptr)
+{
+    this->insert(0, ptr);
+}
+
+void path::append(std::wstring const& newContent)
+{
+    this->insert(0, newContent);
+}
+
+void path::append(wchar_t const* ptr, size_type ptrLength)
+{
+    this->insert(0, ptr, ptrLength);
+}
+
 path::~path() BOOST_NOEXCEPT_OR_NOTHROW
 {
     // delete this->buffer happens in unique_ptr destructor

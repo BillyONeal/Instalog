@@ -774,3 +774,25 @@ TEST(PathClass, LengthBufferInsert)
     p.insert(0, L"this is new content", 4);
     EXPECT_STREQ(L"this", p.get());
 }
+
+TEST(PathClass, AppendCStr)
+{
+    path p;
+    p.append(L"Example");
+    EXPECT_STREQ(L"Example", p.get());
+}
+
+TEST(PathClass, AppendWstr)
+{
+    path p;
+    std::wstring example(L"Example");
+    p.append(example);
+    EXPECT_STREQ(L"Example", p.get());
+}
+
+TEST(PathClass, AppendBuffLen)
+{
+    path p;
+    p.append(L"Example", 2);
+    EXPECT_STREQ(L"Ex", p.get());
+}

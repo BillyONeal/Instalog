@@ -91,9 +91,15 @@ public:
 
     void swap(path& other) BOOST_NOEXCEPT_OR_NOTHROW;
     
+    // Inserts new content at `index` the value designated by the following arguments.
     void insert(size_type index, wchar_t const* ptr);
     void insert(size_type index, std::wstring const& newContent);
     void insert(size_type index, wchar_t const* ptr, size_type ptrLength);
+
+    // Effects: insert(0, /* args */)
+    void append(wchar_t const* ptr);
+    void append(std::wstring const& newContent);
+    void append(wchar_t const* ptr, size_type ptrLength);
 
     ~path() BOOST_NOEXCEPT_OR_NOTHROW;
 private:
