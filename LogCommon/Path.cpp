@@ -439,6 +439,11 @@ void path::construct_upper()
     ptr[s] = L'\0';
 }
 
+std::uint32_t path::get_next_capacity(size_type minimumCapacity) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return std::max(static_cast<std::uint32_t>(minimumCapacity), this->actualCapacity * 2);
+}
+
 path::path() BOOST_NOEXCEPT_OR_NOTHROW : buffer(nullptr), actualSize(0), actualCapacity(0)
 {}
 
@@ -609,35 +614,55 @@ void path::insert(size_type index, wchar_t const* newContent, size_type newConte
     if (requiredCapacity <= oldCapacity)
     {
         // Move out the content after the inserted block to create a "hole"
-        wchar_t* insertionPtr = this->buffer.get() + index;
-        wchar_t* destinationPtr = insertionPtr + newContentSize;
+        wchar_t* insertionPtr;
+        wchar_t* destinationPtr;
+
+        insertionPtr = this->buffer.get() + index;
+        destinationPtr = insertionPtr + newContentSize;
         std::memmove(destinationPtr, insertionPtr, aboveIndex * sizeof(wchar_t));
-        *(this->buffer.get() + this->actualSize + newContentSize) = L'\0';
+
         insertionPtr = this->get_upper_ptr() + index;
         destinationPtr = insertionPtr + newContentSize;
         std::memmove(destinationPtr, insertionPtr, aboveIndex * sizeof(wchar_t));
-        *(this->get_upper_ptr() + this->actualSize + newContentSize) = L'\0';
     }
     else
     {
         // Copy the content with a hole for the new data
-        auto const newCapacity = std::max(requiredCapacity, static_cast<size_type>(this->actualCapacity * 2));
+        auto const newCapacity = this->get_next_capacity(requiredCapacity);
         std::unique_ptr<wchar_t[]> buff(new wchar_t[path_buffer_size_for_characters(newCapacity)]);
         swap(buff, this->buffer);
         this->actualCapacity = static_cast<std::uint32_t>(newCapacity);
-        auto const postIndex = index + newContentSize;
-        std::memcpy(this->buffer.get(), buff.get(), index * sizeof(wchar_t));
-        std::memcpy(this->buffer.get() + postIndex, buff.get() + index, aboveIndex * sizeof(wchar_t));
-        *(this->buffer.get() + this->actualSize + newContentSize) = L'\0';
-        std::memcpy(this->get_upper_ptr(), buff.get() + oldCapacity + 1, index * sizeof(wchar_t));
-        std::memcpy(this->get_upper_ptr() + postIndex, buff.get() + oldCapacity + 1 + index, aboveIndex * sizeof(wchar_t));
-        *(this->get_upper_ptr() + this->actualSize + newContentSize) = L'\0';
+
+        std::size_t const lengthPre = index * sizeof(wchar_t);
+        std::size_t const lengthPost = aboveIndex * sizeof(wchar_t);
+
+        wchar_t* sourcePre;
+        wchar_t* targetPre;
+        wchar_t* sourcePost;
+        wchar_t* targetPost;
+
+        sourcePre = buff.get();
+        targetPre = this->buffer.get();
+        sourcePost = sourcePre + index;
+        targetPost = targetPre + newContentSize + index;
+        std::memcpy(targetPre, sourcePre, lengthPre);
+        std::memcpy(targetPost, sourcePost, lengthPost);
+
+        sourcePre = buff.get() + oldCapacity + 1;
+        targetPre = this->get_upper_ptr();
+        sourcePost = sourcePre + index;
+        targetPost = targetPre + newContentSize + index;
+        std::memcpy(targetPre, sourcePre, lengthPre);
+        std::memcpy(targetPost, sourcePost, lengthPost);
     }
+
+    this->actualSize += static_cast<std::uint32_t>(newContentSize);
+    *(this->buffer.get() + this->actualSize) = L'\0';
+    *(this->get_upper_ptr() + this->actualSize) = L'\0';
 
     // Copy the new content into the "hole"
     std::memcpy(this->buffer.get() + index, newContent, newContentSize * sizeof(wchar_t));
     convert_ntfs_upper(this->buffer.get() + index, newContentSize, this->get_upper_ptr() + index);
-    this->actualSize += static_cast<std::uint32_t>(newContentSize);
 }
 
 void path::insert(size_type index, wchar_t const* newContent)
