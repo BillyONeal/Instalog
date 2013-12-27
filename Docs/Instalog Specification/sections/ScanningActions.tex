@@ -1567,12 +1567,12 @@ otherwise legitimate programs into launching malware instead.
 "Debugger"="${Target}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|Ifeo: ${Source}->${Target}|
+\verb|Ifeo: [${Source}] ${Target}|
 \item[Output Description] \hfill \\
 \var{Source} shall be escaped using the default escaping method defined in
 \ref{generalescape}, using an escape character of hash (\verb|#|), and a right
-delimiter of dash (\verb|-|). \var{Target} shall be displayed using the default
-file display format defined in \ref{stdfile}.
+delimiter of right square bracket (\verb|]|). \var{Target} shall be displayed
+using the default file display format defined in \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\
 None at this time.
 \item[Fix Considerations] \hfill \\

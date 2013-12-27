@@ -1757,6 +1757,14 @@ static void ActiveSetup(log_sink& output)
         "ActiveSetup");
 }
 
+static void ImageFileExecutionOptions(log_sink& output)
+{
+    SubkeyMajorBasedEnumeration(output,
+        "\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options",
+        "Debugger",
+        "Ifeo");
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1772,7 +1780,7 @@ static void MachineSpecificHjt(log_sink& output)
     LocalSecurityAuthority(output);
     CsrssDll(output);
     ActiveSetup(output);
-    // IFEO
+    ImageFileExecutionOptions(output);
     // File Associations
     // Hosts
 }
