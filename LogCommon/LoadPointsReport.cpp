@@ -238,8 +238,8 @@ void RunKeyOutput(log_sink& output,
 static void SubkeyMajorBasedEnumeration(
     log_sink& output,
     std::string const& root,
-    std::string const& prefix,
     std::string const& valueName,
+    std::string const& prefix,
     std::function<void(log_sink& out, std::string& source)> dataProcess =
         FileProcess)
 {
@@ -1606,7 +1606,7 @@ static void Protocols(log_sink& output)
 
 static void WinlogonNotify(log_sink& output)
 {
-    SubkeyMajorBasedEnumeration(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify", "Notify", "DllName", FileProcess);
+    SubkeyMajorBasedEnumeration(output, "\\Registry\\Machine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify", "DllName", "Notify", FileProcess);
 }
 
 static void SingleCommaValueBitless(log_sink& output, std::string const& rootKey, std::string const& valueName, std::string const& prefix, std::string const& suffix)
@@ -1747,6 +1747,16 @@ static void CsrssDll(log_sink& output)
     }
 }
 
+static void ActiveSetup(log_sink& output)
+{
+    SubkeyMajorBasedEnumerationBitless(output,
+        "\\Registry\\Machine\\Software",
+        "\\Microsoft\\Active Setup\\Installed Components",
+        "\\Wow6432Node\\Microsoft\\Active Setup\\Installed Components",
+        "StubPath",
+        "ActiveSetup");
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1761,7 +1771,7 @@ static void MachineSpecificHjt(log_sink& output)
     SecurityProviders(output);
     LocalSecurityAuthority(output);
     CsrssDll(output);
-    // Active Setup
+    ActiveSetup(output);
     // IFEO
     // File Associations
     // Hosts
