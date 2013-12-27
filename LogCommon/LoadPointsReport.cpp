@@ -86,7 +86,7 @@ static void SecurityCenterOutput(log_sink& output)
 */
 static void GeneralProcess(log_sink& out, std::string& target)
 {
-    GeneralEscape(target, '#', '\r');
+    GeneralEscape(target, '#');
     write(out, target);
 }
 
@@ -109,7 +109,7 @@ static void FileProcess(log_sink& out, std::string& target)
 */
 static void HttpProcess(log_sink& out, std::string& target)
 {
-    HttpEscape(target, '#', '\r');
+    HttpEscape(target, '#');
     write(out, target);
 }
 
@@ -1765,6 +1765,60 @@ static void ImageFileExecutionOptions(log_sink& output)
         "Ifeo");
 }
 
+static void FileAssociation(log_sink& output, std::string const& association)
+{
+    RegistryKey key(RegistryKey::Open("\\Registry\\Machine\\Software\\Classes\\" + association));
+    if (key.Invalid())
+    {
+        return;
+    }
+
+    std::string namedExtension = key[""].GetStringStrict();
+    key = RegistryKey::Open("\\Registry\\Machine\\Software\\Classes\\" + namedExtension + "\\Shell");
+    std::string defaultVerb("open");
+    try
+    {
+        defaultVerb = key[""].GetStringStrict();
+    }
+    catch (ErrorFileNotFoundException const&)
+    {}
+
+    key = RegistryKey::Open("\\Registry\\Machine\\Software\\Classes\\" + namedExtension + "\\Shell\\" + defaultVerb + "\\Command");
+    std::string command = key[""].GetStringStrict();
+
+    GeneralEscape(namedExtension, '#', '-');
+    GeneralEscape(defaultVerb, '#', '-');
+    GeneralEscape(command, '#');
+
+    writeln(output, "Association: ", association, "->", namedExtension, "->", defaultVerb, "->", command);
+}
+
+static void FileAssociations(log_sink& output)
+{
+    char const* associationList[] = {
+        ".exe",
+        ".bat",
+        ".cmd",
+        ".com",
+        ".pif",
+        ".scr",
+        ".reg",
+        ".txt",
+        ".chm",
+        ".inf",
+        ".ini",
+        ".vbe",
+        ".vbs",
+        ".jse",
+        ".jsf"
+    };
+
+    for (char const* association : associationList)
+    {
+        FileAssociation(output, association);
+    }
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1781,7 +1835,7 @@ static void MachineSpecificHjt(log_sink& output)
     CsrssDll(output);
     ActiveSetup(output);
     ImageFileExecutionOptions(output);
-    // File Associations
+    FileAssociations(output);
     // Hosts
 }
 
