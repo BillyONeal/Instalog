@@ -74,7 +74,16 @@ order).  Move, generally speaking, will generate script to quarantine a file
 associated with an entry, and Fix will generate script to reset settings to a
 default state, or delete loading points.
 
-The Load Points machine report contains settings which affect the entire machine.
+The Load Points machine report contains settings which affect the entire
+machine. The first line of the machine report indicates the machine name, and is
+of the form
+\begin{verbatim}
+Identity: [${MachineName}] MACHINE
+\end{verbatim}
+where \var{MachineName} is the computer name of the machine, escaped using the
+general escaping function defined in \ref{generalescape} with an escape
+character hash (\verb|#|) and a right delimiter character right bracket
+(\verb|]|).
 
 The Load Points user report is specific to a given user on the target machine.
 There will be a separate such section for each user that is loaded into the
@@ -83,16 +92,17 @@ registry at the time Instalog is run (that is, loaded into \verb|HKEY_USERS|).
 The first line of the user report indicates which SID and name the user has, and
 is of the form:
 \begin{verbatim}
-Identity: "${username}" ${sid}
+Identity: [${username}] ${sid}
 \end{verbatim}
 
 The variable \var{username} refers to the display name of the user being
 enumerated. It is escaped using the general escaping method defined in
-\ref{generalescape}, using a right delimiter of \verb|"|, and an escape
-character of \verb|\|. The \var{sid} is the security identifier associated with
+\ref{generalescape}, using a right delimiter of \verb|]|, and an escape
+character of \verb|#|. The \var{sid} is the security identifier associated with
 that user. It follows a regular format, and therefore need not be escaped.
 
-The PsuedoHJT report  can be invoked in a script by calling \verb|:PsuedoHJT|. 
+The load points report can be invoked in a script by calling
+\verb|:LoadPoints|.
 This action does not require any argument or additional input.
 
 \subsubsection{Root Registry Hives}

@@ -1745,10 +1745,26 @@ static void UserSpecificHjt(log_sink& /* output */, std::string const& /* rootKe
     // Startup Folder
 }
 
+static void WriteMachineIdentity(log_sink& output)
+{
+    auto const length = MAX_COMPUTERNAME_LENGTH + 1;
+    DWORD resultLength = length;
+    wchar_t compName[length];
+    if (::GetComputerNameW(compName, &resultLength) == 0)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+
+    std::string narrowName = utf8::ToUtf8(compName);
+    GeneralEscape(narrowName, '#', ']');
+    writeln(output, "Identity: [", narrowName, "] MACHINE");
+}
+
 void LoadPointsReport::Execute(log_sink& output,
                         ScriptSection const&,
                         std::vector<std::string> const&) const
 {
+    WriteMachineIdentity(output);
     SecurityCenterOutput(output);
     CommonHjt(output, "\\Registry\\Machine");
     MachineSpecificHjt(output);
