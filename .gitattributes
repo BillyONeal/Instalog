@@ -6,7 +6,7 @@
 *.txt text
 *.vcxproj text
 *.vcxproj.filters text
-*.rc text
+*.rc text=crlf
 *.manifest text
 *.masm text
 *.obj binary
