@@ -8,6 +8,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <regex>
 #include <iterator>
 #include <Sddl.h>
 #include <comdef.h>
@@ -17,6 +18,7 @@
 #include "StockOutputFormats.hpp"
 #include "Registry.hpp"
 #include "LoadPointsReport.hpp"
+#include "Path.hpp"
 #include "ScopeExit.hpp"
 #include "Dns.hpp"
 #include "Utf8.hpp"
@@ -1716,6 +1718,35 @@ static void LocalSecurityAuthority(log_sink& output)
     LocalSecurityAuthorityValue(output, key, "Security");
 }
 
+static void CsrssDll(log_sink& output)
+{
+    RegistryKey key(RegistryKey::Open("\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Subsystems"));
+    std::string const csrssCommandLine = key["Windows"].GetStringStrict();
+    std::regex serverDllRegex("ServerDll=([^:,]+)(:[^,]+)?,[\\d]", std::regex_constants::ECMAScript | std::regex_constants::icase);
+    std::sregex_iterator begin(csrssCommandLine.cbegin(), csrssCommandLine.cend(), serverDllRegex);
+    std::sregex_iterator end;
+
+    std::vector<std::string> values;
+    for (; begin != end; ++begin)
+    {
+        std::ssub_match currentMatch = (*begin)[1];
+        std::string value = currentMatch.str() + ".dll";
+        if (Path::ResolveFromCommandLine(value))
+        {
+            values.emplace_back(std::move(value));
+        }
+    }
+
+    std::sort(values.begin(), values.end());
+    values.erase(std::unique(values.begin(), values.end()), values.end());
+    for (std::string& str : values)
+    {
+        write(output, "SubSystems: ");
+        WriteDefaultFileOutput(output, str);
+        writeln(output);
+    }
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1729,7 +1760,7 @@ static void MachineSpecificHjt(log_sink& output)
     ShellExecuteHooks(output);
     SecurityProviders(output);
     LocalSecurityAuthority(output);
-    // CSRSS DLL
+    CsrssDll(output);
     // Active Setup
     // IFEO
     // File Associations
