@@ -1204,14 +1204,14 @@ protocols, such as HTTP or FTP.
 @="${File}"
 \end{verbatim}
 \item[Log Format] \hfill \\
-\verb|IeFilter: [${Item}->${CLSID}] ${File}| \\
-\verb|IeHandler: [${Item}->${CLSID}] ${File}| \\
-\verb|IeNamespace: [${Item}->${CLSID}] ${File}|
+\verb|IeFilter: [${Item} ${CLSID}] ${File}| \\
+\verb|IeHandler: [${Item} ${CLSID}] ${File}| \\
+\verb|IeNamespace: [${Item} ${CLSID}] ${File}|
 \item[Output Description] \hfill \\
 \var{Item} is escaped using the default escaping function defined in
 \ref{generalescape}, using an escape character of hash (\verb|#|), and a right
-delimiter if dash (\verb|-|) \var{CLSID} is escaped using the default escaping
-function defined in \ref{generalescape}, using an escape character of hash
+delimiter of space (\verb|' '|) \var{CLSID} is escaped using the default
+escaping function defined in \ref{generalescape}, using an escape character of hash
 (\verb|#|) and a right delimiter of right square bracket (\verb|]|).
 \var{File} is displayed using the method defined in section \ref{stdfile}.
 \item[Whitelisting Considerations] \hfill \\

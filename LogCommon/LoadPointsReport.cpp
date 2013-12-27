@@ -1536,37 +1536,10 @@ static void TcpNameservers(log_sink& output)
     }
 }
 
-static void ProtocolsSection(log_sink& output, std::string const& hive, std::string const& prefix)
-{
-    RegistryKey targetKey(RegistryKey::Open(hive, KEY_ENUMERATE_SUB_KEYS));
-    if (!targetKey.Valid())
-    {
-        return;
-    }
-
-    for (RegistryKey const& protocolKey : targetKey.EnumerateSubKeys(KEY_QUERY_VALUE))
-    {
-        std::string itemName = protocolKey.GetLocalName();
-        std::string clsid = protocolKey["CLSID"].GetStringStrict();
-        std::string clsidKeyName = "\\Registry\\Machine\\SOFTWARE\\Classes\\CLSID\\" + clsid + "\\InProcServer32";
-        RegistryKey clsidKey = RegistryKey::Open(clsidKeyName, KEY_QUERY_VALUE);
-        if (!clsidKey.Valid())
-        {
-            continue;
-        }
-
-        std::string file = clsidKey[""].GetStringStrict();
-        GeneralEscape(itemName, '#', '-');
-        GeneralEscape(clsid, '#', ']');
-        write(output, prefix, ": [", itemName, "->", clsid, "] ");
-        WriteDefaultFileOutput(output, file);
-        writeln(output);
-    }
-}
-
-static void NameSpaceHandlerRecursive(log_sink& output,
+static void ProtocolsSectionRecursive(log_sink& output,
     std::string const& rootKey,
-    std::string const& namespaceToEnter)
+    std::string const& namespaceToEnter,
+    std::string const& prefix)
 {
     RegistryKey currentNamespaceKey =
         RegistryKey::Open(rootKey, KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE);
@@ -1580,9 +1553,9 @@ static void NameSpaceHandlerRecursive(log_sink& output,
         if (clsidKey.Valid())
         {
             std::string file = clsidKey[""].GetStringStrict();
-            GeneralEscape(itemName, '#', '-');
+            GeneralEscape(itemName, '#', ' ');
             GeneralEscape(clsid, '#', ']');
-            write(output, "IeNamespace: [", itemName, "->", clsid, "] ");
+            write(output, prefix, ": [", itemName, " ", clsid, "] ");
             WriteDefaultFileOutput(output, file);
             writeln(output);
         }
@@ -1600,13 +1573,13 @@ static void NameSpaceHandlerRecursive(log_sink& output,
         subNamespace += '.';
         subNamespace += namespaceToEnter;
 
-        NameSpaceHandlerRecursive(output, rootKey + "\\" + key, subNamespace);
+        ProtocolsSectionRecursive(output, rootKey + "\\" + key, subNamespace, prefix);
     }
 }
 
-static void NameSpaceHandler(log_sink& out)
+static void ProtocolsSection(log_sink& out, std::string const& registryPath, std::string const& prefix)
 {
-    std::string rootPath("\\Registry\\Machine\\SOFTWARE\\Classes\\PROTOCOLS\\Name-Space Handler");
+    std::string rootPath(registryPath);
     RegistryKey handlersRoot =
         RegistryKey::Open(rootPath, KEY_ENUMERATE_SUB_KEYS);
     if (handlersRoot.Invalid())
@@ -1617,8 +1590,8 @@ static void NameSpaceHandler(log_sink& out)
     auto handlers = handlersRoot.EnumerateSubKeyNames();
     for (auto const& rootHandler : handlers)
     {
-        NameSpaceHandlerRecursive(
-            out, rootPath + "\\" + rootHandler, rootHandler);
+        ProtocolsSectionRecursive(
+            out, rootPath + "\\" + rootHandler, rootHandler, prefix);
     }
 }
 
@@ -1626,6 +1599,7 @@ static void Protocols(log_sink& output)
 {
     ProtocolsSection(output, "\\Registry\\Machine\\SOFTWARE\\Classes\\PROTOCOLS\\Filter", "IeFilter");
     ProtocolsSection(output, "\\Registry\\Machine\\SOFTWARE\\Classes\\PROTOCOLS\\Handler", "IeHandler");
+    ProtocolsSection(output, "\\Registry\\Machine\\SOFTWARE\\Classes\\PROTOCOLS\\Name-Space Handler", "IeNamespace");
 }
 
 static void WinlogonNotify(log_sink& output)
@@ -1748,7 +1722,6 @@ static void MachineSpecificHjt(log_sink& output)
     ExecuteWinsock2Parameters(output);
     TcpNameservers(output);
     Protocols(output);
-    NameSpaceHandler(output);
     WinlogonNotify(output);
     AppinitDlls(output);
     ShellServiceObjectDelayLoad(output);
