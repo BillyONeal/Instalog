@@ -1682,7 +1682,7 @@ static void ShellExecuteHooks(log_sink& output)
 
 static void SecurityProviders(log_sink& output)
 {
-    SingleCommaValueBitless(output, "\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", "SecurityProviders", "SecurityProviders", "");
+    SingleCommaValueBitless(output, "\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", "SecurityProviders", "SecurityProvider", "");
 }
 
 static void LocalSecurityAuthorityValue(log_sink& output, RegistryKey const& key, std::string const& value)
