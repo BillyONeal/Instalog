@@ -1819,6 +1819,35 @@ static void FileAssociations(log_sink& output)
     }
 }
 
+static void HostsFile(log_sink& output)
+{
+    RegistryKey key(RegistryKey::Open("\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters"));
+    std::string dataBasePath = key["DataBasePath"].GetStringStrict();
+    dataBasePath += "\\Hosts";
+    dataBasePath = Path::ExpandEnvStrings(std::move(dataBasePath));
+    File hostsFile(dataBasePath);
+
+    std::vector<std::string> hostsLines = hostsFile.ReadAllLines();
+    GeneralEscape(dataBasePath);
+    writeln(output, "HostsFile: ", dataBasePath);
+    for (std::string& hostsLine : hostsLines)
+    {
+        boost::algorithm::trim(hostsLine);
+        if (hostsLine.empty())
+        {
+            continue;
+        }
+
+        if (boost::algorithm::starts_with(hostsLine, "#"))
+        {
+            continue;
+        }
+
+        HttpEscape(hostsLine);
+        writeln(output, "Hosts: ", hostsLine);
+    }
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1836,7 +1865,7 @@ static void MachineSpecificHjt(log_sink& output)
     ActiveSetup(output);
     ImageFileExecutionOptions(output);
     FileAssociations(output);
-    // Hosts
+    HostsFile(output);
 }
 
 static void UserSpecificHjt(log_sink& /* output */, std::string const& /* rootKey */)

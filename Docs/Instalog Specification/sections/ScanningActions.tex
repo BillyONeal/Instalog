@@ -1637,20 +1637,28 @@ These defaults will need to be generated through testing.
 The hosts file maps hostnames to IP addresses.  This file is sometimes modified
 by software, so strange entries shall be reported.  
 \item[Data Sources] \hfill \\
-The hosts file is located at
-\vspace{-\baselineskip}
+The location of the TCP/IP database in Windows is stored in the registry at
 \begin{verbatim}
-%SystemRoot%\system32\drivers\etc\hosts
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters]
+"DataBasePath"="${Path}"
 \end{verbatim}
+
+The hosts file is located at \var{Path}\verb|\Hosts|, typically
+\verb|%SystemRoot%\system32\drivers\etc\hosts|.
+
 This file is formatted quite simply.  Lines that begin with a \verb|#| are
 comment lines.  The hosts file usually starts with several of these lines
 explaining how the file is structured.  After this, IP address (\var{ip}) and
 hostnames (\var{hostname}) pairs are listed.
 \item[Log Format] \hfill \\
+\verb|HostsFile: ${Path}\Hosts| \\
 \verb|Hosts: ${ip} ${hostname}|
 \item[Output Description] \hfill \\
-The variable \var{url} shall be escaped using the URL escaping scheme defined in
-\ref{urlescape}, where the escape character is the hash mark (\verb|#|).
+\verb|${Path}\Hosts| shall be escaped using the general escape function defined
+in \ref{generalescape}.
+
+The variable \var{hostname} shall be escaped using the URL escaping scheme
+defined in \ref{urlescape}, where the escape character is the hash mark (\verb|#|).
 \item[Whitelist Considerations] \hfill \\
 Any entry in the hosts file with an \var{ip} value of \verb|127.0.0.1| or
 \verb|::1| shall be whitelisted unless \var{hostname} contains one of the

@@ -97,6 +97,8 @@ class File : boost::noncopyable
     /// fails.</exception>
     bool WriteBytes(std::vector<char> const& bytes);
 
+    std::vector<std::string> ReadAllLines() const;
+
     /// <summary>Gets the size of a file without opening the file.</summary>
     /// <param name="filename">Filename of the file.</param>
     /// <returns>The size of the file.</returns>

@@ -101,6 +101,32 @@ std::vector<char> File::ReadBytes(unsigned int bytesToRead) const
     return bytes;
 }
 
+std::vector<std::string> File::ReadAllLines() const
+{
+    std::string buffer;
+    if (::SetFilePointer(hFile, 0, 0, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+    {
+        Win32Exception::ThrowFromLastError();
+    }
+
+    auto const readSize = 4096u;
+    DWORD bytesRead = readSize;
+    while (bytesRead != 0)
+    {
+        char stackBuff[readSize];
+        if (::ReadFile(hFile, stackBuff, readSize, &bytesRead, nullptr) == false)
+        {
+            Win32Exception::ThrowFromLastError();
+        }
+
+        buffer.append(stackBuff, bytesRead);
+    }
+
+    std::vector<std::string> result;
+    boost::algorithm::split(result, buffer, [](char c) { return c == '\r' || c == '\n'; }, boost::algorithm::token_compress_on);
+    return result;
+}
+
 bool File::WriteBytes(std::vector<char> const& bytes)
 {
     DWORD bytesWritten;
