@@ -1940,12 +1940,78 @@ static void IniAutostarts(log_sink& output, std::string const& rootKey)
     { }
 }
 
+#include <Objbase.h>
+#include <ObjIdl.h>
+#include <shobjidl.h>
+static std::string ResolveLink(std::string const& lnkPathNarrow)
+{
+    // Stolen from PEV
+    std::string result;
+    std::wstring lnkPath(utf8::ToUtf16(lnkPathNarrow));
+    IPersistFile * persistFile;
+    IShellLink * theLink;
+    HRESULT errorCheck = 0;
+    wchar_t linkTarget[MAX_PATH];
+    wchar_t expandedTarget[MAX_PATH];
+    wchar_t arguments[INFOTIPSIZE];
+    errorCheck = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IPersistFile, reinterpret_cast<void **>(&persistFile));
+    if (!SUCCEEDED(errorCheck)) goto error;
+    if (!SUCCEEDED(persistFile->Load(lnkPath.c_str(), 0))) goto unloadPersist;
+    errorCheck = persistFile->QueryInterface(IID_IShellLinkW, reinterpret_cast<void **>(&theLink));
+    if (!SUCCEEDED(errorCheck)) goto unloadPersist;
+    if (!SUCCEEDED(theLink->Resolve(NULL, SLR_NO_UI))) goto unloadLink;
+    if (!SUCCEEDED(theLink->GetPath(linkTarget, MAX_PATH, NULL, SLGP_RAWPATH))) goto unloadLink;
+    errorCheck = theLink->GetArguments(arguments, INFOTIPSIZE);
+    if (!SUCCEEDED(errorCheck)) arguments[0] = L'\0';
+    ExpandEnvironmentStringsW(linkTarget, expandedTarget, MAX_PATH);
+    persistFile->Release();
+    theLink->Release();
+    result = utf8::ToUtf8(static_cast<std::wstring>(expandedTarget)+L" " + arguments);
+
+unloadLink:
+    theLink->Release();
+unloadPersist:
+    persistFile->Release();
+error:
+    return result;
+}
+
+static void StartupFolder(log_sink& output, std::string const& rootKey)
+{
+    RegistryKey key(RegistryKey::Open(rootKey + "\\Volatile Environment"));
+    if (key.Invalid())
+    {
+        return;
+    }
+
+    std::string startupFolderSpec = key["USERPROFILE"].GetStringStrict() + "\\Start Menu\\Startup\\*";
+
+    FindFiles startupFiles(startupFolderSpec);
+    while (startupFiles.NextSuccess())
+    {
+        std::string fileName = startupFiles.GetRecord().GetFileName();
+        std::string target = ResolveLink(fileName);
+        write(output, "StartupFolder: ");
+        if (target.empty())
+        {
+            WriteDefaultFileOutput(output, fileName);
+        }
+        else
+        {
+            write(output, fileName, "->");
+            WriteDefaultFileOutput(output, target);
+        }
+
+        writeln(output);
+    }
+}
+
 static void UserSpecificHjt(log_sink& output, std::string const& rootKey)
 {
     InternetConnectionWizardShellNext(output, rootKey);
     ProxySettings(output, rootKey);
     IniAutostarts(output, rootKey);
-    // Startup Folder
+    StartupFolder(output, rootKey);
 }
 
 static void WriteMachineIdentity(log_sink& output)
