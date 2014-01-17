@@ -11,8 +11,12 @@
 #include <regex>
 #include <iterator>
 #include <Sddl.h>
+#include <windows.h>
 #include <comdef.h>
 #include <Wbemidl.h>
+#include <Objbase.h>
+#include <ObjIdl.h>
+#include <shobjidl.h>
 #include "Com.hpp"
 #include "SecurityCenter.hpp"
 #include "StockOutputFormats.hpp"
@@ -1940,9 +1944,6 @@ static void IniAutostarts(log_sink& output, std::string const& rootKey)
     { }
 }
 
-#include <Objbase.h>
-#include <ObjIdl.h>
-#include <shobjidl.h>
 static std::string ResolveLink(std::string const& lnkPathNarrow)
 {
     // Stolen from PEV

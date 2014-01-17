@@ -243,7 +243,7 @@ namespace Instalog
 
     // Helper function implementing the write formatting API.
     template <typename Sink, typename... Slices>
-    Sink& write_impl(Sink& target, Slices &&...slices)
+    Sink& write_impl_n(Sink& target, Slices const&... slices)
     {
         // Special thanks to Nawaz for his help here.
         // See: http://stackoverflow.com/a/20440197/82320
@@ -254,6 +254,22 @@ namespace Instalog
         char* expand[] = {(endPtr = std::copy_n(slices.data(), slices.size(), endPtr))...};
         (void)expand; // silence unreferenced parameter warning.
         target.append(ptr, endPtr - ptr);
+        return target;
+    }
+
+    template <typename Sink, typename FirstSlice, typename... Slices>
+    Sink& write_impl(Sink& target, FirstSlice firstSlice, Slices const&...slices)
+    {
+        write_impl_n(target, firstSlice, slices...);
+        return target;
+    }
+
+    // This overload does an optimization such that when we are formatting a single
+    // result, we can write directly from that result's buffer rather than
+    template <typename Sink, typename Slice>
+    Sink& write_impl(Sink& target, Slice const& slice)
+    {
+        target.append(slice.data(), slice.size());
         return target;
     }
 
