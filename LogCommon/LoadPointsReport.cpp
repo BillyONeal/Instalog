@@ -1868,12 +1868,83 @@ static void MachineSpecificHjt(log_sink& output)
     HostsFile(output);
 }
 
-static void UserSpecificHjt(log_sink& /* output */, std::string const& /* rootKey */)
+static void InternetConnectionWizardShellNext(log_sink& output, std::string const& rootKey)
 {
-    // Internet Connection Wizard, ShellNext
-    // Proxy Server
-    // Proxy Override
-    // INI Autostarts
+    RegistryKey key(RegistryKey::Open(rootKey + "\\Software\\Microsoft\\Internet Connection Wizard"));
+    if (key.Invalid())
+    {
+        return;
+    }
+
+    try
+    {
+        std::string shellNext = key["ShellNext"].GetStringStrict();
+        HttpEscape(shellNext);
+        writeln(output, "InternetConnectionWizard: ", shellNext);
+    }
+    catch (ErrorFileNotFoundException const&)
+    { }
+}
+
+static void ProxySettings(log_sink& output, std::string const& rootKey)
+{
+    RegistryKey key(RegistryKey::Open(rootKey + "\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"));
+    if (key.Invalid())
+    {
+        return;
+    }
+
+    try
+    {
+        std::string proxyServer = key["ProxyServer"].GetStringStrict();
+        GeneralEscape(proxyServer);
+        writeln(output, "ProxyServer: ", proxyServer);
+    }
+    catch (ErrorFileNotFoundException const&)
+    { }
+
+    try
+    {
+        std::string proxyOverride = key["ProxyOverride"].GetStringStrict();
+        GeneralEscape(proxyOverride);
+        writeln(output, "ProxyOverride: ", proxyOverride);
+    }
+    catch (ErrorFileNotFoundException const&)
+    { }
+}
+
+static void IniAutostarts(log_sink& output, std::string const& rootKey)
+{
+    RegistryKey key(RegistryKey::Open(rootKey + "\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"));
+    if (key.Invalid())
+    {
+        return;
+    }
+
+    try
+    {
+        std::string load = key["load"].GetStringStrict();
+        GeneralEscape(load);
+        writeln(output, "IniLoad: ", load);
+    }
+    catch (ErrorFileNotFoundException const&)
+    { }
+
+    try
+    {
+    std::string run = key["run"].GetStringStrict();
+    GeneralEscape(run);
+    writeln(output, "IniRun: ", run);
+    }
+    catch (ErrorFileNotFoundException const&)
+    { }
+}
+
+static void UserSpecificHjt(log_sink& output, std::string const& rootKey)
+{
+    InternetConnectionWizardShellNext(output, rootKey);
+    ProxySettings(output, rootKey);
+    IniAutostarts(output, rootKey);
     // Startup Folder
 }
 
