@@ -22,18 +22,6 @@ TEST(Win32Exception, CanGetNarrowName)
     }
 }
 
-TEST(Win32Exception, CanGetWideName)
-{
-    try
-    {
-        Win32Exception::Throw(ERROR_ACCESS_DENIED);
-    }
-    catch (Win32Exception const& ex)
-    {
-        ASSERT_EQ(L"Access is denied.\r\n", ex.GetWideMessage());
-    }
-}
-
 TEST(Win32Exception, CanGetErrorCode)
 {
     try

@@ -41,6 +41,7 @@
   <ItemGroup>
     <ClCompile Include="Com.cpp" />
     <ClCompile Include="Dns.cpp" />
+    <ClCompile Include="ErrorReporter.cpp" />
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="LogSink.cpp" />
@@ -68,6 +69,7 @@
     <ClInclude Include="DdkStructures.h" />
     <ClInclude Include="Dns.hpp" />
     <ClInclude Include="EnumClassOperators.hpp" />
+    <ClInclude Include="ErrorReporter.hpp" />
     <ClInclude Include="EventLog.hpp" />
     <ClInclude Include="Expected.hpp" />
     <ClInclude Include="File.hpp" />

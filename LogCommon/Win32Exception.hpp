@@ -65,11 +65,6 @@ class Win32Exception : public std::exception
         return errorCode_;
     }
 
-    /// @brief    Gets the wide message.
-    ///
-    /// @return    The wide message.
-    std::wstring GetWideMessage() const;
-
     /// @brief    Gets the character message.
     ///
     /// @return    The character message.
@@ -178,5 +173,10 @@ void __declspec(noreturn) ThrowFromHResult(HRESULT hRes);
  * @param   hRes    The hResult to check.
  */
 void ThrowIfFailed(HRESULT hRes);
+
+std::string GetWin32ErrorMessage(DWORD errorCode);
+std::uint32_t GetWin32ErrorFromNtError(NTSTATUS errorCode);
+std::string GetHresultErrorMessage(HRESULT errorCode);
+
 }
 }

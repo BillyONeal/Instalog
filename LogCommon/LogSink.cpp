@@ -103,4 +103,9 @@ namespace Instalog
         return result;
     }
 
+    format_intrusive_result format_value(boost::string_ref value)
+    {
+        return format_intrusive_result(value.data(), value.length());
+    }
+
 }

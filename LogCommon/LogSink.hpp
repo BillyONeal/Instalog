@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <memory>
 #include <boost/config.hpp>
+#include <boost/utility/string_ref.hpp>
 #include <utf8/utf8.h>
 #include "OptimisticBuffer.hpp"
 
@@ -199,6 +200,7 @@ namespace Instalog
     std::string format_value(std::wstring const& value);
     std::string format_value(wchar_t const* value);
     format_stack_result<4> format_value(wchar_t value);
+    format_intrusive_result format_value(boost::string_ref value);
 
 #define DECLARE_KARMA_GENERATOR(t) \
     stack_result_for_digits<t>::type format_value(t value) BOOST_NOEXCEPT_OR_NOTHROW

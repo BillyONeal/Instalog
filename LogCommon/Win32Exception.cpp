@@ -8,6 +8,7 @@
 #include "Com.hpp"
 #include "StringUtilities.hpp"
 #include "LogSink.hpp"
+#include "Utf8.hpp"
 #include "Win32Exception.hpp"
 
 namespace Instalog
@@ -46,11 +47,7 @@ std::exception_ptr Win32Exception::FromWinError(DWORD errorCode) BOOST_NOEXCEPT_
 
 std::exception_ptr Win32Exception::FromNtError(NTSTATUS errorCode) BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typedef ULONG(WINAPI * RtlNtStatusToDosErrorFunc)(__in NTSTATUS Status);
-    RtlNtStatusToDosErrorFunc conv =
-        GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>(
-            "RtlNtStatusToDosError");
-    return FromWinError(conv(errorCode));
+    return FromWinError(GetWin32ErrorFromNtError(errorCode));
 }
 
 void __declspec(noreturn) Win32Exception::Throw(DWORD lastError)
@@ -67,36 +64,9 @@ struct LocalFreeHelper
     ;
 };
 
-std::wstring Win32Exception::GetWideMessage() const
-{
-    std::unique_ptr<void, LocalFreeHelper> buff;
-    LPWSTR buffPtr;
-    DWORD bufferLength = ::FormatMessageW(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-        NULL,
-        GetErrorCode(),
-        0,
-        reinterpret_cast<LPWSTR>(&buffPtr),
-        0,
-        NULL);
-    buff.reset(buffPtr);
-    return std::wstring(buffPtr, bufferLength);
-}
-
 std::string Win32Exception::GetCharMessage() const
 {
-    std::unique_ptr<void, LocalFreeHelper> buff;
-    LPSTR buffPtr;
-    DWORD bufferLength = ::FormatMessageA(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-        NULL,
-        GetErrorCode(),
-        0,
-        reinterpret_cast<LPSTR>(&buffPtr),
-        0,
-        NULL);
-    buff.reset(buffPtr);
-    return std::string(buffPtr, bufferLength);
+    return GetWin32ErrorMessage(this->GetErrorCode());
 }
 
 void __declspec(noreturn) Win32Exception::ThrowFromNtError(NTSTATUS errorCode)
@@ -157,5 +127,52 @@ char const* HresultException::what()
 {
     return narrow.c_str();
 }
+
+std::string GetWin32ErrorMessage(DWORD errorCode)
+{
+    std::unique_ptr<wchar_t[], LocalFreeHelper> buff;
+    LPWSTR buffPtr;
+    DWORD bufferLength = ::FormatMessageW(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        NULL,
+        errorCode,
+        0,
+        reinterpret_cast<LPWSTR>(&buffPtr),
+        0,
+        NULL);
+    buff.reset(buffPtr);
+    return utf8::ToUtf8(buff.get(), bufferLength);
+}
+
+std::uint32_t GetWin32ErrorFromNtError(NTSTATUS errorCode)
+{
+    typedef ULONG(WINAPI * RtlNtStatusToDosErrorFunc)(__in NTSTATUS Status);
+    RtlNtStatusToDosErrorFunc conv =
+        GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>(
+        "RtlNtStatusToDosError");
+    return conv(errorCode);
+}
+
+std::string GetHresultErrorMessage(HRESULT errorCode)
+{
+    UniqueComPtr<IErrorInfo> iei;
+    if (S_OK == ::GetErrorInfo(0, iei.PassAsOutParameter()) &&
+        (iei.Get() != nullptr))
+    {
+        // get the error description from the IErrorInfo
+        UniqueBstr bStr;
+        iei->GetDescription(bStr.AsTarget());
+        return utf8::ToUtf8(bStr.AsInput(), bStr.Length());
+    }
+    else if (HRESULT_FACILITY(errorCode) == FACILITY_ITF)
+    {
+        return "Interface Specific";
+    }
+    else
+    {
+        return GetWin32ErrorMessage(static_cast<DWORD>(errorCode));
+    }
+}
+
 }
 } // namespace Instalog::SystemFacades

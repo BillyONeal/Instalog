@@ -41,6 +41,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DnsTest.cpp" />
+    <ClCompile Include="ErrorReporterTest.cpp" />
     <ClCompile Include="EventLogTest.cpp" />
     <ClCompile Include="ExpectedTest.cpp" />
     <ClCompile Include="FileTest.cpp" />
