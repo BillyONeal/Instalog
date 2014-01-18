@@ -149,12 +149,27 @@ void Script::Run(log_sink& logOutput, IUserInterface* ui) const
         writeln(logOutput);
         writeln(logOutput, header);
         writeln(logOutput);
-        entry.first.GetDefinition().Execute(
-            logOutput, entry.first, entry.second);
+        ExecutionOptions options(logOutput, entry.first, entry.second);
+        entry.first.GetDefinition().Execute(options);
     }
 
     writeln(logOutput);
     WriteScriptFooter(logOutput, startTime);
     ui->ReportFinished();
 }
+
+ExecutionOptions::ExecutionOptions(log_sink& logOutput_, ScriptSection const& sectionData_, std::vector<std::string> const& options_)
+    : logOutput(logOutput_)
+    , sectionData(sectionData_)
+    , options(options_)
+{
+}
+
+ExecutionOptions::ExecutionOptions(ExecutionOptions const& toCopy)
+    : logOutput(toCopy.logOutput)
+    , sectionData(toCopy.sectionData)
+    , options(toCopy.options)
+{
+}
+
 }

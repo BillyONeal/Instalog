@@ -36,9 +36,7 @@ static bool list_contains(Container const& c, std::string const& input)
     return false;
 }
 
-void RunningProcesses::Execute(log_sink& logOutput,
-                               ScriptSection const&,
-                               std::vector<std::string> const&) const
+void RunningProcesses::Execute(ExecutionOptions options) const
 {
     using Instalog::SystemFacades::ProcessEnumerator;
     using Instalog::SystemFacades::ErrorAccessDeniedException;
@@ -121,19 +119,17 @@ void RunningProcesses::Execute(log_sink& logOutput,
                 }
             }
             GeneralEscape(pathElement);
-            writeln(logOutput, pathElement);
+            writeln(options.logOutput, pathElement);
         }
         else
         {
-            writeln(logOutput, "Could not open process PID=", it->GetProcessId());
+            writeln(options.logOutput, "Could not open process PID=", it->GetProcessId());
         }
     }
 }
 
 void
-ServicesDrivers::Execute(log_sink& logOutput,
-                         ScriptSection const& /*sectionData*/,
-                         std::vector<std::string> const& /*options*/) const
+ServicesDrivers::Execute(ExecutionOptions options) const
 {
     using Instalog::SystemFacades::ServiceControlManager;
     using Instalog::SystemFacades::Service;
@@ -176,13 +172,11 @@ ServicesDrivers::Execute(log_sink& logOutput,
 
     for (auto const& serviceString : serviceStrings)
     {
-        writeln(logOutput, serviceString);
+        writeln(options.logOutput, serviceString);
     }
 }
 
-void EventViewer::Execute(log_sink& logOutput,
-                          ScriptSection const& /*sectionData*/,
-                          std::vector<std::string> const& /*options*/) const
+void EventViewer::Execute(ExecutionOptions options) const
 {
     using Instalog::SystemFacades::OldEventLog;
     using Instalog::SystemFacades::XmlEventLog;
@@ -239,26 +233,26 @@ void EventViewer::Execute(log_sink& logOutput,
             continue;
 
         // Print the Date
-        WriteDefaultDateFormat(logOutput,
+        WriteDefaultDateFormat(options.logOutput,
                                FiletimeToInteger((*eventLogEntry)->date));
 
         // Print the Type
         switch ((*eventLogEntry)->level)
         {
         case EventLogEntry::EvtLevelCritical:
-            write(logOutput, ", Critical: ");
+            write(options.logOutput, ", Critical: ");
             break;
         case EventLogEntry::EvtLevelError:
-            write(logOutput, ", Error: ");
+            write(options.logOutput, ", Error: ");
             break;
         }
 
         // Print the Source
         auto const& source = (*eventLogEntry)->GetSource();
-        write(logOutput, source, " [");
+        write(options.logOutput, source, " [");
 
         // Print the EventID
-        write(logOutput, eventId, "] ");
+        write(options.logOutput, eventId, "] ");
 
         // Print the description
         std::string description = (*eventLogEntry)->GetDescription();
@@ -267,7 +261,7 @@ void EventViewer::Execute(log_sink& logOutput,
         {
             description.erase(description.end() - 4, description.end());
         }
-        writeln(logOutput, description);
+        writeln(options.logOutput, description);
     }
 }
 
@@ -372,16 +366,13 @@ void MachineSpecifications::PerfFormattedData_PerfOS_System(
     writeln(logOutput, uptime / ticksPerMinute, " Minutes)");
 }
 
-void MachineSpecifications::Execute(
-    log_sink& logOutput,
-    ScriptSection const& /*sectionData*/,
-    std::vector<std::string> const& /*options*/) const
+void MachineSpecifications::Execute(ExecutionOptions options) const
 {
-    OperatingSystem(logOutput);
-    PerfFormattedData_PerfOS_System(logOutput);
-    BaseBoard(logOutput);
-    Processor(logOutput);
-    LogicalDisk(logOutput);
+    OperatingSystem(options.logOutput);
+    PerfFormattedData_PerfOS_System(options.logOutput);
+    BaseBoard(options.logOutput);
+    Processor(options.logOutput);
+    LogicalDisk(options.logOutput);
 }
 
 void MachineSpecifications::BaseBoard(log_sink& logOutput) const
@@ -565,9 +556,7 @@ void MachineSpecifications::LogicalDisk(log_sink& logOutput) const
     }
 }
 
-void RestorePoints::Execute(log_sink& logOutput,
-                            ScriptSection const& /*sectionData*/,
-                            std::vector<std::string> const& /*options*/) const
+void RestorePoints::Execute(ExecutionOptions options) const
 {
     try
     {
@@ -576,31 +565,29 @@ void RestorePoints::Execute(log_sink& logOutput,
 
         for (auto const& restorePoint : restorePoints)
         {
-            write(logOutput, restorePoint.SequenceNumber, ' ');
+            write(options.logOutput, restorePoint.SequenceNumber, ' ');
             WriteMillisecondDateFormat(
-                logOutput,
+                options.logOutput,
                 FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(
                     restorePoint.CreationTime)));
-            writeln(logOutput, ' ', restorePoint.Description);
+            writeln(options.logOutput, ' ', restorePoint.Description);
         }
     }
     catch (SystemFacades::HresultException const& ex)
     {
-        writeln(logOutput, "(Failed to enumerate restore points; HRESULT=", hex(ex.GetErrorCode()), ')');
+        writeln(options.logOutput, "(Failed to enumerate restore points; HRESULT=", hex(ex.GetErrorCode()), ')');
     }
 }
 
 void
-InstalledPrograms::Execute(log_sink& logOutput,
-                           ScriptSection const& /*sectionData*/,
-                           std::vector<std::string> const& /*options*/) const
+InstalledPrograms::Execute(ExecutionOptions options) const
 {
     Enumerate(
-        logOutput,
+        options.logOutput,
         "\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #ifdef _M_X64
     Enumerate(
-        logOutput,
+        options.logOutput,
         "\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #endif
 }
@@ -1150,24 +1137,22 @@ void PrintFileData(log_sink& logOutput,
     }
 }
 
-void FindStarM::Execute(log_sink& logOutput,
-                        ScriptSection const& /*sectionData*/,
-                        std::vector<std::string> const& /*options*/) const
+void FindStarM::Execute(ExecutionOptions options) const
 {
     std::vector<SystemFacades::FindFilesRecord> createdLast30FileData(
         GetCreatedLast30FileData());
 
-    PrintFileData(logOutput, createdLast30FileData);
+    PrintFileData(options.logOutput, createdLast30FileData);
 
     std::string head("Find3M");
     Header(head);
-    writeln(logOutput);
-    writeln(logOutput, head);
-    writeln(logOutput);
+    writeln(options.logOutput);
+    writeln(options.logOutput, head);
+    writeln(options.logOutput);
 
     std::vector<SystemFacades::FindFilesRecord> find3MFileData(
         GetFind3MFileData(createdLast30FileData));
 
-    PrintFileData(logOutput, find3MFileData);
+    PrintFileData(options.logOutput, find3MFileData);
 }
 }

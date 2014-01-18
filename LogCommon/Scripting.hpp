@@ -90,6 +90,18 @@ class ScriptSection
     bool operator<(const ScriptSection& rhs) const;
 };
 
+#pragma warning(push)
+#pragma warning(disable: 4512) // Assignment operator could not be generated.
+struct ExecutionOptions
+{
+    log_sink& logOutput;
+    ScriptSection const& sectionData;
+    std::vector<std::string> const& options;
+    ExecutionOptions(log_sink& logOutput_, ScriptSection const& sectionData_, std::vector<std::string> const& options_);
+    ExecutionOptions(ExecutionOptions const& toCopy);
+};
+#pragma warning(pop)
+
 /// @brief    Section definition.
 struct ISectionDefinition
 {
@@ -113,9 +125,7 @@ struct ISectionDefinition
     /// @return    The priority.
     virtual LogSectionPriorities GetPriority() const = 0;
 
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const = 0;
+    virtual void Execute(ExecutionOptions options) const = 0;
 };
 
 class Script;

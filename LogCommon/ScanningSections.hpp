@@ -22,9 +22,7 @@ struct RunningProcesses : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 };
 
 /// @brief    Services/drivers scanning section
@@ -42,9 +40,7 @@ struct ServicesDrivers : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-        ScriptSection const& sectionData,
-        std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 };
 
 /// @brief    Event viewer scanning section
@@ -62,9 +58,7 @@ struct EventViewer : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 };
 
 /// @brief    Machine specifications scanning section
@@ -83,9 +77,7 @@ struct MachineSpecifications : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 
     private:
     void OperatingSystem(log_sink& logOutput) const;
@@ -110,9 +102,7 @@ struct RestorePoints : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 };
 
 /// @brief    Installed programs scanning sections
@@ -130,9 +120,7 @@ struct InstalledPrograms : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 
     private:
     void Enumerate(log_sink& logOutput,
@@ -154,8 +142,6 @@ struct FindStarM : public ISectionDefinition
     {
         return SCANNING;
     }
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const override;
+    virtual void Execute(ExecutionOptions options) const override;
 };
 }

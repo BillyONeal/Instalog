@@ -12,29 +12,30 @@ using namespace Instalog;
 
 struct TestingSectionDefinition : public ISectionDefinition
 {
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& section,
-                         std::vector<std::string> const& vect) const
+    virtual void Execute(ExecutionOptions options) const override
+    //virtual void Execute(log_sink& logOutput,
+    //                     ScriptSection const& section,
+    //                     std::vector<std::string> const& vect) const override
     {
         std::string vectWritten;
-        if (vect.size())
+        if (options.options.size())
         {
-            std::size_t size = vect.size() * 3;
-            for (auto it = vect.cbegin(); it != vect.cend(); ++it)
+            std::size_t size = options.options.size() * 3;
+            for (auto it = options.options.cbegin(); it != options.options.cend(); ++it)
             {
                 size += it->size();
             }
             vectWritten.reserve(size);
             vectWritten.assign("{");
-            vectWritten.append(vect[0]);
-            for (std::size_t idx = 1; idx < vect.size(); ++idx)
+            vectWritten.append(options.options[0]);
+            for (std::size_t idx = 1; idx < options.options.size(); ++idx)
             {
-                vectWritten.append("}\r\n{").append(vect[idx]);
+                vectWritten.append("}\r\n{").append(options.options[idx]);
             }
             vectWritten.append("}");
         }
 
-        writeln(logOutput, section.GetDefinition().GetName(), " section has.GetArgument() \"", section.GetArgument(), "\" and options \r\n", vectWritten);
+        writeln(options.logOutput, options.sectionData.GetDefinition().GetName(), " section has.GetArgument() \"", options.sectionData.GetArgument(), "\" and options \r\n", vectWritten);
     }
 };
 

@@ -18,7 +18,8 @@ struct BaseSectionsTest : public testing::Test
     std::string arg;
     void Go()
     {
-        def->Execute(ss, ScriptSection(def, arg), options);
+        ScriptSection section(def, arg);
+        def->Execute(ExecutionOptions(ss, section, options));
     }
 };
 
