@@ -107,7 +107,50 @@ TEST(PathExpanding, FileExpansion)
         std::wcout << ::GetLastError() << std::endl;
     }
 
-    TestExpansion("Temporary Long Path File", "Tempor~1", true);
+    HKEY hReg;
+    LSTATUS openResult = ::RegOpenKeyExW(
+        HKEY_LOCAL_MACHINE,
+        L"SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+        0,
+        KEY_QUERY_VALUE,
+        &hReg
+        );
+
+    ASSERT_EQ(ERROR_SUCCESS, openResult);
+
+    DWORD disable83;
+    DWORD disableLen = sizeof(disable83);
+    LONG queryResult = RegQueryValueExW(
+        hReg,
+        L"NtfsDisable8dot3NameCreation",
+        nullptr,
+        nullptr,
+        reinterpret_cast<LPBYTE>(&disable83),
+        &disableLen
+        );
+
+    bool shortNamesAreEnabled;
+    if (queryResult == ERROR_SUCCESS)
+    {
+        shortNamesAreEnabled = disable83 == 0u;
+    }
+    else if (queryResult == ERROR_FILE_NOT_FOUND)
+    {
+        shortNamesAreEnabled = true;
+    }
+    else
+    {
+        FAIL();
+    }
+
+    if (shortNamesAreEnabled)
+    {
+        TestExpansion("Temporary Long Path File", "Tempor~1", true);
+    }
+    else
+    {
+        TestExpansion("Tempor~1", "Tempor~1", false);
+    }
 
     ::CloseHandle(hFile);
 }
