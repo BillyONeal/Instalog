@@ -3,6 +3,7 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
+#include <cstdint>
 #include <string>
 #include <exception>
 #include <windows.h>

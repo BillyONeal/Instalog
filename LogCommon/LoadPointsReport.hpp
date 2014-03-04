@@ -15,8 +15,6 @@ class LoadPointsReport : public ISectionDefinition
     virtual std::string GetName() const;
     virtual LogSectionPriorities GetPriority() const;
 
-    virtual void Execute(log_sink& logOutput,
-                         ScriptSection const& sectionData,
-                         std::vector<std::string> const& options) const;
+    virtual void Execute(ExecutionOptions options) const;
 };
 }

@@ -2030,10 +2030,9 @@ static void WriteMachineIdentity(log_sink& output)
     writeln(output, "Identity: [", narrowName, "] MACHINE");
 }
 
-void LoadPointsReport::Execute(log_sink& output,
-                        ScriptSection const&,
-                        std::vector<std::string> const&) const
+void LoadPointsReport::Execute(ExecutionOptions options) const
 {
+    auto& output = options.logOutput;
     WriteMachineIdentity(output);
     SecurityCenterOutput(output);
     CommonHjt(output, "\\Registry\\Machine");
