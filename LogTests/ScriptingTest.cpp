@@ -5,6 +5,7 @@
 #include "pch.hpp"
 #include <vector>
 #include <string>
+#include <numeric>
 #include "gtest/gtest.h"
 #include "../LogCommon/Scripting.hpp"
 
@@ -13,29 +14,25 @@ using namespace Instalog;
 struct TestingSectionDefinition : public ISectionDefinition
 {
     virtual void Execute(ExecutionOptions options) const override
-    //virtual void Execute(log_sink& logOutput,
-    //                     ScriptSection const& section,
-    //                     std::vector<std::string> const& vect) const override
     {
         std::string vectWritten;
-        if (options.options.size())
+        std::vector<std::string> const& scriptLines = options.GetOptions();
+        if (!scriptLines.empty())
         {
-            std::size_t size = options.options.size() * 3;
-            for (auto it = options.options.cbegin(); it != options.options.cend(); ++it)
-            {
-                size += it->size();
-            }
+            std::size_t size = std::accumulate(scriptLines.cbegin(), scriptLines.cend(), scriptLines.size() * 3,
+                [](std::size_t val, std::string const& x) { return val + x.size(); });
             vectWritten.reserve(size);
             vectWritten.assign("{");
-            vectWritten.append(options.options[0]);
-            for (std::size_t idx = 1; idx < options.options.size(); ++idx)
+            vectWritten.append(scriptLines[0]);
+            for (std::size_t idx = 1; idx < scriptLines.size(); ++idx)
             {
-                vectWritten.append("}\r\n{").append(options.options[idx]);
+                vectWritten.append("}\r\n{").append(scriptLines[idx]);
             }
             vectWritten.append("}");
         }
 
-        writeln(options.logOutput, options.sectionData.GetDefinition().GetName(), " section has.GetArgument() \"", options.sectionData.GetArgument(), "\" and options \r\n", vectWritten);
+        writeln(options.GetOutput(), options.GetSectionData().GetDefinition().GetName(), " section has.GetArgument() \"",
+            options.GetSectionData().GetArgument(), "\" and options \r\n", vectWritten);
     }
 };
 

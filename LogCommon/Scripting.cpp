@@ -159,17 +159,25 @@ void Script::Run(log_sink& logOutput, IUserInterface* ui) const
 }
 
 ExecutionOptions::ExecutionOptions(log_sink& logOutput_, ScriptSection const& sectionData_, std::vector<std::string> const& options_)
-    : logOutput(logOutput_)
-    , sectionData(sectionData_)
-    , options(options_)
+    : logOutput(&logOutput_)
+    , sectionData(&sectionData_)
+    , options(&options_)
 {
 }
 
-ExecutionOptions::ExecutionOptions(ExecutionOptions const& toCopy)
-    : logOutput(toCopy.logOutput)
-    , sectionData(toCopy.sectionData)
-    , options(toCopy.options)
+log_sink& ExecutionOptions::GetOutput()
 {
+    return *this->logOutput;
+}
+
+ScriptSection const& ExecutionOptions::GetSectionData() const
+{
+    return *this->sectionData;
+}
+
+std::vector<std::string> const& ExecutionOptions::GetOptions() const
+{
+    return *this->options;
 }
 
 }

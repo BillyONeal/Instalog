@@ -90,17 +90,17 @@ class ScriptSection
     bool operator<(const ScriptSection& rhs) const;
 };
 
-#pragma warning(push)
-#pragma warning(disable: 4512) // Assignment operator could not be generated.
-struct ExecutionOptions
+class ExecutionOptions
 {
-    log_sink& logOutput;
-    ScriptSection const& sectionData;
-    std::vector<std::string> const& options;
+    log_sink* logOutput;
+    ScriptSection const* sectionData;
+    std::vector<std::string> const* options;
+public:
     ExecutionOptions(log_sink& logOutput_, ScriptSection const& sectionData_, std::vector<std::string> const& options_);
-    ExecutionOptions(ExecutionOptions const& toCopy);
+    log_sink& GetOutput();
+    ScriptSection const& GetSectionData() const;
+    std::vector<std::string> const& GetOptions() const;
 };
-#pragma warning(pop)
 
 /// @brief    Section definition.
 struct ISectionDefinition

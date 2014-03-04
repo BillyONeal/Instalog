@@ -2032,7 +2032,7 @@ static void WriteMachineIdentity(log_sink& output)
 
 void LoadPointsReport::Execute(ExecutionOptions options) const
 {
-    auto& output = options.logOutput;
+    auto& output = options.GetOutput();
     WriteMachineIdentity(output);
     SecurityCenterOutput(output);
     CommonHjt(output, "\\Registry\\Machine");

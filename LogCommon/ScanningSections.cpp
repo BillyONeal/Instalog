@@ -119,11 +119,11 @@ void RunningProcesses::Execute(ExecutionOptions options) const
                 }
             }
             GeneralEscape(pathElement);
-            writeln(options.logOutput, pathElement);
+            writeln(options.GetOutput(), pathElement);
         }
         else
         {
-            writeln(options.logOutput, "Could not open process PID=", it->GetProcessId());
+            writeln(options.GetOutput(), "Could not open process PID=", it->GetProcessId());
         }
     }
 }
@@ -172,7 +172,7 @@ ServicesDrivers::Execute(ExecutionOptions options) const
 
     for (auto const& serviceString : serviceStrings)
     {
-        writeln(options.logOutput, serviceString);
+        writeln(options.GetOutput(), serviceString);
     }
 }
 
@@ -233,26 +233,26 @@ void EventViewer::Execute(ExecutionOptions options) const
             continue;
 
         // Print the Date
-        WriteDefaultDateFormat(options.logOutput,
+        WriteDefaultDateFormat(options.GetOutput(),
                                FiletimeToInteger((*eventLogEntry)->date));
 
         // Print the Type
         switch ((*eventLogEntry)->level)
         {
         case EventLogEntry::EvtLevelCritical:
-            write(options.logOutput, ", Critical: ");
+            write(options.GetOutput(), ", Critical: ");
             break;
         case EventLogEntry::EvtLevelError:
-            write(options.logOutput, ", Error: ");
+            write(options.GetOutput(), ", Error: ");
             break;
         }
 
         // Print the Source
         auto const& source = (*eventLogEntry)->GetSource();
-        write(options.logOutput, source, " [");
+        write(options.GetOutput(), source, " [");
 
         // Print the EventID
-        write(options.logOutput, eventId, "] ");
+        write(options.GetOutput(), eventId, "] ");
 
         // Print the description
         std::string description = (*eventLogEntry)->GetDescription();
@@ -261,7 +261,7 @@ void EventViewer::Execute(ExecutionOptions options) const
         {
             description.erase(description.end() - 4, description.end());
         }
-        writeln(options.logOutput, description);
+        writeln(options.GetOutput(), description);
     }
 }
 
@@ -368,11 +368,11 @@ void MachineSpecifications::PerfFormattedData_PerfOS_System(
 
 void MachineSpecifications::Execute(ExecutionOptions options) const
 {
-    OperatingSystem(options.logOutput);
-    PerfFormattedData_PerfOS_System(options.logOutput);
-    BaseBoard(options.logOutput);
-    Processor(options.logOutput);
-    LogicalDisk(options.logOutput);
+    OperatingSystem(options.GetOutput());
+    PerfFormattedData_PerfOS_System(options.GetOutput());
+    BaseBoard(options.GetOutput());
+    Processor(options.GetOutput());
+    LogicalDisk(options.GetOutput());
 }
 
 void MachineSpecifications::BaseBoard(log_sink& logOutput) const
@@ -565,17 +565,17 @@ void RestorePoints::Execute(ExecutionOptions options) const
 
         for (auto const& restorePoint : restorePoints)
         {
-            write(options.logOutput, restorePoint.SequenceNumber, ' ');
+            write(options.GetOutput(), restorePoint.SequenceNumber, ' ');
             WriteMillisecondDateFormat(
-                options.logOutput,
+                options.GetOutput(),
                 FiletimeToInteger(SystemFacades::WmiDateStringToFiletime(
                     restorePoint.CreationTime)));
-            writeln(options.logOutput, ' ', restorePoint.Description);
+            writeln(options.GetOutput(), ' ', restorePoint.Description);
         }
     }
     catch (SystemFacades::HresultException const& ex)
     {
-        writeln(options.logOutput, "(Failed to enumerate restore points; HRESULT=", hex(ex.GetErrorCode()), ')');
+        writeln(options.GetOutput(), "(Failed to enumerate restore points; HRESULT=", hex(ex.GetErrorCode()), ')');
     }
 }
 
@@ -583,11 +583,11 @@ void
 InstalledPrograms::Execute(ExecutionOptions options) const
 {
     Enumerate(
-        options.logOutput,
+        options.GetOutput(),
         "\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #ifdef _M_X64
     Enumerate(
-        options.logOutput,
+        options.GetOutput(),
         "\\Registry\\Machine\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
 #endif
 }
@@ -1142,17 +1142,17 @@ void FindStarM::Execute(ExecutionOptions options) const
     std::vector<SystemFacades::FindFilesRecord> createdLast30FileData(
         GetCreatedLast30FileData());
 
-    PrintFileData(options.logOutput, createdLast30FileData);
+    PrintFileData(options.GetOutput(), createdLast30FileData);
 
     std::string head("Find3M");
     Header(head);
-    writeln(options.logOutput);
-    writeln(options.logOutput, head);
-    writeln(options.logOutput);
+    writeln(options.GetOutput());
+    writeln(options.GetOutput(), head);
+    writeln(options.GetOutput());
 
     std::vector<SystemFacades::FindFilesRecord> find3MFileData(
         GetFind3MFileData(createdLast30FileData));
 
-    PrintFileData(options.logOutput, find3MFileData);
+    PrintFileData(options.GetOutput(), find3MFileData);
 }
 }
