@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include "ErrorReporter.hpp"
 
 namespace Instalog
 {
@@ -20,7 +21,8 @@ namespace SystemFacades
 ///
 /// @return    The IPv4 address in the form xxx.xxx.xxx.xxx or empty string if
 /// an error occured
-std::string IpAddressFromHostname(std::string const& hostname,
+std::string IpAddressFromHostname(IErrorReporter& errorReporter,
+                                  std::string const& hostname,
                                   bool useSafeDnsAddresses = false);
 
 /// @brief    Queries DNS for the hostnape for a given IP address
@@ -31,7 +33,8 @@ std::string IpAddressFromHostname(std::string const& hostname,
 /// "safe" DNS servers (Google's and if that fails, then OpenDNS)
 ///
 /// @return    The hostname or empty string if an error occured
-std::string HostnameFromIpAddress(std::string const& ipAddress,
+std::string HostnameFromIpAddress(IErrorReporter& errorReporter,
+                                  std::string const& ipAddress,
                                   bool useSafeDnsAddresses = false);
 
 /// @brief    Reverses an IP address.  Doesn't do any validation, just reverses

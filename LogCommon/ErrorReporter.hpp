@@ -22,31 +22,29 @@ namespace Instalog
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) = 0;
         virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) = 0;
         virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) = 0;
+        virtual void ReportGenericError(boost::string_ref errorMessage) = 0;
     protected:
         ~IErrorReporter();
     };
 
-    struct IgnoreErrorReporter : public IErrorReporter
-    {
-        virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) override;
-        virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) override;
-        virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) override;
-    };
+    IErrorReporter& GetIgnoreReporter();
 
-    struct LoggingErrorReporter : public IErrorReporter
+    struct LoggingErrorReporter final : public IErrorReporter
     {
         std::string const& Get() const;
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) override;
         virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) override;
         virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) override;
+        virtual void ReportGenericError(boost::string_ref errorMessage) override;
     private:
         std::string errorLog;
     };
 
-    struct ThrowingErrorReporter : public IErrorReporter
+    struct ThrowingErrorReporter final : public IErrorReporter
     {
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) override;
         virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) override;
         virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) override;
+        virtual void ReportGenericError(boost::string_ref errorMessage) override;
     };
 }

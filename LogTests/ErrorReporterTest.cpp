@@ -11,24 +11,24 @@
 using namespace Instalog;
 using namespace Instalog::SystemFacades;
 
-struct IgnoreErrorReporterTests : public ::testing::Test
+TEST(IgnoreErrorReporterTests, WinErrorIsANoOp)
 {
-    IgnoreErrorReporter reporter;
-};
-
-TEST_F(IgnoreErrorReporterTests, WinErrorIsANoOp)
-{
-    reporter.ReportWinError(0u, "Example API");
+    GetIgnoreReporter().ReportWinError(0u, "Example API");
 }
 
-TEST_F(IgnoreErrorReporterTests, NtErrorIsANoOp)
+TEST(IgnoreErrorReporterTests, NtErrorIsANoOp)
 {
-    reporter.ReportNtError(0u, "Example API");
+    GetIgnoreReporter().ReportNtError(0u, "Example API");
 }
 
-TEST_F(IgnoreErrorReporterTests, HresultIsANoOp)
+TEST(IgnoreErrorReporterTests, HresultIsANoOp)
 {
-    reporter.ReportHresult(0u, "Example API");
+    GetIgnoreReporter().ReportHresult(0u, "Example API");
+}
+
+TEST(IgnoreErrorReporterTests, GenericErrorIsANoOp)
+{
+    GetIgnoreReporter().ReportGenericError("Error message");
 }
 
 struct LoggingErrorReporterTests : public ::testing::Test
@@ -78,6 +78,12 @@ TEST_F(LoggingErrorReporterTests, HResultFailureCodeLogsMessage)
     Check("HRESULT IShellLink::QueryInterface: (0x80004002) No such interface supported");
 }
 
+TEST_F(LoggingErrorReporterTests, GenericErrorLogsMessage)
+{
+    reporter.ReportGenericError("This is a generic error not associated with an API call.");
+    Check("ERROR: This is a generic error not associated with an API call.");
+}
+
 struct ThrowingErrorReporterTests : public ::testing::Test
 {
     ThrowingErrorReporter reporter;
@@ -96,4 +102,9 @@ TEST_F(ThrowingErrorReporterTests, NtErrorThrows)
 TEST_F(ThrowingErrorReporterTests, HResultThrows)
 {
     ASSERT_THROW(reporter.ReportHresult(E_NOINTERFACE, "IShellLink::QueryInterface"), Win32Exception);
+}
+
+TEST_F(ThrowingErrorReporterTests, GenericErrorThrows)
+{
+    ASSERT_THROW(reporter.ReportGenericError("This is a generic error message."), std::exception);
 }

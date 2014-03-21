@@ -10,6 +10,8 @@
 #include "Dns.hpp"
 #include "Utf8.hpp"
 
+using Instalog::IErrorReporter;
+
 namespace Instalog
 {
 namespace SystemFacades
@@ -51,7 +53,8 @@ static std::vector<char> GetSafeServersList()
     return serversList;
 }
 
-std::string IpAddressFromHostname(std::string const& hostname,
+std::string IpAddressFromHostname(IErrorReporter& errorReporter,
+                                  std::string const& hostname,
                                   bool useSafeDnsAddresses /*= false*/)
 {
     DNS_STATUS status;
@@ -80,6 +83,7 @@ std::string IpAddressFromHostname(std::string const& hostname,
 
     if (status)
     {
+        errorReporter.ReportWinError(status, "DnsQuery_UTF8");
         return std::string();
     }
     else
@@ -89,8 +93,9 @@ std::string IpAddressFromHostname(std::string const& hostname,
         DnsRecordListFree(pDnsRecord, DnsFreeRecordListDeep);
 
         char* hostnameNarrow = inet_ntoa(ipaddr);
-        if (hostnameNarrow == NULL)
+        if (hostnameNarrow == nullptr)
         {
+            errorReporter.ReportGenericError("DNS lookup of " + hostname + " IP address conversion failed.");
             return std::string();
         }
         else
@@ -100,7 +105,8 @@ std::string IpAddressFromHostname(std::string const& hostname,
     }
 }
 
-std::string HostnameFromIpAddress(std::string const& ipAddress,
+std::string HostnameFromIpAddress(IErrorReporter& errorReporter,
+                                  std::string const& ipAddress,
                                   bool useSafeDnsAddresses /*= false*/)
 {
     std::string reversedIpAddress(ReverseIpAddress(ipAddress));
@@ -132,6 +138,7 @@ std::string HostnameFromIpAddress(std::string const& ipAddress,
 
     if (status)
     {
+        errorReporter.ReportWinError(status, "DnsQuery_UTF8");
         return std::string();
     }
     else

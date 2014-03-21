@@ -15,16 +15,22 @@ namespace Instalog
     {
     }
 
-    void IgnoreErrorReporter::ReportWinError(std::uint32_t, boost::string_ref)
+    struct IgnoreErrorReporter final : public IErrorReporter
     {
-    }
+        virtual void ReportWinError(std::uint32_t, boost::string_ref) override
+        {}
+        virtual void ReportNtError(std::int32_t, boost::string_ref) override
+        {}
+        virtual void ReportHresult(std::int32_t, boost::string_ref) override
+        {}
+        virtual void ReportGenericError(boost::string_ref) override
+        {}
+    };
 
-    void IgnoreErrorReporter::ReportNtError(std::int32_t, boost::string_ref)
+    IErrorReporter& GetIgnoreReporter()
     {
-    }
-
-    void IgnoreErrorReporter::ReportHresult(std::int32_t, boost::string_ref)
-    {
+        static IgnoreErrorReporter reporter;
+        return reporter;
     }
 
     std::string const& LoggingErrorReporter::Get() const
@@ -48,6 +54,11 @@ namespace Instalog
         write(this->errorLog, "HRESULT ", apiCall, ": (0x", hex(errorCode), ") ", GetHresultErrorMessage(errorCode));
     }
 
+    void LoggingErrorReporter::ReportGenericError(boost::string_ref errorMessage)
+    {
+        writeln(this->errorLog, "ERROR: ", errorMessage);
+    }
+
     void ThrowingErrorReporter::ReportWinError(std::uint32_t errorCode, boost::string_ref)
     {
         Win32Exception::Throw(errorCode);
@@ -61,5 +72,10 @@ namespace Instalog
     void ThrowingErrorReporter::ReportHresult(std::int32_t errorCode, boost::string_ref)
     {
         ThrowFromHResult(errorCode);
+    }
+
+    void ThrowingErrorReporter::ReportGenericError(boost::string_ref errorMessage)
+    {
+        throw std::runtime_error(errorMessage.to_string());
     }
 }

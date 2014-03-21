@@ -10,12 +10,12 @@ using namespace Instalog::SystemFacades;
 
 TEST(DnsAddressFromHostname, DefaultServers)
 {
-    ASSERT_FALSE(IpAddressFromHostname("google.com").empty());
+    ASSERT_FALSE(IpAddressFromHostname(Instalog::GetIgnoreReporter(), "google.com").empty());
 }
 
 TEST(DnsAddressFromHostname, SafeServers)
 {
-    ASSERT_FALSE(IpAddressFromHostname("google.com", true).empty());
+    ASSERT_FALSE(IpAddressFromHostname(Instalog::GetIgnoreReporter(), "google.com", true).empty());
 }
 
 /* This needs reworked; see issue 13
@@ -52,8 +52,8 @@ TEST(DnsIpReverse, RealIpReverse)
 
 TEST(DnsHostnameFromAddress, DefaultServers)
 {
-    auto const ip = IpAddressFromHostname("google.com");
-    auto const host = HostnameFromIpAddress(ip);
+    auto const ip = IpAddressFromHostname(Instalog::GetIgnoreReporter(), "google.com");
+    auto const host = HostnameFromIpAddress(Instalog::GetIgnoreReporter(), ip);
     ASSERT_TRUE(boost::ends_with(host, ".1e100.net")) << "IP was " << ip << " and host is " << host;
 }
 
