@@ -84,27 +84,22 @@ TEST_F(LoggingErrorReporterTests, GenericErrorLogsMessage)
     Check("ERROR: This is a generic error not associated with an API call.");
 }
 
-struct ThrowingErrorReporterTests : public ::testing::Test
+TEST(ThrowingErrorReporterTests, Win32Throws)
 {
-    ThrowingErrorReporter reporter;
-};
-
-TEST_F(ThrowingErrorReporterTests, Win32Throws)
-{
-    ASSERT_THROW(reporter.ReportWinError(ERROR_FILE_NOT_FOUND, "FindFirstFileExW"), ErrorFileNotFoundException);
+    ASSERT_THROW(GetThrowingErrorReporter().ReportWinError(ERROR_FILE_NOT_FOUND, "FindFirstFileExW"), ErrorFileNotFoundException);
 }
 
-TEST_F(ThrowingErrorReporterTests, NtErrorThrows)
+TEST(ThrowingErrorReporterTests, NtErrorThrows)
 {
-    ASSERT_THROW(reporter.ReportNtError(STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
+    ASSERT_THROW(GetThrowingErrorReporter().ReportNtError(STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
 }
 
-TEST_F(ThrowingErrorReporterTests, HResultThrows)
+TEST(ThrowingErrorReporterTests, HResultThrows)
 {
-    ASSERT_THROW(reporter.ReportHresult(E_NOINTERFACE, "IShellLink::QueryInterface"), Win32Exception);
+    ASSERT_THROW(GetThrowingErrorReporter().ReportHresult(E_NOINTERFACE, "IShellLink::QueryInterface"), Win32Exception);
 }
 
-TEST_F(ThrowingErrorReporterTests, GenericErrorThrows)
+TEST(ThrowingErrorReporterTests, GenericErrorThrows)
 {
-    ASSERT_THROW(reporter.ReportGenericError("This is a generic error message."), std::exception);
+    ASSERT_THROW(GetThrowingErrorReporter().ReportGenericError("This is a generic error message."), std::exception);
 }

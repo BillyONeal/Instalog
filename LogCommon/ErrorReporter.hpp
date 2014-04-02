@@ -40,11 +40,5 @@ namespace Instalog
         std::string errorLog;
     };
 
-    struct ThrowingErrorReporter final : public IErrorReporter
-    {
-        virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) override;
-        virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) override;
-        virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) override;
-        virtual void ReportGenericError(boost::string_ref errorMessage) override;
-    };
+    IErrorReporter& GetThrowingErrorReporter();
 }
