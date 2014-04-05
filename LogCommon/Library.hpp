@@ -5,72 +5,83 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <Windows.h>
-#include <boost/noncopyable.hpp>
-#include "Win32Exception.hpp"
+#include "ErrorReporter.hpp"
 
 namespace Instalog
 {
-namespace SystemFacades
+
+enum class load_type
 {
-
-class Library : boost::noncopyable
-{
-    protected:
-    /// @summary    The module handle.
-    HMODULE hModule;
-
-    /// @brief    Constructor, opens a handle to the library with the given
-    /// flags
-    ///
-    /// @param    filename    Path of the library.
-    /// @param    flags       The flags.
-    Library(std::string const& filename, DWORD flags);
-
-    /// @brief    Destructor, frees the library.
-    ~Library();
+    load_all,
+    load_data_only
 };
 
-/// @brief    An easy runtime dynamic linker
-class RuntimeDynamicLinker : public Library
+class library
 {
-    public:
-    /// @brief    Constructor.
-    ///
-    /// @param    filename    Filename of the library.
-    RuntimeDynamicLinker(std::string const& filename);
+    void* hModule;
+    void destroy();
+    typedef void(*get_proc_address_result)();
+    static get_proc_address_result get_function_impl(
+        void* hMod,
+        IErrorReporter& errorReporter,
+        char const* functionName
+        );
+public:
+    library();
+    explicit library(void* hModule);
+    library(library const&) = delete;
+    library& operator=(library const&) = delete;
+
+    library(library&& other);
+    library& operator=(library&& other);
+
+    ~library();
 
     /// @brief    Gets a function pointer to the specified function
     ///
     /// @param    functionName    Name of the function.
     ///
     /// @return    Function pointer
-    template <typename FuncT> FuncT GetProcAddress(char const* functionName)
+    template <typename FuncT> FuncT get_function(
+        IErrorReporter& errorReporter,
+        char const* functionName
+        )
     {
-        FuncT answer =
-            reinterpret_cast<FuncT>(::GetProcAddress(hModule, functionName));
-        if (!answer)
-        {
-            Win32Exception::ThrowFromLastError();
-        }
-        return answer;
+        return reinterpret_cast<FuncT>(get_function_impl(
+            this->hModule,
+            errorReporter,
+            functionName
+            ));
     }
-};
 
-/// @brief    Gets the Windows NT dll
-///
-/// @return    The Windows NT dll
-RuntimeDynamicLinker& GetNtDll();
-
-class FormattedMessageLoader : public Library
-{
-    public:
-    /// @brief    Constructor.
+    /// @brief    Constructor, opens a handle to the library with the given
+    /// flags
     ///
-    /// @param    filename    Filename of the library containing the messages.
-    FormattedMessageLoader(std::string const& filename);
+    /// @param    filename    Path of the library.
+    /// @param    flags       The flags.
+    void open(
+        IErrorReporter& errorReporter,
+        boost::string_ref filename,
+        load_type loadType
+        );
 
-    std::string GetFormattedMessage(DWORD messageId);
+    std::string get_formatted_message(
+        IErrorReporter& errorReporter,
+        std::uint32_t messageId
+        );
+    
+    /// @brief    Gets a formatted message with the given id and arguments to
+    /// replace
+    ///
+    /// @param    messageId    Identifier for the message.
+    /// @param    arguments    (optional) the arguments.
+    ///
+    /// @return    The formatted message.
+    std::string get_formatted_message(
+        IErrorReporter& errorReporter,
+        std::uint32_t messageId,
+        std::vector<std::wstring> const& arguments
+        );
 
     /// @brief    Gets a formatted message with the given id and arguments to
     /// replace
@@ -79,20 +90,18 @@ class FormattedMessageLoader : public Library
     /// @param    arguments    (optional) the arguments.
     ///
     /// @return    The formatted message.
-    std::string
-        GetFormattedMessage(DWORD messageId,
-        std::vector<std::wstring> const& arguments);
+    std::string get_formatted_message(
+        IErrorReporter& errorReporter,
+        std::uint32_t messageId,
+        std::vector<std::string> const& arguments
+        );
 
-    /// @brief    Gets a formatted message with the given id and arguments to
-    /// replace
+    /// @brief    Gets the Windows NT dll
     ///
-    /// @param    messageId    Identifier for the message.
-    /// @param    arguments    (optional) the arguments.
-    ///
-    /// @return    The formatted message.
-    std::string
-    GetFormattedMessage(DWORD messageId,
-                        std::vector<std::string> const& arguments);
+    /// @return    The Windows NT dll
+    static library& ntdll();
+
+    static library& kernel32();
 };
-}
+
 }

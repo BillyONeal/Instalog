@@ -8,10 +8,11 @@
 #include <cstddef>
 #include <iterator>
 #include <utf8/utf8.h>
+#include <boost/utility/string_ref.hpp>
 
 namespace utf8
 {
-    inline std::string ToUtf8(std::wstring const& input)
+    inline std::string ToUtf8(boost::wstring_ref input)
     {
         std::string result;
         result.reserve(input.size());
@@ -27,17 +28,7 @@ namespace utf8
         return result;
     }
 
-    inline std::string ToUtf8(wchar_t const* const input, std::size_t lengthInCharacters)
-    {
-        return ToUtf8(input, input + lengthInCharacters);
-    }
-
-    inline std::string ToUtf8(wchar_t const* const input)
-    {
-        return ToUtf8(input, std::wcslen(input));
-    }
-
-    inline std::wstring ToUtf16(std::string const& input)
+    inline std::wstring ToUtf16(boost::string_ref input)
     {
         std::wstring result;
         result.reserve(input.size());
@@ -51,15 +42,5 @@ namespace utf8
         result.reserve(end - input);
         utf8::utf8to16(input, end, std::back_inserter(result));
         return result;
-    }
-
-    inline std::wstring ToUtf16(char const* const input, std::size_t lengthInBytes)
-    {
-        return ToUtf16(input, input + lengthInBytes);
-    }
-
-    inline std::wstring ToUtf16(char const* const input)
-    {
-        return ToUtf16(input, std::strlen(input));
     }
 }

@@ -143,21 +143,22 @@ void WriteMemoryInformation(log_sink& log)
     GlobalMemoryStatusEx(&memStatus);
 
     availableRam = memStatus.ullAvailPhys;
-
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
-    typedef BOOL(WINAPI *
-                 GetPhysicallyInstalledFunc)(PULONGLONG TotalMemoryInKilobytes);
-    try
-    {
-        auto gpFunc = kernel32.GetProcAddress<GetPhysicallyInstalledFunc>(
-            "GetPhysicallyInstalledSystemMemory");
-        gpFunc(&totalRam);
-        totalRam *= 1024;
-    }
-    catch (SystemFacades::ErrorProcedureNotFoundException&)
+    typedef BOOL(WINAPI * GetPhysicallyInstalledFunc)(
+        PULONGLONG TotalMemoryInKilobytes
+        );
+    auto gpFunc = library::kernel32().get_function<GetPhysicallyInstalledFunc>(
+        GetIgnoreReporter(),
+        "GetPhysicallyInstalledSystemMemory");
+    if (gpFunc == nullptr)
     {
         totalRam = memStatus.ullTotalPhys;
     }
+    else
+    {
+        gpFunc(&totalRam);
+        totalRam *= 1024;
+    }
+
     totalRam /= 1024 * 1024;
     availableRam /= 1024 * 1024;
     write(log, availableRam, '/', totalRam, " MB Free");
@@ -173,17 +174,14 @@ void WriteOsVersion(log_sink& log)
     GetVersionEx((LPOSVERSIONINFO) & versionInfo);
 
     DWORD productType = 0;
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
-
-    try
+    auto getProductInfo = library::kernel32().get_function<GetProductInfoFunc>(
+            GetIgnoreReporter(),
+            "GetProductInfo"
+            );
+    if (getProductInfo != nullptr)
     {
-        auto getProductInfo =
-            kernel32.GetProcAddress<GetProductInfoFunc>("GetProductInfo");
         getProductInfo(6, 3, 0, 0, &productType);
     }
-    catch (SystemFacades::ErrorProcedureNotFoundException const&)
-    {
-    } // Expected on earlier OSes
 
     SYSTEM_INFO systemInfo;
     GetSystemInfo(&systemInfo);

@@ -11,8 +11,8 @@
 #include <array>
 #include <functional>
 #include <boost/lexical_cast.hpp>
-#include "Win32Exception.hpp"
 #include "StringUtilities.hpp"
+#include "ErrorReporter.hpp"
 #include "Library.hpp"
 #include "Registry.hpp"
 #include "Utf8.hpp"
@@ -22,23 +22,42 @@ namespace Instalog
 namespace SystemFacades
 {
 
-static NtOpenKeyFunc PNtOpenKey =
-    GetNtDll().GetProcAddress<NtOpenKeyFunc>("NtOpenKey");
-static NtCreateKeyFunc PNtCreateKey =
-    GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
-static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
-static NtDeleteKeyFunc PNtDeleteKey =
-    GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
-static NtQueryKeyFunc PNtQueryKey =
-    GetNtDll().GetProcAddress<NtQueryKeyFunc>("NtQueryKey");
-static NtEnumerateKeyFunc PNtEnumerateKey =
-    GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
-static NtEnumerateValueKeyFunc PNtEnumerateValueKeyFunc =
-    GetNtDll().GetProcAddress<NtEnumerateValueKeyFunc>("NtEnumerateValueKey");
-static NtQueryValueKeyFunc PNtQueryValueKeyFunc =
-    GetNtDll().GetProcAddress<NtQueryValueKeyFunc>("NtQueryValueKey");
-static NtSetValueKeyFunc PNtSetValueKeyFunc =
-    GetNtDll().GetProcAddress<NtSetValueKeyFunc>("NtSetValueKey");
+static NtOpenKeyFunc PNtOpenKey = library::ntdll().get_function<NtOpenKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtOpenKey"
+    );
+static NtCreateKeyFunc PNtCreateKey = library::ntdll().get_function<NtCreateKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtCreateKey"
+    );
+static NtCloseFunc PNtClose = library::ntdll().get_function<NtCloseFunc>(
+    GetThrowingErrorReporter(),
+    "NtClose"
+    );
+static NtDeleteKeyFunc PNtDeleteKey = library::ntdll().get_function<NtCloseFunc>(
+    GetThrowingErrorReporter(),
+    "NtDeleteKey"
+    );
+static NtQueryKeyFunc PNtQueryKey = library::ntdll().get_function<NtQueryKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtQueryKey"
+    );
+static NtEnumerateKeyFunc PNtEnumerateKey = library::ntdll().get_function<NtEnumerateKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtEnumerateKey"
+    );
+static NtEnumerateValueKeyFunc PNtEnumerateValueKeyFunc = library::ntdll().get_function<NtEnumerateValueKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtEnumerateValueKey"
+    );
+static NtQueryValueKeyFunc PNtQueryValueKeyFunc = library::ntdll().get_function<NtQueryValueKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtQueryValueKey"
+    );
+static NtSetValueKeyFunc PNtSetValueKeyFunc = library::ntdll().get_function<NtSetValueKeyFunc>(
+    GetThrowingErrorReporter(),
+    "NtSetValueKey"
+    );
 
 RegistryKey::~RegistryKey()
 {

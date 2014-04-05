@@ -29,8 +29,10 @@ namespace SystemFacades
 ProcessEnumerator::ProcessEnumerator()
 {
     NtQuerySystemInformationFunc ntQuerySysInfo =
-        GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>(
-            "NtQuerySystemInformation");
+        library::ntdll().get_function<NtQuerySystemInformationFunc>(
+            GetThrowingErrorReporter(),
+            "NtQuerySystemInformation"
+            );
     NTSTATUS errorCheck = STATUS_INFO_LENGTH_MISMATCH;
     ULONG goalLength = 0;
     while (errorCheck == STATUS_INFO_LENGTH_MISMATCH)
@@ -120,7 +122,9 @@ static UniqueHandle OpenProc(std::size_t processId, DWORD access)
     std::memset(&attribs, 0, sizeof(attribs));
     attribs.Length = sizeof(attribs);
     NtOpenProcessFunc ntOpen =
-        GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
+        library::ntdll().get_function<NtOpenProcessFunc>(
+        GetThrowingErrorReporter(),
+        "NtOpenProcess");
     NTSTATUS errorCheck = ntOpen(hProc.Ptr(), access, &attribs, &cid);
     if (errorCheck == ERROR_SUCCESS)
     {

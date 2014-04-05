@@ -141,15 +141,17 @@ std::string GetWin32ErrorMessage(DWORD errorCode)
         0,
         NULL);
     buff.reset(buffPtr);
-    return utf8::ToUtf8(buff.get(), bufferLength);
+    return utf8::ToUtf8(boost::wstring_ref(buff.get(), bufferLength));
 }
 
 std::uint32_t GetWin32ErrorFromNtError(NTSTATUS errorCode)
 {
     typedef ULONG(WINAPI * RtlNtStatusToDosErrorFunc)(__in NTSTATUS Status);
     RtlNtStatusToDosErrorFunc conv =
-        GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>(
-        "RtlNtStatusToDosError");
+        library::ntdll().get_function<RtlNtStatusToDosErrorFunc>(
+        GetThrowingErrorReporter(),
+        "RtlNtStatusToDosError"
+        );
     return conv(errorCode);
 }
 
@@ -162,7 +164,7 @@ std::string GetHresultErrorMessage(HRESULT errorCode)
         // get the error description from the IErrorInfo
         UniqueBstr bStr;
         iei->GetDescription(bStr.AsTarget());
-        return utf8::ToUtf8(bStr.AsInput(), bStr.Length());
+        return utf8::ToUtf8(boost::wstring_ref(bStr.AsInput(), bStr.Length()));
     }
     else if (HRESULT_FACILITY(errorCode) == FACILITY_ITF)
     {

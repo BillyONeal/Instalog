@@ -3,56 +3,126 @@
 // See the included LICENSE.TXT file for more details.
 
 #include "pch.hpp"
-#include "Win32Exception.hpp"
 #include "Library.hpp"
+#include <Windows.h>
 #include "Utf8.hpp"
 
 namespace Instalog
 {
-namespace SystemFacades
-{
 
-Library::Library(std::string const& filename, DWORD flags)
-    : hModule(::LoadLibraryExW(utf8::ToUtf16(filename).c_str(), NULL, flags))
+void library::destroy()
 {
-    if (hModule == NULL)
+    if (this->hModule != nullptr)
     {
-        Win32Exception::ThrowFromLastError();
+        ::FreeLibrary(static_cast<HMODULE>(this->hModule));
     }
 }
 
-Library::~Library()
+library::library() : hModule(nullptr)
+{}
+
+library::library(void* hModule) : hModule(hModule)
+{}
+
+library::library(library&& other)
+    : hModule(other.hModule)
 {
-    ::FreeLibrary(hModule);
+    other.hModule = nullptr;
 }
 
-RuntimeDynamicLinker& GetNtDll()
+library& library::operator=(library&& other)
 {
-    static RuntimeDynamicLinker ntdll("ntdll.dll");
-    return ntdll;
+    this->destroy();
+    this->hModule = other.hModule;
+    other.hModule = nullptr;
+    return *this;
 }
 
-RuntimeDynamicLinker::RuntimeDynamicLinker(std::string const& filename)
-    : Library(filename, 0)
+library::~library()
 {
+    this->destroy();
 }
 
-static bool IsVistaLater()
+library::get_proc_address_result library::get_function_impl(
+    void* hMod,
+    IErrorReporter& errorReporter,
+    char const* functionName
+    )
 {
-    OSVERSIONINFOW info;
-    info.dwOSVersionInfoSize = sizeof(info);
-    ::GetVersionExW(&info);
-    return info.dwMajorVersion >= 6;
+    get_proc_address_result result = reinterpret_cast<get_proc_address_result>(
+        ::GetProcAddress(static_cast<HMODULE>(hMod), functionName));
+    if (result == nullptr)
+    {
+        errorReporter.ReportWinError(::GetLastError(), "GetProcAddress");
+    }
+
+    return result;
 }
 
-static bool IsVistaLaterCache()
+void library::open(
+    IErrorReporter& errorReporter,
+    boost::string_ref filename,
+    load_type loadType
+    )
 {
-    static bool isVistaLater = IsVistaLater();
-    return isVistaLater;
+    DWORD flags;
+    switch (loadType)
+    {
+    case load_type::load_all:
+        flags = 0;
+        break;
+    case load_type::load_data_only:
+        flags = LOAD_LIBRARY_AS_DATAFILE;
+        break;
+    }
+
+    std::wstring expanded(utf8::ToUtf16(filename));
+    HMODULE loadedModule = ::LoadLibraryExW(expanded.c_str(), NULL, flags);
+    if (loadedModule == NULL)
+    {
+        errorReporter.ReportWinError(::GetLastError(), "LoadLibraryExW");
+    }
+    else
+    {
+        this->destroy();
+        this->hModule = loadedModule;
+    }
 }
 
-static std::string FormatMessageU(HMODULE hModule, DWORD messageId, va_list* argPtr)
+static library create_module_library(wchar_t const* lib)
 {
+    return static_cast<library>(static_cast<void*>(
+        ::GetModuleHandleW(lib)));
+}
+
+library& library::ntdll()
+{
+    static library nt = create_module_library(L"ntdll.dll");
+    return nt;
+}
+
+library& library::kernel32()
+{
+    static library kernel32 = create_module_library(L"kernel32.dll");
+    return kernel32;
+}
+
+struct local_free
+{
+    void operator()(void* hLocal)
+    {
+        LocalFree(static_cast<HLOCAL>(hLocal));
+    }
+};
+
+static std::string FormatMessageU(
+    IErrorReporter& errorReporter,
+    void* hModule,
+    DWORD messageId,
+    va_list* argPtr
+    )
+{
+    std::string answer;
     wchar_t* messagePtr = nullptr;
     if (FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE |
@@ -64,38 +134,39 @@ static std::string FormatMessageU(HMODULE hModule, DWORD messageId, va_list* arg
         0,
         argPtr) == 0)
     {
-        Win32Exception::ThrowFromLastError();
+        errorReporter.ReportWinError(::GetLastError(), "FormatMessageW");
     }
-    std::string answer(utf8::ToUtf8(messagePtr));
-    LocalFree(messagePtr);
+    else
+    {
+        std::unique_ptr<void, local_free> destroyer(messagePtr);
+        answer = utf8::ToUtf8(messagePtr);
+    }
+
     return answer;
 }
 
-FormattedMessageLoader::FormattedMessageLoader(std::string const& filename)
-    : Library(filename,
-              (IsVistaLaterCache() ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0) |
-                  LOAD_LIBRARY_AS_DATAFILE)
+std::string library::get_formatted_message(
+    IErrorReporter& errorReporter,
+    std::uint32_t messageId
+    )
 {
+    return FormatMessageU(errorReporter, this->hModule, messageId, nullptr);
 }
 
-std::string FormattedMessageLoader::GetFormattedMessage(
-    DWORD messageId)
-{
-    return FormatMessageU(this->hModule, messageId, nullptr);
-}
-
-std::string FormattedMessageLoader::GetFormattedMessage(
-    DWORD messageId,
+std::string library::get_formatted_message(
+    IErrorReporter& errorReporter,
+    std::uint32_t messageId,
     std::vector<std::string> const& argumentsSource)
 {
     std::vector<std::wstring> arguments;
     arguments.reserve(argumentsSource.size());
     std::transform(argumentsSource.cbegin(), argumentsSource.cend(), std::back_inserter(arguments), [](std::string const& s) { return utf8::ToUtf16(s); });
-    return GetFormattedMessage(messageId, arguments);
+    return get_formatted_message(errorReporter, messageId, arguments);
 }
 
-std::string FormattedMessageLoader::GetFormattedMessage(
-    DWORD messageId,
+std::string library::get_formatted_message(
+    IErrorReporter& errorReporter,
+    std::uint32_t messageId,
     std::vector<std::wstring> const& arguments)
 {
     std::vector<DWORD_PTR> argumentPtrs;
@@ -109,7 +180,6 @@ std::string FormattedMessageLoader::GetFormattedMessage(
         argPtr = nullptr;
     }
 
-    return FormatMessageU(this->hModule, messageId, argPtr);
-}
+    return FormatMessageU(errorReporter, this->hModule, messageId, argPtr);
 }
 }

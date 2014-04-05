@@ -3,101 +3,90 @@
 // See the included LICENSE.TXT file for more details.
 
 #pragma once
-#include <boost/noncopyable.hpp>
 #include "Library.hpp"
 
 #pragma once
 
 namespace Instalog
 {
-namespace SystemFacades
-{
 
 /// @brief    Query if the current process is running under WOW64.
 ///
 /// @return    true if running under WOW64, false otherwise
-inline bool IsWow64()
+inline bool IsWow64(IErrorReporter& errorReporter)
 {
-    try
+    typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
+                                            __out PBOOL Wow64Process);
+    auto IsWow64ProcessFunc = library::kernel32().get_function<
+        IsWow64ProcessT>(GetIgnoreReporter(), "IsWow64Process");
+    if (IsWow64ProcessFunc == nullptr)
     {
-        RuntimeDynamicLinker kernel32("kernel32.dll");
-        typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
-                                               __out PBOOL Wow64Process);
-        auto IsWow64ProcessFunc =
-            kernel32.GetProcAddress<IsWow64ProcessT>("IsWow64Process");
-        BOOL answer;
-        BOOL errorCheck = IsWow64ProcessFunc(GetCurrentProcess(), &answer);
-        if (errorCheck == 0)
+        DWORD const actualError = ::GetLastError();
+        if (actualError != ERROR_PROC_NOT_FOUND)
         {
-            Win32Exception::ThrowFromLastError();
+            errorReporter.ReportWinError(actualError, "GetProcAddress");
         }
-        return answer != 0;
-    }
-    catch (ErrorProcedureNotFoundException const&)
-    {
+
         return false;
     }
+
+    BOOL answer;
+    BOOL errorCheck = IsWow64ProcessFunc(::GetCurrentProcess(), &answer);
+    if (errorCheck == 0)
+    {
+        errorReporter.ReportWinError(::GetLastError(), "IsWow64Process");
+    }
+
+    return answer != 0;
 }
 
-struct NativeFilePathScope : boost::noncopyable
+struct NativeFilePathScope
 {
-    NativeFilePathScope()
-        : kernel32("kernel32.dll")
-        , ptr(nullptr)
+    NativeFilePathScope(IErrorReporter& errorReporter)
+        : ptr(nullptr)
     {
-        try
+        if (!IsWow64(errorReporter))
         {
-            typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
-                                                   __out PBOOL Wow64Process);
-            auto IsWow64ProcessFunc =
-                this->kernel32.GetProcAddress<IsWow64ProcessT>(
-                    "IsWow64Process");
-            BOOL isWow64;
-            BOOL errorCheck =
-                IsWow64ProcessFunc(::GetCurrentProcess(), &isWow64);
-            if (errorCheck == 0)
-            {
-                Win32Exception::ThrowFromLastError();
-            }
-
-            if (isWow64 == 0)
-            {
-                return;
-            }
-
-            typedef BOOL(WINAPI * Wow64DisableWow64FsRedirectionFunc)(void**);
-            auto disableFunc =
-                this->kernel32
-                    .GetProcAddress<Wow64DisableWow64FsRedirectionFunc>(
-                         "Wow64DisableWow64FsRedirection");
-            errorCheck = disableFunc(&this->ptr);
-            if (errorCheck == 0)
-            {
-                Win32Exception::ThrowFromLastError();
-            }
+            return;
         }
-        catch (ErrorProcedureNotFoundException const&)
+
+        char const wow64FuncName[] = "Wow64DisableWow64FsRedirection";
+        typedef BOOL(WINAPI * Wow64DisableWow64FsRedirectionFunc)(void**);
+        auto disableFunc = library::kernel32().get_function<
+            Wow64DisableWow64FsRedirectionFunc>(
+            GetIgnoreReporter(),
+            wow64FuncName
+            );
+
+        if (disableFunc == nullptr)
         {
-            // That's okay :)
-            this->ptr = nullptr;
+            DWORD const actualError = ::GetLastError();
+            if (actualError != ERROR_PROC_NOT_FOUND)
+            {
+                errorReporter.ReportWinError(actualError, wow64FuncName)
+            }
+
+            return;
+        }
+
+        BOOL const errorCheck = disableFunc(&this->ptr);
+        if (errorCheck == 0)
+        {
+            errorReporter.ReportWinError(::GetLastError(), wow64FuncName);
         }
     }
 
     void Revert()
     {
-        try
+        typedef BOOL(WINAPI * Wow64RevertWow64FsRedirectionFunc)(void*);
+        auto revertFunc = library::kernel32()
+            .get_function<Wow64RevertWow64FsRedirectionFunc>(
+            GetIgnoreReporter(),
+            "Wow64RevertWow64FsRedirection");
+        if (revertFunc)
         {
-            typedef BOOL(WINAPI * Wow64RevertWow64FsRedirectionFunc)(void*);
-            auto revertFunc =
-                this->kernel32
-                    .GetProcAddress<Wow64RevertWow64FsRedirectionFunc>(
-                         "Wow64RevertWow64FsRedirection");
             revertFunc(this->ptr);
             this->ptr = nullptr;
-        }
-        catch (ErrorProcedureNotFoundException const&)
-        {
-            // That's okay :)
         }
     }
 
@@ -107,8 +96,6 @@ struct NativeFilePathScope : boost::noncopyable
     }
 
     private:
-    RuntimeDynamicLinker kernel32;
     void* ptr;
 };
-}
 }

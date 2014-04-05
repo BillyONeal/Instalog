@@ -333,8 +333,10 @@ void MachineSpecifications::PerfFormattedData_PerfOS_System(
     log_sink& logOutput) const
 {
     NtQuerySystemInformationFunc ntQuerySysInfo =
-        SystemFacades::GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>(
-            "NtQuerySystemInformation");
+        library::ntdll().get_function<NtQuerySystemInformationFunc>(
+            GetThrowingErrorReporter(),
+            "NtQuerySystemInformation"
+            );
 
     const std::uint64_t ticksPerDay = 10000000ull * 60ull * 60ull * 24ull;
     const std::uint64_t ticksPerHour = 10000000ull * 60ull * 60ull;
