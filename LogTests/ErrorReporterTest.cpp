@@ -103,3 +103,36 @@ TEST(ThrowingErrorReporterTests, GenericErrorThrows)
 {
     ASSERT_THROW(GetThrowingErrorReporter().ReportGenericError("This is a generic error message."), std::exception);
 }
+
+struct  Win32FilteringReporterTests : ::testing::Test
+{
+    Win32FilteringReporter uut;
+    Win32FilteringReporterTests() : uut(GetThrowingErrorReporter(), ERROR_FILE_NOT_FOUND)
+    {}
+};
+
+TEST_F(Win32FilteringReporterTests, Win32PassThrough)
+{
+    ASSERT_THROW(uut.ReportWinError(ERROR_PATH_NOT_FOUND, "api"), Win32Exception);
+}
+
+TEST_F(Win32FilteringReporterTests, Win32Filtered)
+{
+    // assert no throw
+    uut.ReportWinError(ERROR_FILE_NOT_FOUND, "api");
+}
+
+TEST_F(Win32FilteringReporterTests, NtErrorThrows)
+{
+    ASSERT_THROW(uut.ReportNtError(STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
+}
+
+TEST_F(Win32FilteringReporterTests, HResultThrows)
+{
+    ASSERT_THROW(uut.ReportHresult(E_NOINTERFACE, "IShellLink::QueryInterface"), Win32Exception);
+}
+
+TEST_F(Win32FilteringReporterTests, GenericErrorThrows)
+{
+    ASSERT_THROW(uut.ReportGenericError("This is a generic error message."), std::exception);
+}

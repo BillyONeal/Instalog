@@ -17,6 +17,7 @@ namespace Instalog
 
     struct IgnoreErrorReporter final : public IErrorReporter
     {
+        IgnoreErrorReporter() = default;
         virtual void ReportWinError(std::uint32_t, boost::string_ref) override
         {}
         virtual void ReportNtError(std::int32_t, boost::string_ref) override
@@ -29,6 +30,7 @@ namespace Instalog
 
     struct ThrowingErrorReporter final : public IErrorReporter
     {
+        ThrowingErrorReporter() = default;
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref) override
         {
             Win32Exception::Throw(errorCode);
@@ -84,4 +86,45 @@ namespace Instalog
     {
         writeln(this->errorLog, "ERROR: ", errorMessage);
     }
+
+    BasicFilteringErrorReporter::BasicFilteringErrorReporter(IErrorReporter& wrappedReporter)
+        : wrappedReporter(&wrappedReporter)
+    { }
+
+    void BasicFilteringErrorReporter::ReportGenericError(boost::string_ref errorMessage)
+    {
+        this->wrappedReporter->ReportGenericError(errorMessage);
+    }
+
+    void BasicFilteringErrorReporter::ReportHresult(std::int32_t errorCode, boost::string_ref apiCall)
+    {
+        this->wrappedReporter->ReportHresult(errorCode, apiCall);
+    }
+
+    void BasicFilteringErrorReporter::ReportNtError(std::int32_t errorCode, boost::string_ref apiCall)
+    {
+        this->wrappedReporter->ReportNtError(errorCode, apiCall);
+    }
+
+    void BasicFilteringErrorReporter::ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall)
+    {
+        this->wrappedReporter->ReportWinError(errorCode, apiCall);
+    }
+
+
+    Win32FilteringReporter::Win32FilteringReporter(IErrorReporter& wrappedReporter, std::uint32_t filteredErrorCode)
+        : BasicFilteringErrorReporter(wrappedReporter)
+        , filteredErrorCode(filteredErrorCode)
+    { }
+
+    void Win32FilteringReporter::ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall)
+    {
+        if (errorCode == this->filteredErrorCode)
+        {
+            return;
+        }
+
+        BasicFilteringErrorReporter::ReportWinError(errorCode, apiCall);
+    }
+
 }
