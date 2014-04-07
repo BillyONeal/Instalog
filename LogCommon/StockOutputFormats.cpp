@@ -147,7 +147,7 @@ void WriteMemoryInformation(log_sink& log)
         PULONGLONG TotalMemoryInKilobytes
         );
     auto gpFunc = library::kernel32().get_function<GetPhysicallyInstalledFunc>(
-        GetIgnoreReporter(),
+        GetThrowingReporterExcept<ERROR_PROC_NOT_FOUND>(),
         "GetPhysicallyInstalledSystemMemory");
     if (gpFunc == nullptr)
     {
@@ -175,7 +175,7 @@ void WriteOsVersion(log_sink& log)
 
     DWORD productType = 0;
     auto getProductInfo = library::kernel32().get_function<GetProductInfoFunc>(
-            GetIgnoreReporter(),
+            GetThrowingReporterExcept<ERROR_PROC_NOT_FOUND>(),
             "GetProductInfo"
             );
     if (getProductInfo != nullptr)
@@ -498,8 +498,7 @@ LONG GetTimeZoneBias()
         tzInfo.Bias += tzInfo.StandardBias;
     case TIME_ZONE_ID_DAYLIGHT:
         tzInfo.Bias += tzInfo.DaylightBias;
-    }
-    ;
+    };
 
     return tzInfo.Bias;
 }
