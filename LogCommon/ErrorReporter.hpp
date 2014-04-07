@@ -74,4 +74,11 @@ namespace Instalog
     private:
         std::uint32_t filteredErrorCode;
     };
+
+    template <unsigned BlockedErrorCode>
+    IErrorReporter& GetThrowingReporterExcept()
+    {
+        static Win32FilteringReporter reporter(GetThrowingErrorReporter(), BlockedErrorCode);
+        return reporter;
+    }
 }

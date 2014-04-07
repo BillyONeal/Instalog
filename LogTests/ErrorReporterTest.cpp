@@ -106,8 +106,8 @@ TEST(ThrowingErrorReporterTests, GenericErrorThrows)
 
 struct  Win32FilteringReporterTests : ::testing::Test
 {
-    Win32FilteringReporter uut;
-    Win32FilteringReporterTests() : uut(GetThrowingErrorReporter(), ERROR_FILE_NOT_FOUND)
+    IErrorReporter& uut;
+    Win32FilteringReporterTests() : uut(GetThrowingReporterExcept<ERROR_FILE_NOT_FOUND>())
     {}
 };
 
