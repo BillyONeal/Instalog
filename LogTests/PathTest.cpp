@@ -132,7 +132,7 @@ TEST(PathExpanding, FileExpansion)
     bool shortNamesAreEnabled;
     if (queryResult == ERROR_SUCCESS)
     {
-        shortNamesAreEnabled = disable83 == 0u;
+        shortNamesAreEnabled = disable83 != 1u;
     }
     else if (queryResult == ERROR_FILE_NOT_FOUND)
     {
