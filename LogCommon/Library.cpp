@@ -59,7 +59,7 @@ library::get_proc_address_result library::get_function_impl(
     return result;
 }
 
-void library::open(
+bool library::open(
     IErrorReporter& errorReporter,
     boost::string_ref filename,
     load_type loadType
@@ -81,12 +81,12 @@ void library::open(
     if (loadedModule == NULL)
     {
         errorReporter.ReportWinError(::GetLastError(), "LoadLibraryExW");
+        return false;
     }
-    else
-    {
-        this->destroy();
-        this->hModule = loadedModule;
-    }
+
+    this->destroy();
+    this->hModule = loadedModule;
+    return true;
 }
 
 static library create_module_library(wchar_t const* lib)

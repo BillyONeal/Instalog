@@ -75,23 +75,23 @@ std::string OldEventLogEntry::GetDescription()
         Win32Exception::ThrowFromNtError(::GetLastError());
     }
 
-    try
-    {
-        RegistryValue eventMessageFileValue =
-            eventKey.GetValue("EventMessageFile");
-        std::string eventMessageFilePath =
-            eventMessageFileValue.GetStringStrict();
-        Path::ResolveFromCommandLine(eventMessageFilePath);
+    RegistryValue eventMessageFileValue =
+        eventKey.GetValue("EventMessageFile");
+    std::string eventMessageFilePath =
+        eventMessageFileValue.GetStringStrict();
+    Path::ResolveFromCommandLine(eventMessageFilePath);
 
-        FormattedMessageLoader eventMessageFile(eventMessageFilePath);
-        return eventMessageFile.GetFormattedMessage(eventIdWithExtras, strings);
-    }
-    catch (ErrorFileNotFoundException const&)
+    library eventMessageFile;
+    if (eventMessageFile.open(
+        GetThrowingReporterExcept<ERROR_FILE_NOT_FOUND>(),
+        eventMessageFilePath, load_type::load_data_only))
     {
-        // We don't know what library to use so just return the short data
-        // string
-        return utf8::ToUtf8(dataString);
+        return eventMessageFile.get_formatted_message(GetThrowingErrorReporter(), eventIdWithExtras, strings);
     }
+
+    // We don't know what library to use so just return the short data
+    // string
+    return utf8::ToUtf8(dataString);
 }
 
 std::string OldEventLogEntry::GetSource()
@@ -313,7 +313,7 @@ typedef enum _EVT_FORMAT_MESSAGE_FLAGS
 /// @brief    Function handles for the new XML API
 class EvtFunctionHandles : boost::noncopyable
 {
-    RuntimeDynamicLinker wevtapi;
+    library wevtapi;
 
     public:
     typedef HANDLE(WINAPI* EvtQuery_t)(HANDLE, LPCWSTR, LPCWSTR, DWORD);

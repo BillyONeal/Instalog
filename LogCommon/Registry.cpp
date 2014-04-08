@@ -13,6 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include "StringUtilities.hpp"
 #include "ErrorReporter.hpp"
+#include "Win32Exception.hpp"
 #include "Library.hpp"
 #include "Registry.hpp"
 #include "Utf8.hpp"
@@ -301,8 +302,8 @@ std::string RegistryKey::GetName() const
     {
         Win32Exception::ThrowFromNtError(errorCheck);
     }
-    return utf8::ToUtf8(keyBasicInformation->Name,
-                        keyBasicInformation->NameLength / sizeof(wchar_t));
+    return utf8::ToUtf8(boost::wstring_ref(keyBasicInformation->Name,
+                        keyBasicInformation->NameLength / sizeof(wchar_t)));
 }
 
 std::string RegistryKey::GetLocalName() const
@@ -341,8 +342,8 @@ std::vector<std::string> RegistryKey::EnumerateSubKeyNames() const
         {
             break;
         }
-        subkeys.emplace_back(utf8::ToUtf8(basicInformation->Name,
-                                          basicInformation->NameLength / sizeof(wchar_t)));
+        subkeys.emplace_back(utf8::ToUtf8(boost::wstring_ref(basicInformation->Name,
+                                          basicInformation->NameLength / sizeof(wchar_t))));
     }
     if (errorCheck != STATUS_NO_MORE_ENTRIES)
     {
@@ -403,9 +404,9 @@ std::vector<std::string> RegistryKey::EnumerateValueNames() const
                                                        &resultLength);
         if (NT_SUCCESS(errorCheck))
         {
-            result.emplace_back(utf8::ToUtf8(
+            result.emplace_back(utf8::ToUtf8(boost::wstring_ref(
                 basicValueInformation->Name,
-                basicValueInformation->NameLength / sizeof(wchar_t)));
+                basicValueInformation->NameLength / sizeof(wchar_t))));
         }
         else if (errorCheck == STATUS_NO_MORE_ENTRIES)
         {
@@ -525,7 +526,7 @@ RegistryValueAndData::RegistryValueAndData(RegistryValueAndData&& other)
 std::string RegistryValueAndData::GetName() const
 {
     auto casted = Cast();
-    return utf8::ToUtf8(casted->Name, casted->NameLength / sizeof(wchar_t));
+    return utf8::ToUtf8(boost::wstring_ref(casted->Name, casted->NameLength / sizeof(wchar_t)));
 }
 
 KEY_VALUE_FULL_INFORMATION const* RegistryValueAndData::Cast() const

@@ -175,7 +175,8 @@ GetProcessStr(std::size_t processId,
                 processId, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION));
             PROCESS_BASIC_INFORMATION basicInfo;
             NtQueryInformationProcessFunc ntQuery =
-                GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>(
+                library::ntdll().get_function<NtQueryInformationProcessFunc>(
+                    GetThrowingErrorReporter(),
                     "NtQueryInformationProcess");
             NTSTATUS errorCheck = ntQuery(hProc.Get(),
                                           ProcessBasicInformation,
@@ -224,11 +225,11 @@ GetProcessStr(std::size_t processId,
             // features.
             UniqueHandle hProc(
                 OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
-            RuntimeDynamicLinker kernel32("Kernel32.dll");
             typedef BOOL(WINAPI * QueryFullProcessImageNameFunc)(
                 HANDLE, DWORD, LPWSTR, PDWORD);
             QueryFullProcessImageNameFunc queryProcessFile =
-                kernel32.GetProcAddress<QueryFullProcessImageNameFunc>(
+                library::kernel32().get_function<QueryFullProcessImageNameFunc>(
+                    GetThrowingErrorReporter(),
                     "QueryFullProcessImageNameW");
             BOOL boolCheck;
             std::wstring buffer;
@@ -270,7 +271,8 @@ void Process::Terminate()
 {
     UniqueHandle hProc(OpenProc(id_, PROCESS_TERMINATE));
     auto terminate =
-        GetNtDll().GetProcAddress<NtTerminateProcessFunc>("NtTerminateProcess");
+        library::ntdll().get_function<NtTerminateProcessFunc>(
+        GetThrowingErrorReporter(), "NtTerminateProcess");
     NTSTATUS errorCheck = terminate(hProc.Get(), -1);
     if (errorCheck != ERROR_SUCCESS)
     {

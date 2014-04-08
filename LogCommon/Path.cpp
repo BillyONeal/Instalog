@@ -537,12 +537,12 @@ path& path::operator=(path && other) BOOST_NOEXCEPT_OR_NOTHROW
 
 std::string path::to_string() const
 {
-    return utf8::ToUtf8(this->get(), this->size());
+    return utf8::ToUtf8(boost::wstring_ref(this->get(), this->size()));
 }
 
 std::string path::to_upper_string() const
 {
-    return utf8::ToUtf8(this->get_upper(), this->size());
+    return utf8::ToUtf8(boost::wstring_ref(this->get_upper(), this->size()));
 }
 
 std::wstring path::to_wstring() const

@@ -59,7 +59,7 @@ public:
     ///
     /// @param    filename    Path of the library.
     /// @param    flags       The flags.
-    void open(
+    bool open(
         IErrorReporter& errorReporter,
         boost::string_ref filename,
         load_type loadType
