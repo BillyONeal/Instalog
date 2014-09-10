@@ -114,17 +114,24 @@ Service::Service( std::string const& serviceName, std::string const& displayName
     RegistryKey svchostGroupKey = RegistryKey::Open(
         "\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost",
         KEY_QUERY_VALUE);
-    RegistryValue svchostGroupRegistration =
-        svchostGroupKey.GetValue(this->svchostGroup);
-    std::vector<std::string> svchostGroupRegistrationStrings =
-        svchostGroupRegistration.GetMultiStringArray();
-    std::locale loc;
-    auto groupRef = std::find_if(svchostGroupRegistrationStrings.begin(),
-                                 svchostGroupRegistrationStrings.end(),
-                                     [&](std::string const & a)->bool {
-        return boost::iequals(a, serviceName, loc);
-    });
-    svchostDamaged = groupRef == svchostGroupRegistrationStrings.end();
+
+    try
+    {
+        RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
+        std::vector<std::string> svchostGroupRegistrationStrings =
+            svchostGroupRegistration.GetMultiStringArray();
+        std::locale loc;
+        auto groupRef = std::find_if(svchostGroupRegistrationStrings.begin(),
+                                     svchostGroupRegistrationStrings.end(),
+                                         [&](std::string const & a)->bool {
+            return boost::iequals(a, serviceName, loc);
+        });
+        svchostDamaged = groupRef == svchostGroupRegistrationStrings.end();
+    }
+    catch (ErrorFileNotFoundException const&)
+    {
+        // value not found, that's OK
+    }
 
     // Get the dll path
     std::string serviceKeyName =
