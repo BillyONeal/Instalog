@@ -2,7 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <cstring>
 #include <functional>
 #include <windows.h>
@@ -31,9 +30,9 @@ ProcessEnumerator::ProcessEnumerator()
     NtQuerySystemInformationFunc ntQuerySysInfo =
         GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>(
             "NtQuerySystemInformation");
-    NTSTATUS errorCheck = STATUS_INFO_LENGTH_MISMATCH;
+    NTSTATUS errorCheck = 0xC0000004 /* STATUS_INFO_LENGTH_MISMATCH */;
     ULONG goalLength = 0;
-    while (errorCheck == STATUS_INFO_LENGTH_MISMATCH)
+    while (errorCheck == 0xC0000004)
     {
         if (goalLength == 0)
         {

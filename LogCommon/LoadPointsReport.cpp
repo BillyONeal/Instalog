@@ -2,7 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <functional>
 #include <algorithm>
 #include <vector>
@@ -10,8 +9,10 @@
 #include <string>
 #include <regex>
 #include <iterator>
-#include <Sddl.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <windows.h>
+#include <Sddl.h>
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <Objbase.h>
@@ -251,7 +252,7 @@ static void SubkeyMajorBasedEnumeration(
     if (key.Invalid())
     {
         DWORD err = ::GetLastError();
-        if (err == STATUS_OBJECT_NAME_NOT_FOUND)
+        if (err == 0xC0000034 /* STATUS_OBJECT_NAME_NOT_FOUND */)
         {
             return;
         }

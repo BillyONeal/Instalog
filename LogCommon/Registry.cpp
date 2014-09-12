@@ -2,7 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <strsafe.h>
 #include <cassert>
 #include <type_traits>
@@ -11,11 +10,17 @@
 #include <array>
 #include <functional>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include "Win32Exception.hpp"
 #include "StringUtilities.hpp"
 #include "Library.hpp"
 #include "Registry.hpp"
 #include "Utf8.hpp"
+
+#define STATUS_BUFFER_TOO_SMALL 0xC0000023
+#define STATUS_BUFFER_OVERFLOW 0x80000005
+#define STATUS_NO_MORE_ENTRIES 0x8000001A
 
 namespace Instalog
 {

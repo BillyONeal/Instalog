@@ -2,13 +2,14 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
+#include "../LogCommon/Path.hpp"
+#include "gtest/gtest.h"
 #include <string>
 #include <iterator>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include "../LogCommon/Win32Exception.hpp"
 #include "../LogCommon/File.hpp"
-#include "../LogCommon/Path.hpp"
 #include "../LogCommon/Wow64.hpp"
 #include "TestSupport.hpp"
 #include "../LogCommon/Utf8.hpp"

@@ -2,7 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <stdlib.h>
 #include "Wmi.hpp"
 #include "Win32Exception.hpp"

@@ -2,11 +2,11 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include "File.hpp"
 #include <algorithm>
 #include <iterator>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include "Utf8.hpp"
 #include "Win32Exception.hpp"
 #include "OptimisticBuffer.hpp"

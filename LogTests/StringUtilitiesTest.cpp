@@ -2,11 +2,11 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
+#include "../LogCommon/StringUtilities.hpp"
+#include "gtest/gtest.h"
 #include <string>
 #include <limits>
 #include <algorithm>
-#include "../LogCommon/StringUtilities.hpp"
 #include "../LogCommon/LogSink.hpp"
 
 using namespace Instalog;

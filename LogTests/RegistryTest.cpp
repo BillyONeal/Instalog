@@ -2,12 +2,13 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
+#include "../LogCommon/Registry.hpp"
 #include <array>
+#include <functional>
+#include <windows.h>
 #include "sddl.h"
 #include "gtest/gtest.h"
 #include "../LogCommon/Win32Glue.hpp"
-#include "../LogCommon/Registry.hpp"
 #include "../LogCommon/Win32Exception.hpp"
 #include "../LogCommon/Utf8.hpp"
 

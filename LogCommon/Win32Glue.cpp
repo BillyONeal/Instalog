@@ -2,9 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
-#include "Library.hpp"
 #include "Win32Glue.hpp"
+#include <cassert>
+#include "Library.hpp"
 #include "Win32Exception.hpp"
 
 namespace

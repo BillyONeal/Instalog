@@ -2,15 +2,15 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
+#include "../LogCommon/Process.hpp"
 #include <algorithm>
 #include <string>
 #include <windows.h>
 #define PSAPI_VERSION 1
 #include <Psapi.h>
 #include "gtest/gtest.h"
+#include <boost/algorithm/string/predicate.hpp>
 #include "../LogCommon/Win32Exception.hpp"
-#include "../LogCommon/Process.hpp"
 #include "../LogCommon/Utf8.hpp"
 
 #pragma comment(lib, "psapi.lib")

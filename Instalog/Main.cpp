@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <conio.h>
-#define NOMINMAX
 #include <windows.h>
 
 #include "../LogCommon/Wow64.hpp"

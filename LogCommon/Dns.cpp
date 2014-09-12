@@ -2,8 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #pragma comment(lib, "dnsapi.lib")
+#pragma comment(lib, "Ws2_32.lib")
+#include <windows.h>
 #include <windns.h>
 #include <vector>
 #include "StringUtilities.hpp"

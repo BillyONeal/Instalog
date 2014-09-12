@@ -84,9 +84,6 @@ extern "C" {
 #define ERROR_SEVERITY_ERROR         0xC0000000
     // end_winnt
 
-#include "ntstatus.h"
-
-
 #define MAX_UNICODE_PATH    32767L
 
 typedef DWORD ACCESS_MASK;

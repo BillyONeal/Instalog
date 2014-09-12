@@ -33,7 +33,6 @@
 //
 // Sometimes it's desirable to build Google Test by compiling a single file.
 // This file serves this purpose.
-#include "pch.hpp"
 // This line ensures that gtest.h can be compiled on its own, even
 // when it's fused.
 #include "gtest/gtest.h"

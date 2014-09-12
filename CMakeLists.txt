@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.0)
+project (Instalog)
+include_directories(ThirdParty/utf8_v2_3_4)
+
+set(InstalogMajorVersion 0)
+set(InstalogMinorVersion 0)
+set(InstalogRevision 8)
+set(InstalogBuild 0)
+
+add_definitions(-DINSTALOG_VERSION=${InstalogMajorVersion}.${InstalogMinorVersion}.${InstalogRevision}.${InstalogBuild})
+add_definitions(-DINSTALOG_RC_VERSION=${InstalogMajorVersion},${InstalogMinorVersion},${InstalogRevision},${InstalogBuild})
+
+add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-DUNICODE)
+add_definitions(-D_UNICODE)
+add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
+add_definitions(-DNOMINMAX)
+add_definitions(-DNTDDI_VERSION=0x05010200)
+add_definitions(-D_WIN32_WINNT=0x0501)
+add_definitions(-DBUILD_WINDOWS)
+
+add_compile_options(/MP /GR- /W4 /EHsc)
+
+add_subdirectory(LogCommon)
+add_subdirectory(LogTests)
+add_subdirectory(Instalog)

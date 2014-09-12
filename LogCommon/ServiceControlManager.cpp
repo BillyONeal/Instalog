@@ -2,9 +2,11 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <type_traits>
 #include <algorithm>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include "Win32Exception.hpp"
 #include "ServiceControlManager.hpp"
 #include "Path.hpp"

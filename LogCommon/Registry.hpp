@@ -4,6 +4,8 @@
 
 #pragma once
 #include <string>
+#include <cstdint>
+#include <vector>
 #include <memory>
 #include <windows.h>
 #include <boost/noncopyable.hpp>

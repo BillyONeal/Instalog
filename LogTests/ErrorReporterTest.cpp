@@ -2,7 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <windows.h>
 #include "gtest/gtest.h"
 #include "../LogCommon/ErrorReporter.hpp"
@@ -54,13 +53,13 @@ TEST_F(LoggingErrorReporterTests, ReportWinErrorWithNotFoundLogsMessage)
 
 TEST_F(LoggingErrorReporterTests, NtStatusSuccessCodeLogsMessage)
 {
-    reporter.ReportNtError(STATUS_SUCCESS, "NtCreateFile");
+    reporter.ReportNtError(0 /* STATUS_SUCCESS */, "NtCreateFile");
     Check("NTSTATUS NtCreateFile: (0x00000000) The operation completed successfully.");
 }
 
 TEST_F(LoggingErrorReporterTests, NtStatusFailureCodeLogsMessage)
 {
-    reporter.ReportNtError(STATUS_ACCESS_DENIED, "NtCreateFile");
+    reporter.ReportNtError(0xC0000022 /* STATUS_ACCESS_DENIED */, "NtCreateFile");
     Check("NTSTATUS NtCreateFile: (0xC0000022) Access is denied.");
 }
 
@@ -91,7 +90,7 @@ TEST(ThrowingErrorReporterTests, Win32Throws)
 
 TEST(ThrowingErrorReporterTests, NtErrorThrows)
 {
-    ASSERT_THROW(GetThrowingErrorReporter().ReportNtError(STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
+    ASSERT_THROW(GetThrowingErrorReporter().ReportNtError(0xC0000034 /* STATUS_OBJECT_NAME_NOT_FOUND */, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
 }
 
 TEST(ThrowingErrorReporterTests, HResultThrows)
@@ -124,7 +123,7 @@ TEST_F(Win32FilteringReporterTests, Win32Filtered)
 
 TEST_F(Win32FilteringReporterTests, NtErrorThrows)
 {
-    ASSERT_THROW(uut.ReportNtError(STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
+    ASSERT_THROW(uut.ReportNtError(0xC0000034 /* STATUS_OBJECT_NAME_NOT_FOUND */, "NtQueryDirectoryFile"), ErrorFileNotFoundException);
 }
 
 TEST_F(Win32FilteringReporterTests, HResultThrows)

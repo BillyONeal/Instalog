@@ -29,7 +29,7 @@ inline std::string GetTestBinaryDir()
     std::string result(GetTestBinaryPath());
     result.replace(std::find(result.crbegin(), result.crend(), '\\').base(),
                    result.cend(),
-                   "TestData\\");
+                   "..\\TestData\\");
     return result;
 }
 

@@ -2,9 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include <vector>
 #include <sstream>
+#include <boost/algorithm/string/predicate.hpp>
 #include "EventLog.hpp"
 #include "Win32Exception.hpp"
 #include "Win32Glue.hpp"

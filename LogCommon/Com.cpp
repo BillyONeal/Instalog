@@ -1,5 +1,5 @@
-#include "pch.hpp"
 #include "Com.hpp"
+#include <cassert>
 
 namespace Instalog
 {

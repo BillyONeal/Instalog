@@ -2,9 +2,9 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
-#include "gtest/gtest.h"
 #include "../LogCommon/ServiceControlManager.hpp"
+#include <boost/algorithm/string/predicate.hpp>
+#include "gtest/gtest.h"
 
 using Instalog::SystemFacades::ServiceControlManager;
 using Instalog::SystemFacades::Service;

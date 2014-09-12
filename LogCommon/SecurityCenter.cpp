@@ -2,8 +2,6 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
-#define _WIN32_DCOM
 #include <windows.h>
 #include <comdef.h>
 #include <wbemidl.h>

@@ -21,3 +21,4 @@ Docs/Instalog Specification/InstalogSpecification.pdf
 *.log
 Instalog/Instalog.txt
 Docs/Instalog Specification/InstalogSpecification.synctex.gz(busy)
+CMakeOut/

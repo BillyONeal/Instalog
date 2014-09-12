@@ -2,11 +2,11 @@
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 
-#include "pch.hpp"
 #include "LogSink.hpp"
 #include <stdexcept>
+#include <vector>
 #include <limits>
-#include <Windows.h>
+#include <windows.h>
 #include "Utf8.hpp"
 #include "Win32Exception.hpp"
 

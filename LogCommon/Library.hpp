@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <Windows.h>
+#include <windows.h>
 #include <boost/noncopyable.hpp>
 #include "Win32Exception.hpp"
 

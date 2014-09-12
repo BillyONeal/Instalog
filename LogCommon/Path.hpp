@@ -4,8 +4,10 @@
 
 #pragma once
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <algorithm>
+#include <memory>
 #include <boost/config.hpp>
 
 namespace Instalog
