@@ -8,7 +8,6 @@
 #include "Win32Exception.hpp"
 #include "Wmi.hpp"
 #include "SecurityCenter.hpp"
-#include "IlTrace.hpp"
 #include "Com.hpp"
 
 namespace Instalog
@@ -39,13 +38,11 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
     }
     ThrowIfFailed(hr);
     ULONG returnCount = 0;
-    INSTALOG_TRACE(L"Enumerating...");
     for (;;)
     {
         UniqueComPtr<IWbemClassObject> obj;
         hr = objEnumerator->Next(
             WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
-        INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
         if (hr == WBEM_S_FALSE)
         {
             break;
@@ -58,18 +55,14 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
         {
             throw std::runtime_error("Unexpected number of returned classes.");
         }
-        INSTALOG_TRACE(L"Getting instanceGuid");
         UniqueVariant variant;
         ThrowIfFailed(
             obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring guid(variant.AsString(GetThrowingErrorReporter()));
-        INSTALOG_TRACE(L"Getting displayName");
         ThrowIfFailed(
             obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring name(variant.AsString(GetThrowingErrorReporter()));
-        INSTALOG_TRACE(name);
 
-        INSTALOG_TRACE(L"Getting " << enabledPropertyName);
         ThrowIfFailed(obj->Get(
             enabledPropertyName, 0, variant.PassAsOutParameter(), 0, 0));
         bool productEnabled = variant.AsBool(GetThrowingErrorReporter());
@@ -77,7 +70,6 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
             SecurityProduct::UpdateNotRequired;
         if (upToDatePropertyName != nullptr)
         {
-            INSTALOG_TRACE(L"Getting " << upToDatePropertyName);
             ThrowIfFailed(obj->Get(
                 upToDatePropertyName, 0, variant.PassAsOutParameter(), 0, 0));
             if (variant.AsBool(GetThrowingErrorReporter()))
@@ -115,7 +107,6 @@ static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
         UniqueComPtr<IWbemClassObject> obj;
         hr = objEnumerator->Next(
             WBEM_INFINITE, 1, obj.PassAsOutParameter(), &returnCount);
-        INSTALOG_TRACE(L"Enumerator says 0x" << std::hex << hr << std::dec);
         if (hr == WBEM_S_FALSE)
         {
             break;
@@ -129,21 +120,15 @@ static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
             throw std::runtime_error("Unexpected number of returned classes.");
         }
         UniqueVariant variant;
-        INSTALOG_TRACE(L"Getting instanceGuid");
         ThrowIfFailed(
             obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring guid(variant.AsString(GetThrowingErrorReporter()));
-        INSTALOG_TRACE(L"Getting displayName");
         ThrowIfFailed(
             obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
         std::wstring name(variant.AsString(GetThrowingErrorReporter()));
-        INSTALOG_TRACE(name);
-        INSTALOG_TRACE(L"Getting productState");
         ThrowIfFailed(
             obj->Get(L"productState", 0, variant.PassAsOutParameter(), 0, 0));
         UINT productState = variant.AsUint(GetThrowingErrorReporter());
-        INSTALOG_TRACE(L"ProductState is 0x" << std::hex << productState
-                                             << std::dec);
         char productType =
             static_cast<char>((productState & 0x00FF0000ul) >> 16);
         char enabledBits =
@@ -187,20 +172,17 @@ static void CheckSecurityCenter(UniqueComPtr<IWbemServices>& wbemServices,
         return;
     }
     ThrowIfFailed(errorCheck);
-    INSTALOG_TRACE(L"AntiVirusProduct");
     SecCenterProductCheck(securityCenter,
                           BSTR(L"AntiVirusProduct"),
                           result,
                           avCode,
                           BSTR(L"onAccessScanningEnabled"),
                           BSTR(L"productUpToDate"));
-    INSTALOG_TRACE(L"FireWallProduct");
     SecCenterProductCheck(securityCenter,
                           BSTR(L"FireWallProduct"),
                           result,
                           fwCode,
                           BSTR(L"enabled"));
-    INSTALOG_TRACE(L"AntiSpywareProduct");
     SecCenterProductCheck(securityCenter,
                           BSTR(L"AntiSpywareProduct"),
                           result,
@@ -223,13 +205,10 @@ static bool CheckSecurityCenter2(UniqueComPtr<IWbemServices>& wbemServices,
     }
     ThrowIfFailed(errorCheck);
 
-    INSTALOG_TRACE(L"AntiVirusProduct");
     SecCenter2ProductCheck(
         securityCenter2, BSTR(L"AntiVirusProduct"), result, avCode);
-    INSTALOG_TRACE(L"FireWallProduct");
     SecCenter2ProductCheck(
         securityCenter2, BSTR(L"FireWallProduct"), result, fwCode);
-    INSTALOG_TRACE(L"AntiSpywareProduct");
     SecCenter2ProductCheck(
         securityCenter2, BSTR(L"AntiSpywareProduct"), result, asCode);
 
@@ -242,7 +221,6 @@ std::vector<SecurityProduct> EnumerateSecurityProducts()
     version.dwOSVersionInfoSize = sizeof(version);
     std::vector<SecurityProduct> result;
     GetVersionExW(&version);
-    INSTALOG_TRACE(L"Making IWbemServices");
     UniqueComPtr<IWbemServices> wbemServices(GetWbemServices());
     if (CheckSecurityCenter2(wbemServices, result))
     {
