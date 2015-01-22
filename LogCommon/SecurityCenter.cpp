@@ -62,17 +62,17 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
         UniqueVariant variant;
         ThrowIfFailed(
             obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
-        std::wstring guid(variant.AsString());
+        std::wstring guid(variant.AsString(GetThrowingErrorReporter()));
         INSTALOG_TRACE(L"Getting displayName");
         ThrowIfFailed(
             obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
-        std::wstring name(variant.AsString());
+        std::wstring name(variant.AsString(GetThrowingErrorReporter()));
         INSTALOG_TRACE(name);
 
         INSTALOG_TRACE(L"Getting " << enabledPropertyName);
         ThrowIfFailed(obj->Get(
             enabledPropertyName, 0, variant.PassAsOutParameter(), 0, 0));
-        bool productEnabled = variant.AsBool();
+        bool productEnabled = variant.AsBool(GetThrowingErrorReporter());
         SecurityProduct::UpdateStatusValues updateStatus =
             SecurityProduct::UpdateNotRequired;
         if (upToDatePropertyName != nullptr)
@@ -80,7 +80,7 @@ static void SecCenterProductCheck(UniqueComPtr<IWbemServices>& securityCenter,
             INSTALOG_TRACE(L"Getting " << upToDatePropertyName);
             ThrowIfFailed(obj->Get(
                 upToDatePropertyName, 0, variant.PassAsOutParameter(), 0, 0));
-            if (variant.AsBool())
+            if (variant.AsBool(GetThrowingErrorReporter()))
             {
                 updateStatus = SecurityProduct::UpToDate;
             }
@@ -132,16 +132,16 @@ static void SecCenter2ProductCheck(UniqueComPtr<IWbemServices>& securityCenter2,
         INSTALOG_TRACE(L"Getting instanceGuid");
         ThrowIfFailed(
             obj->Get(L"instanceGuid", 0, variant.PassAsOutParameter(), 0, 0));
-        std::wstring guid(variant.AsString());
+        std::wstring guid(variant.AsString(GetThrowingErrorReporter()));
         INSTALOG_TRACE(L"Getting displayName");
         ThrowIfFailed(
             obj->Get(L"displayName", 0, variant.PassAsOutParameter(), 0, 0));
-        std::wstring name(variant.AsString());
+        std::wstring name(variant.AsString(GetThrowingErrorReporter()));
         INSTALOG_TRACE(name);
         INSTALOG_TRACE(L"Getting productState");
         ThrowIfFailed(
             obj->Get(L"productState", 0, variant.PassAsOutParameter(), 0, 0));
-        UINT productState = variant.AsUint();
+        UINT productState = variant.AsUint(GetThrowingErrorReporter());
         INSTALOG_TRACE(L"ProductState is 0x" << std::hex << productState
                                              << std::dec);
         char productType =

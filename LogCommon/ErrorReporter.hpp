@@ -67,6 +67,7 @@ namespace Instalog
         IErrorReporter* wrappedReporter;
     };
 
+    // An implementation of IErrorReporter that ignores a specific error code.
     struct Win32FilteringReporter final : public BasicFilteringErrorReporter
     {
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) override;
@@ -75,6 +76,7 @@ namespace Instalog
         std::uint32_t filteredErrorCode;
     };
 
+    // Gets an implementation of IErrorReporter that ignores errors except for the one indicated.
     template <unsigned BlockedErrorCode>
     IErrorReporter& GetThrowingReporterExcept()
     {

@@ -304,14 +304,14 @@ void MachineSpecifications::OperatingSystem(log_sink& logOutput) const
 
     ThrowIfFailed(response->Get(
         L"SystemDrive", 0, variant.PassAsOutParameter(), NULL, NULL));
-    writeln(logOutput, "Boot Device: ", variant.AsString());
+    writeln(logOutput, "Boot Device: ", variant.AsString(GetThrowingErrorReporter()));
 
     ThrowIfFailed(response->Get(
         L"InstallDate", 0, variant.PassAsOutParameter(), NULL, NULL));
     write(logOutput, "Install Date: ");
     WriteMillisecondDateFormat(
         logOutput,
-        FiletimeToInteger(WmiDateStringToFiletime(variant.AsString())));
+        FiletimeToInteger(WmiDateStringToFiletime(variant.AsString(GetThrowingErrorReporter()))));
     writeln(logOutput);
 }
 
@@ -414,10 +414,10 @@ void MachineSpecifications::BaseBoard(log_sink& logOutput) const
 
     ThrowIfFailed(response->Get(
         L"Manufacturer", 0, variant.PassAsOutParameter(), NULL, NULL));
-    write(logOutput, "Motherboard: ", variant.AsString());
+    write(logOutput, "Motherboard: ", variant.AsString(GetThrowingErrorReporter()));
     ThrowIfFailed(
         response->Get(L"Product", 0, variant.PassAsOutParameter(), NULL, NULL));
-    writeln(logOutput, ' ', variant.AsString());
+    writeln(logOutput, ' ', variant.AsString(GetThrowingErrorReporter()));
 }
 
 void MachineSpecifications::Processor(log_sink& logOutput) const
@@ -459,7 +459,7 @@ void MachineSpecifications::Processor(log_sink& logOutput) const
 
     ThrowIfFailed(
         response->Get(L"Name", 0, variant.PassAsOutParameter(), NULL, NULL));
-    writeln(logOutput, "Processor: ", variant.AsString());
+    writeln(logOutput, "Processor: ", variant.AsString(GetThrowingErrorReporter()));
 }
 
 void MachineSpecifications::LogicalDisk(log_sink& logOutput) const
@@ -503,11 +503,11 @@ void MachineSpecifications::LogicalDisk(log_sink& logOutput) const
 
         ThrowIfFailed(response->Get(
             L"DeviceID", 0, variant.PassAsOutParameter(), NULL, NULL));
-        write(logOutput, variant.AsString(), " is ");
+        write(logOutput, variant.AsString(GetThrowingErrorReporter()), " is ");
 
         ThrowIfFailed(response->Get(
             L"DriveType", 0, variant.PassAsOutParameter(), NULL, NULL));
-        switch (variant.AsUlong())
+        switch (variant.AsUlong(GetThrowingErrorReporter()))
         {
         case 0:
             write(logOutput, "UNKNOWN");
@@ -543,10 +543,10 @@ void MachineSpecifications::LogicalDisk(log_sink& logOutput) const
         }
         else
         {
-            ULONGLONG totalSize = variant.AsUlonglong();
+            ULONGLONG totalSize = variant.AsUlonglong(GetThrowingErrorReporter());
             ThrowIfFailed(response->Get(
                 L"FreeSpace", 0, variant.PassAsOutParameter(), NULL, NULL));
-            ULONGLONG freeSpace = variant.AsUlonglong();
+            ULONGLONG freeSpace = variant.AsUlonglong(GetThrowingErrorReporter());
 
             totalSize /= 1073741824;
             freeSpace /= 1073741824;

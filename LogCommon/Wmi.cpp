@@ -13,7 +13,7 @@ namespace SystemFacades
 UniqueComPtr<IWbemServices> GetWbemServices()
 {
     auto locator = UniqueComPtr<IWbemLocator>::Create(CLSID_WbemLocator,
-                                                      CLSCTX_INPROC_SERVER);
+                                                      CLSCTX_INPROC_SERVER, GetThrowingErrorReporter());
     UniqueComPtr<IWbemServices> wbemServices;
     ThrowIfFailed(locator->ConnectServer(
         BSTR(L"ROOT"), 0, 0, 0, 0, 0, 0, wbemServices.PassAsOutParameter()));

@@ -58,20 +58,20 @@ std::vector<RestorePoint> EnumerateRestorePoints()
 
         ThrowIfFailed(systemRestore->Get(
             L"Description", 0, variant.PassAsOutParameter(), NULL, NULL));
-        restorePoint.Description = variant.AsString();
+        restorePoint.Description = variant.AsString(GetThrowingErrorReporter());
         ThrowIfFailed(systemRestore->Get(
             L"CreationTime", 0, variant.PassAsOutParameter(), NULL, NULL));
-        restorePoint.CreationTime = variant.AsString();
+        restorePoint.CreationTime = variant.AsString(GetThrowingErrorReporter());
 
         ThrowIfFailed(systemRestore->Get(
             L"RestorePointType", 0, variant.PassAsOutParameter(), NULL, NULL));
-        restorePoint.RestorePointType = variant.AsUint();
+        restorePoint.RestorePointType = variant.AsUint(GetThrowingErrorReporter());
         ThrowIfFailed(systemRestore->Get(
             L"EventType", 0, variant.PassAsOutParameter(), NULL, NULL));
-        restorePoint.EventType = variant.AsUint();
+        restorePoint.EventType = variant.AsUint(GetThrowingErrorReporter());
         ThrowIfFailed(systemRestore->Get(
             L"SequenceNumber", 0, variant.PassAsOutParameter(), NULL, NULL));
-        restorePoint.SequenceNumber = variant.AsUint();
+        restorePoint.SequenceNumber = variant.AsUint(GetThrowingErrorReporter());
 
         restorePoints.push_back(restorePoint);
     }

@@ -6,10 +6,18 @@ namespace Instalog
 namespace SystemFacades
 {
 
-Com::Com(DWORD threadingType /* = COINIT_APARTMENTTHREADED */)
+Com::Com(DWORD threadingType, IErrorReporter& errorReporter)
+    : setupComplete(false)
 {
-    ThrowIfFailed(::CoInitializeEx(nullptr, threadingType));
-    ThrowIfFailed(::CoInitializeSecurity(
+    HRESULT hr;
+    hr = ::CoInitializeEx(nullptr, threadingType);
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "CoInitializeEx");
+        return;
+    }
+
+    hr = ::CoInitializeSecurity(
         NULL,
         -1,                          // COM negotiates service
         NULL,                        // Authentication services
@@ -19,12 +27,23 @@ Com::Com(DWORD threadingType /* = COINIT_APARTMENTTHREADED */)
         NULL,                        // Authentication info
         EOAC_NONE,                   // Additional capabilities
         NULL                         // Reserved
-        ));
+        );
+
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "CoInitializeSecurity");
+        return;
+    }
+
+    this->setupComplete = true;
 }
 
 Com::~Com()
 {
-    ::CoUninitialize();
+    if (this->setupComplete)
+    {
+        ::CoUninitialize();
+    }
 }
 
 UniqueBstr::UniqueBstr() : wrapped(nullptr)
@@ -81,8 +100,7 @@ UniqueBstr::~UniqueBstr()
 }
 
 #pragma warning(push)
-#pragma warning(disable                                                        \
-                : 4189) // local variable is initialized but not referenced
+#pragma warning(disable: 4189) // local variable is initialized but not referenced
 // (The assert gets compiled out in release mode leading to the spurrious
 // warning)
 void UniqueVariant::Destroy()
@@ -114,46 +132,84 @@ VARIANT const& UniqueVariant::Get() const
     return this->wrappedVariant;
 }
 
-std::wstring UniqueVariant::AsString() const
+std::wstring UniqueVariant::AsString(IErrorReporter& errorReporter) const
 {
     UniqueVariant bstrVariant;
-    ThrowIfFailed(::VariantChangeType(
-        bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR));
-    BSTR asBstr = bstrVariant.Get().bstrVal;
-    return std::wstring(asBstr, ::SysStringLen(asBstr));
+    HRESULT hr = ::VariantChangeType(
+        bstrVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BSTR);
+
+    BSTR asBstr;
+    std::size_t bstrLen;
+    if (SUCCEEDED(hr))
+    {
+        asBstr = bstrVariant.Get().bstrVal;
+        bstrLen = ::SysStringLen(asBstr);
+    }
+    else
+    {
+        errorReporter.ReportHresult(hr, "VariantChangeType (string)");
+        asBstr = nullptr;
+        bstrLen = 0;
+    }
+
+    return std::wstring(asBstr, bstrLen);
 }
 
-UINT UniqueVariant::AsUint() const
+UINT UniqueVariant::AsUint(IErrorReporter& errorReporter) const
 {
     UniqueVariant uintVariant;
-    ThrowIfFailed(::VariantChangeType(
-        uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT));
+    HRESULT hr = ::VariantChangeType(
+        uintVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UINT);
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "VariantChangeType (unsigned int)");
+        return 0u;
+    }
+
     return uintVariant.Get().uintVal;
 }
 
-ULONG UniqueVariant::AsUlong() const
+ULONG UniqueVariant::AsUlong(IErrorReporter& errorReporter) const
 {
     UniqueVariant ulongVariant;
-    ThrowIfFailed(::VariantChangeType(
-        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4));
+    HRESULT hr = ::VariantChangeType(
+        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI4);
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "VariantChangeType (unsigned long)");
+        return 0ul;
+    }
+
     return ulongVariant.Get().ulVal;
 }
 
-ULONGLONG UniqueVariant::AsUlonglong() const
+ULONGLONG UniqueVariant::AsUlonglong(IErrorReporter& errorReporter) const
 {
     UniqueVariant ulongVariant;
-    ThrowIfFailed(::VariantChangeType(
-        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8));
+
+    HRESULT hr = ::VariantChangeType(
+        ulongVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_UI8);
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "VariantChangeType (unsigned long long)");
+        return 0ull;
+    }
+
     return ulongVariant.Get().ullVal;
 }
 
-bool UniqueVariant::AsBool() const
+bool UniqueVariant::AsBool(IErrorReporter& errorReporter) const
 {
     UniqueVariant booleanVariant;
-    ThrowIfFailed(::VariantChangeType(booleanVariant.PassAsOutParameter(),
-                                      &this->wrappedVariant,
-                                      0,
-                                      VT_BOOL));
+
+    HRESULT hr = ::VariantChangeType(
+        booleanVariant.PassAsOutParameter(), &this->wrappedVariant, 0, VT_BOOL);
+    if (FAILED(hr))
+    {
+        errorReporter.ReportHresult(hr, "VariantChangeType (bool)");
+        return false;
+    }
+
     return booleanVariant.Get().boolVal != 0;
 }
 

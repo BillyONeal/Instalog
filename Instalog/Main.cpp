@@ -44,7 +44,7 @@ int main()
         "|___|_| |_|___/\\__\\__,_|_|\\___/ \\__, |\n"
         "by Jacob Snyder and Billy ONeal |___/");
 
-    Instalog::SystemFacades::Com com;
+    Instalog::SystemFacades::Com com(COINIT_APARTMENTTHREADED, GetThrowingErrorReporter());
     if (Instalog::SystemFacades::IsWow64())
     {
         std::puts("This program is not designed to be run under WOW64 mode.\n"

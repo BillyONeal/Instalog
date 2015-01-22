@@ -4,20 +4,23 @@
 #pragma once
 #include <cstring>
 #include <cstdint>
+#include <string>
 #include <boost/noncopyable.hpp>
 #include <Windows.h>
-#include "Win32Exception.hpp"
+#include "ErrorReporter.hpp"
 
 namespace Instalog
 {
 namespace SystemFacades
 {
 
-struct Com : boost::noncopyable
+class Com : boost::noncopyable
 {
+    bool setupComplete;
+public:
     /// <summary>Initializes a new instance of the Com class. Initializes the
     /// Component Object Model.</summary>
-    Com(DWORD threadingType = COINIT_APARTMENTTHREADED);
+    Com(DWORD threadingType, IErrorReporter& errorReporter);
 
     /// <summary>Finalizes an instance of the Com class. Shuts down Component
     /// Object Model.</summary>
@@ -47,7 +50,7 @@ template <typename T> class UniqueComPtr
     {
     }
 
-    UniqueComPtr(T* wrap) : pointer(wrap)
+    explicit UniqueComPtr(T* wrap) : pointer(wrap)
     {
     }
 
@@ -64,14 +67,20 @@ template <typename T> class UniqueComPtr
         }
     }
 
-    static UniqueComPtr<T> Create(REFCLSID clsid, DWORD clsCtx)
+    static UniqueComPtr<T> Create(REFCLSID clsid, DWORD clsCtx, IErrorReporter& errorReporter)
     {
         T* resultPtr;
-        ThrowIfFailed(::CoCreateInstance(clsid,
+        HRESULT hr = ::CoCreateInstance(clsid,
                                          nullptr,
                                          clsCtx,
                                          __uuidof(T),
-                                         reinterpret_cast<void**>(&resultPtr)));
+                                         reinterpret_cast<void**>(&resultPtr));
+        if (FAILED(hr))
+        {
+            errorReporter.ReportHresult(hr, "CoCreateInstance");
+            resultPtr = nullptr;
+        }
+
         return UniqueComPtr<T>(resultPtr);
     }
 
@@ -125,11 +134,15 @@ class UniqueVariant
     VARIANT* PassAsOutParameter();
     VARIANT& Get();
     VARIANT const& Get() const;
-    std::wstring AsString() const;
-    UINT AsUint() const;
-    ULONG AsUlong() const;
-    ULONGLONG AsUlonglong() const;
-    bool AsBool() const;
+
+    // Convert this variant into the indicated type. If an error is
+    // reported, and the IErrorReporter implementation supplied ignores it,
+    // a default value (e.g. zero for numbers, empty string, false) is returned.
+    std::wstring AsString(IErrorReporter&) const;
+    UINT AsUint(IErrorReporter&) const;
+    ULONG AsUlong(IErrorReporter&) const;
+    ULONGLONG AsUlonglong(IErrorReporter&) const;
+    bool AsBool(IErrorReporter&) const;
     bool IsNull() const;
     ~UniqueVariant();
 };
