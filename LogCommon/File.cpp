@@ -10,6 +10,7 @@
 #include "Utf8.hpp"
 #include "Win32Exception.hpp"
 #include "OptimisticBuffer.hpp"
+#include "Utf8.hpp"
 
 #pragma comment(lib, "Version.lib")
 
@@ -120,6 +121,20 @@ std::vector<std::string> File::ReadAllLines() const
         }
 
         buffer.append(stackBuff, bytesRead);
+    }
+    
+    std::size_t isTextUnicodeLength = std::min(buffer.size(), static_cast<std::size_t>(std::numeric_limits<int>::max()));
+
+    // If the input is UTF-16, convert it to UTF-8.
+    if (::IsTextUnicode(buffer.c_str(), static_cast<int>(isTextUnicodeLength), nullptr))
+    {
+        buffer = utf8::ToUtf8(reinterpret_cast<wchar_t const*const>(buffer.c_str()), buffer.size() / sizeof(wchar_t));
+    }
+
+    // If the input contained a byte order mark, remove it.
+    if (boost::algorithm::starts_with(buffer, "\xEF\xBB\xBF"))
+    {
+        buffer.erase(0, 3);
     }
 
     std::vector<std::string> result;
