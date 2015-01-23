@@ -12,7 +12,6 @@ add_library(LogCommon STATIC
     Expected.hpp
     File.cpp
     File.hpp
-    IlTrace.hpp
     Library.cpp
     Library.hpp
     LoadPointsReport.cpp
