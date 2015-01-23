@@ -27,6 +27,7 @@
 #include "ScopeExit.hpp"
 #include "Dns.hpp"
 #include "Utf8.hpp"
+#include "Library.hpp"
 
 namespace Instalog
 {
@@ -1853,6 +1854,65 @@ static void HostsFile(log_sink& output)
     }
 }
 
+#pragma comment(lib, "Rpcrt4.lib")
+
+typedef enum _SL_GENUINE_STATE { 
+  SL_GEN_STATE_IS_GENUINE       = 0,
+  SL_GEN_STATE_INVALID_LICENSE  = 1,
+  SL_GEN_STATE_TAMPERED         = 2,
+  SL_GEN_STATE_LAST             = 3
+} SL_GENUINE_STATE;
+
+typedef struct _tagSL_NONGENUINE_UI_OPTIONS {
+  DWORD      cbSize;
+  const GUID *pComponentId;
+  HRESULT    hResultUI;
+} SL_NONGENUINE_UI_OPTIONS;
+
+typedef HRESULT (WINAPI *SLIsGenuineLocalFunc)(
+  _In_         const GUID *pAppId,
+  _Out_        SL_GENUINE_STATE *pGenuineState,
+  _Inout_opt_  SL_NONGENUINE_UI_OPTIONS *pUIOptions
+);
+
+static void GenuineWindows(log_sink& output)
+{
+    // http://stackoverflow.com/questions/7545206/how-to-check-if-a-windows-version-is-genuine-or-not
+    SystemFacades::RuntimeDynamicLinker slwga(GetIgnoreReporter(), "Slwga.dll");
+    if (!slwga.Valid())
+    {
+        return;
+    }
+
+    auto isGenuine = slwga.GetProcAddress<SLIsGenuineLocalFunc>(GetIgnoreReporter(), "SLIsGenuineLocal");
+    if (isGenuine == nullptr)
+    {
+        return;
+    }
+
+    GUID windowsId;
+    wchar_t str[] = L"55c92734-d682-4d71-983e-d6ec3f16059f";
+    if (UuidFromStringW(reinterpret_cast<RPC_WSTR>(str), &windowsId) != RPC_S_OK)
+    {
+        throw std::runtime_error("UuidFromString failed.");
+    }
+
+    SL_GENUINE_STATE state;
+    HRESULT hr = isGenuine(&windowsId, &state, nullptr);
+    if (hr != S_OK)
+    {
+        writeln(output, "WGA: SLIsGenuineLocal failed with 0x", hex(hr));
+    }
+    else if (state == SL_GENUINE_STATE::SL_GEN_STATE_INVALID_LICENSE || state == SL_GENUINE_STATE::SL_GEN_STATE_LAST)
+    {
+        writeln(output, "WGA: Invalid");
+    }
+    else if (state == SL_GENUINE_STATE::SL_GEN_STATE_TAMPERED)
+    {
+        writeln(output, "WGA: Tamper");
+    }
+}
+
 static void MachineSpecificHjt(log_sink& output)
 {
     ExecuteDpf(output);
@@ -1871,6 +1931,7 @@ static void MachineSpecificHjt(log_sink& output)
     ImageFileExecutionOptions(output);
     FileAssociations(output);
     HostsFile(output);
+    GenuineWindows(output);
 }
 
 static void InternetConnectionWizardShellNext(log_sink& output, std::string const& rootKey)
