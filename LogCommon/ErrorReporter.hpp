@@ -17,8 +17,8 @@ namespace Instalog
 
 #define INSTALOG_LINE LineInfo {__FILE__, __LINE__}
 
-    // Generic interface for error reporting; allows code to delegate how errors
-    // are handled to callers.
+    // Generic interface for error reporting; allows code to delegate how errors are handled to
+    // callers. 
     struct IErrorReporter
     {
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) = 0;
