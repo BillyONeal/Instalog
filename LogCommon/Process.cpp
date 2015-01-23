@@ -29,6 +29,7 @@ ProcessEnumerator::ProcessEnumerator()
 {
     NtQuerySystemInformationFunc ntQuerySysInfo =
         GetNtDll().GetProcAddress<NtQuerySystemInformationFunc>(
+            GetThrowingErrorReporter(),
             "NtQuerySystemInformation");
     NTSTATUS errorCheck = 0xC0000004 /* STATUS_INFO_LENGTH_MISMATCH */;
     ULONG goalLength = 0;
@@ -119,7 +120,7 @@ static UniqueHandle OpenProc(std::size_t processId, DWORD access)
     std::memset(&attribs, 0, sizeof(attribs));
     attribs.Length = sizeof(attribs);
     NtOpenProcessFunc ntOpen =
-        GetNtDll().GetProcAddress<NtOpenProcessFunc>("NtOpenProcess");
+        GetNtDll().GetProcAddress<NtOpenProcessFunc>(GetThrowingErrorReporter(), "NtOpenProcess");
     NTSTATUS errorCheck = ntOpen(hProc.Ptr(), access, &attribs, &cid);
     if (errorCheck == ERROR_SUCCESS)
     {
@@ -171,6 +172,7 @@ GetProcessStr(std::size_t processId,
             PROCESS_BASIC_INFORMATION basicInfo;
             NtQueryInformationProcessFunc ntQuery =
                 GetNtDll().GetProcAddress<NtQueryInformationProcessFunc>(
+                    GetThrowingErrorReporter(),
                     "NtQueryInformationProcess");
             NTSTATUS errorCheck = ntQuery(hProc.Get(),
                                           ProcessBasicInformation,
@@ -219,12 +221,11 @@ GetProcessStr(std::size_t processId,
             // features.
             UniqueHandle hProc(
                 OpenProc(processId, PROCESS_QUERY_LIMITED_INFORMATION));
-            RuntimeDynamicLinker kernel32("Kernel32.dll");
             typedef BOOL(WINAPI * QueryFullProcessImageNameFunc)(
                 HANDLE, DWORD, LPWSTR, PDWORD);
             QueryFullProcessImageNameFunc queryProcessFile =
-                kernel32.GetProcAddress<QueryFullProcessImageNameFunc>(
-                    "QueryFullProcessImageNameW");
+                GetKernel32().GetProcAddress<QueryFullProcessImageNameFunc>(
+                    GetThrowingErrorReporter(), "QueryFullProcessImageNameW");
             BOOL boolCheck;
             std::wstring buffer;
             DWORD goalSize = MAX_PATH;
@@ -265,7 +266,7 @@ void Process::Terminate()
 {
     UniqueHandle hProc(OpenProc(id_, PROCESS_TERMINATE));
     auto terminate =
-        GetNtDll().GetProcAddress<NtTerminateProcessFunc>("NtTerminateProcess");
+        GetNtDll().GetProcAddress<NtTerminateProcessFunc>(GetThrowingErrorReporter(), "NtTerminateProcess");
     NTSTATUS errorCheck = terminate(hProc.Get(), -1);
     if (errorCheck != ERROR_SUCCESS)
     {

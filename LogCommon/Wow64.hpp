@@ -5,6 +5,7 @@
 #pragma once
 #include <boost/noncopyable.hpp>
 #include "Library.hpp"
+#include "Win32Exception.hpp"
 
 #pragma once
 
@@ -20,11 +21,10 @@ inline bool IsWow64()
 {
     try
     {
-        RuntimeDynamicLinker kernel32("kernel32.dll");
         typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
                                                __out PBOOL Wow64Process);
         auto IsWow64ProcessFunc =
-            kernel32.GetProcAddress<IsWow64ProcessT>("IsWow64Process");
+            GetKernel32().GetProcAddress<IsWow64ProcessT>(GetThrowingErrorReporter(), "IsWow64Process");
         BOOL answer;
         BOOL errorCheck = IsWow64ProcessFunc(GetCurrentProcess(), &answer);
         if (errorCheck == 0)
@@ -42,15 +42,15 @@ inline bool IsWow64()
 struct NativeFilePathScope : boost::noncopyable
 {
     NativeFilePathScope()
-        : kernel32("kernel32.dll")
-        , ptr(nullptr)
+        : ptr(nullptr)
     {
         try
         {
             typedef BOOL(WINAPI * IsWow64ProcessT)(__in HANDLE hProcess,
                                                    __out PBOOL Wow64Process);
             auto IsWow64ProcessFunc =
-                this->kernel32.GetProcAddress<IsWow64ProcessT>(
+                GetKernel32().GetProcAddress<IsWow64ProcessT>(
+                    GetThrowingErrorReporter(),
                     "IsWow64Process");
             BOOL isWow64;
             BOOL errorCheck =
@@ -67,9 +67,10 @@ struct NativeFilePathScope : boost::noncopyable
 
             typedef BOOL(WINAPI * Wow64DisableWow64FsRedirectionFunc)(void**);
             auto disableFunc =
-                this->kernel32
+                GetKernel32()
                     .GetProcAddress<Wow64DisableWow64FsRedirectionFunc>(
-                         "Wow64DisableWow64FsRedirection");
+                        GetThrowingErrorReporter(),
+                        "Wow64DisableWow64FsRedirection");
             errorCheck = disableFunc(&this->ptr);
             if (errorCheck == 0)
             {
@@ -89,9 +90,9 @@ struct NativeFilePathScope : boost::noncopyable
         {
             typedef BOOL(WINAPI * Wow64RevertWow64FsRedirectionFunc)(void*);
             auto revertFunc =
-                this->kernel32
-                    .GetProcAddress<Wow64RevertWow64FsRedirectionFunc>(
-                         "Wow64RevertWow64FsRedirection");
+                GetKernel32().GetProcAddress<Wow64RevertWow64FsRedirectionFunc>(
+                        GetThrowingErrorReporter(),
+                        "Wow64RevertWow64FsRedirection");
             revertFunc(this->ptr);
             this->ptr = nullptr;
         }
@@ -107,7 +108,6 @@ struct NativeFilePathScope : boost::noncopyable
     }
 
     private:
-    RuntimeDynamicLinker kernel32;
     void* ptr;
 };
 }

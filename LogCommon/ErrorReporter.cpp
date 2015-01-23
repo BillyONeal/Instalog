@@ -15,6 +15,12 @@ namespace Instalog
     {
     }
 
+    void IErrorReporter::ReportLastWinError(boost::string_ref apiCall)
+    {
+        DWORD lastError = ::GetLastError();
+        this->ReportWinError(lastError, apiCall);
+    }
+
     struct IgnoreErrorReporter final : public IErrorReporter
     {
         IgnoreErrorReporter() = default;

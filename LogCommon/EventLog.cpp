@@ -83,8 +83,8 @@ std::string OldEventLogEntry::GetDescription()
             eventMessageFileValue.GetStringStrict();
         Path::ResolveFromCommandLine(eventMessageFilePath);
 
-        FormattedMessageLoader eventMessageFile(eventMessageFilePath);
-        return eventMessageFile.GetFormattedMessage(eventIdWithExtras, strings);
+        FormattedMessageLoader eventMessageFile(GetThrowingErrorReporter(), eventMessageFilePath);
+        return eventMessageFile.GetFormattedMessage(GetThrowingErrorReporter(), eventIdWithExtras, strings);
     }
     catch (ErrorFileNotFoundException const&)
     {
@@ -357,14 +357,14 @@ class EvtFunctionHandles : boost::noncopyable
     EvtFormatMessage_t EvtFormatMessage;
 
     EvtFunctionHandles()
-            : wevtapi("wevtapi.dll")
-            , EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>("EvtQuery"))
-            , EvtClose(wevtapi.GetProcAddress<EvtClose_t>("EvtClose"))
-            , EvtNext(wevtapi.GetProcAddress<EvtNext_t>("EvtNext"))
-            , EvtCreateRenderContext(wevtapi.GetProcAddress<EvtCreateRenderContext_t>("EvtCreateRenderContext"))
-            , EvtRender(wevtapi.GetProcAddress<EvtRender_t>("EvtRender"))
-            , EvtOpenPublisherMetadata(wevtapi.GetProcAddress<EvtOpenPublisherMetadata_t>("EvtOpenPublisherMetadata"))
-            , EvtFormatMessage(wevtapi.GetProcAddress<EvtFormatMessage_t>("EvtFormatMessage"))
+            : wevtapi(GetThrowingErrorReporter(), "wevtapi.dll")
+            , EvtQuery(wevtapi.GetProcAddress<EvtQuery_t>(GetThrowingErrorReporter(), "EvtQuery"))
+            , EvtClose(wevtapi.GetProcAddress<EvtClose_t>(GetThrowingErrorReporter(), "EvtClose"))
+            , EvtNext(wevtapi.GetProcAddress<EvtNext_t>(GetThrowingErrorReporter(), "EvtNext"))
+            , EvtCreateRenderContext(wevtapi.GetProcAddress<EvtCreateRenderContext_t>(GetThrowingErrorReporter(), "EvtCreateRenderContext"))
+            , EvtRender(wevtapi.GetProcAddress<EvtRender_t>(GetThrowingErrorReporter(), "EvtRender"))
+            , EvtOpenPublisherMetadata(wevtapi.GetProcAddress<EvtOpenPublisherMetadata_t>(GetThrowingErrorReporter(), "EvtOpenPublisherMetadata"))
+            , EvtFormatMessage(wevtapi.GetProcAddress<EvtFormatMessage_t>(GetThrowingErrorReporter(), "EvtFormatMessage"))
     {
     }
 };

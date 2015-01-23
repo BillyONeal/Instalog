@@ -148,6 +148,7 @@ std::uint32_t GetWin32ErrorFromNtError(NTSTATUS errorCode)
     typedef ULONG(WINAPI * RtlNtStatusToDosErrorFunc)(__in NTSTATUS Status);
     RtlNtStatusToDosErrorFunc conv =
         GetNtDll().GetProcAddress<RtlNtStatusToDosErrorFunc>(
+        GetThrowingErrorReporter(),
         "RtlNtStatusToDosError");
     return conv(errorCode);
 }

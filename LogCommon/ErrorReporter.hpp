@@ -22,6 +22,7 @@ namespace Instalog
     struct IErrorReporter
     {
         virtual void ReportWinError(std::uint32_t errorCode, boost::string_ref apiCall) = 0;
+        void ReportLastWinError(boost::string_ref apiCall);
         virtual void ReportNtError(std::int32_t errorCode, boost::string_ref apiCall) = 0;
         virtual void ReportHresult(std::int32_t errorCode, boost::string_ref apiCall) = 0;
         virtual void ReportGenericError(boost::string_ref errorMessage) = 0;

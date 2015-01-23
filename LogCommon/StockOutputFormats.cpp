@@ -142,12 +142,12 @@ void WriteMemoryInformation(log_sink& log)
 
     availableRam = memStatus.ullAvailPhys;
 
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
     typedef BOOL(WINAPI *
                  GetPhysicallyInstalledFunc)(PULONGLONG TotalMemoryInKilobytes);
     try
     {
-        auto gpFunc = kernel32.GetProcAddress<GetPhysicallyInstalledFunc>(
+        auto gpFunc = SystemFacades::GetKernel32().GetProcAddress<GetPhysicallyInstalledFunc>(
+            GetThrowingErrorReporter(),
             "GetPhysicallyInstalledSystemMemory");
         gpFunc(&totalRam);
         totalRam *= 1024;
@@ -171,12 +171,13 @@ void WriteOsVersion(log_sink& log)
     GetVersionEx((LPOSVERSIONINFO) & versionInfo);
 
     DWORD productType = 0;
-    Instalog::SystemFacades::RuntimeDynamicLinker kernel32("kernel32.dll");
 
     try
     {
         auto getProductInfo =
-            kernel32.GetProcAddress<GetProductInfoFunc>("GetProductInfo");
+            SystemFacades::GetKernel32().GetProcAddress<GetProductInfoFunc>(
+            GetThrowingErrorReporter(),
+            "GetProductInfo");
         getProductInfo(6, 3, 0, 0, &productType);
     }
     catch (SystemFacades::ErrorProcedureNotFoundException const&)

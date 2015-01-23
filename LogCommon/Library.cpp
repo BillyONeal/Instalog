@@ -3,8 +3,9 @@
 // See the included LICENSE.TXT file for more details.
 
 #include <algorithm>
-#include "Win32Exception.hpp"
+#include <stdexcept>
 #include "Library.hpp"
+#include "ScopeExit.hpp"
 #include "Utf8.hpp"
 
 namespace Instalog
@@ -12,28 +13,45 @@ namespace Instalog
 namespace SystemFacades
 {
 
-Library::Library(std::string const& filename, DWORD flags)
-    : hModule(::LoadLibraryExW(utf8::ToUtf16(filename).c_str(), NULL, flags))
+Library::Library(IErrorReporter& reporter, std::string const& filename, DWORD flags)
+    : hModule(::LoadLibraryExW(utf8::ToUtf16(filename).c_str(), nullptr, flags))
 {
-    if (hModule == NULL)
+    if (!this->Valid())
     {
-        Win32Exception::ThrowFromLastError();
+        reporter.ReportLastWinError("LoadLibraryExW");
     }
 }
 
 Library::~Library()
 {
-    ::FreeLibrary(hModule);
+    if (this->Valid())
+    {
+        ::FreeLibrary(hModule);
+    }
+}
+
+void Library::RequireValid() const
+{
+    if (!this->Valid())
+    {
+        throw std::invalid_argument("Invalid library state.");
+    }
 }
 
 RuntimeDynamicLinker& GetNtDll()
 {
-    static RuntimeDynamicLinker ntdll("ntdll.dll");
+    static RuntimeDynamicLinker ntdll(GetThrowingErrorReporter(), "ntdll.dll");
     return ntdll;
 }
 
-RuntimeDynamicLinker::RuntimeDynamicLinker(std::string const& filename)
-    : Library(filename, 0)
+RuntimeDynamicLinker& GetKernel32()
+{
+    static RuntimeDynamicLinker kernel32(GetThrowingErrorReporter(), "kernel32.dll");
+    return kernel32;
+}
+
+RuntimeDynamicLinker::RuntimeDynamicLinker(IErrorReporter& reporter, std::string const& filename)
+    : Library(reporter, filename, 0)
 {
 }
 
@@ -51,9 +69,15 @@ static bool IsVistaLaterCache()
     return isVistaLater;
 }
 
-static std::string FormatMessageU(HMODULE hModule, DWORD messageId, va_list* argPtr)
+static std::string FormatMessageU(IErrorReporter& reporter, HMODULE hModule, DWORD messageId, va_list* argPtr)
 {
     wchar_t* messagePtr = nullptr;
+    ScopeExit onExit([&]() {
+        if (messagePtr)
+        {
+            LocalFree(messagePtr);
+        }}
+    );
     if (FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE |
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_ARGUMENT_ARRAY,
@@ -64,40 +88,46 @@ static std::string FormatMessageU(HMODULE hModule, DWORD messageId, va_list* arg
         0,
         argPtr) == 0)
     {
-        Win32Exception::ThrowFromLastError();
+        reporter.ReportLastWinError("FormatMessageW");
+        messagePtr = nullptr;
     }
-    std::string answer(utf8::ToUtf8(messagePtr));
-    LocalFree(messagePtr);
-    return answer;
+
+    return utf8::ToUtf8(messagePtr);
 }
 
-FormattedMessageLoader::FormattedMessageLoader(std::string const& filename)
-    : Library(filename,
+FormattedMessageLoader::FormattedMessageLoader(IErrorReporter& reporter, std::string const& filename)
+    : Library(reporter, filename,
               (IsVistaLaterCache() ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0) |
                   LOAD_LIBRARY_AS_DATAFILE)
 {
 }
 
 std::string FormattedMessageLoader::GetFormattedMessage(
+    IErrorReporter& reporter,
     DWORD messageId)
 {
-    return FormatMessageU(this->hModule, messageId, nullptr);
+    this->RequireValid();
+    return FormatMessageU(reporter, this->hModule, messageId, nullptr);
 }
 
 std::string FormattedMessageLoader::GetFormattedMessage(
+    IErrorReporter& reporter,
     DWORD messageId,
     std::vector<std::string> const& argumentsSource)
 {
+    this->RequireValid();
     std::vector<std::wstring> arguments;
     arguments.reserve(argumentsSource.size());
     std::transform(argumentsSource.cbegin(), argumentsSource.cend(), std::back_inserter(arguments), [](std::string const& s) { return utf8::ToUtf16(s); });
-    return GetFormattedMessage(messageId, arguments);
+    return GetFormattedMessage(reporter, messageId, arguments);
 }
 
 std::string FormattedMessageLoader::GetFormattedMessage(
+    IErrorReporter& reporter,
     DWORD messageId,
     std::vector<std::wstring> const& arguments)
 {
+    this->RequireValid();
     std::vector<DWORD_PTR> argumentPtrs;
     argumentPtrs.reserve(arguments.size());
     std::transform(arguments.cbegin(), arguments.cend(), std::back_inserter(argumentPtrs),
@@ -109,7 +139,7 @@ std::string FormattedMessageLoader::GetFormattedMessage(
         argPtr = nullptr;
     }
 
-    return FormatMessageU(this->hModule, messageId, argPtr);
+    return FormatMessageU(reporter, this->hModule, messageId, argPtr);
 }
 }
 }

@@ -28,22 +28,22 @@ namespace SystemFacades
 {
 
 static NtOpenKeyFunc PNtOpenKey =
-    GetNtDll().GetProcAddress<NtOpenKeyFunc>("NtOpenKey");
+    GetNtDll().GetProcAddress<NtOpenKeyFunc>(GetThrowingErrorReporter(), "NtOpenKey");
 static NtCreateKeyFunc PNtCreateKey =
-    GetNtDll().GetProcAddress<NtCreateKeyFunc>("NtCreateKey");
-static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>("NtClose");
+    GetNtDll().GetProcAddress<NtCreateKeyFunc>(GetThrowingErrorReporter(), "NtCreateKey");
+static NtCloseFunc PNtClose = GetNtDll().GetProcAddress<NtCloseFunc>(GetThrowingErrorReporter(), "NtClose");
 static NtDeleteKeyFunc PNtDeleteKey =
-    GetNtDll().GetProcAddress<NtCloseFunc>("NtDeleteKey");
+    GetNtDll().GetProcAddress<NtCloseFunc>(GetThrowingErrorReporter(), "NtDeleteKey");
 static NtQueryKeyFunc PNtQueryKey =
-    GetNtDll().GetProcAddress<NtQueryKeyFunc>("NtQueryKey");
+    GetNtDll().GetProcAddress<NtQueryKeyFunc>(GetThrowingErrorReporter(), "NtQueryKey");
 static NtEnumerateKeyFunc PNtEnumerateKey =
-    GetNtDll().GetProcAddress<NtEnumerateKeyFunc>("NtEnumerateKey");
+    GetNtDll().GetProcAddress<NtEnumerateKeyFunc>(GetThrowingErrorReporter(), "NtEnumerateKey");
 static NtEnumerateValueKeyFunc PNtEnumerateValueKeyFunc =
-    GetNtDll().GetProcAddress<NtEnumerateValueKeyFunc>("NtEnumerateValueKey");
+    GetNtDll().GetProcAddress<NtEnumerateValueKeyFunc>(GetThrowingErrorReporter(), "NtEnumerateValueKey");
 static NtQueryValueKeyFunc PNtQueryValueKeyFunc =
-    GetNtDll().GetProcAddress<NtQueryValueKeyFunc>("NtQueryValueKey");
+    GetNtDll().GetProcAddress<NtQueryValueKeyFunc>(GetThrowingErrorReporter(), "NtQueryValueKey");
 static NtSetValueKeyFunc PNtSetValueKeyFunc =
-    GetNtDll().GetProcAddress<NtSetValueKeyFunc>("NtSetValueKey");
+    GetNtDll().GetProcAddress<NtSetValueKeyFunc>(GetThrowingErrorReporter(), "NtSetValueKey");
 
 RegistryKey::~RegistryKey()
 {
