@@ -34,9 +34,49 @@ struct ConsoleInterface : public Instalog::IUserInterface
 
 using namespace Instalog;
 
+typedef BOOL (WINAPI *SetProcessDEPPolicyFunc)(
+  _In_  DWORD dwFlags
+);
+
+typedef BOOL (WINAPI *SetProcessMitigationPolicyFunc)(
+    _In_  PROCESS_MITIGATION_POLICY MitigationPolicy,
+    _In_  PVOID lpBuffer,
+    _In_  SIZE_T dwLength
+    );
+
+static void DisableBackCompat()
+{
+    // Windows Vista or later:
+    auto setProcessDep = SystemFacades::GetKernel32()
+        .GetProcAddress<SetProcessDEPPolicyFunc>(GetIgnoreReporter(), "SetProcessDEPPolicy");
+    if (setProcessDep == nullptr)
+    {
+        return;
+    }
+
+    // Make sure DEP failures kill the process.
+    setProcessDep(0x3); // Turns on all the things.
+
+    // Windows 8 or later:
+    auto setProcMitigation = SystemFacades::GetKernel32()
+        .GetProcAddress<SetProcessMitigationPolicyFunc>(GetIgnoreReporter(), "SetProcessMitigationPolicy");
+    if (setProcMitigation == nullptr)
+    {
+        return;
+    }
+    
+    // Make sure passing around invalid handles kill the process.
+    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY strictHandle = {};
+    strictHandle.RaiseExceptionOnInvalidHandleReference = true;
+    strictHandle.HandleExceptionsPermanentlyEnabled = true;
+    setProcMitigation(ProcessStrictHandleCheckPolicy, &strictHandle, sizeof(strictHandle));
+}
+
 /// @brief    Main entry-point for this application.
 int main()
 {
+    DisableBackCompat();
+
     std::puts(" ___           _        _\n"
         "|_ _|_ __  ___| |_ __ _| | ___   __ _\n"
         " | || '_ \\/ __| __/ _` | |/ _ \\ / _` |\n"
