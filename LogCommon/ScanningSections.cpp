@@ -931,6 +931,7 @@ std::vector<SystemFacades::FindFilesRecord> GetFind3MFileData(
     static const char* directories_list1b[] = {
         "%APPDATA%\\",              "%SYSTEMDRIVE%\\", "%SYSTEMROOT%\\",
         "%SYSTEMROOT%\\system32\\", "%USERPROFILE%\\", "%ALLUSERSPROFILE%\\",
+        "%TEMP%\\",
 #ifdef _M_X64
         "%SYSTEMROOT%\\Syswow64\\",
 #endif
