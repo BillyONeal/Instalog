@@ -1,4 +1,6 @@
 add_library(LogCommon STATIC
+    ../ThirdParty/sqlite-amalgamation/sqlite3.h
+    ../ThirdParty/sqlite-amalgamation/sqlite3.c
     Com.cpp
     Com.hpp
     DdkStructures.h
@@ -53,3 +55,20 @@ add_library(LogCommon STATIC
     Wmi.hpp
     Wow64.hpp
 )
+
+set(SQLITE_COMMAND ${CMAKE_SOURCE_DIR}/ThirdParty/sqlite-amalgamation/sqlite3.exe CACHE STRING "SQLite Executable Path")
+set(WHITELIST_SQL_FILE ${CMAKE_CURRENT_LIST_DIR}/Whitelist.sql)
+set(WHITELIST_DB_FILE ${CMAKE_CURRENT_BINARY_DIR}/Whitelist.db)
+
+add_custom_command(
+    OUTPUT ${WHITELIST_DB_FILE}
+    COMMAND ${SQLITE_COMMAND} ${WHITELIST_DB_FILE} -init ${WHITELIST_SQL_FILE} ".exit"
+    MAIN_DEPENDENCY ${WHITELIST_SQL_FILE}
+    )
+
+add_custom_target(BuildWhitelist
+    DEPENDS ${WHITELIST_SQL_FILE} ${WHITELIST_DB_FILE}
+    )
+
+add_dependencies(LogCommon BuildWhitelist)
+
