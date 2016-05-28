@@ -712,7 +712,7 @@ static void SingleRegistryValueOutput(
     }
     try
     {
-        auto value = key[valueName];
+        auto const& value = key[valueName];
         write(output, prefix, ": ");
         std::string val(value.GetString());
         dataProcess(output, val);
@@ -1390,7 +1390,7 @@ static void ExecuteLspChain(log_sink& output,
     {
         std::string const& actualName = catalogEntryNames[idx];
         char expectedName[13];
-        sprintf_s(expectedName, "%012u", idx + 1);
+        sprintf_s(expectedName, "%012zu", idx + 1);
         if (actualName != expectedName)
         {
             chainOk = false;
@@ -1398,7 +1398,7 @@ static void ExecuteLspChain(log_sink& output,
 
         RegistryKey catalogEntryKey(
             RegistryKey::Open(catalogEntriesKey, actualName, KEY_QUERY_VALUE));
-        RegistryValue packedCatalogItem(catalogEntryKey["PackedCatalogItem"]);
+        RegistryValue const& packedCatalogItem(catalogEntryKey["PackedCatalogItem"]);
         auto const end = std::find(
             packedCatalogItem.cbegin(), packedCatalogItem.cend(), '\0');
         catalogFiles.emplace(packedCatalogItem.cbegin(), end);
@@ -1438,7 +1438,7 @@ static void ExecuteNspChain(log_sink& output,
     {
         std::string const& actualName = catalogEntryNames[idx];
         char expectedName[13];
-        sprintf_s(expectedName, "%012u", idx + 1);
+        sprintf_s(expectedName, "%012zu", idx + 1);
         if (actualName != expectedName)
         {
             chainOk = false;

@@ -1,4 +1,4 @@
-// Copyright © Billy O'Neal III
+// Copyright ï¿½ Billy O'Neal III
 // This is under the 2 clause BSD license.
 // See the included LICENSE.TXT file for more details.
 #pragma once
@@ -81,11 +81,11 @@ namespace Instalog
     // The code that calls the value formatters is designed to accept any of these types;
     // they are seperate this way so that each formatter can do the most performant thing
     // for their specific formatted type.
-    // 
+    //
     // Format results types have a member function "data" which returns a pointer to the data
     // to write, and a member function "size" which returns the length of the valid region
     // pointed to by data().
-    
+
     // Intrusive results: For objects which contain a string representation as part of
     // themselves, e.g. std::string. Contains a pointer to the string data to write, and
     // a length.
@@ -125,7 +125,7 @@ namespace Instalog
         { }
 
         static const std::size_t declared_size = allocLength;
-        decltype(array)& data() BOOST_NOEXCEPT_OR_NOTHROW
+        auto& data() BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->array;
         }
@@ -185,11 +185,11 @@ namespace Instalog
     //
     // Users who wish to add their types to this formatting mechanism can do so
     // by defining a format_value that gets selected via argument dependant lookup.
-    // 
-    
+    //
+
     // Format std::string
     format_intrusive_result format_value(std::string const& value) BOOST_NOEXCEPT_OR_NOTHROW;
-    
+
     // Format character pointers. (Assume null terminated)
     format_intrusive_result format_value(char const* ptr) BOOST_NOEXCEPT_OR_NOTHROW;
 
@@ -304,7 +304,7 @@ namespace Instalog
             , fill_impl(fill_)
             , size_impl(size_)
         {}
-        
+
         std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW
         {
             return this->size_impl;
@@ -340,7 +340,7 @@ namespace Instalog
             auto const paddingCharacters = desiredSize - unpaddedSize;
             result.append(paddingCharacters, val.fill());
         }
-        
+
         result.append(basic.data(), unpaddedSize);
         return result;
     }

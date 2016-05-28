@@ -39,7 +39,7 @@ File::File(std::string const& filename,
     }
 }
 
-File::File(File&& other)
+File::File(File&& other) BOOST_NOEXCEPT_OR_NOTHROW
 {
     hFile = other.hFile;
     other.hFile = INVALID_HANDLE_VALUE;

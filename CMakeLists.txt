@@ -1,10 +1,13 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.4)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE
     ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides.cmake)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_flag_overrides.cmake)
 project (Instalog)
 include_directories(ThirdParty/utf8_v2_3_4)
+
+find_package(Boost)
+include_directories(${Boost_INCLUDE_DIRS})
 
 set(InstalogMajorVersion 0)
 set(InstalogMinorVersion 0)

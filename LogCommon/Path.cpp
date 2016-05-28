@@ -59,7 +59,8 @@ std::string GetWindowsPath()
 
 static void NativePathToWin32Path(std::string& path)
 {
-    // Remove \, ??\, \?\, and globalroot\ 
+    // Remove \, ??\, \?\, and globalroot\
+
     std::string::iterator chop = path.begin();
     if (boost::starts_with(boost::make_iterator_range(chop, path.end()), "\\"))
     {
@@ -437,7 +438,7 @@ void path::construct(wchar_t const* const buffer, std::size_t length)
     this->construct_upper();
 }
 
-void path::construct_upper()
+void path::construct_upper() BOOST_NOEXCEPT_OR_NOTHROW
 {
     // Assumes that the internal buffer has the normal case part
     // of the buffer filled out; fills in the upper case part.

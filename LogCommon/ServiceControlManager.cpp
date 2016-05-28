@@ -119,7 +119,7 @@ Service::Service( std::string const& serviceName, std::string const& displayName
 
     try
     {
-        RegistryValue svchostGroupRegistration = svchostGroupKey.GetValue(this->svchostGroup);
+        RegistryValue svchostGroupRegistration{svchostGroupKey.GetValue(this->svchostGroup)};
         std::vector<std::string> svchostGroupRegistrationStrings =
             svchostGroupRegistration.GetMultiStringArray();
         std::locale loc;

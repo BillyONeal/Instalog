@@ -338,14 +338,14 @@ class RegistryKey : boost::noncopyable
     /// @param    name    The name of the value to retrieve.
     ///
     /// @return    The value.
-    RegistryValue const GetValue(std::string const& name) const;
+    RegistryValue GetValue(std::string const& name) const;
 
     /// @brief    Array indexer operator. Forwards to GetValue()
     ///
     /// @param    name    The name of the value to retrieve.
     ///
     /// @return    The registry value retrieved from the given name.
-    RegistryValue const operator[](std::string const& name) const;
+    RegistryValue operator[](std::string const& name) const;
 
     /// Sets a registry value.
     /// @param name             The name of the value.
@@ -532,7 +532,7 @@ class RegistryKey : boost::noncopyable
      *
      * @remarks This function depends on the value of LastError set in Create or
      *Open.
-     * 
+     *
      * @throws Instalog::SystemFacades::Win32Exception The registry key is
      *invalid.
      */

@@ -78,12 +78,12 @@ RegistryKey::RegistryKey() : hKey_(INVALID_HANDLE_VALUE)
 {
 }
 
-RegistryValue const RegistryKey::operator[](std::string const& name) const
+RegistryValue RegistryKey::operator[](std::string const& name) const
 {
     return GetValue(name);
 }
 
-RegistryValue const RegistryKey::GetValue(std::string const& name) const
+RegistryValue RegistryKey::GetValue(std::string const& name) const
 {
     std::wstring wideName(utf8::ToUtf16(name));
     UNICODE_STRING valueName(WstringToUnicodeString(wideName));
